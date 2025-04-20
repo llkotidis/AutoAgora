@@ -1,0 +1,174 @@
+/* Car Search Form Styles */
+/* ---------------------------------------- */
+
+#car-search-form,
+#more-options {
+  border-radius: var(--border-radius-large);
+  background: var(--white);
+  padding: 2rem;
+  width: 450px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+#car-search-form h1 {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  margin: 0 0 0.5rem 0;
+}
+
+#more-options h2 {
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+}
+
+/* Transition styles for more options */
+#more-options {
+  transition: opacity 0.1s ease-out, transform 0.1s ease-out, visibility 0.1s; /* Match JS transition, include visibility */
+  opacity: 0;
+  transform: translateY(-10px);
+  visibility: hidden;
+  display: none;
+}
+
+#more-options.show {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.car-search-container {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* Spacing between rows */
+.car-search-form .form-row,
+#more-options .form-row {
+  width: 100%;
+  display: flex;
+}
+
+/* Rows that should have side-by-side inputs */
+.car-search-form .form-row.make-model-row,
+.car-search-form .form-row.price-row,
+#more-options .form-row.year-row,
+#more-options .form-row.km-row,
+#more-options .form-row.body-color-row,
+#more-options .form-row.engine-row {
+  flex-direction: row; /* Override to row layout */
+  gap: 1rem;
+}
+
+.car-search-form .form-group,
+#more-options .form-group {
+  width: 100%;
+}
+
+/* Spacing between label and input */
+.car-search-form .form-group label,
+#more-options .form-group label {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Style the error message */
+#car-search-error {
+  color: #dc3545;
+  text-align: center;
+}
+
+/* Style the 'More options' link */
+.more-options-link {
+  text-align: center;
+}
+.more-options-link a {
+  text-decoration: none !important;
+  color: #007bff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.more-options-link .chevron {
+  display: inline-block;
+  transition: transform 0.2s ease-in-out;
+  transform: rotate(90deg) translateY(1px); /* Default: Point down + Nudge down */
+  font-size: 1.2em; /* Make chevron slightly larger */
+  line-height: 1; /* Adjust line-height for better vertical alignment */
+  transform-origin: center; /* Rotate around the center */
+}
+.more-options-link a.rotate .chevron {
+  transform: rotate(0deg);
+}
+
+/* Consolidated Input/Select Styles for BOTH forms */
+#car-search-form select,
+#car-search-form input[type="text"], /* Add other input types if needed */
+#more-options select,
+#more-options input[type="text"] /* Add other input types if needed */ {
+  width: 100%; /* Ensure they fill the form-group */
+  padding: 8px 8px; /* Adjusted padding */
+  border: var(--border);
+  border-radius: var(--border-radius-small);
+  background-color: var(--white);
+  color: var(--text-color);
+  font-size: 0.875rem;
+  /* Re-add appearance styling to hide default arrows */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Re-add custom background arrow for selects only */
+}
+/* Add specific background for SELECT only */
+#car-search-form select,
+#more-options select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 1em;
+  padding-right: 2.5em; /* Add padding to prevent text overlap */
+}
+
+/* Combined Focus Styles */
+#car-search-form input:focus,
+#car-search-form select:focus,
+#more-options input:focus,
+#more-options select:focus {
+  outline: none;
+  border-color: var(--dark-blue);
+  box-shadow: 0 0 0 2px rgba(11, 114, 193, 0.1);
+}
+
+/* Combined Disabled Styles */
+#car-search-form input:disabled,
+#car-search-form select:disabled,
+#more-options input:disabled,
+#more-options select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.car-search-form .gradient-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin: 1rem 0 0 0;
+}
+
+.car-search-form .gradient-button:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+}
