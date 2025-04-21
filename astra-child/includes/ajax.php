@@ -201,9 +201,6 @@ function ajax_filter_car_listings_handler() {
                         }
                     }
                     
-                    echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
-                    echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
-                    
                     $user_id = get_current_user_id();
                     $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
                     $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
@@ -211,6 +208,9 @@ function ajax_filter_car_listings_handler() {
                     $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
                     $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
                     echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . get_the_ID() . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
+                    
+                    echo '<button class="carousel-nav prev" style="display: none;"><i class="fas fa-chevron-left"></i></button>';
+                    echo '<button class="carousel-nav next" style="display: none;"><i class="fas fa-chevron-right"></i></button>';
                     
                     echo '</div>'; // close .car-listing-image-carousel
                     echo '</div>'; // close .car-listing-image-container

@@ -52,11 +52,24 @@ function astra_child_enqueue_styles() {
     // Enqueue Car Listings script and localize data if relevant shortcodes might be present
     global $post;
     $load_car_listings_script = false;
+    
+    // Check if the current page has the shortcode
     if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'car_listings' ) || has_shortcode( $post->post_content, 'car_listing_detailed' ) ) ) {
         $load_car_listings_script = true;
     }
-    // Add other conditions if this script is needed elsewhere, e.g., on a specific archive page
-    // if (is_post_type_archive('car')) { $load_car_listings_script = true; }
+    
+    // Also load on car archive pages or specific templates
+    if ( is_post_type_archive('car') || is_tax('car_make') || is_tax('car_model') || is_tax('car_variant') ) {
+        $load_car_listings_script = true;
+    }
+    
+    // Check if we're on a page with a specific template that might need car listings
+    if ( is_page() && ( is_page_template('template-car-listings.php') || is_page_template('template-car-search.php') ) ) {
+        $load_car_listings_script = true;
+    }
+    
+    // For debugging - you can temporarily set this to true to always load the script
+    // $load_car_listings_script = true;
 
     if ( $load_car_listings_script ) {
         wp_enqueue_script(
@@ -64,7 +77,7 @@ function astra_child_enqueue_styles() {
             get_stylesheet_directory_uri() . '/js/car-listings.js',
             array('jquery'), 
             filemtime(get_stylesheet_directory() . '/js/car-listings.js'),
-            true // Load in footer
+            false // Load in header instead of footer
         );
 
         // Prepare ALL data needed by car-listings.js

@@ -433,8 +433,8 @@ function display_car_listings($atts) {
                                 }
                             }
                             
-                            echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
-                            echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
+                            echo '<button class="carousel-nav prev" style="display: none;"><i class="fas fa-chevron-left"></i></button>';
+                            echo '<button class="carousel-nav next" style="display: none;"><i class="fas fa-chevron-right"></i></button>';
                             
                             $user_id = get_current_user_id();
                             $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);

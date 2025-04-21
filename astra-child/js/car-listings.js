@@ -585,7 +585,6 @@ document.addEventListener("DOMContentLoaded", function () {
   updateActiveFiltersDisplay();
 
   filterForm.addEventListener("submit", function (e) {
-    console.log("Filter form submit event fired!");
     e.preventDefault();
     submitFiltersWithAjax(1); // Submit with page 1 on explicit form submission
   });
@@ -678,7 +677,7 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.innerHTML = data.data.pagination_html;
           }
 
-          // Update URL using History API
+          // Update URL using History API - always include the question mark
           const newUrl = window.location.pathname + "?" + params.toString();
           // Only push state if URL is different to avoid duplicate entries on simple pagination clicks
           if (window.location.href !== newUrl) {
@@ -754,66 +753,76 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Helper functions to re-initialize JS components ---
   function reinitializeCarousels() {
-    document
-      .querySelectorAll(".car-listing-image-carousel")
-      .forEach((carousel) => {
-        const images = carousel.querySelectorAll(".car-listing-image");
-        const prevBtn = carousel.querySelector(".carousel-nav.prev");
-        const nextBtn = carousel.querySelector(".carousel-nav.next");
-        const seeAllImagesBtn = carousel.querySelector(".see-all-images");
-        let currentIndex = 0;
+    const carousels = document.querySelectorAll(".car-listing-image-carousel");
+    
+    carousels.forEach((carousel, index) => {
+      const images = carousel.querySelectorAll(".car-listing-image");
+      const prevBtn = carousel.querySelector(".carousel-nav.prev");
+      const nextBtn = carousel.querySelector(".carousel-nav.next");
+      const seeAllImagesBtn = carousel.querySelector(".see-all-images");
+      let currentIndex = 0;
 
-        if (images.length <= 1) {
-          if (prevBtn) prevBtn.style.display = "none";
-          if (nextBtn) nextBtn.style.display = "none";
-          if (seeAllImagesBtn) seeAllImagesBtn.style.display = "none";
-          return;
-        }
+      // If there's only one image, hide all navigation elements
+      if (images.length <= 1) {
+        if (prevBtn) prevBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "none";
+        if (seeAllImagesBtn) seeAllImagesBtn.style.display = "none";
+        return;
+      }
 
-        const updateImages = () => {
-          images.forEach((img, index) => {
-            img.classList.toggle("active", index === currentIndex);
-          });
+      // Function to update image visibility and navigation buttons
+      const updateCarousel = () => {
+        // Update image visibility
+        images.forEach((img, i) => {
+          img.classList.toggle("active", i === currentIndex);
+        });
 
-          if (prevBtn)
-            prevBtn.style.display = currentIndex === 0 ? "none" : "flex";
-          if (nextBtn)
-            nextBtn.style.display =
-              currentIndex === images.length - 1 ? "none" : "flex";
-          if (seeAllImagesBtn)
-            seeAllImagesBtn.style.display =
-              currentIndex === images.length - 1 ? "block" : "none";
-        };
-
-        updateImages(); // Set initial state
-
-        // --- Re-attach listeners using cloning ---
+        // Update navigation buttons - explicitly set display based on current index
         if (prevBtn) {
-          const newPrevBtn = prevBtn.cloneNode(true);
-          prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-          newPrevBtn.addEventListener("click", () => {
-            if (currentIndex > 0) {
-              currentIndex--;
-              updateImages();
-            }
-          });
+          prevBtn.style.display = currentIndex === 0 ? "none" : "flex";
         }
+        
         if (nextBtn) {
-          const newNextBtn = nextBtn.cloneNode(true);
-          nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-          newNextBtn.addEventListener("click", () => {
-            if (currentIndex < images.length - 1) {
-              currentIndex++;
-              updateImages();
-            }
-          });
+          nextBtn.style.display = currentIndex === images.length - 1 ? "none" : "flex";
         }
-        // --- End Re-attach listeners ---
-      });
+        
+        if (seeAllImagesBtn) {
+          seeAllImagesBtn.style.display = currentIndex === images.length - 1 ? "block" : "none";
+        }
+      };
+
+      // Set initial state
+      updateCarousel();
+
+      // Add event listeners to navigation buttons
+      if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (currentIndex > 0) {
+            currentIndex--;
+            updateCarousel();
+          }
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (currentIndex < images.length - 1) {
+            currentIndex++;
+            updateCarousel();
+          }
+        });
+      }
+    });
   }
 
   function reinitializeFavoriteButtons() {
-    document.querySelectorAll(".favorite-btn").forEach((button) => {
+    const buttons = document.querySelectorAll(".favorite-btn");
+    
+    buttons.forEach((button, index) => {
       // --- Re-attach listener using cloning ---
       const newButton = button.cloneNode(true);
       button.parentNode.replaceChild(newButton, button);
@@ -1087,4 +1096,8 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
   updateAllFilterDisplays();
+  
+  // Initialize carousels and favorite buttons on initial page load
+  reinitializeCarousels();
+  reinitializeFavoriteButtons();
 });
