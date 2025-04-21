@@ -9,6 +9,8 @@
 // Register the shortcode
 add_shortcode('my_account', 'display_my_account');
 
+//this is proof that github is working
+
 function display_my_account($atts) {
     // Check if user is logged in
     if (!is_user_logged_in()) {
