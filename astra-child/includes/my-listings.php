@@ -39,30 +39,54 @@ function display_my_listings($atts) {
         
         if ($user_listings->have_posts()) :
         ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($user_listings->have_posts()) : $user_listings->the_post(); ?>
-                        <tr>
-                            <td><?php the_title(); ?></td>
-                            <td><?php echo get_the_date(); ?></td>
-                            <td><?php echo get_post_status(); ?></td>
-                            <td>
-                                <a href="<?php the_permalink(); ?>" class="button">View</a>
+            <div class="listings-grid">
+                <?php while ($user_listings->have_posts()) : $user_listings->the_post(); 
+                    $post_id = get_the_ID();
+                    $price = get_post_meta($post_id, 'price', true);
+                    
+                    // Get all car images
+                    $featured_image = get_post_thumbnail_id($post_id);
+                    $additional_images = get_field('car_images', $post_id);
+                    $all_images = array();
+                    
+                    if ($featured_image) {
+                        $all_images[] = $featured_image;
+                    }
+                    
+                    if (is_array($additional_images)) {
+                        $all_images = array_merge($all_images, $additional_images);
+                    }
+                ?>
+                    <div class="listing-item">
+                        <div class="listing-image-container">
+                            <?php if (!empty($all_images)) : 
+                                $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
+                            ?>
+                                <a href="<?php echo esc_url(add_query_arg('car_id', $post_id, home_url('/car-listing-detailed/'))); ?>" class="listing-image-link">
+                                    <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php the_title(); ?>" class="listing-image">
+                                    <div class="image-count">
+                                        <i class="fas fa-camera"></i>
+                                        <span><?php echo count($all_images); ?></span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="listing-details">
+                            <a href="<?php echo esc_url(add_query_arg('car_id', $post_id, home_url('/car-listing-detailed/'))); ?>" class="listing-title">
+                                <?php the_title(); ?> (€<?php echo number_format($price); ?>)
+                            </a>
+                            <div class="listing-meta">
+                                <span class="listing-date">Published: <?php echo get_the_date(); ?></span>
+                                <span class="listing-status">Status: <?php echo get_post_status(); ?></span>
+                            </div>
+                            <div class="listing-actions">
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
-                                <a href="<?php echo get_delete_post_link(); ?>" class="button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                                <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
         <?php 
         else :
             echo '<p>You haven\'t created any car listings yet.</p>';
@@ -72,6 +96,131 @@ function display_my_listings($atts) {
         wp_reset_postdata();
         ?>
     </div>
+    
+    <style>
+        .my-listings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .listings-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .listing-item {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .listing-image-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            flex-shrink: 0;
+        }
+        
+        .listing-image-link {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .listing-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .image-count {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .listing-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .listing-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+        
+        .listing-title:hover {
+            color: #007bff;
+        }
+        
+        .listing-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .listing-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0073aa;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button:hover {
+            background-color: #005177;
+            color: white;
+        }
+        
+        .delete-button {
+            background-color: #dc3545;
+        }
+        
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        
+        @media (max-width: 768px) {
+            .listing-item {
+                flex-direction: column;
+            }
+            
+            .listing-image-container {
+                width: 100%;
+                height: 200px;
+            }
+        }
+    </style>
     
     <?php
     // Return the buffered content
