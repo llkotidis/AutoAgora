@@ -677,8 +677,12 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.innerHTML = data.data.pagination_html;
           }
 
-          // Update URL using History API - always include the question mark
-          const newUrl = window.location.pathname + "?" + params.toString();
+          // Update URL using History API - only add question mark if there are parameters
+          const paramsString = params.toString();
+          const newUrl = paramsString 
+            ? window.location.pathname + "?" + paramsString 
+            : window.location.pathname;
+          
           // Only push state if URL is different to avoid duplicate entries on simple pagination clicks
           if (window.location.href !== newUrl) {
             history.pushState({ path: newUrl, page: page }, "", newUrl);
@@ -728,9 +732,42 @@ document.addEventListener("DOMContentLoaded", function () {
       const pageLink = e.target.closest("a.page-numbers"); // Find the closest anchor
       if (pageLink && !pageLink.classList.contains("current")) {
         e.preventDefault();
-        const url = new URL(pageLink.href);
-        const page = url.searchParams.get("paged") || 1;
-        submitFiltersWithAjax(parseInt(page, 10));
+        
+        // Get the current page from the URL with proper validation
+        const currentUrl = new URL(window.location.href);
+        let currentPage = parseInt(currentUrl.searchParams.get("paged"), 10);
+        // Ensure currentPage is a valid number and at least 1
+        if (isNaN(currentPage) || currentPage < 1) {
+          currentPage = 1;
+        }
+        
+        // Determine the target page
+        let targetPage = currentPage;
+        
+        // Check if it's a direct page number link
+        const href = pageLink.getAttribute("href");
+        const hrefUrl = new URL(href, window.location.origin);
+        const pagedParam = hrefUrl.searchParams.get("paged");
+        
+        if (pagedParam) {
+          // Direct page number link
+          targetPage = parseInt(pagedParam, 10);
+          // Validate the target page
+          if (isNaN(targetPage) || targetPage < 1) {
+            targetPage = 1;
+          }
+        } else {
+          // Check if it's a next/prev link
+          if (href.includes("next")) {
+            targetPage = currentPage + 1;
+          } else if (href.includes("prev")) {
+            targetPage = Math.max(1, currentPage - 1);
+          }
+        }
+        
+        // Submit the form with the correct page number
+        submitFiltersWithAjax(targetPage);
+        
         // Optional: Scroll to top of listings
         const listingsContainer = document.querySelector(
           ".car-listings-container"

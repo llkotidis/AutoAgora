@@ -111,9 +111,6 @@ function display_favourite_listings($atts) {
                     $transmission = get_post_meta(get_the_ID(), 'transmission', true);
                     $mileage = get_post_meta(get_the_ID(), 'mileage', true);
                     $location = get_post_meta(get_the_ID(), 'location', true);
-                    $is_favorite = in_array(get_the_ID(), $favorite_car_ids);
-                    $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
-                    $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
                     ?>
                     <div class="car-listing-card">
                         <?php 
@@ -146,10 +143,9 @@ function display_favourite_listings($atts) {
                                 }
                             }
                             
-                            echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . get_the_ID() . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
-                            
-                            echo '<button class="carousel-nav prev" style="display: none;"><i class="fas fa-chevron-left"></i></button>';
-                            echo '<button class="carousel-nav next" style="display: none;"><i class="fas fa-chevron-right"></i></button>';
+                            echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
+                            echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
+                            echo '<button class="favorite-btn active" data-car-id="' . get_the_ID() . '"><i class="fas fa-heart"></i></button>';
                             
                             echo '</div>';
                             echo '</div>';
