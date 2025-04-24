@@ -557,8 +557,8 @@ function car_search_form_shortcode() {
                     }
                 });
                 
-                // Construct the URL for the search results page (replace '/search-results/' if needed)
-                const searchUrl = '<?php echo home_url("/search-results/"); ?>?' + params.toString();
+                // Construct the URL for the search results page (replace '/car_listings/' if needed)
+                const searchUrl = '<?php echo home_url("/car_listings/"); ?>?' + params.toString();
                 window.location.href = searchUrl; // Redirect to search results
             });
         } else {
