@@ -9,6 +9,7 @@
 // Include helper files
 require_once __DIR__ . '/car-listings-data.php';
 require_once __DIR__ . '/car-listings-query.php'; // Added this line
+require_once __DIR__ . '/car-filter-form.php'; // Include the new filter form file
 // require_once __DIR__ . '/car-listings-render.php'; // Potential future file
 
 // Register the shortcode
@@ -66,8 +67,10 @@ function display_car_listings($atts) {
                     <button class="close-filters">&times;</button>
                 </div>
             <form method="get" class="filters-form">
-                <!-- All filter groups (Location, Make/Model/Variant, Price, Year, KM, etc.) removed -->
-                <!-- Filter actions (Apply/Reset buttons) removed -->
+                <?php 
+                // Display the new filter form with 'listings_page' context
+                echo display_car_filter_form('listings_page'); 
+                ?>
             </form>
             </div>
         </div>
