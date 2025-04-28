@@ -121,16 +121,45 @@ function display_car_filter_form( $context = 'default' ) {
         );
     }
     // --- End Make Counts ---
-    
+
+    // --- Get Counts for Models grouped by Make ---
+    $model_counts_by_make_query = array();
+    if (!empty($all_makes_from_files)) {
+        // Prepare placeholders for makes
+        $make_placeholders = implode(', ', array_fill(0, count($all_makes_from_files), '%s'));
+        $sql = $wpdb->prepare(
+            "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
+             FROM {$wpdb->posts} p
+             JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+             JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+             WHERE p.post_type = %s
+             AND p.post_status = %s
+             AND pm_make.meta_value IN ({$make_placeholders})
+             AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
+             GROUP BY pm_make.meta_value, pm_model.meta_value",
+            array_merge(['make', 'model', 'car', 'publish'], $all_makes_from_files)
+        );
+        $model_counts_results = $wpdb->get_results($sql);
+
+        // Restructure the results for easier JS access: Make => [Model => Count]
+        foreach ($model_counts_results as $row) {
+            if (!isset($model_counts_by_make_query[$row->make])) {
+                $model_counts_by_make_query[$row->make] = array();
+            }
+            $model_counts_by_make_query[$row->make][$row->model] = (int)$row->count;
+        }
+    }
+    // --- End Model Counts ---
+
+    // --- Generate Nonce for AJAX ---
+    $ajax_nonce = wp_create_nonce('car_filter_variant_nonce');
+    // --- End Nonce Generation ---
+
     // --- Start Form Output ---
     ob_start();
-    // Add a nonce for AJAX security
-    $ajax_nonce = wp_create_nonce("car_filter_nonce");
     ?>
     <div class="car-filter-form-container context-<?php echo esc_attr($context); ?>">
         <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action=""> 
-            <!-- Add nonce field -->
-            <input type="hidden" name="car_filter_nonce" value="<?php echo $ajax_nonce; ?>">
             
             <h2>Find Your Car</h2> 
 
@@ -213,188 +242,119 @@ function display_car_filter_form( $context = 'default' ) {
         </form>
     </div>
 
-    <?php // Inline JS for dependent dropdowns - Consider moving to a separate .js file and enqueueing ?>
+    <?php // Inline JS for dependent dropdowns ?>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // Get the data structure passed from PHP
             const makeModelVariantData = <?php echo json_encode($make_model_variant_data); ?>;
-            const context = '<?php echo esc_js($context); ?>'; // Get context for unique IDs
-            const ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>'; // WordPress AJAX URL
-            const nonce = '<?php echo $ajax_nonce; ?>'; // Nonce for security
+            const modelCountsByMake = <?php echo json_encode($model_counts_by_make_query); ?>;
+            const ajaxNonce = '<?php echo esc_js($ajax_nonce); ?>';
+            const ajaxUrl = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+            const context = '<?php echo esc_js($context); ?>';
             
-            // Get references to the select elements using context-specific IDs
-            const locationSelect = document.getElementById('filter-location-' + context);
             const makeSelect = document.getElementById('filter-make-' + context);
             const modelSelect = document.getElementById('filter-model-' + context);
             const variantSelect = document.getElementById('filter-variant-' + context);
 
-            if (!locationSelect || !makeSelect || !modelSelect || !variantSelect) {
+            if (!makeSelect || !modelSelect || !variantSelect) {
                 console.error('Filter dropdowns not found for context:', context);
                 return; // Stop if elements are missing
             }
 
             // Function to clear and disable a select element
-            function resetSelect(selectElement, defaultText, keepEnabled = false) {
+            function resetSelect(selectElement, defaultText) {
                 selectElement.innerHTML = ''; // Clear existing options
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = defaultText;
                 selectElement.appendChild(defaultOption);
-                selectElement.disabled = !keepEnabled;
+                selectElement.disabled = true;
             }
-
-            // Function to update dropdown options with counts from AJAX
-            function updateOptionsWithCounts(selectElement, countsData) {
-                const options = selectElement.options;
-                let hasAvailableOptions = false;
-
-                for (let i = 0; i < options.length; i++) {
-                    const option = options[i];
-                    if (option.value === '') continue; // Skip the default "All..." option
-
-                    const value = option.value;
-                    const count = countsData[value] || 0;
-                    
-                    // Update text content (assuming base text is just the value)
-                    option.textContent = value + ' (' + count + ')'; 
-                    
-                    // Update disabled state
-                    if (count > 0) {
-                        option.disabled = false;
-                        hasAvailableOptions = true;
-                    } else {
-                        option.disabled = true;
-                    }
-                }
-                // Optional: Disable the entire select if no options are available (besides default)
-                // selectElement.disabled = !hasAvailableOptions && options.length > 1; 
-            }
-
-            // AJAX function to fetch counts
-            async function fetchFilterCounts(level, currentFilters) {
-                 console.log('Fetching counts for:', level, 'with filters:', currentFilters);
-                 
-                 const formData = new FormData();
-                 formData.append('action', 'get_dynamic_filter_counts');
-                 formData.append('nonce', nonce);
-                 formData.append('target_level', level); // 'model' or 'variant'
-                 formData.append('filter_location', currentFilters.location || '');
-                 formData.append('filter_make', currentFilters.make || '');
-                 formData.append('filter_model', currentFilters.model || '');
-
-                 try {
-                    const response = await fetch(ajaxUrl, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok: ' + response.statusText);
-                    }
-                    const data = await response.json();
-                    console.log('AJAX Response:', data);
-
-                    if (data.success) {
-                        return data.data; // Return the counts object
-                    } else {
-                        console.error('AJAX Error:', data.data || 'Unknown error');
-                        return {}; // Return empty object on error
-                    }
-                 } catch (error) {
-                    console.error('Fetch Error:', error);
-                    return {}; // Return empty object on fetch error
-                 }
-            }
-
-            // Event listener for Location selection (to update models/variants if needed)
-            locationSelect.addEventListener('change', async function() {
-                const selectedMake = makeSelect.value;
-                // If a make is already selected, update model counts
-                if (selectedMake) {
-                    const currentFilters = {
-                        location: this.value,
-                        make: selectedMake
-                    };
-                    const modelCounts = await fetchFilterCounts('model', currentFilters);
-                    updateOptionsWithCounts(modelSelect, modelCounts);
-                    // If a model is also selected, update variant counts too
-                    const selectedModel = modelSelect.value;
-                    if(selectedModel) {
-                         const variantFilters = { ...currentFilters, model: selectedModel };
-                         const variantCounts = await fetchFilterCounts('variant', variantFilters);
-                         updateOptionsWithCounts(variantSelect, variantCounts);
-                    }
-                }
-                // Potentially update Make counts too, although PHP handles initial load
-                // const makeCounts = await fetchFilterCounts('make', { location: this.value }); 
-                // updateOptionsWithCounts(makeSelect, makeCounts); 
-            });
 
             // Event listener for Make selection
-            makeSelect.addEventListener('change', async function() {
+            makeSelect.addEventListener('change', function() {
                 const selectedMake = this.value;
-                const selectedLocation = locationSelect.value;
                 
-                resetSelect(variantSelect, 'Select Model First'); // Reset variant
-                resetSelect(modelSelect, 'Select Make First'); // Reset model 
+                resetSelect(variantSelect, 'Select Model First');
+                resetSelect(modelSelect, 'Select Make First');
 
                 if (selectedMake && makeModelVariantData[selectedMake]) {
                     modelSelect.disabled = false;
-                    modelSelect.options[0].textContent = 'All Models'; // Change default text
+                    modelSelect.options[0].textContent = 'All Models';
 
-                    // 1. Populate Model options based on STRUCTURE
                     const models = makeModelVariantData[selectedMake];
+                    const modelCounts = modelCountsByMake[selectedMake] || {}; // Get counts for this make, default to empty object
+
                     Object.keys(models).sort().forEach(model => {
+                        const count = modelCounts[model] || 0; // Get count for this specific model
                         const option = document.createElement('option');
                         option.value = model;
-                        option.textContent = model; // Base text, count added by AJAX update
-                        option.disabled = true; // Start disabled until counts arrive
+                        option.textContent = model + ' (' + count + ')'; 
+                        if (count === 0) {
+                            option.disabled = true;
+                        }
                         modelSelect.appendChild(option);
                     });
-
-                    // 2. Fetch and Update Model counts via AJAX
-                     const currentFilters = {
-                        location: selectedLocation,
-                        make: selectedMake
-                    };
-                    const modelCounts = await fetchFilterCounts('model', currentFilters);
-                    updateOptionsWithCounts(modelSelect, modelCounts);
-
                 } 
             });
 
             // Event listener for Model selection
-            modelSelect.addEventListener('change', async function() {
+            modelSelect.addEventListener('change', function() {
                 const selectedMake = makeSelect.value;
                 const selectedModel = this.value;
-                const selectedLocation = locationSelect.value;
 
-                resetSelect(variantSelect, 'Select Model First'); // Reset variant
+                resetSelect(variantSelect, 'Select Model First'); 
 
                 if (selectedMake && selectedModel && 
                     makeModelVariantData[selectedMake] && 
                     makeModelVariantData[selectedMake][selectedModel]) {
-                    
-                    variantSelect.disabled = false;
-                    variantSelect.options[0].textContent = 'All Variants'; // Change default text
 
-                    // 1. Populate Variant options based on STRUCTURE
-                    const variants = makeModelVariantData[selectedMake][selectedModel];
-                    variants.sort().forEach(variant => {
-                        const option = document.createElement('option');
-                        option.value = variant;
-                        option.textContent = variant; // Base text, count added by AJAX update
-                        option.disabled = true; // Start disabled until counts arrive
-                        variantSelect.appendChild(option);
+                    // Show loading state maybe?
+                    variantSelect.options[0].textContent = 'Loading Variants...';
+                    variantSelect.disabled = true; 
+
+                    // Prepare data for AJAX request
+                    const formData = new FormData();
+                    formData.append('action', 'get_variant_counts');
+                    formData.append('make', selectedMake);
+                    formData.append('model', selectedModel);
+                    formData.append('nonce', ajaxNonce);
+
+                    // Perform AJAX request
+                    fetch(ajaxUrl, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        resetSelect(variantSelect, 'All Variants'); // Reset again before populating
+                        variantSelect.disabled = false;
+
+                        if (result.success && result.data) {
+                            const variantCounts = result.data;
+                            const variants = makeModelVariantData[selectedMake][selectedModel]; // Get structure
+                            
+                            variants.sort().forEach(variant => {
+                                const count = variantCounts[variant] || 0;
+                                const option = document.createElement('option');
+                                option.value = variant;
+                                option.textContent = variant + ' (' + count + ')';
+                                if (count === 0) {
+                                    option.disabled = true;
+                                }
+                                variantSelect.appendChild(option);
+                            });
+                        } else {
+                            console.error('AJAX error fetching variants:', result.data || 'Unknown error');
+                             variantSelect.options[0].textContent = 'Error loading variants';
+                             variantSelect.disabled = true; 
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        resetSelect(variantSelect, 'Error loading variants');
+                        variantSelect.disabled = true; 
                     });
 
-                     // 2. Fetch and Update Variant counts via AJAX
-                     const currentFilters = {
-                        location: selectedLocation,
-                        make: selectedMake,
-                        model: selectedModel
-                    };
-                    const variantCounts = await fetchFilterCounts('variant', currentFilters);
-                    updateOptionsWithCounts(variantSelect, variantCounts);
                 } 
             });
         });

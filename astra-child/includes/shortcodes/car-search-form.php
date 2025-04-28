@@ -15,7 +15,7 @@ function car_search_form_shortcode() {
     global $wpdb; // Keep global wpdb if other non-form PHP remains or might be added
     
     // Removed the old data fetching for makes, models, etc.
-     
+
     ob_start();
 
     // Display the new filter form with 'homepage' context
