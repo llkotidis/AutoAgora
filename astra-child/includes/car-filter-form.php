@@ -23,24 +23,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 function display_car_filter_form( $context = 'default' ) {
     global $wpdb;
 
-    // --- Get Unique Locations from ACF field ---
-    // Query unique 'location' meta values from published 'car' posts
-    $location_query = $wpdb->get_col(
+    // --- Get ALL Unique Locations Ever Used for 'car' posts ---
+    $all_locations_query = $wpdb->get_col(
         $wpdb->prepare(
             "SELECT DISTINCT pm.meta_value 
             FROM {$wpdb->postmeta} pm
             JOIN {$wpdb->posts} p ON pm.post_id = p.ID
             WHERE pm.meta_key = %s 
             AND p.post_type = %s 
-            AND p.post_status = %s
+            AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
             ORDER BY pm.meta_value ASC",
-            'location', // The ACF field key
-            'car',      // The custom post type
-            'publish'   // Only published posts
+            'location', // The ACF field key (or meta key)
+            'car'       // The custom post type
         )
     );
+    $all_locations = array_filter( $all_locations_query );
 
-    $locations = array_filter( $location_query ); // Remove any empty values just in case
+    // --- Get Counts of PUBLISHED 'car' posts for each location ---
+    $published_counts_query = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT pm.meta_value, COUNT(p.ID) as count
+            FROM {$wpdb->postmeta} pm
+            JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            WHERE pm.meta_key = %s
+            AND p.post_type = %s
+            AND p.post_status = %s
+            AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
+            GROUP BY pm.meta_value",
+            'location',
+            'car',
+            'publish'
+        ),
+        OBJECT_K // Index the results by meta_value (location name)
+    );
+
+    // --- Prepare data for dropdown (all locations with their published counts) ---
+    $locations_with_counts = array();
+    foreach ( $all_locations as $location ) {
+        $count = isset($published_counts_query[$location]) ? $published_counts_query[$location]->count : 0;
+        $locations_with_counts[$location] = $count;
+    }
 
     // --- Start Form Output ---
     ob_start();
@@ -55,9 +77,15 @@ function display_car_filter_form( $context = 'default' ) {
                 <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
                 <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location">
                     <option value="">All Locations</option>
-                    <?php foreach ( $locations as $location ) : ?>
-                        <option value="<?php echo esc_attr( $location ); ?>">
-                            <?php echo esc_html( $location ); ?>
+                    <?php foreach ( $locations_with_counts as $location => $count ) : 
+                        $disabled_attr = ( $count == 0 ) ? ' disabled="disabled"' : ''; // Add disabled attribute if count is 0
+                        $display_text = esc_html( $location );
+                        if ( $count > 0 ) {
+                            $display_text .= ' (' . $count . ')'; // Append count if > 0
+                        }
+                    ?>
+                        <option value="<?php echo esc_attr( $location ); ?>"<?php echo $disabled_attr; ?>>
+                            <?php echo $display_text; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
