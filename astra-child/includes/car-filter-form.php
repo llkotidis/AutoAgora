@@ -25,11 +25,28 @@ function display_car_filter_form( $context = 'default' ) {
 
     // --- Get Predefined Choices from ACF Select Field ---
     $location_field_key = 'location'; // MAKE SURE THIS IS THE CORRECT FIELD NAME/KEY
-    $field = get_field_object( $location_field_key );
+    
+    // Try to get a sample post ID from the 'car' post type for context
+    $sample_car_post_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s LIMIT 1",
+            'car',
+            'publish'
+        )
+    );
+
+    $field = false;
+    if ($sample_car_post_id) {
+        $field = get_field_object( $location_field_key, $sample_car_post_id );
+    } else {
+        // Fallback if no published cars exist yet, try without post ID
+        $field = get_field_object( $location_field_key ); 
+    }
+
     $all_possible_locations = array();
 
     // --- DEBUGGING START ---
-    echo "<!-- DEBUG: ACF Field Object for '{$location_field_key}':\n";
+    echo "<!-- DEBUG: ACF Field Object for '{$location_field_key}' (using post ID: " . ($sample_car_post_id ?: 'none') . "):\n";
     echo var_export($field, true);
     echo "\n-->";
     // --- DEBUGGING END ---
