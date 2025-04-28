@@ -28,13 +28,28 @@ function display_car_filter_form( $context = 'default' ) {
     $field = get_field_object( $location_field_key );
     $all_possible_locations = array();
 
+    // --- DEBUGGING START ---
+    echo "<!-- DEBUG: ACF Field Object for '{$location_field_key}':\n";
+    echo var_export($field, true);
+    echo "\n-->";
+    // --- DEBUGGING END ---
+
     if ( $field && isset($field['choices']) && is_array($field['choices']) ) {
         // Assuming choices are stored as value => label
-        // We want the values (which are the location names)
         $all_possible_locations = $field['choices'];
         // Sort alphabetically by label (city name) for display consistency
         asort($all_possible_locations);
+
+        // --- DEBUGGING START ---
+        echo "<!-- DEBUG: Extracted Choices:\n";
+        echo var_export($all_possible_locations, true);
+        echo "\n-->";
+        // --- DEBUGGING END ---
+
     } else {
+        // --- DEBUGGING START ---
+        echo "<!-- DEBUG: Failed to get valid choices from ACF field '{$location_field_key}'. -->";
+        // --- DEBUGGING END ---
         // Fallback or error handling if ACF field isn't found or doesn't have choices
         // error_log("ACF field '{$location_field_key}' not found or has no choices.");
         // Optionally, you could try the previous method of querying post meta as a fallback
