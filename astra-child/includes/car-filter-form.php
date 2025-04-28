@@ -23,45 +23,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 function display_car_filter_form( $context = 'default' ) {
     global $wpdb;
 
-    // --- Get ALL Unique Locations Ever Used for 'car' posts ---
-    $all_locations_query = $wpdb->get_col(
-        $wpdb->prepare(
-            "SELECT DISTINCT pm.meta_value 
-            FROM {$wpdb->postmeta} pm
-            JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-            WHERE pm.meta_key = %s 
-            AND p.post_type = %s 
-            AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
-            ORDER BY pm.meta_value ASC",
-            'location', // The ACF field key (or meta key)
-            'car'       // The custom post type
-        )
-    );
-    $all_locations = array_filter( $all_locations_query );
+    // --- Get Predefined Choices from ACF Select Field ---
+    $location_field_key = 'location'; // MAKE SURE THIS IS THE CORRECT FIELD NAME/KEY
+    $field = get_field_object( $location_field_key );
+    $all_possible_locations = array();
+
+    if ( $field && isset($field['choices']) && is_array($field['choices']) ) {
+        // Assuming choices are stored as value => label
+        // We want the values (which are the location names)
+        $all_possible_locations = $field['choices'];
+        // Sort alphabetically by label (city name) for display consistency
+        asort($all_possible_locations);
+    } else {
+        // Fallback or error handling if ACF field isn't found or doesn't have choices
+        // error_log("ACF field '{$location_field_key}' not found or has no choices.");
+        // Optionally, you could try the previous method of querying post meta as a fallback
+    }
 
     // --- Get Counts of PUBLISHED 'car' posts for each location ---
-    $published_counts_query = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT pm.meta_value, COUNT(p.ID) as count
-            FROM {$wpdb->postmeta} pm
-            JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-            WHERE pm.meta_key = %s
-            AND p.post_type = %s
-            AND p.post_status = %s
-            AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
-            GROUP BY pm.meta_value",
-            'location',
-            'car',
-            'publish'
-        ),
-        OBJECT_K // Index the results by meta_value (location name)
-    );
-
-    // --- Prepare data for dropdown (all locations with their published counts) ---
-    $locations_with_counts = array();
-    foreach ( $all_locations as $location ) {
-        $count = isset($published_counts_query[$location]) ? $published_counts_query[$location]->count : 0;
-        $locations_with_counts[$location] = $count;
+    $published_counts_query = array(); // Initialize as empty array
+    if (!empty($all_possible_locations)) {
+        // Only run query if we have locations to check
+        $published_counts_query = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT pm.meta_value, COUNT(p.ID) as count
+                FROM {$wpdb->postmeta} pm
+                JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                WHERE pm.meta_key = %s
+                AND p.post_type = %s
+                AND p.post_status = %s
+                AND pm.meta_value IN (" . implode(', ', array_fill(0, count($all_possible_locations), '%s')) . ")
+                GROUP BY pm.meta_value",
+                array_merge([$location_field_key, 'car', 'publish'], array_keys($all_possible_locations)) // Pass field key, post type, status, and all possible locations
+            ),
+            OBJECT_K // Index the results by meta_value (location name)
+        );
     }
 
     // --- Start Form Output ---
@@ -77,17 +73,25 @@ function display_car_filter_form( $context = 'default' ) {
                 <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
                 <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location">
                     <option value="">All Locations</option>
-                    <?php foreach ( $locations_with_counts as $location => $count ) : 
-                        $disabled_attr = ( $count == 0 ) ? ' disabled="disabled"' : ''; // Add disabled attribute if count is 0
-                        $display_text = esc_html( $location );
-                        if ( $count > 0 ) {
-                            $display_text .= ' (' . $count . ')'; // Append count if > 0
-                        }
+                    <?php 
+                    if (!empty($all_possible_locations)):
+                        foreach ( $all_possible_locations as $value => $label ) : 
+                            // $value is the location name stored in meta, $label is the display name
+                            $count = isset($published_counts_query[$value]) ? $published_counts_query[$value]->count : 0;
+                            $disabled_attr = ( $count == 0 ) ? ' disabled="disabled"' : '';
+                            $display_text = esc_html( $label ); // Use the label from ACF choices for display
+                            if ( $count > 0 ) {
+                                $display_text .= ' (' . $count . ')';
+                            } else {
+                                $display_text .= ' (0)'; // Explicitly show (0) for disabled options
+                            }
+                        ?>
+                            <option value="<?php echo esc_attr( $value ); ?>"<?php echo $disabled_attr; ?>>
+                                <?php echo $display_text; ?>
+                            </option>
+                        <?php endforeach; 
+                    endif; // end check for !empty($all_possible_locations)
                     ?>
-                        <option value="<?php echo esc_attr( $location ); ?>"<?php echo $disabled_attr; ?>>
-                            <?php echo $display_text; ?>
-                        </option>
-                    <?php endforeach; ?>
                 </select>
             </div>
 
