@@ -122,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // --- NEW: Master function to update all filter displays ---
   function updateAllFilterDisplays() {
     const activeFilters = getFiltersFromForm();
 
@@ -679,10 +678,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
           // Update URL using History API - only add question mark if there are parameters
           const paramsString = params.toString();
-          const newUrl = paramsString 
-            ? window.location.pathname + "?" + paramsString 
+          const newUrl = paramsString
+            ? window.location.pathname + "?" + paramsString
             : window.location.pathname;
-          
+
           // Only push state if URL is different to avoid duplicate entries on simple pagination clicks
           if (window.location.href !== newUrl) {
             history.pushState({ path: newUrl, page: page }, "", newUrl);
@@ -732,7 +731,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const pageLink = e.target.closest("a.page-numbers"); // Find the closest anchor
       if (pageLink && !pageLink.classList.contains("current")) {
         e.preventDefault();
-        
+
         // Get the current page from the URL with proper validation
         const currentUrl = new URL(window.location.href);
         let currentPage = parseInt(currentUrl.searchParams.get("paged"), 10);
@@ -740,15 +739,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isNaN(currentPage) || currentPage < 1) {
           currentPage = 1;
         }
-        
+
         // Determine the target page
         let targetPage = currentPage;
-        
+
         // Check if it's a direct page number link
         const href = pageLink.getAttribute("href");
         const hrefUrl = new URL(href, window.location.origin);
         const pagedParam = hrefUrl.searchParams.get("paged");
-        
+
         if (pagedParam) {
           // Direct page number link
           targetPage = parseInt(pagedParam, 10);
@@ -764,10 +763,10 @@ document.addEventListener("DOMContentLoaded", function () {
             targetPage = Math.max(1, currentPage - 1);
           }
         }
-        
+
         // Submit the form with the correct page number
         submitFiltersWithAjax(targetPage);
-        
+
         // Optional: Scroll to top of listings
         const listingsContainer = document.querySelector(
           ".car-listings-container"
@@ -791,7 +790,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Helper functions to re-initialize JS components ---
   function reinitializeCarousels() {
     const carousels = document.querySelectorAll(".car-listing-image-carousel");
-    
+
     carousels.forEach((carousel, index) => {
       const images = carousel.querySelectorAll(".car-listing-image");
       const prevBtn = carousel.querySelector(".carousel-nav.prev");
@@ -818,13 +817,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (prevBtn) {
           prevBtn.style.display = currentIndex === 0 ? "none" : "flex";
         }
-        
+
         if (nextBtn) {
-          nextBtn.style.display = currentIndex === images.length - 1 ? "none" : "flex";
+          nextBtn.style.display =
+            currentIndex === images.length - 1 ? "none" : "flex";
         }
-        
+
         if (seeAllImagesBtn) {
-          seeAllImagesBtn.style.display = currentIndex === images.length - 1 ? "block" : "none";
+          seeAllImagesBtn.style.display =
+            currentIndex === images.length - 1 ? "block" : "none";
         }
       };
 
@@ -858,7 +859,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function reinitializeFavoriteButtons() {
     const buttons = document.querySelectorAll(".favorite-btn");
-    
+
     buttons.forEach((button, index) => {
       // --- Re-attach listener using cloning ---
       const newButton = button.cloneNode(true);
@@ -1133,7 +1134,7 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
   updateAllFilterDisplays();
-  
+
   // Initialize carousels and favorite buttons on initial page load
   reinitializeCarousels();
   reinitializeFavoriteButtons();
