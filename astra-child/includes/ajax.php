@@ -585,6 +585,62 @@ function ajax_update_filter_counts_handler() {
         $updated_counts[$engine_field_key.'_counts'] = $engine_counts; // Add to response under specific key
         // --- End Engine Capacity Count --- 
 
+        // --- Calculate Cumulative Engine Counts --- 
+        $engine_min_cumulative_counts = [];
+        $engine_max_cumulative_counts = [];
+        $all_engine_sizes = $GLOBALS['wp_filter']['astra_child_engine_sizes'] ?? []; // Need to make sizes available globally or pass differently
+        // A better approach: Get distinct available engine sizes from the filtered results
+        $distinct_engine_sql = $wpdb->prepare(
+             "SELECT DISTINCT pm.meta_value 
+              FROM {$wpdb->posts} p
+              INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s)"
+              . $meta_sql_engine['joins'] . // Use same joins/where from exact count calculation
+             " WHERE p.post_type = 'car'
+              AND p.post_status = 'publish'"
+              . $meta_sql_engine['where'] . 
+             " AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
+              ORDER BY CAST(pm.meta_value AS DECIMAL(10,1)) ASC",
+             $engine_field_key 
+         );
+        $available_engine_sizes = $wpdb->get_col($distinct_engine_sql);
+        
+        // Pre-calculate total count for efficiency if needed, or query per size
+        // For simplicity, query per size threshold here:
+        $engine_size_list_for_query = $engine_capacities ?? []; // Use the list defined in car-filter-form.php
+
+        if (!empty($engine_size_list_for_query)) {
+            foreach ($engine_size_list_for_query as $size_threshold) {
+                 $formatted_threshold_key = number_format(floatval($size_threshold), 1);
+                 
+                 // Min Count (>= threshold)
+                 $sql_min = $wpdb->prepare(
+                     "SELECT COUNT(DISTINCT p.ID) 
+                      FROM {$wpdb->posts} p
+                      INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s AND CAST(pm.meta_value AS DECIMAL(10,1)) >= %f)"
+                      . $meta_sql_engine['joins'] .
+                     " WHERE p.post_type = 'car' AND p.post_status = 'publish'" 
+                      . $meta_sql_engine['where'],
+                     $engine_field_key, floatval($size_threshold)
+                 );
+                 $engine_min_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_min);
+                 
+                 // Max Count (<= threshold)
+                  $sql_max = $wpdb->prepare(
+                     "SELECT COUNT(DISTINCT p.ID) 
+                      FROM {$wpdb->posts} p
+                      INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s AND CAST(pm.meta_value AS DECIMAL(10,1)) <= %f)"
+                      . $meta_sql_engine['joins'] .
+                     " WHERE p.post_type = 'car' AND p.post_status = 'publish'" 
+                      . $meta_sql_engine['where'],
+                     $engine_field_key, floatval($size_threshold)
+                 );
+                 $engine_max_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_max);
+            }
+        }
+        $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
+        $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
+        // --- End Cumulative Engine Counts --- 
+
         // Note: We don't calculate counts for year/mileage range inputs in this example.
         
     } else {

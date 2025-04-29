@@ -785,25 +785,27 @@ function display_car_filter_form( $context = 'default' ) {
                             const engineCounts = updatedCounts.engine_capacity_counts || {};
                             const engineMinSelect = form.querySelector('select[data-filter-key="engine_min"]');
                             const engineMaxSelect = form.querySelector('select[data-filter-key="engine_max"]');
+                            const engineMinCumulativeCounts = updatedCounts.engine_min_cumulative_counts || {};
+                            const engineMaxCumulativeCounts = updatedCounts.engine_max_cumulative_counts || {};
 
-                            function updateEngineOptions(selectElement, currentEngineCounts, suffix) {
+                            function updateEngineOptions(selectElement, isMinSelect, suffix) {
+                                const cumulativeCounts = isMinSelect ? engineMinCumulativeCounts : engineMaxCumulativeCounts;
                                 const options = selectElement.querySelectorAll('option');
                                 options.forEach(option => {
                                     if (!option.value) return; // Skip default "Min/Max Size"
                                     const value = option.value; // e.g., "1.0", "2.0"
-                                    const count = currentEngineCounts[value] || 0;
+                                    const count = cumulativeCounts[value] || 0;
                                     // Format display text (e.g., 2.0L (15))
                                     const numericValue = parseFloat(value);
-                                    // Use JS number_format helper
-                                    const displayValueNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1); 
+                                    const displayValueNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1);
                                      option.textContent = displayValueNum + suffix + ' (' + count + ')';
-                                    // Disable based on count
+                                    // Disable based on cumulative count
                                     option.disabled = (count === 0);
                                 });
                             }
                             
-                            if (engineMinSelect) updateEngineOptions(engineMinSelect, engineCounts, 'L');
-                            if (engineMaxSelect) updateEngineOptions(engineMaxSelect, engineCounts, 'L');
+                            if (engineMinSelect) updateEngineOptions(engineMinSelect, true, 'L');
+                            if (engineMaxSelect) updateEngineOptions(engineMaxSelect, false, 'L');
 
                             // --- Apply Min/Max Interaction Logic --- 
                             if (engineMinSelect && engineMaxSelect) {
