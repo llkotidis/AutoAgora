@@ -433,31 +433,119 @@ function ajax_update_filter_counts_handler() {
 
     // 4. Calculate Counts for Each Filter Based on Matching IDs
     $updated_counts = array();
+    $all_field_keys_to_count = array_keys($filter_keys); // Get all keys including ranges initially
+    $count_fields = array_filter($all_field_keys_to_count, function($key) use ($filter_keys) {
+        // Only get counts for fields that are not range min/max
+        return $filter_keys[$key]['type'] === 'simple';
+    });
 
-    if (!empty($matching_post_ids)) {
+    if (!empty($matching_post_ids) || true) { // Calculate counts even if initial match is empty for multi-select logic
         global $wpdb;
-        $post_id_placeholders = implode(',', array_fill(0, count($matching_post_ids), '%d'));
+        $post_id_placeholders = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; // Handle empty case
+        $prepared_post_ids = !empty($matching_post_ids) ? $matching_post_ids : [0]; // Ensure array for prepare
 
-        // Fields to get counts for (excluding range fields)
-        $count_fields = ['location', 'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type']; 
+        // --- Helper function to build JOIN/WHERE clauses for a meta query --- 
+        // (Simplified version - might need refinement for complex meta queries)
+        function build_meta_sql_clauses($meta_query_array) {
+            global $wpdb;
+            $sql_joins = '';
+            $sql_where = '';
+            $join_alias_count = 0;
+
+            foreach ($meta_query_array as $index => $clause) {
+                if (isset($clause['relation'])) continue; // Skip relation clause
+
+                $join_alias_count++;
+                $alias = 'mt' . $join_alias_count;
+                
+                $sql_joins .= $wpdb->prepare(" INNER JOIN {$wpdb->postmeta} AS {$alias} ON ( p.ID = {$alias}.post_id ) ", []);
+
+                $meta_key = $clause['key'];
+                $meta_value = $clause['value'];
+                $compare = isset($clause['compare']) ? $clause['compare'] : '=';
+                $type = isset($clause['type']) ? $clause['type'] : 'CHAR';
+
+                 // Simple value comparison
+                 if (!is_array($meta_value)) {
+                     $sql_where .= $wpdb->prepare(
+                         " AND ( {$alias}.meta_key = %s AND {$alias}.meta_value " . $compare . " %s ) ", 
+                         $meta_key, $meta_value
+                     );
+                 } 
+                 // IN comparison for arrays
+                 elseif ($compare === 'IN' && is_array($meta_value)) {
+                     if (!empty($meta_value)) {
+                         $value_placeholders = implode(',', array_fill(0, count($meta_value), '%s'));
+                         $sql_where .= $wpdb->prepare(
+                             " AND ( {$alias}.meta_key = %s AND {$alias}.meta_value IN ({$value_placeholders}) ) ", 
+                             array_merge([$meta_key], $meta_value)
+                         );
+                     }
+                 } 
+                 // Add more comparison handling if needed (BETWEEN, LIKE, etc.)
+                 // Also handle type casting (NUMERIC, DATE etc.) if required
+            }
+            return ['joins' => $sql_joins, 'where' => $sql_where];
+        }
+        // --- End Helper --- 
 
         foreach ($count_fields as $field_key) {
-            $sql = $wpdb->prepare(
-                "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                 FROM {$wpdb->postmeta} 
-                 WHERE meta_key = %s 
-                 AND post_id IN ($post_id_placeholders)
-                 AND meta_value IS NOT NULL AND meta_value != ''
-                 GROUP BY meta_value",
-                array_merge([$field_key], $matching_post_ids)
-            );
-            $results = $wpdb->get_results($sql, OBJECT_K); // Index by meta_value
-
+            $config = $filter_keys[$field_key];
+            $is_multi = $config['multi'];
             $field_counts = array();
-            if ($results) {
-                foreach ($results as $value => $data) {
-                    $field_counts[$value] = (int)$data->count;
-                }
+            $sql = '';
+
+            if ($is_multi) {
+                // For multi-select, calculate counts based on all OTHER filters applied
+                $temp_meta_query = array_filter($meta_query, function($clause, $key) use ($field_key) {
+                    // Keep relation, remove the clause matching the current field key
+                     return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== $field_key);
+                }, ARRAY_FILTER_USE_BOTH);
+                $temp_meta_query = array_values($temp_meta_query); // Reindex array
+
+                // Build SQL based on the temporary meta query
+                $meta_sql = build_meta_sql_clauses($temp_meta_query);
+                
+                 // Get counts for the current field_key, but filter posts using the temporary meta query
+                $sql = $wpdb->prepare(
+                     "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
+                      FROM {$wpdb->posts} p
+                      INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
+                      . $meta_sql['joins'] . // Joins needed to filter by other criteria
+                     " WHERE p.post_type = 'car'
+                      AND p.post_status = 'publish'"
+                      . $meta_sql['where'] . // Where clauses for other criteria
+                     " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
+                      GROUP BY pm_count.meta_value",
+                     $field_key // Bind the meta_key for counting
+                 );
+
+            } else {
+                 // For single-select, calculate counts based on the initial matching_post_ids
+                 if (!empty($matching_post_ids)) {
+                     $sql = $wpdb->prepare(
+                         "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                          FROM {$wpdb->postmeta} 
+                          WHERE meta_key = %s 
+                          AND post_id IN ({$post_id_placeholders})
+                          AND meta_value IS NOT NULL AND meta_value != ''
+                          GROUP BY meta_value",
+                         array_merge([$field_key], $prepared_post_ids)
+                     );
+                 } else {
+                     // If no initial posts matched, single selects will have 0 counts
+                     $sql = ''; // No need to query
+                     $field_counts = array(); // Empty counts
+                 }
+            }
+
+            if ($sql) { // Only query if SQL was generated
+                 $results = $wpdb->get_results($sql, OBJECT_K);
+                 if ($results) {
+                     foreach ($results as $value => $data) {
+                         $field_counts[$value] = (int)$data->count;
+                     }
+                 }
             }
             $updated_counts[$field_key] = $field_counts;
         }
@@ -465,8 +553,7 @@ function ajax_update_filter_counts_handler() {
         // Their options remain static, only the main select filters update counts.
 
     } else {
-        // If no posts match, return empty counts for all fields
-         $count_fields = ['location', 'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type']; 
+        // If no posts match initially, and we didn't recalculate for multi-selects
         foreach ($count_fields as $field_key) {
             $updated_counts[$field_key] = array();
         }
