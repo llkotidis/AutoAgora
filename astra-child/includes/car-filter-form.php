@@ -241,17 +241,27 @@ function display_car_filter_form( $context = 'default' ) {
                     echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
             }
-            function render_range_options($range, $selected_value = '', $suffix = '') {
+            // Modified helper function for range options to include counts
+            function render_range_options($range, $counts = array(), $selected_value = '', $suffix = '') {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
                     $numeric_value = floatval($value);
-                    // Always format display number to one decimal place
-                    $display_value_num = number_format($numeric_value, 1); 
+                    // Format the value attribute to always have one decimal place for consistency (e.g., engine)
+                    $value_attr = number_format($numeric_value, ($suffix === 'L' ? 1 : 0)); 
+                    // Always format display number to one decimal place if suffix is 'L', otherwise integer
+                    $display_value_num = number_format($numeric_value, ($suffix === 'L' ? 1 : 0)); 
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
-                    // Format the value attribute to always have one decimal place before escaping
-                    $value_attr = number_format($numeric_value, 1); 
-                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
+
+                    // Get count for this specific formatted value
+                    // Note: Counts array keys must match the formatted $value_attr
+                    $count = isset($counts[$value_attr]) ? $counts[$value_attr] : 0;
+                    $display_text .= ' (' . $count . ')'; // Add count display
+
+                    // Disable if count is 0 (and not the selected value, though select won't hold selection if disabled)
+                    $disabled_attr = ($count === 0) ? ' disabled="disabled"' : ''; 
+
+                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
                 }
             }
             ?>
@@ -309,12 +319,12 @@ function display_car_filter_form( $context = 'default' ) {
                 <div class="filter-range-fields">
                     <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
-                        <?php render_range_options($years); ?>
+                        <?php render_range_options($years, array(), '', ''); ?>
                     </select>
                     <span class="range-separator">-</span>
                     <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
-                         <?php render_range_options($years); ?>
+                         <?php render_range_options($years, array(), '', ''); ?>
                    </select>
                 </div>
             </div>
@@ -325,12 +335,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-engine-from-<?php echo esc_attr($context); ?>" name="filter_engine_from" data-filter-key="engine_from">
                         <option value="">From Any</option>
-                         <?php render_range_options($engine_capacities, '', 'L'); ?>
+                         <?php render_range_options($engine_capacities, array(), '', 'L'); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-engine-to-<?php echo esc_attr($context); ?>" name="filter_engine_to" data-filter-key="engine_to">
                         <option value="">To Any</option>
-                        <?php render_range_options($engine_capacities, '', 'L'); ?>
+                        <?php render_range_options($engine_capacities, array(), '', 'L'); ?>
                     </select>
                 </div>
             </div>
@@ -341,12 +351,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
-                         <?php render_range_options($mileages, '', ' km'); ?>
+                         <?php render_range_options($mileages, array(), '', ' km'); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
-                        <?php render_range_options($mileages, '', ' km'); ?>
+                        <?php render_range_options($mileages, array(), '', ' km'); ?>
                     </select>
                 </div>
             </div>
