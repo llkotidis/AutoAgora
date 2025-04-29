@@ -704,7 +704,8 @@ function display_car_filter_form( $context = 'default' ) {
                                             }
                                             break; // Skip generic update 
                                         case 'model':
-                                            const selectedMake = form.querySelector('#filter-make-' + context).value;
+                                            const makeSelectForModel = form.querySelector('#filter-make-' + context);
+                                            const selectedMake = makeSelectForModel ? makeSelectForModel.value : null;
                                             if (selectedMake && makeModelVariantStructure[selectedMake]) {
                                                 choicesForThisSelect = Object.keys(makeModelVariantStructure[selectedMake])
                                                                             .reduce((obj, key) => { obj[key] = key; return obj; }, {});
@@ -717,8 +718,10 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForModel, defaultText);
                                             break;
                                         case 'variant':
-                                            const selMake = form.querySelector('#filter-make-' + context).value;
-                                            const selModel = form.querySelector('#filter-model-' + context).value;
+                                            const makeSelectForVariant = form.querySelector('#filter-make-' + context);
+                                            const modelSelectForVariant = form.querySelector('#filter-model-' + context);
+                                            const selMake = makeSelectForVariant ? makeSelectForVariant.value : null;
+                                            const selModel = modelSelectForVariant ? modelSelectForVariant.value : null;
                                             if (selMake && selModel && makeModelVariantStructure[selMake] && makeModelVariantStructure[selMake][selModel]) {
                                                 choicesForThisSelect = makeModelVariantStructure[selMake][selModel]
                                                                             .reduce((obj, key) => { obj[key] = key; return obj; }, {});
