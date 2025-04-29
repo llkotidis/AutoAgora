@@ -752,17 +752,21 @@ function display_car_filter_form( $context = 'default' ) {
                                 }
                                 // --- Update Engine From/To Select Counts --- 
                                 else if (filterKey === 'engine_from' || filterKey === 'engine_to') {
-                                      const engineCounts = updatedCounts['engine_capacity'] || {}; // Get counts for the base field
+                                      // Use the specific count array returned from backend
+                                      const countArrayKey = (filterKey === 'engine_from') ? 'engine_from_counts' : 'engine_to_counts';
+                                      const engineCounts = updatedCounts[countArrayKey] || {}; 
                                       const currentVal = element.value; // Preserve selection
  
                                       element.querySelectorAll('option').forEach(opt => {
                                          if (opt.value) { // Skip the "Any" option
                                              const engineValue = opt.value; // e.g., "1.0", "7.0"
-                                             const count = engineCounts[engineValue] || 0;
+                                             // Lookup count using the formatted option value as key
+                                             const count = engineCounts[engineValue] !== undefined ? engineCounts[engineValue] : 0; 
                                              // Reconstruct the display text with the new count
                                              const numericValue = parseFloat(engineValue);
-                                             const displayNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1);
-                                             opt.textContent = displayNum + 'L (' + count + ')'; // Format: 1.0L (5) or 7L (2)
+                                             // Always display with one decimal place
+                                             const displayNum = number_format(numericValue, 1);
+                                             opt.textContent = displayNum + 'L (' + count + ')'; // Format: 1.0L (5) or 7.0L (2)
                                              // Don't disable based on count, similar to AutoTrader
                                              // opt.disabled = (count === 0);
                                          }
