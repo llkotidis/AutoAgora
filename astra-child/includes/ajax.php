@@ -335,4 +335,137 @@ function get_variant_counts_ajax_handler() {
 // Hook for logged-in users
 add_action('wp_ajax_get_variant_counts', 'get_variant_counts_ajax_handler');
 // Hook for non-logged-in users (optional, if the filter is for everyone)
-add_action('wp_ajax_nopriv_get_variant_counts', 'get_variant_counts_ajax_handler'); 
+add_action('wp_ajax_nopriv_get_variant_counts', 'get_variant_counts_ajax_handler');
+
+/**
+ * AJAX handler to dynamically update counts for all filter fields.
+ */
+function ajax_update_filter_counts_handler() {
+    // 1. Verify Nonce
+    check_ajax_referer('car_filter_update_nonce', 'nonce'); 
+
+    // 2. Get and Sanitize All Filter Inputs
+    $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : array();
+    $sanitized_filters = array();
+    $meta_query = array('relation' => 'AND'); // Start meta query
+
+    // Define filter keys and their types (simple meta, range_min, range_max)
+    $filter_keys = array(
+        'location'       => 'simple',
+        'make'           => 'simple',
+        'model'          => 'simple',
+        'variant'        => 'simple',
+        'fuel_type'      => 'simple',
+        'transmission'   => 'simple',
+        'exterior_color' => 'simple',
+        'interior_color' => 'simple',
+        'body_type'      => 'simple',
+        'drive_type'     => 'simple',
+        'year_min'       => 'range_min',
+        'year_max'       => 'range_max',
+        'engine_min'     => 'range_min',
+        'engine_max'     => 'range_max',
+        'mileage_min'    => 'range_min',
+        'mileage_max'    => 'range_max',
+    );
+
+    // Build meta_query from received filters
+    foreach ($filter_keys as $key => $type) {
+        $base_key = str_replace(array('_min', '_max'), '', $key); // Get the ACF field name
+        $value = isset($filters[$key]) ? $filters[$key] : '';
+
+        if (!empty($value)) {
+            $sanitized_value = sanitize_text_field($value); // Basic sanitization
+
+            if ($type === 'simple') {
+                $meta_query[] = array(
+                    'key'     => $base_key,
+                    'value'   => $sanitized_value,
+                    'compare' => '=',
+                );
+            } elseif ($type === 'range_min') {
+                 $meta_query[] = array(
+                    'key'     => $base_key,
+                    'value'   => floatval($sanitized_value), // Use floatval for numeric comparison
+                    'compare' => '>=',
+                    'type'    => 'NUMERIC',
+                 );
+            } elseif ($type === 'range_max') {
+                 $meta_query[] = array(
+                    'key'     => $base_key,
+                    'value'   => floatval($sanitized_value), // Use floatval for numeric comparison
+                    'compare' => '<=',
+                    'type'    => 'NUMERIC',
+                 );
+            }
+        }
+    }
+
+    // 3. Query for Matching Post IDs
+    $query_args = array(
+        'post_type'      => 'car',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1, // Get all matching posts
+        'fields'         => 'ids', // Only get post IDs for efficiency
+        'meta_query'     => $meta_query,
+    );
+    $matching_post_ids = get_posts($query_args);
+
+    // 4. Calculate Counts for Each Filter Based on Matching IDs
+    $updated_counts = array();
+
+    if (!empty($matching_post_ids)) {
+        global $wpdb;
+        $post_id_placeholders = implode(',', array_fill(0, count($matching_post_ids), '%d'));
+
+        // Fields to get counts for (excluding range fields)
+        $count_fields = ['location', 'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type']; 
+
+        foreach ($count_fields as $field_key) {
+            $sql = $wpdb->prepare(
+                "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                 FROM {$wpdb->postmeta} 
+                 WHERE meta_key = %s 
+                 AND post_id IN ($post_id_placeholders)
+                 AND meta_value IS NOT NULL AND meta_value != ''
+                 GROUP BY meta_value",
+                array_merge([$field_key], $matching_post_ids)
+            );
+            $results = $wpdb->get_results($sql, OBJECT_K); // Index by meta_value
+
+            $field_counts = array();
+            if ($results) {
+                foreach ($results as $value => $data) {
+                    $field_counts[$value] = (int)$data->count;
+                }
+            }
+            $updated_counts[$field_key] = $field_counts;
+        }
+        // Note: We don't calculate counts for range inputs (year, mileage, engine) dynamically in this example.
+        // Their options remain static, only the main select filters update counts.
+
+    } else {
+        // If no posts match, return empty counts for all fields
+         $count_fields = ['location', 'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type']; 
+        foreach ($count_fields as $field_key) {
+            $updated_counts[$field_key] = array();
+        }
+    }
+    
+    // Handle potential empty model/variant counts if make/model selected
+    if (empty($updated_counts['model'])) {
+        $updated_counts['model'] = array();
+    }
+     if (empty($updated_counts['variant'])) {
+        $updated_counts['variant'] = array();
+    }
+
+
+    // 5. Send JSON Response
+    wp_send_json_success($updated_counts);
+    wp_die(); // Always die in AJAX handlers
+}
+
+// Hook the new handler
+add_action('wp_ajax_update_filter_counts', 'ajax_update_filter_counts_handler');
+add_action('wp_ajax_nopriv_update_filter_counts', 'ajax_update_filter_counts_handler'); 

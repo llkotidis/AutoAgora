@@ -181,29 +181,32 @@ function display_car_filter_form( $context = 'default' ) {
     // --- End Model Counts ---
 
     // --- Generate Nonce for AJAX ---
-    $ajax_nonce = wp_create_nonce('car_filter_variant_nonce');
+    $ajax_update_nonce = wp_create_nonce('car_filter_update_nonce'); // New nonce for updating counts
     // --- End Nonce Generation ---
-    
+
     // --- Prepare Data for JS (for potential future dynamic updates) ---
     $js_data = [
         'context' => $context,
         'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce' => $ajax_nonce,
+        'updateNonce' => $ajax_update_nonce, // Pass the new nonce
+        'updateAction' => 'update_filter_counts', // Pass the new action name
         'makeModelVariantStructure' => $make_model_variant_data,
         'initialCounts' => [
             'location' => $published_location_counts,
             'make' => $make_counts,
-            'modelByMake' => $model_counts_by_make,
+            'modelByMake' => $model_counts_by_make, // Still useful for initial model population
             'fuelType' => $fuel_type_counts,
             'transmission' => $transmission_counts,
             'exteriorColor' => $ext_color_counts,
             'interiorColor' => $int_color_counts,
             'bodyType' => $body_type_counts,
             'driveType' => $drive_type_counts,
-            // Variant counts are fetched via AJAX
+            // Variant counts are now fetched via the main update AJAX
         ],
         'choices' => [
              'location' => $all_possible_locations,
+             // Make choices are derived from $all_makes_from_files in the PHP
+             // Model/Variant choices are derived from makeModelVariantStructure dynamically
              'fuelType' => $fuel_type_choices,
              'transmission' => $transmission_choices,
              'exteriorColor' => $ext_color_choices,
@@ -222,15 +225,16 @@ function display_car_filter_form( $context = 'default' ) {
     ob_start();
     ?>
     <div class="car-filter-form-container context-<?php echo esc_attr($context); ?>">
-        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action=""> 
-            
-            <h2>Find Your Car</h2> 
+        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="">
 
-            <?php // Helper function for generating select options 
+            <h2>Find Your Car</h2>
+
+            <?php // Helper function for generating select options
             function render_select_options($choices, $counts, $selected_value = '') {
                 foreach ($choices as $value => $label) {
                     $count = isset($counts[$value]) ? $counts[$value] : 0;
-                    $disabled_attr = ($count == 0) ? ' disabled="disabled"' : '';
+                    // Initial render - disable based on initial counts
+                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
                     $display_text = esc_html($label);
                     $display_text .= ' (' . $count . ')';
                     $selected_attr = selected($selected_value, $value, false);
@@ -245,50 +249,50 @@ function display_car_filter_form( $context = 'default' ) {
             }
             ?>
 
-            <!-- Location Selector (existing) -->
+            <!-- Location Selector -->
             <div class="filter-form-group filter-group-location">
                 <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
-                <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location">
+                <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location" data-filter-key="location">
                     <option value="">All Locations</option>
                     <?php render_select_options($all_possible_locations, $published_location_counts); ?>
                 </select>
             </div>
 
-            <!-- Make Selector (existing) -->
+            <!-- Make Selector -->
             <div class="filter-form-group filter-group-make">
                 <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
-                <select id="filter-make-<?php echo esc_attr($context); ?>" name="filter_make">
+                <select id="filter-make-<?php echo esc_attr($context); ?>" name="filter_make" data-filter-key="make">
                     <option value="">All Makes</option>
-                     <?php 
+                     <?php
                     if (!empty($all_makes_from_files)):
-                        foreach ( $all_makes_from_files as $make_name ) : 
-                            $count = isset($make_counts[$make_name]) ? $make_counts[$make_name] : 0;
-                            $disabled_attr = ( $count == 0 ) ? ' disabled="disabled"' : '';
-                            $display_text = esc_html( $make_name ); 
-                            $display_text .= ' (' . $count . ')'; // Always show count
-                        ?>
-                            <option value="<?php echo esc_attr( $make_name ); ?>"<?php echo $disabled_attr; ?>>
-                                <?php echo $display_text; ?>
-                            </option>
-                        <?php endforeach; 
-                    endif; 
+                        // Create a choices array for render_select_options
+                        $make_choices_assoc = array_combine($all_makes_from_files, $all_makes_from_files);
+                        render_select_options($make_choices_assoc, $make_counts);
+                    endif;
                     ?>
                 </select>
             </div>
 
-            <!-- Model Selector (existing) -->
+            <!-- Model Selector -->
             <div class="filter-form-group filter-group-model">
                 <label for="filter-model-<?php echo esc_attr($context); ?>">Model</label>
-                <select id="filter-model-<?php echo esc_attr($context); ?>" name="filter_model" disabled>
+                <select id="filter-model-<?php echo esc_attr($context); ?>" name="filter_model" data-filter-key="model" disabled>
                     <option value="">Select Make First</option>
+                    <?php
+                        // Initially empty or potentially pre-populated if make is pre-selected
+                        // JS will handle dynamic population based on Make selection and AJAX counts
+                    ?>
                 </select>
             </div>
 
-            <!-- Variant Selector (existing) -->
+            <!-- Variant Selector -->
             <div class="filter-form-group filter-group-variant">
                 <label for="filter-variant-<?php echo esc_attr($context); ?>">Variant</label>
-                <select id="filter-variant-<?php echo esc_attr($context); ?>" name="filter_variant" disabled>
+                <select id="filter-variant-<?php echo esc_attr($context); ?>" name="filter_variant" data-filter-key="variant" disabled>
                     <option value="">Select Model First</option>
+                     <?php
+                        // Initially empty, JS will handle dynamic population based on Model selection and AJAX counts
+                    ?>
                </select>
             </div>
 
@@ -296,12 +300,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-year">
                 <label>Year</label>
                 <div class="filter-range-fields">
-                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min">
+                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
                         <?php render_range_options($years); ?>
                     </select>
                     <span class="range-separator">-</span>
-                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max">
+                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
                          <?php render_range_options($years); ?>
                    </select>
@@ -312,12 +316,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>
                  <div class="filter-range-fields">
-                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min">
+                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min" data-filter-key="engine_min">
                         <option value="">Min Size</option>
                          <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max">
+                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
@@ -328,12 +332,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-mileage">
                 <label>Mileage (km)</label>
                  <div class="filter-range-fields">
-                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min">
+                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
                          <?php render_range_options($mileages, '', ' km'); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max">
+                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
                         <?php render_range_options($mileages, '', ' km'); ?>
                     </select>
@@ -343,7 +347,7 @@ function display_car_filter_form( $context = 'default' ) {
              <!-- Fuel Type Selector -->
             <div class="filter-form-group filter-group-fuel">
                 <label for="filter-fuel_type-<?php echo esc_attr($context); ?>">Fuel Type</label>
-                <select id="filter-fuel_type-<?php echo esc_attr($context); ?>" name="filter_fuel_type">
+                <select id="filter-fuel_type-<?php echo esc_attr($context); ?>" name="filter_fuel_type" data-filter-key="fuel_type">
                     <option value="">All Fuel Types</option>
                      <?php render_select_options($fuel_type_choices, $fuel_type_counts); ?>
                 </select>
@@ -352,7 +356,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Transmission Selector -->
             <div class="filter-form-group filter-group-transmission">
                 <label for="filter-transmission-<?php echo esc_attr($context); ?>">Transmission</label>
-                <select id="filter-transmission-<?php echo esc_attr($context); ?>" name="filter_transmission">
+                <select id="filter-transmission-<?php echo esc_attr($context); ?>" name="filter_transmission" data-filter-key="transmission">
                     <option value="">All Transmissions</option>
                     <?php render_select_options($transmission_choices, $transmission_counts); ?>
                 </select>
@@ -361,7 +365,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Body Type Selector -->
              <div class="filter-form-group filter-group-bodytype">
                 <label for="filter-body_type-<?php echo esc_attr($context); ?>">Body Type</label>
-                <select id="filter-body_type-<?php echo esc_attr($context); ?>" name="filter_body_type">
+                <select id="filter-body_type-<?php echo esc_attr($context); ?>" name="filter_body_type" data-filter-key="body_type">
                     <option value="">All Body Types</option>
                     <?php render_select_options($body_type_choices, $body_type_counts); ?>
                 </select>
@@ -370,7 +374,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Drive Type Selector -->
              <div class="filter-form-group filter-group-drivetype">
                 <label for="filter-drive_type-<?php echo esc_attr($context); ?>">Drive Type</label>
-                <select id="filter-drive_type-<?php echo esc_attr($context); ?>" name="filter_drive_type">
+                <select id="filter-drive_type-<?php echo esc_attr($context); ?>" name="filter_drive_type" data-filter-key="drive_type">
                     <option value="">All Drive Types</option>
                     <?php render_select_options($drive_type_choices, $drive_type_counts); ?>
                 </select>
@@ -379,7 +383,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Exterior Color Selector -->
             <div class="filter-form-group filter-group-extcolor">
                 <label for="filter-exterior_color-<?php echo esc_attr($context); ?>">Exterior Color</label>
-                <select id="filter-exterior_color-<?php echo esc_attr($context); ?>" name="filter_exterior_color">
+                <select id="filter-exterior_color-<?php echo esc_attr($context); ?>" name="filter_exterior_color" data-filter-key="exterior_color">
                     <option value="">Any Exterior Color</option>
                     <?php render_select_options($ext_color_choices, $ext_color_counts); ?>
                 </select>
@@ -388,7 +392,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Interior Color Selector -->
              <div class="filter-form-group filter-group-intcolor">
                 <label for="filter-interior_color-<?php echo esc_attr($context); ?>">Interior Color</label>
-                <select id="filter-interior_color-<?php echo esc_attr($context); ?>" name="filter_interior_color">
+                <select id="filter-interior_color-<?php echo esc_attr($context); ?>" name="filter_interior_color" data-filter-key="interior_color">
                     <option value="">Any Interior Color</option>
                     <?php render_select_options($int_color_choices, $int_color_counts); ?>
                 </select>
@@ -397,120 +401,253 @@ function display_car_filter_form( $context = 'default' ) {
 
             <div class="filter-form-actions">
                  <button type="submit" class="filter-submit-button">Search</button>
+                 <button type="button" class="filter-reset-button">Reset</button> <!-- Optional: Add a reset button -->
             </div>
 
         </form>
+         <div class="filter-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; text-align: center; padding-top: 50px;">Loading...</div>
     </div>
 
-    <?php // Inline JS - Consider moving/refining later ?>
+    <?php // Inline JS - Handles interdependent filtering ?>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
             const filterData = <?php echo json_encode($js_data); ?>;
             const context = filterData.context;
-            const makeModelVariantData = filterData.makeModelVariantStructure;
-            const modelCountsByMake = filterData.initialCounts.modelByMake;
-            const ajaxNonce = filterData.nonce;
             const ajaxUrl = filterData.ajaxUrl;
+            const updateNonce = filterData.updateNonce;
+            const updateAction = filterData.updateAction;
+            const makeModelVariantStructure = filterData.makeModelVariantStructure;
+            const allChoices = filterData.choices; // All possible static choices (ACF)
 
-            const makeSelect = document.getElementById('filter-make-' + context);
-            const modelSelect = document.getElementById('filter-model-' + context);
-            const variantSelect = document.getElementById('filter-variant-' + context);
+            const form = document.getElementById('car-filter-form-' + context);
+            const container = form.closest('.car-filter-form-container');
+            const loadingOverlay = container.querySelector('.filter-loading-overlay');
+            const filterSelects = form.querySelectorAll('select[data-filter-key]');
+            const resetButton = form.querySelector('.filter-reset-button');
 
-            // Add refs for other selects if needed for future dynamic updates
-
-            if (!makeSelect || !modelSelect || !variantSelect) {
-                console.error('Core filter dropdowns not found for context:', context);
-                return;
+            // --- Helper: Get all current filter values --- 
+            function getCurrentFilters() {
+                const filters = {};
+                filterSelects.forEach(select => {
+                    const key = select.getAttribute('data-filter-key');
+                    if (key && select.value) {
+                        filters[key] = select.value;
+                    }
+                });
+                return filters;
             }
 
-            function resetSelect(selectElement, defaultText) {
-                selectElement.innerHTML = '';
+            // --- Helper: Update Options in a Select Dropdown --- 
+            function updateSelectOptions(selectElement, choices, counts, defaultOptionText, keepExistingValue = true) {
+                const currentVal = selectElement.value;
+                const filterKey = selectElement.getAttribute('data-filter-key');
+                
+                selectElement.innerHTML = ''; // Clear existing options
+
+                // Add the default "All/Any..." option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
-                defaultOption.textContent = defaultText;
+                defaultOption.textContent = defaultOptionText;
                 selectElement.appendChild(defaultOption);
-                selectElement.disabled = true;
+
+                // Add the actual filter options
+                Object.entries(choices).sort(([,a],[,b]) => a.localeCompare(b)).forEach(([value, label]) => {
+                    const count = counts[value] || 0;
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label + ' (' + count + ')';
+                    option.disabled = (count === 0);
+                    selectElement.appendChild(option);
+                });
+
+                // Restore previous selection if possible and desired
+                if (keepExistingValue && currentVal && selectElement.querySelector(`option[value="${currentVal}"]:not([disabled])`)) {
+                    selectElement.value = currentVal;
+                } else {
+                     selectElement.value = ''; // Reset if previous value is no longer valid/available
+                }
+
+                // Special handling for model/variant enablement
+                if (filterKey === 'model') {
+                    const makeSelect = form.querySelector('#filter-make-' + context);
+                    selectElement.disabled = !makeSelect.value; 
+                }
+                if (filterKey === 'variant') {
+                     const modelSelect = form.querySelector('#filter-model-' + context);
+                     selectElement.disabled = !modelSelect.value; 
+                }
             }
 
-            // --- Make Selection Handler (Updates Models) ---
-            makeSelect.addEventListener('change', function() {
-                const selectedMake = this.value;
-                resetSelect(variantSelect, 'Select Model First');
-                resetSelect(modelSelect, 'Select Make First');
+            // --- Main Filter Update Function (AJAX Call) --- 
+            function handleFilterChange() {
+                if (loadingOverlay) loadingOverlay.style.display = 'block';
 
-                if (selectedMake && makeModelVariantData[selectedMake]) {
-                    modelSelect.disabled = false;
-                    modelSelect.options[0].textContent = 'All Models';
-                    const models = makeModelVariantData[selectedMake];
-                    const modelCounts = modelCountsByMake[selectedMake] || {};
+                const currentFilters = getCurrentFilters();
 
-                    Object.keys(models).sort().forEach(model => {
-                        const count = modelCounts[model] || 0;
-                        const option = document.createElement('option');
-                        option.value = model;
-                        option.textContent = model + ' (' + count + ')';
-                        if (count === 0) {
-                            option.disabled = true;
-                        }
-                        modelSelect.appendChild(option);
-                    });
+                const formData = new FormData();
+                formData.append('action', updateAction);
+                formData.append('nonce', updateNonce);
+                // Send filters as an object string (PHP will parse it)
+                // Using JSON.stringify is more robust for complex values if needed later
+                for (const key in currentFilters) {
+                     formData.append(`filters[${key}]`, currentFilters[key]);
                 }
-            });
-
-            // --- Model Selection Handler (Updates Variants via AJAX) ---
-            modelSelect.addEventListener('change', function() {
-                const selectedMake = makeSelect.value;
-                const selectedModel = this.value;
-                resetSelect(variantSelect, 'Select Model First');
-
-                if (selectedMake && selectedModel &&
-                    makeModelVariantData[selectedMake] &&
-                    makeModelVariantData[selectedMake][selectedModel]) {
-                    
-                    variantSelect.options[0].textContent = 'Loading Variants...';
-                    variantSelect.disabled = true;
-
-                    const formData = new FormData();
-                    formData.append('action', 'get_variant_counts');
-                    formData.append('make', selectedMake);
-                    formData.append('model', selectedModel);
-                    formData.append('nonce', ajaxNonce);
-
-                    fetch(ajaxUrl, { method: 'POST', body: formData })
-                    .then(response => response.json())
+                
+                fetch(ajaxUrl, { method: 'POST', body: formData })
+                    .then(response => {
+                         if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                         }
+                         return response.json();
+                     })
                     .then(result => {
-                        resetSelect(variantSelect, 'All Variants');
-                        variantSelect.disabled = false;
-
                         if (result.success && result.data) {
-                            const variantCounts = result.data;
-                            const variants = makeModelVariantData[selectedMake][selectedModel];
-                            
-                            variants.sort().forEach(variant => {
-                                const count = variantCounts[variant] || 0;
-                                const option = document.createElement('option');
-                                option.value = variant;
-                                option.textContent = variant + ' (' + count + ')';
-                                if (count === 0) {
-                                    option.disabled = true;
+                            const updatedCounts = result.data;
+
+                            // Update each select based on the new counts
+                            filterSelects.forEach(select => {
+                                const filterKey = select.getAttribute('data-filter-key');
+                                
+                                // Skip range inputs, they don't get counts back
+                                if (filterKey.endsWith('_min') || filterKey.endsWith('_max')) {
+                                    return;
                                 }
-                                variantSelect.appendChild(option);
+                                
+                                let choicesForThisSelect = {};
+                                let defaultText = 'All'; // Generic default
+
+                                switch (filterKey) {
+                                    case 'location':
+                                        choicesForThisSelect = allChoices.location || {};
+                                        defaultText = 'All Locations';
+                                        break;
+                                    case 'make':
+                                        // Choices come from initial PHP render (all makes from files)
+                                        // We just need to update counts
+                                        const makeOptions = select.querySelectorAll('option');
+                                        makeOptions.forEach(opt => {
+                                             if (opt.value) { // skip default option
+                                                const count = updatedCounts.make[opt.value] || 0;
+                                                opt.textContent = opt.value + ' (' + count + ')'; // Assuming value and label are the same for makes
+                                                opt.disabled = (count === 0);
+                                             }
+                                        });
+                                        // Re-select current value manually for make since we didn't use updateSelectOptions
+                                        const currentMake = select.value;
+                                        if (currentMake && select.querySelector(`option[value="${currentMake}"]:not([disabled])`)) {
+                                            select.value = currentMake;
+                                        } else {
+                                            select.value = '';
+                                        }
+                                        break; // Skip generic update for make
+                                    case 'model':
+                                        const selectedMake = form.querySelector('#filter-make-' + context).value;
+                                        if (selectedMake && makeModelVariantStructure[selectedMake]) {
+                                            // Models depend on the selected Make
+                                            choicesForThisSelect = Object.keys(makeModelVariantStructure[selectedMake])
+                                                                        .reduce((obj, key) => { obj[key] = key; return obj; }, {});
+                                             defaultText = 'All Models';
+                                        } else {
+                                             choicesForThisSelect = {}; // No make selected, no models to show
+                                             defaultText = 'Select Make First';
+                                        }
+                                        break;
+                                    case 'variant':
+                                         const selMake = form.querySelector('#filter-make-' + context).value;
+                                         const selModel = form.querySelector('#filter-model-' + context).value;
+                                        if (selMake && selModel && makeModelVariantStructure[selMake] && makeModelVariantStructure[selMake][selModel]) {
+                                            // Variants depend on selected Make AND Model
+                                             choicesForThisSelect = makeModelVariantStructure[selMake][selModel]
+                                                                         .reduce((obj, key) => { obj[key] = key; return obj; }, {});
+                                            defaultText = 'All Variants';
+                                        } else {
+                                             choicesForThisSelect = {}; // No model selected, no variants
+                                             defaultText = 'Select Model First';
+                                        }
+                                        break;
+                                    case 'fuel_type':
+                                        choicesForThisSelect = allChoices.fuelType || {};
+                                        defaultText = 'All Fuel Types';
+                                        break;
+                                     case 'transmission':
+                                        choicesForThisSelect = allChoices.transmission || {};
+                                        defaultText = 'All Transmissions';
+                                        break;
+                                    case 'body_type':
+                                        choicesForThisSelect = allChoices.bodyType || {};
+                                        defaultText = 'All Body Types';
+                                        break;
+                                    case 'drive_type':
+                                         choicesForThisSelect = allChoices.driveType || {};
+                                         defaultText = 'All Drive Types';
+                                         break;
+                                     case 'exterior_color':
+                                        choicesForThisSelect = allChoices.exteriorColor || {};
+                                         defaultText = 'Any Exterior Color';
+                                         break;
+                                     case 'interior_color':
+                                         choicesForThisSelect = allChoices.interiorColor || {};
+                                         defaultText = 'Any Interior Color';
+                                         break;
+                                    // Add other simple filters here if needed
+                                }
+                                
+                                // Use the helper to update options for most fields
+                                if (filterKey !== 'make') { // Make was handled specially
+                                    const countsForThisSelect = updatedCounts[filterKey] || {};
+                                     updateSelectOptions(select, choicesForThisSelect, countsForThisSelect, defaultText);
+                                }
+
                             });
+                            
+                            // Ensure Model/Variant selects are enabled/disabled correctly after update
+                            const makeSelect = form.querySelector('#filter-make-' + context);
+                            const modelSelect = form.querySelector('#filter-model-' + context);
+                            const variantSelect = form.querySelector('#filter-variant-' + context);
+                            modelSelect.disabled = !makeSelect.value;
+                            variantSelect.disabled = !modelSelect.value;
+
                         } else {
-                            console.error('AJAX error fetching variants:', result.data || 'Unknown error');
-                             variantSelect.options[0].textContent = 'Error loading variants';
-                             variantSelect.disabled = true;
+                            console.error('AJAX error fetching filter counts:', result.data || 'Unknown error');
+                            // Maybe show an error message to the user
                         }
                     })
                     .catch(error => {
                         console.error('Fetch error:', error);
-                        resetSelect(variantSelect, 'Error loading variants');
-                        variantSelect.disabled = true;
+                        // Maybe show an error message to the user
+                    })
+                    .finally(() => {
+                         if (loadingOverlay) loadingOverlay.style.display = 'none';
                     });
-                }
+            }
+
+            // --- Event Listeners --- 
+            filterSelects.forEach(select => {
+                select.addEventListener('change', handleFilterChange);
             });
 
-            // Add event listeners for other fields HERE if full dynamic updates are needed later
+             // --- Reset Button Listener (Optional) ---
+             if (resetButton) {
+                 resetButton.addEventListener('click', () => {
+                     form.reset(); // Reset native form elements
+                     // Manually trigger update after reset to refresh counts/options
+                     handleFilterChange(); 
+                 });
+             }
+
+            // --- Initial Setup --- 
+            // Disable Model/Variant initially if Make/Model aren't pre-selected
+            const initialMake = form.querySelector('#filter-make-' + context).value;
+            const initialModel = form.querySelector('#filter-model-' + context).value;
+            if (!initialMake) {
+                 form.querySelector('#filter-model-' + context).disabled = true;
+            }
+             if (!initialModel) {
+                 form.querySelector('#filter-variant-' + context).disabled = true;
+             }
+             // TODO: Consider if an initial AJAX call is needed on page load
+             // if filters might be pre-populated (e.g., from URL parameters)
+             // handleFilterChange(); // Uncomment to run initial update
 
         });
     </script>
