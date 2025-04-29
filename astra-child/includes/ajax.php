@@ -350,39 +350,59 @@ function ajax_update_filter_counts_handler() {
     $meta_query = array('relation' => 'AND'); // Start meta query
 
     // Define filter keys and their types (simple meta, range_min, range_max)
+    // Mark multi-select fields
     $filter_keys = array(
-        'location'       => 'simple',
-        'make'           => 'simple',
-        'model'          => 'simple',
-        'variant'        => 'simple',
-        'fuel_type'      => 'simple',
-        'transmission'   => 'simple',
-        'exterior_color' => 'simple',
-        'interior_color' => 'simple',
-        'body_type'      => 'simple',
-        'drive_type'     => 'simple',
-        'year_min'       => 'range_min',
-        'year_max'       => 'range_max',
-        'engine_min'     => 'range_min',
-        'engine_max'     => 'range_max',
-        'mileage_min'    => 'range_min',
-        'mileage_max'    => 'range_max',
+        'location'       => ['type' => 'simple', 'multi' => false],
+        'make'           => ['type' => 'simple', 'multi' => false],
+        'model'          => ['type' => 'simple', 'multi' => false],
+        'variant'        => ['type' => 'simple', 'multi' => false],
+        'fuel_type'      => ['type' => 'simple', 'multi' => true],
+        'transmission'   => ['type' => 'simple', 'multi' => true],
+        'exterior_color' => ['type' => 'simple', 'multi' => true],
+        'interior_color' => ['type' => 'simple', 'multi' => true],
+        'body_type'      => ['type' => 'simple', 'multi' => true],
+        'drive_type'     => ['type' => 'simple', 'multi' => true],
+        'year_min'       => ['type' => 'range_min', 'multi' => false],
+        'year_max'       => ['type' => 'range_max', 'multi' => false],
+        'engine_min'     => ['type' => 'range_min', 'multi' => false],
+        'engine_max'     => ['type' => 'range_max', 'multi' => false],
+        'mileage_min'    => ['type' => 'range_min', 'multi' => false],
+        'mileage_max'    => ['type' => 'range_max', 'multi' => false],
     );
 
     // Build meta_query from received filters
-    foreach ($filter_keys as $key => $type) {
+    foreach ($filter_keys as $key => $config) {
+        $type = $config['type'];
+        $is_multi = $config['multi'];
         $base_key = str_replace(array('_min', '_max'), '', $key); // Get the ACF field name
         $value = isset($filters[$key]) ? $filters[$key] : '';
 
         if (!empty($value)) {
-            $sanitized_value = sanitize_text_field($value); // Basic sanitization
+            // Sanitize differently based on multi-select or not
+             if ($is_multi) {
+                 // Expecting comma-separated string, sanitize each part
+                 $value_array = explode(',', $value);
+                 $sanitized_value = array_map('sanitize_text_field', $value_array);
+                 $sanitized_value = array_filter($sanitized_value); // Remove empty values after sanitization
+                 if (empty($sanitized_value)) continue; // Skip if no valid values remain
+             } else {
+                 $sanitized_value = sanitize_text_field($value); // Basic sanitization for single values
+             }
 
             if ($type === 'simple') {
-                $meta_query[] = array(
-                    'key'     => $base_key,
-                    'value'   => $sanitized_value,
-                    'compare' => '=',
-                );
+                 if ($is_multi && is_array($sanitized_value)) {
+                     $meta_query[] = array(
+                         'key'     => $base_key,
+                         'value'   => $sanitized_value, // Pass the array
+                         'compare' => 'IN', 
+                    );
+                 } elseif (!$is_multi) {
+                     $meta_query[] = array(
+                         'key'     => $base_key,
+                         'value'   => $sanitized_value,
+                         'compare' => '=',
+                     );
+                 }
             } elseif ($type === 'range_min') {
                  $meta_query[] = array(
                     'key'     => $base_key,

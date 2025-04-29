@@ -183,7 +183,7 @@ function display_car_filter_form( $context = 'default' ) {
     // --- Generate Nonce for AJAX ---
     $ajax_update_nonce = wp_create_nonce('car_filter_update_nonce'); // New nonce for updating counts
     // --- End Nonce Generation ---
-
+    
     // --- Prepare Data for JS (for potential future dynamic updates) ---
     $js_data = [
         'context' => $context,
@@ -225,11 +225,11 @@ function display_car_filter_form( $context = 'default' ) {
     ob_start();
     ?>
     <div class="car-filter-form-container context-<?php echo esc_attr($context); ?>">
-        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="">
+        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action=""> 
+            
+            <h2>Find Your Car</h2> 
 
-            <h2>Find Your Car</h2>
-
-            <?php // Helper function for generating select options
+            <?php // Helper function for generating select options 
             function render_select_options($choices, $counts, $selected_value = '') {
                 foreach ($choices as $value => $label) {
                     $count = isset($counts[$value]) ? $counts[$value] : 0;
@@ -263,12 +263,12 @@ function display_car_filter_form( $context = 'default' ) {
                 <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
                 <select id="filter-make-<?php echo esc_attr($context); ?>" name="filter_make" data-filter-key="make">
                     <option value="">All Makes</option>
-                     <?php
+                     <?php 
                     if (!empty($all_makes_from_files)):
                         // Create a choices array for render_select_options
                         $make_choices_assoc = array_combine($all_makes_from_files, $all_makes_from_files);
                         render_select_options($make_choices_assoc, $make_counts);
-                    endif;
+                    endif; 
                     ?>
                 </select>
             </div>
@@ -346,56 +346,153 @@ function display_car_filter_form( $context = 'default' ) {
 
              <!-- Fuel Type Selector -->
             <div class="filter-form-group filter-group-fuel">
-                <label for="filter-fuel_type-<?php echo esc_attr($context); ?>">Fuel Type</label>
-                <select id="filter-fuel_type-<?php echo esc_attr($context); ?>" name="filter_fuel_type" data-filter-key="fuel_type">
-                    <option value="">All Fuel Types</option>
-                     <?php render_select_options($fuel_type_choices, $fuel_type_counts); ?>
-                </select>
+                <label>Fuel Type</label> <?php // Removed 'for' attribute as target is custom ?>
+                <div class="multi-select-filter" data-filter-key="fuel_type">
+                    <div class="multi-select-display">
+                        <span>All Fuel Types</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                            <?php
+                            foreach ($fuel_type_choices as $value => $label) {
+                                $count = isset($fuel_type_counts[$value]) ? $fuel_type_counts[$value] : 0;
+                                // Never disable initially for multi-select
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                    <input type="hidden" name="filter_fuel_type" class="multi-select-value">
+                </div>
             </div>
 
             <!-- Transmission Selector -->
-            <div class="filter-form-group filter-group-transmission">
-                <label for="filter-transmission-<?php echo esc_attr($context); ?>">Transmission</label>
-                <select id="filter-transmission-<?php echo esc_attr($context); ?>" name="filter_transmission" data-filter-key="transmission">
-                    <option value="">All Transmissions</option>
-                    <?php render_select_options($transmission_choices, $transmission_counts); ?>
-                </select>
+             <div class="filter-form-group filter-group-transmission">
+                <label>Transmission</label>
+                 <div class="multi-select-filter" data-filter-key="transmission">
+                    <div class="multi-select-display">
+                        <span>All Transmissions</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                            <?php
+                            foreach ($transmission_choices as $value => $label) {
+                                $count = isset($transmission_counts[$value]) ? $transmission_counts[$value] : 0;
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                    <input type="hidden" name="filter_transmission" class="multi-select-value">
+                 </div>
             </div>
 
-            <!-- Body Type Selector -->
+             <!-- Body Type Selector -->
              <div class="filter-form-group filter-group-bodytype">
-                <label for="filter-body_type-<?php echo esc_attr($context); ?>">Body Type</label>
-                <select id="filter-body_type-<?php echo esc_attr($context); ?>" name="filter_body_type" data-filter-key="body_type">
-                    <option value="">All Body Types</option>
-                    <?php render_select_options($body_type_choices, $body_type_counts); ?>
-                </select>
+                <label>Body Type</label>
+                 <div class="multi-select-filter" data-filter-key="body_type">
+                    <div class="multi-select-display">
+                        <span>All Body Types</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                            <?php
+                            foreach ($body_type_choices as $value => $label) {
+                                $count = isset($body_type_counts[$value]) ? $body_type_counts[$value] : 0;
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                     <input type="hidden" name="filter_body_type" class="multi-select-value">
+                </div>
             </div>
 
-            <!-- Drive Type Selector -->
+             <!-- Drive Type Selector -->
              <div class="filter-form-group filter-group-drivetype">
-                <label for="filter-drive_type-<?php echo esc_attr($context); ?>">Drive Type</label>
-                <select id="filter-drive_type-<?php echo esc_attr($context); ?>" name="filter_drive_type" data-filter-key="drive_type">
-                    <option value="">All Drive Types</option>
-                    <?php render_select_options($drive_type_choices, $drive_type_counts); ?>
-                </select>
+                <label>Drive Type</label>
+                 <div class="multi-select-filter" data-filter-key="drive_type">
+                    <div class="multi-select-display">
+                        <span>All Drive Types</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                             <?php
+                            foreach ($drive_type_choices as $value => $label) {
+                                $count = isset($drive_type_counts[$value]) ? $drive_type_counts[$value] : 0;
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                     <input type="hidden" name="filter_drive_type" class="multi-select-value">
+                 </div>
             </div>
 
-            <!-- Exterior Color Selector -->
-            <div class="filter-form-group filter-group-extcolor">
-                <label for="filter-exterior_color-<?php echo esc_attr($context); ?>">Exterior Color</label>
-                <select id="filter-exterior_color-<?php echo esc_attr($context); ?>" name="filter_exterior_color" data-filter-key="exterior_color">
-                    <option value="">Any Exterior Color</option>
-                    <?php render_select_options($ext_color_choices, $ext_color_counts); ?>
-                </select>
+             <!-- Exterior Color Selector -->
+             <div class="filter-form-group filter-group-extcolor">
+                <label>Exterior Color</label>
+                 <div class="multi-select-filter" data-filter-key="exterior_color">
+                    <div class="multi-select-display">
+                        <span>Any Exterior Color</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                            <?php
+                            foreach ($ext_color_choices as $value => $label) {
+                                $count = isset($ext_color_counts[$value]) ? $ext_color_counts[$value] : 0;
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                    <input type="hidden" name="filter_exterior_color" class="multi-select-value">
+                 </div>
             </div>
 
-            <!-- Interior Color Selector -->
+             <!-- Interior Color Selector -->
              <div class="filter-form-group filter-group-intcolor">
-                <label for="filter-interior_color-<?php echo esc_attr($context); ?>">Interior Color</label>
-                <select id="filter-interior_color-<?php echo esc_attr($context); ?>" name="filter_interior_color" data-filter-key="interior_color">
-                    <option value="">Any Interior Color</option>
-                    <?php render_select_options($int_color_choices, $int_color_counts); ?>
-                </select>
+                <label>Interior Color</label>
+                 <div class="multi-select-filter" data-filter-key="interior_color">
+                    <div class="multi-select-display">
+                        <span>Any Interior Color</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-popup">
+                        <ul>
+                             <?php
+                            foreach ($int_color_choices as $value => $label) {
+                                $count = isset($int_color_counts[$value]) ? $int_color_counts[$value] : 0;
+                                echo '<li><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                echo '</label></li>';
+                            }
+                            ?>
+                        </ul>
+                    </div>
+                    <input type="hidden" name="filter_interior_color" class="multi-select-value">
+                </div>
             </div>
 
 
@@ -420,22 +517,65 @@ function display_car_filter_form( $context = 'default' ) {
 
             const form = document.getElementById('car-filter-form-' + context);
             const container = form.closest('.car-filter-form-container');
+            // const loadingOverlay = container.querySelector('.filter-loading-overlay'); // Removed loading overlay
             const filterSelects = form.querySelectorAll('select[data-filter-key]');
+            const multiSelectFilters = form.querySelectorAll('.multi-select-filter'); // Get multi-selects
+            const allFilterElements = form.querySelectorAll('[data-filter-key]'); // All elements with filter keys
             const resetButton = form.querySelector('.filter-reset-button');
+
+            // Store initial state for multi-selects to detect changes
+            let multiSelectInitialValues = {}; 
 
             // --- Helper: Get all current filter values --- 
             function getCurrentFilters() {
                 const filters = {};
-                filterSelects.forEach(select => {
-                    const key = select.getAttribute('data-filter-key');
-                    if (key && select.value) {
-                        filters[key] = select.value;
+                allFilterElements.forEach(element => {
+                    const key = element.getAttribute('data-filter-key');
+                    let value = null;
+
+                    if (element.matches('select')) {
+                        value = element.value;
+                    } else if (element.matches('.multi-select-filter')) {
+                        const hiddenInput = element.querySelector('.multi-select-value');
+                        value = hiddenInput ? hiddenInput.value : ''; // Get comma-separated string
+                    }
+
+                    if (key && value) {
+                        filters[key] = value;
                     }
                 });
                 return filters;
             }
 
-            // --- Helper: Update Options in a Select Dropdown --- 
+            // --- Helper: Update Display Text for Multi-Select --- 
+            function updateMultiSelectDisplay(multiSelectElement) {
+                const displaySpan = multiSelectElement.querySelector('.multi-select-display > span:first-child');
+                const checkboxes = multiSelectElement.querySelectorAll('.multi-select-popup input[type="checkbox"]:checked');
+                const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
+                const defaultText = displaySpan.parentElement.parentElement.querySelector('label')?.textContent || 'Select Options'; // Get default text better
+
+                const selectedLabels = [];
+                const selectedValues = [];
+                checkboxes.forEach(cb => {
+                     selectedValues.push(cb.value);
+                     // Use data-label attribute stored during PHP generation
+                     const label = cb.getAttribute('data-label'); 
+                     if (label) selectedLabels.push(label);
+                     else selectedLabels.push(cb.value); // Fallback to value
+                });
+
+                if (selectedLabels.length === 0) {
+                    displaySpan.textContent = defaultText; // Show default text like "All Fuel Types"
+                } else if (selectedLabels.length <= 2) { // Show names if 1 or 2 selected
+                    displaySpan.textContent = selectedLabels.join(', ');
+                } else { // Show count if more than 2
+                    displaySpan.textContent = selectedLabels.length + ' selected';
+                }
+                
+                hiddenInput.value = selectedValues.join(','); // Update hidden input
+            }
+
+            // --- Helper: Update Options in a Standard Select Dropdown --- 
             function updateSelectOptions(selectElement, choices, counts, defaultOptionText, keepExistingValue = true) {
                 const currentVal = selectElement.value;
                 const filterKey = selectElement.getAttribute('data-filter-key');
@@ -477,14 +617,30 @@ function display_car_filter_form( $context = 'default' ) {
             }
 
             // --- Main Filter Update Function (AJAX Call) --- 
-            function handleFilterChange() {
+            let ajaxRequestPending = false; // Prevent simultaneous requests
+            function handleFilterChange(triggeredByMultiSelectKey = null) { // Pass key if triggered by multi-select close
+                 if (ajaxRequestPending) return; // Don't stack requests
+                ajaxRequestPending = true;
+
+                // If triggered by multi-select closing, check if value actually changed
+                if (triggeredByMultiSelectKey) {
+                    const multiSelectElement = form.querySelector(`.multi-select-filter[data-filter-key="${triggeredByMultiSelectKey}"]`);
+                    const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
+                    if (hiddenInput.value === multiSelectInitialValues[triggeredByMultiSelectKey]) {
+                        ajaxRequestPending = false;
+                        return; // Value didn't change, no need for AJAX
+                    }
+                }
+                
+                // console.log("Triggering AJAX Update. Filters:", getCurrentFilters()); // Debugging
+
+                // if (loadingOverlay) loadingOverlay.style.display = 'block'; // Removed
+
                 const currentFilters = getCurrentFilters();
 
                 const formData = new FormData();
                 formData.append('action', updateAction);
                 formData.append('nonce', updateNonce);
-                // Send filters as an object string (PHP will parse it)
-                // Using JSON.stringify is more robust for complex values if needed later
                 for (const key in currentFilters) {
                      formData.append(`filters[${key}]`, currentFilters[key]);
                 }
@@ -499,151 +655,209 @@ function display_car_filter_form( $context = 'default' ) {
                     .then(result => {
                         if (result.success && result.data) {
                             const updatedCounts = result.data;
+                           // console.log("Received updated counts:", updatedCounts); // Debugging
 
-                            // Update each select based on the new counts
-                            filterSelects.forEach(select => {
-                                const filterKey = select.getAttribute('data-filter-key');
+                            // Update each filter element (standard selects and multi-selects)
+                            allFilterElements.forEach(element => {
+                                const filterKey = element.getAttribute('data-filter-key');
                                 
                                 // Skip range inputs, they don't get counts back
                                 if (filterKey.endsWith('_min') || filterKey.endsWith('_max')) {
                                     return;
                                 }
-                                
-                                let choicesForThisSelect = {};
-                                let defaultText = 'All'; // Generic default
 
-                                switch (filterKey) {
-                                    case 'location':
-                                        choicesForThisSelect = allChoices.location || {};
-                                        defaultText = 'All Locations';
-                                        break;
-                                    case 'make':
-                                        // Choices come from initial PHP render (all makes from files)
-                                        // We just need to update counts
-                                        const makeOptions = select.querySelectorAll('option');
-                                        makeOptions.forEach(opt => {
-                                             if (opt.value) { // skip default option
-                                                const count = updatedCounts.make[opt.value] || 0;
-                                                opt.textContent = opt.value + ' (' + count + ')'; // Assuming value and label are the same for makes
-                                                opt.disabled = (count === 0);
-                                             }
-                                        });
-                                        // Re-select current value manually for make since we didn't use updateSelectOptions
-                                        const currentMake = select.value;
-                                        if (currentMake && select.querySelector(`option[value="${currentMake}"]:not([disabled])`)) {
-                                            select.value = currentMake;
-                                        } else {
-                                            select.value = '';
-                                        }
-                                        break; // Skip generic update for make
-                                    case 'model':
-                                        const selectedMake = form.querySelector('#filter-make-' + context).value;
-                                        if (selectedMake && makeModelVariantStructure[selectedMake]) {
-                                            // Models depend on the selected Make
-                                            choicesForThisSelect = Object.keys(makeModelVariantStructure[selectedMake])
-                                                                        .reduce((obj, key) => { obj[key] = key; return obj; }, {});
-                                             defaultText = 'All Models';
-                                        } else {
-                                             choicesForThisSelect = {}; // No make selected, no models to show
-                                             defaultText = 'Select Make First';
-                                        }
-                                        break;
-                                    case 'variant':
-                                         const selMake = form.querySelector('#filter-make-' + context).value;
-                                         const selModel = form.querySelector('#filter-model-' + context).value;
-                                        if (selMake && selModel && makeModelVariantStructure[selMake] && makeModelVariantStructure[selMake][selModel]) {
-                                            // Variants depend on selected Make AND Model
-                                             choicesForThisSelect = makeModelVariantStructure[selMake][selModel]
-                                                                         .reduce((obj, key) => { obj[key] = key; return obj; }, {});
-                                            defaultText = 'All Variants';
-                                        } else {
-                                             choicesForThisSelect = {}; // No model selected, no variants
-                                             defaultText = 'Select Model First';
-                                        }
-                                        break;
-                                    case 'fuel_type':
-                                        choicesForThisSelect = allChoices.fuelType || {};
-                                        defaultText = 'All Fuel Types';
-                                        break;
-                                     case 'transmission':
-                                        choicesForThisSelect = allChoices.transmission || {};
-                                        defaultText = 'All Transmissions';
-                                        break;
-                                    case 'body_type':
-                                        choicesForThisSelect = allChoices.bodyType || {};
-                                        defaultText = 'All Body Types';
-                                        break;
-                                    case 'drive_type':
-                                         choicesForThisSelect = allChoices.driveType || {};
-                                         defaultText = 'All Drive Types';
-                                         break;
-                                     case 'exterior_color':
-                                        choicesForThisSelect = allChoices.exteriorColor || {};
-                                         defaultText = 'Any Exterior Color';
-                                         break;
-                                     case 'interior_color':
-                                         choicesForThisSelect = allChoices.interiorColor || {};
-                                         defaultText = 'Any Interior Color';
-                                         break;
-                                    // Add other simple filters here if needed
-                                }
-                                
-                                // Use the helper to update options for most fields
-                                if (filterKey !== 'make') { // Make was handled specially
-                                    const countsForThisSelect = updatedCounts[filterKey] || {};
-                                     updateSelectOptions(select, choicesForThisSelect, countsForThisSelect, defaultText);
-                                }
+                                // --- Update Standard Select --- 
+                                if (element.matches('select')) {
+                                     let choicesForThisSelect = {};
+                                     let defaultText = 'All'; // Generic default
+                                    
+                                     switch (filterKey) {
+                                        // ... Cases for make, model, variant (as before)
+                                        case 'make':
+                                            const makeOptions = element.querySelectorAll('option');
+                                            makeOptions.forEach(opt => {
+                                                if (opt.value) {
+                                                    const count = updatedCounts.make[opt.value] || 0;
+                                                    opt.textContent = opt.value + ' (' + count + ')';
+                                                    opt.disabled = (count === 0);
+                                                }
+                                            });
+                                            const currentMake = element.value;
+                                            if (currentMake && element.querySelector(`option[value="${currentMake}"]:not([disabled])`)) {
+                                                element.value = currentMake;
+                                            } else {
+                                                element.value = '';
+                                            }
+                                            break; // Skip generic update 
+                                        case 'model':
+                                            const selectedMake = form.querySelector('#filter-make-' + context).value;
+                                            if (selectedMake && makeModelVariantStructure[selectedMake]) {
+                                                choicesForThisSelect = Object.keys(makeModelVariantStructure[selectedMake])
+                                                                            .reduce((obj, key) => { obj[key] = key; return obj; }, {});
+                                                defaultText = 'All Models';
+                                            } else {
+                                                choicesForThisSelect = {}; 
+                                                defaultText = 'Select Make First';
+                                            }
+                                            const countsForModel = updatedCounts[filterKey] || {};
+                                             updateSelectOptions(element, choicesForThisSelect, countsForModel, defaultText);
+                                            break;
+                                        case 'variant':
+                                            const selMake = form.querySelector('#filter-make-' + context).value;
+                                            const selModel = form.querySelector('#filter-model-' + context).value;
+                                            if (selMake && selModel && makeModelVariantStructure[selMake] && makeModelVariantStructure[selMake][selModel]) {
+                                                choicesForThisSelect = makeModelVariantStructure[selMake][selModel]
+                                                                            .reduce((obj, key) => { obj[key] = key; return obj; }, {});
+                                                defaultText = 'All Variants';
+                                            } else {
+                                                choicesForThisSelect = {};
+                                                defaultText = 'Select Model First';
+                                            }
+                                            const countsForVariant = updatedCounts[filterKey] || {};
+                                             updateSelectOptions(element, choicesForThisSelect, countsForVariant, defaultText);
+                                            break;
+                                        // Add cases for any other standard selects if needed
+                                    }
+                                // --- Update Multi Select --- 
+                                } else if (element.matches('.multi-select-filter')) {
+                                    const countsForThisMultiSelect = updatedCounts[filterKey] || {};
+                                    const checkboxes = element.querySelectorAll('.multi-select-popup input[type="checkbox"]');
 
+                                    checkboxes.forEach(cb => {
+                                        const value = cb.value;
+                                        const count = countsForThisMultiSelect[value] || 0;
+                                        const countSpan = cb.closest('label').querySelector('.option-count');
+                                        if (countSpan) {
+                                            countSpan.textContent = count;
+                                        }
+                                        // DO NOT disable checkbox based on count per user request
+                                        // cb.disabled = (count === 0); // <-- Removed/Commented
+                                    });
+                                    // We don't need to call updateMultiSelectDisplay here, as the selections 
+                                    // themselves haven't changed, only the counts beside them.
+                                }
                             });
                             
                             // Ensure Model/Variant selects are enabled/disabled correctly after update
                             const makeSelect = form.querySelector('#filter-make-' + context);
                             const modelSelect = form.querySelector('#filter-model-' + context);
                             const variantSelect = form.querySelector('#filter-variant-' + context);
-                            modelSelect.disabled = !makeSelect.value;
-                            variantSelect.disabled = !modelSelect.value;
+                            if (modelSelect) modelSelect.disabled = !makeSelect.value;
+                            if (variantSelect) variantSelect.disabled = !modelSelect.value;
 
                         } else {
                             console.error('AJAX error fetching filter counts:', result.data || 'Unknown error');
-                            // Maybe show an error message to the user
                         }
                     })
                     .catch(error => {
                         console.error('Fetch error:', error);
-                        // Maybe show an error message to the user
                     })
                     .finally(() => {
-                         // loadingOverlay removed
+                         ajaxRequestPending = false; // Allow next request
+                         // if (loadingOverlay) loadingOverlay.style.display = 'none'; // Removed
                     });
             }
 
-            // --- Event Listeners --- 
+            // --- Event Listeners for Standard Selects --- 
             filterSelects.forEach(select => {
                 select.addEventListener('change', handleFilterChange);
             });
 
-             // --- Reset Button Listener (Optional) ---
-             if (resetButton) {
-                 resetButton.addEventListener('click', () => {
-                     form.reset(); // Reset native form elements
-                     // Manually trigger update after reset to refresh counts/options
-                     handleFilterChange(); 
-                 });
-             }
+            // --- Event Listeners for Multi-Select Filters --- 
+            multiSelectFilters.forEach(msFilter => {
+                const display = msFilter.querySelector('.multi-select-display');
+                const popup = msFilter.querySelector('.multi-select-popup');
+                const checkboxes = msFilter.querySelectorAll('input[type="checkbox"]');
+                const filterKey = msFilter.getAttribute('data-filter-key');
+                const hiddenInput = msFilter.querySelector('.multi-select-value');
+
+                // Toggle Popup
+                display.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent closing immediately via document listener
+                    const isActive = msFilter.classList.contains('active');
+                    // Close all other popups first
+                    document.querySelectorAll('.multi-select-filter.active').forEach(activeMs => {
+                        if (activeMs !== msFilter) {
+                             activeMs.classList.remove('active');
+                            // Check if value changed on close and trigger AJAX if needed
+                            const otherKey = activeMs.getAttribute('data-filter-key');
+                            const otherHidden = activeMs.querySelector('.multi-select-value');
+                            if (multiSelectInitialValues[otherKey] !== otherHidden.value) {
+                                handleFilterChange(otherKey);
+                            }
+                        }
+                    });
+                    // Toggle current popup
+                    msFilter.classList.toggle('active');
+                    if (msFilter.classList.contains('active')) {
+                        // Store current value when opened
+                         multiSelectInitialValues[filterKey] = hiddenInput.value;
+                    } else {
+                        // Check if value changed on close and trigger AJAX if needed
+                        if (multiSelectInitialValues[filterKey] !== hiddenInput.value) {
+                            handleFilterChange(filterKey); 
+                        }
+                    }
+                });
+
+                // Handle Checkbox Changes (Update Display/Hidden Input ONLY)
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        updateMultiSelectDisplay(msFilter); 
+                        // DO NOT trigger handleFilterChange here
+                    });
+                });
+            });
+
+            // --- Global Click Listener to Close Popups --- 
+            document.addEventListener('click', (event) => {
+                const openPopup = document.querySelector('.multi-select-filter.active');
+                if (openPopup && !openPopup.contains(event.target)) {
+                    openPopup.classList.remove('active');
+                    // Check if value changed on close and trigger AJAX if needed
+                    const filterKey = openPopup.getAttribute('data-filter-key');
+                    const hiddenInput = openPopup.querySelector('.multi-select-value');
+                    if (multiSelectInitialValues[filterKey] !== hiddenInput.value) {
+                         handleFilterChange(filterKey);
+                    }
+                }
+            });
+
+            // --- Reset Button Listener (Optional) ---
+            if (resetButton) {
+                resetButton.addEventListener('click', () => {
+                    form.reset(); // Reset native form elements
+                    // Also manually reset multi-selects
+                    multiSelectFilters.forEach(msFilter => {
+                       const hiddenInput = msFilter.querySelector('.multi-select-value');
+                       hiddenInput.value = '';
+                       msFilter.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                       updateMultiSelectDisplay(msFilter); // Update display to default
+                    });
+                    // Manually trigger update after reset to refresh counts/options
+                    handleFilterChange(); 
+                });
+            }
 
             // --- Initial Setup --- 
             // Disable Model/Variant initially if Make/Model aren't pre-selected
             const initialMake = form.querySelector('#filter-make-' + context).value;
             const initialModel = form.querySelector('#filter-model-' + context).value;
             if (!initialMake) {
-                 form.querySelector('#filter-model-' + context).disabled = true;
+                 const modelSelect = form.querySelector('#filter-model-' + context)
+                 if(modelSelect) modelSelect.disabled = true;
             }
              if (!initialModel) {
-                 form.querySelector('#filter-variant-' + context).disabled = true;
+                 const variantSelect = form.querySelector('#filter-variant-' + context)
+                  if(variantSelect) variantSelect.disabled = true;
              }
-             // TODO: Consider if an initial AJAX call is needed on page load
-             // if filters might be pre-populated (e.g., from URL parameters)
-             // handleFilterChange(); // Uncomment to run initial update
+            // Initial setup for multi-select display text
+            multiSelectFilters.forEach(msFilter => {
+                 updateMultiSelectDisplay(msFilter);
+             });
+            // TODO: Consider if an initial AJAX call is needed on page load
+            // if filters might be pre-populated (e.g., from URL parameters)
+            // handleFilterChange(); // Uncomment to run initial update
 
         });
     </script>
