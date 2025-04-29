@@ -774,7 +774,8 @@ function display_car_filter_form( $context = 'default' ) {
                                     const count = currentEngineCounts[value] || 0;
                                     // Format display text (e.g., 2.0L (15))
                                     const numericValue = parseFloat(value);
-                                    const displayValueNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1);
+                                    // Use JS number_format helper
+                                    const displayValueNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1); 
                                      option.textContent = displayValueNum + suffix + ' (' + count + ')';
                                     // Disable based on count
                                     option.disabled = (count === 0);
