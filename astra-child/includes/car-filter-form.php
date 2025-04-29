@@ -321,15 +321,15 @@ function display_car_filter_form( $context = 'default' ) {
 
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
-                <label>Engine (L)</label>
+                <label>Engine Size</label>
                  <div class="filter-range-fields">
-                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min" data-filter-key="engine_min">
-                        <option value="">Min Size</option>
+                    <select id="filter-engine-from-<?php echo esc_attr($context); ?>" name="filter_engine_from" data-filter-key="engine_from">
+                        <option value="">From Any</option>
                          <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max" data-filter-key="engine_max">
-                        <option value="">Max Size</option>
+                    <select id="filter-engine-to-<?php echo esc_attr($context); ?>" name="filter_engine_to" data-filter-key="engine_to">
+                        <option value="">To Any</option>
                         <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                 </div>
@@ -731,7 +731,7 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForVariant, defaultText);
                                             break;
                                         // Add cases for any other standard selects if needed
-                                    }
+                                     }
                                 // --- Update Multi Select --- 
                                 } else if (element.matches('.multi-select-filter')) {
                                     const countsForThisMultiSelect = updatedCounts[filterKey] || {};
@@ -750,6 +750,28 @@ function display_car_filter_form( $context = 'default' ) {
                                     // We don't need to call updateMultiSelectDisplay here, as the selections 
                                     // themselves haven't changed, only the counts beside them.
                                 }
+                                // --- Update Engine From/To Select Counts --- 
+                                else if (filterKey === 'engine_from' || filterKey === 'engine_to') {
+                                      const engineCounts = updatedCounts['engine_capacity'] || {}; // Get counts for the base field
+                                      const currentVal = element.value; // Preserve selection
+ 
+                                      element.querySelectorAll('option').forEach(opt => {
+                                         if (opt.value) { // Skip the "Any" option
+                                             const engineValue = opt.value; // e.g., "1.0", "7.0"
+                                             const count = engineCounts[engineValue] || 0;
+                                             // Reconstruct the display text with the new count
+                                             const numericValue = parseFloat(engineValue);
+                                             const displayNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1);
+                                             opt.textContent = displayNum + 'L (' + count + ')'; // Format: 1.0L (5) or 7L (2)
+                                             // Don't disable based on count, similar to AutoTrader
+                                             // opt.disabled = (count === 0);
+                                         }
+                                      });
+                                     // Restore selection if possible
+                                     if (currentVal && element.querySelector(`option[value="${currentVal}"]`)) {
+                                         element.value = currentVal;
+                                     }
+                                 }
                             });
                             
                             // Ensure Model/Variant selects are enabled/disabled correctly after update

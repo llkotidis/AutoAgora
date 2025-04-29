@@ -364,8 +364,8 @@ function ajax_update_filter_counts_handler() {
         'drive_type'     => ['type' => 'simple', 'multi' => true],
         'year_min'       => ['type' => 'range_min', 'multi' => false],
         'year_max'       => ['type' => 'range_max', 'multi' => false],
-        'engine_min'     => ['type' => 'range_min', 'multi' => false],
-        'engine_max'     => ['type' => 'range_max', 'multi' => false],
+        'engine_from'    => ['type' => 'range_limit', 'multi' => false], // New engine from
+        'engine_to'      => ['type' => 'range_limit', 'multi' => false], // New engine to
         'mileage_min'    => ['type' => 'range_min', 'multi' => false],
         'mileage_max'    => ['type' => 'range_max', 'multi' => false],
     );
@@ -374,8 +374,11 @@ function ajax_update_filter_counts_handler() {
     foreach ($filter_keys as $key => $config) {
         $type = $config['type'];
         $is_multi = $config['multi'];
-        $base_key = str_replace(array('_min', '_max'), '', $key); // Get the ACF field name
+        $base_key = str_replace(array('_min', '_max', '_from', '_to'), '', $key); // Adjusted base key calculation
         $value = isset($filters[$key]) ? $filters[$key] : '';
+
+        // Determine actual meta key (special case for engine)
+        $meta_key_for_query = ($base_key === 'engine') ? 'engine_capacity' : $base_key;
 
         if (!empty($value)) {
             // Sanitize differently based on multi-select or not
@@ -392,32 +395,34 @@ function ajax_update_filter_counts_handler() {
             if ($type === 'simple') {
                  if ($is_multi && is_array($sanitized_value)) {
                      $meta_query[] = array(
-                         'key'     => $base_key,
+                         'key'     => $meta_key_for_query,
                          'value'   => $sanitized_value, // Pass the array
                          'compare' => 'IN', 
                     );
                  } elseif (!$is_multi) {
                      $meta_query[] = array(
-                         'key'     => $base_key,
+                         'key'     => $meta_key_for_query,
                          'value'   => $sanitized_value,
                          'compare' => '=',
                      );
                  }
-            } elseif ($type === 'range_min') {
-                 $meta_query[] = array(
-                    'key'     => $base_key,
-                    'value'   => floatval($sanitized_value), // Use floatval for numeric comparison
-                    'compare' => '>=',
-                    'type'    => 'NUMERIC',
-                 );
-            } elseif ($type === 'range_max') {
-                 $meta_query[] = array(
-                    'key'     => $base_key,
-                    'value'   => floatval($sanitized_value), // Use floatval for numeric comparison
-                    'compare' => '<=',
-                    'type'    => 'NUMERIC',
-                 );
-            }
+            } elseif ($type === 'range_min' || $type === 'range_max') { // Combine range min/max logic
+                 $compare = ($type === 'range_min') ? '>=' : '<=';
+                  $meta_query[] = array(
+                     'key'     => $meta_key_for_query,
+                     'value'   => floatval($sanitized_value), // Use floatval for numeric comparison
+                     'compare' => $compare,
+                     'type'    => 'NUMERIC',
+                  );
+             } elseif ($type === 'range_limit') { // Handle engine_from / engine_to
+                  $compare = ($key === 'engine_from') ? '>=' : '<=';
+                  $meta_query[] = array(
+                     'key'     => 'engine_capacity', // Always use engine_capacity
+                     'value'   => floatval($sanitized_value),
+                     'compare' => $compare,
+                     'type'    => 'NUMERIC',
+                  );
+             }
         }
     }
 
@@ -520,8 +525,35 @@ function ajax_update_filter_counts_handler() {
                      $field_key // Bind the meta_key for counting
                  );
 
-            } else {
-                 // For single-select, calculate counts based on the initial matching_post_ids
+            }
+            // Special handling to get counts for ENGINE CAPACITY (used by engine_from/engine_to)
+            elseif ($field_key === 'engine_capacity') {
+                 // Calculate counts based on all filters EXCEPT engine_from and engine_to
+                 $temp_meta_query = array_filter($meta_query, function($clause) {
+                     // Keep relation, remove clauses matching engine_from/engine_to keys
+                     return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== 'engine_capacity');
+                 }, ARRAY_FILTER_USE_BOTH);
+                 $temp_meta_query = array_values($temp_meta_query); // Reindex
+                 
+                 $meta_sql = build_meta_sql_clauses($temp_meta_query);
+ 
+                 // Get counts for engine_capacity, filtering posts using the temporary meta query
+                 $sql = $wpdb->prepare(
+                     "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
+                      FROM {$wpdb->posts} p
+                      INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
+                      . $meta_sql['joins'] . 
+                     " WHERE p.post_type = 'car'
+                      AND p.post_status = 'publish'"
+                      . $meta_sql['where'] . 
+                     " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
+                      GROUP BY pm_count.meta_value",
+                     'engine_capacity' // Hardcoded field key to count
+                 );
+             }
+             else {
+                 // For single-select (excluding engine_capacity handled above), 
+                 // calculate counts based on the initial matching_post_ids
                  if (!empty($matching_post_ids)) {
                      $sql = $wpdb->prepare(
                          "SELECT meta_value, COUNT(DISTINCT post_id) as count 
@@ -537,7 +569,7 @@ function ajax_update_filter_counts_handler() {
                      $sql = ''; // No need to query
                      $field_counts = array(); // Empty counts
                  }
-            }
+             }
 
             if ($sql) { // Only query if SQL was generated
                  $results = $wpdb->get_results($sql, OBJECT_K);
