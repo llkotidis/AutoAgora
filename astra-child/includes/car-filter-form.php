@@ -775,18 +775,27 @@ function display_car_filter_form( $context = 'default' ) {
                                       const countDataKey = (filterKey === 'engine_from') ? 'engine_counts_from' : 'engine_counts_to';
                                       const engineCounts = updatedCounts[countDataKey] || {};
                                       const currentVal = element.value; // Preserve selection
+                                      console.log(`Updating counts for ${filterKey}. Count data:`, engineCounts); // Added log
   
                                       element.querySelectorAll('option').forEach(opt => {
                                          if (opt.value) { // Skip the "Any" option
                                              const engineValueKey = opt.value; // e.g., "1.0", "7.0"
                                              const count = engineCounts[engineValueKey] || 0;
+                                             console.log(`  Option Value: ${engineValueKey}, Found Count: ${count}`); // Added log
+
                                              // --- Reconstruct the entire option text --- 
                                              // 1. Get the base numeric value
                                              const numericValue = parseFloat(engineValueKey);
                                              // 2. Format it for display (always one decimal place)
-                                             const displayNum = numericValue.toFixed(1);
-                                             // 3. Set the text content including the count
-                                             opt.textContent = displayNum + 'L (' + count + ')'; 
+                                             if (!isNaN(numericValue)) { // Check if parsing worked
+                                                 const displayNum = numericValue.toFixed(1);
+                                                 // 3. Set the text content including the count
+                                                 const newText = displayNum + 'L (' + count + ')'; 
+                                                 console.log(`  Setting text for ${engineValueKey} to: ${newText}`); // Added log
+                                                 opt.textContent = newText;
+                                             } else {
+                                                  console.error(`  Failed to parse numeric value for option value: ${engineValueKey}`); // Added log
+                                             }
                                              // ------------------------------------------
                                              
                                              // Don't disable based on count
