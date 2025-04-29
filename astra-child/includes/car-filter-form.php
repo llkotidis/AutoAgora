@@ -122,8 +122,8 @@ function display_car_filter_form( $context = 'default' ) {
     // --- Generate Static Ranges ---
     $current_year = date('Y');
     $years = range($current_year, 1990); // Example range
-    $engine_capacities = array(); // Example range for engine size (e.g., 1.0 to 6.0)
-    for ($i = 1.0; $i <= 6.0; $i += 0.1) { $engine_capacities[] = number_format($i, 1); }
+    // Use the specific list provided by the user
+    $engine_capacities = [1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
     $mileages = range(0, 300000, 10000); // Example range
 
     // --- Get Make/Model/Variant Data from JSONs ---
