@@ -704,8 +704,7 @@ function display_car_filter_form( $context = 'default' ) {
                                             }
                                             break; // Skip generic update 
                                         case 'model':
-                                            const makeSelectForModel = form.querySelector('#filter-make-' + context);
-                                            const selectedMake = makeSelectForModel ? makeSelectForModel.value : null;
+                                            const selectedMake = form.querySelector('#filter-make-' + context).value;
                                             if (selectedMake && makeModelVariantStructure[selectedMake]) {
                                                 choicesForThisSelect = Object.keys(makeModelVariantStructure[selectedMake])
                                                                             .reduce((obj, key) => { obj[key] = key; return obj; }, {});
@@ -718,10 +717,8 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForModel, defaultText);
                                             break;
                                         case 'variant':
-                                            const makeSelectForVariant = form.querySelector('#filter-make-' + context);
-                                            const modelSelectForVariant = form.querySelector('#filter-model-' + context);
-                                            const selMake = makeSelectForVariant ? makeSelectForVariant.value : null;
-                                            const selModel = modelSelectForVariant ? modelSelectForVariant.value : null;
+                                            const selMake = form.querySelector('#filter-make-' + context).value;
+                                            const selModel = form.querySelector('#filter-model-' + context).value;
                                             if (selMake && selModel && makeModelVariantStructure[selMake] && makeModelVariantStructure[selMake][selModel]) {
                                                 choicesForThisSelect = makeModelVariantStructure[selMake][selModel]
                                                                             .reduce((obj, key) => { obj[key] = key; return obj; }, {});
@@ -734,6 +731,63 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForVariant, defaultText);
                                             break;
                                         // Add cases for any other standard selects if needed
+                                        case 'engine_from':
+                                            // Update counts for engine_from (minimum engine size)
+                                            const engineFromCounts = updatedCounts['engine_from'] || {};
+                                            const engineFromOptions = element.querySelectorAll('option');
+                                            
+                                            // Preserve current selection
+                                            const currentEngineFrom = element.value;
+                                            
+                                            // Update each option
+                                            engineFromOptions.forEach(opt => {
+                                                if (opt.value) { // Skip "Any" option
+                                                    const count = engineFromCounts[opt.value] || 0;
+                                                    
+                                                    // Get the current display text without the count
+                                                    const displayValue = opt.textContent.replace(/\s*\(\d+\)$/, '');
+                                                    
+                                                    // Set new text with count
+                                                    opt.textContent = displayValue + ' (' + count + ')';
+                                                    
+                                                    // Don't disable options with 0 count (per requirements)
+                                                }
+                                            });
+                                            
+                                            // Restore selection
+                                            if (currentEngineFrom) {
+                                                element.value = currentEngineFrom;
+                                            }
+                                            break;
+                                            
+                                        case 'engine_to':
+                                            // Update counts for engine_to (maximum engine size)
+                                            const engineToCounts = updatedCounts['engine_to'] || {};
+                                            const engineToOptions = element.querySelectorAll('option');
+                                            
+                                            // Preserve current selection
+                                            const currentEngineTo = element.value;
+                                            
+                                            // Update each option
+                                            engineToOptions.forEach(opt => {
+                                                if (opt.value) { // Skip "Any" option
+                                                    const count = engineToCounts[opt.value] || 0;
+                                                    
+                                                    // Get the current display text without the count
+                                                    const displayValue = opt.textContent.replace(/\s*\(\d+\)$/, '');
+                                                    
+                                                    // Set new text with count
+                                                    opt.textContent = displayValue + ' (' + count + ')';
+                                                    
+                                                    // Don't disable options with 0 count (per requirements)
+                                                }
+                                            });
+                                            
+                                            // Restore selection
+                                            if (currentEngineTo) {
+                                                element.value = currentEngineTo;
+                                            }
+                                            break;
                                      }
                                 // --- Update Multi Select --- 
                                 } else if (element.matches('.multi-select-filter')) {
@@ -754,31 +808,8 @@ function display_car_filter_form( $context = 'default' ) {
                                     // themselves haven't changed, only the counts beside them.
                                 }
                                 // --- Update Engine From/To Select Counts --- 
-                                else if (filterKey === 'engine_from' || filterKey === 'engine_to') {
-                                      // Use the specific count array returned from backend
-                                      const countArrayKey = (filterKey === 'engine_from') ? 'engine_from_counts' : 'engine_to_counts';
-                                      const engineCounts = updatedCounts[countArrayKey] || {}; 
-                                      const currentVal = element.value; // Preserve selection
- 
-                                      element.querySelectorAll('option').forEach(opt => {
-                                         if (opt.value) { // Skip the "Any" option
-                                             const engineValue = opt.value; // e.g., "1.0", "7.0"
-                                             // Lookup count using the formatted option value as key
-                                             const count = engineCounts[engineValue] !== undefined ? engineCounts[engineValue] : 0; 
-                                             // Reconstruct the display text with the new count
-                                             const numericValue = parseFloat(engineValue);
-                                             // Always display with one decimal place using native JS toFixed()
-                                             const displayNum = numericValue.toFixed(1);
-                                             opt.textContent = displayNum + 'L (' + count + ')'; // Format: 1.0L (5) or 7.0L (2)
-                                             // Don't disable based on count, similar to AutoTrader
-                                             // opt.disabled = (count === 0);
-                                         }
-                                      });
-                                     // Restore selection if possible
-                                     if (currentVal && element.querySelector(`option[value="${currentVal}"]`)) {
-                                         element.value = currentVal;
-                                     }
-                                 }
+                                // This section is now handled by the specific cases above
+                                // Removing the old code that was not working properly
                             });
                             
                             // Ensure Model/Variant selects are enabled/disabled correctly after update
