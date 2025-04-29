@@ -563,7 +563,7 @@ function ajax_update_filter_counts_handler() {
                  // Execute the query to get raw counts { 'actual_value': count, ... }
                  $raw_engine_counts = [];
                  if ($sql) {
-                     // error_log("Engine Count SQL: " . $sql); // Temporary Debugging
+                     error_log("Engine Count SQL: " . $sql); // Temporary Debugging
                      $results = $wpdb->get_results($sql);
                      if ($results) {
                          foreach ($results as $row) {
@@ -574,7 +574,7 @@ function ajax_update_filter_counts_handler() {
                          }
                      }
                  }
-                 // error_log("Raw Engine Counts: " . print_r($raw_engine_counts, true)); // Temporary Debugging
+                 error_log("Raw Engine Counts: " . print_r($raw_engine_counts, true)); // Temporary Debugging
                  
                  // Now, calculate cumulative counts based on the fixed list
                  $cumulative_counts_from = [];
@@ -609,8 +609,8 @@ function ajax_update_filter_counts_handler() {
                  // Add these specific counts to the main response array
                  $updated_counts['engine_counts_from'] = $cumulative_counts_from;
                  $updated_counts['engine_counts_to'] = $cumulative_counts_to;
-                 // error_log("Cumulative From: " . print_r($cumulative_counts_from, true)); // Temp Debug
-                 // error_log("Cumulative To: " . print_r($cumulative_counts_to, true)); // Temp Debug
+                 error_log("Cumulative From: " . print_r($cumulative_counts_from, true)); // Temp Debug
+                 error_log("Cumulative To: " . print_r($cumulative_counts_to, true)); // Temp Debug
                  $sql = ''; // Prevent the generic result processing below for this key
                  $field_counts = []; // Prevent the generic result processing below for this key
             }
