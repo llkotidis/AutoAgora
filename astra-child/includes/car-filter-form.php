@@ -405,7 +405,6 @@ function display_car_filter_form( $context = 'default' ) {
             </div>
 
         </form>
-         <div class="filter-loading-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; text-align: center; padding-top: 50px;">Loading...</div>
     </div>
 
     <?php // Inline JS - Handles interdependent filtering ?>
@@ -421,7 +420,6 @@ function display_car_filter_form( $context = 'default' ) {
 
             const form = document.getElementById('car-filter-form-' + context);
             const container = form.closest('.car-filter-form-container');
-            const loadingOverlay = container.querySelector('.filter-loading-overlay');
             const filterSelects = form.querySelectorAll('select[data-filter-key]');
             const resetButton = form.querySelector('.filter-reset-button');
 
@@ -480,8 +478,6 @@ function display_car_filter_form( $context = 'default' ) {
 
             // --- Main Filter Update Function (AJAX Call) --- 
             function handleFilterChange() {
-                if (loadingOverlay) loadingOverlay.style.display = 'block';
-
                 const currentFilters = getCurrentFilters();
 
                 const formData = new FormData();
@@ -617,7 +613,7 @@ function display_car_filter_form( $context = 'default' ) {
                         // Maybe show an error message to the user
                     })
                     .finally(() => {
-                         if (loadingOverlay) loadingOverlay.style.display = 'none';
+                         // loadingOverlay removed
                     });
             }
 
