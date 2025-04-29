@@ -123,7 +123,7 @@ function display_car_filter_form( $context = 'default' ) {
     $current_year = date('Y');
     $years = range($current_year, 1990); // Example range
     // Use the specific list provided by the user
-    $engine_capacities = [1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
+    $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
     $mileages = range(0, 300000, 10000); // Example range
 
     // --- Get Make/Model/Variant Data from JSONs ---
@@ -244,7 +244,12 @@ function display_car_filter_form( $context = 'default' ) {
             function render_range_options($range, $selected_value = '', $suffix = '') {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
-                    echo "<option value=\"" . esc_attr($value) . "\"{$selected_attr}>" . esc_html($value . $suffix) . "</option>";
+                    // Format the display value: if it's numerically an integer, show as integer, else show with one decimal place.
+                    $numeric_value = floatval($value);
+                    $display_value_num = ($numeric_value == floor($numeric_value)) ? number_format($numeric_value, 0) : number_format($numeric_value, 1);
+                    // Add suffix with a preceding space if suffix exists
+                    $display_text = $display_value_num . ($suffix ? ' ' . trim($suffix) : ''); 
+                    echo "<option value=\"" . esc_attr($value) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
                 }
             }
             ?>
