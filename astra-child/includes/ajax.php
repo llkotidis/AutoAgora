@@ -441,8 +441,17 @@ function ajax_update_filter_counts_handler() {
     $all_field_keys_to_count = array_keys($filter_keys); // Get all keys including ranges initially
     $count_fields = array_filter($all_field_keys_to_count, function($key) use ($filter_keys) {
         // Only get counts for fields that are not range min/max
-        return $filter_keys[$key]['type'] === 'simple';
+        // return $filter_keys[$key]['type'] === 'simple'; // Original filter
+        // We need counts for simple fields AND engine_capacity base field
+         return $filter_keys[$key]['type'] === 'simple' || $key === 'engine_capacity'; 
     });
+     // Manually add engine_capacity if not already present (needed for from/to counts)
+     if (!in_array('engine_capacity', $count_fields)) {
+         $count_fields[] = 'engine_capacity';
+     }
+
+    // Define the fixed engine capacities list (should match the one in car-filter-form.php)
+     $fixed_engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
 
     if (!empty($matching_post_ids) || true) { // Calculate counts even if initial match is empty for multi-select logic
         global $wpdb;
@@ -531,25 +540,67 @@ function ajax_update_filter_counts_handler() {
                  // Calculate counts based on all filters EXCEPT engine_from and engine_to
                  $temp_meta_query = array_filter($meta_query, function($clause) {
                      // Keep relation, remove clauses matching engine_from/engine_to keys
-                     return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== 'engine_capacity');
+                     // Check the key within the clause array
+                     return isset($clause['relation']) || 
+                            (isset($clause['key']) && $clause['key'] !== 'engine_capacity'); 
                  }, ARRAY_FILTER_USE_BOTH);
                  $temp_meta_query = array_values($temp_meta_query); // Reindex
                  
                  $meta_sql = build_meta_sql_clauses($temp_meta_query);
  
-                 // Get counts for engine_capacity, filtering posts using the temporary meta query
-                 $sql = $wpdb->prepare(
-                     "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
-                      FROM {$wpdb->posts} p
-                      INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
-                      . $meta_sql['joins'] . 
-                     " WHERE p.post_type = 'car'
-                      AND p.post_status = 'publish'"
-                      . $meta_sql['where'] . 
-                     " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
-                      GROUP BY pm_count.meta_value",
-                     'engine_capacity' // Hardcoded field key to count
-                 );
+                 // Get RAW counts for actual engine_capacity values present in the filtered posts
+                  $sql = $wpdb->prepare(
+                      "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
+                       FROM {$wpdb->posts} p
+                       INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
+                       . $meta_sql['joins'] . 
+                      " WHERE p.post_type = 'car'
+                       AND p.post_status = 'publish'"
+                       . $meta_sql['where'] . 
+                      " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
+                       GROUP BY pm_count.meta_value",
+                      'engine_capacity' // Hardcoded field key to count
+                  );
+                 // Execute the query to get raw counts { 'actual_value': count, ... }
+                  $raw_engine_counts = [];
+                  if ($sql) {
+                      $results = $wpdb->get_results($sql);
+                      if ($results) {
+                          foreach ($results as $row) {
+                              // Ensure value is float for comparison
+                              $raw_engine_counts[floatval($row->meta_value)] = (int)$row->count;
+                          }
+                      }
+                  }
+                  
+                  // Now, calculate cumulative counts based on the fixed list
+                  $cumulative_counts_from = [];
+                  $cumulative_counts_to = [];
+                  $total_matching_cars = array_sum($raw_engine_counts); // Total cars matching other filters
+ 
+                  foreach ($fixed_engine_capacities as $capacity_option) {
+                       $count_from = 0;
+                       $count_to = 0;
+                       // Iterate through actual engine sizes found
+                       foreach ($raw_engine_counts as $actual_capacity => $count) {
+                           if ($actual_capacity >= $capacity_option) {
+                               $count_from += $count;
+                           }
+                           if ($actual_capacity <= $capacity_option) {
+                               $count_to += $count;
+                           }
+                       }
+                       // Store counts keyed by the option value (formatted as string with .0)
+                       $option_key = number_format($capacity_option, 1);
+                       $cumulative_counts_from[$option_key] = $count_from;
+                       $cumulative_counts_to[$option_key] = $count_to;
+                  }
+ 
+                  // Add these specific counts to the main response array
+                  $updated_counts['engine_counts_from'] = $cumulative_counts_from;
+                  $updated_counts['engine_counts_to'] = $cumulative_counts_to;
+                  $sql = ''; // Prevent the generic result processing below for this key
+                  $field_counts = []; // Prevent the generic result processing below for this key
              }
              else {
                  // For single-select (excluding engine_capacity handled above), 
@@ -579,69 +630,19 @@ function ajax_update_filter_counts_handler() {
                      }
                  }
             }
-            $updated_counts[$field_key] = $field_counts;
-        }
-        
-        // --- SPECIAL HANDLING FOR ENGINE CAPACITY COUNTS ---
-        
-        // Define the fixed list of engine capacities
-        $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0];
-        
-        // Get all actual engine capacity values from the database
-        $temp_meta_query = array_filter($meta_query, function($clause) {
-            // Keep relation, remove clauses matching engine_from/engine_to keys
-            return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== 'engine_capacity');
-        }, ARRAY_FILTER_USE_BOTH);
-        $temp_meta_query = array_values($temp_meta_query); // Reindex
-        
-        $meta_sql = build_meta_sql_clauses($temp_meta_query);
-        
-        // Query to get all engine capacities that match other filters
-        $engine_sql = $wpdb->prepare(
-            "SELECT DISTINCT pm_engine.meta_value AS engine_capacity
-             FROM {$wpdb->posts} p
-             INNER JOIN {$wpdb->postmeta} pm_engine ON (p.ID = pm_engine.post_id AND pm_engine.meta_key = %s)"
-            . $meta_sql['joins'] . 
-            " WHERE p.post_type = 'car'
-             AND p.post_status = 'publish'"
-            . $meta_sql['where'] . 
-            " AND pm_engine.meta_value IS NOT NULL AND pm_engine.meta_value != ''",
-            'engine_capacity'
-        );
-        
-        $engine_results = $wpdb->get_col($engine_sql);
-        
-        // Initialize counts for engine_from (min) and engine_to (max)
-        $engine_from_counts = array();
-        $engine_to_counts = array();
-        
-        // For each engine capacity in our fixed list
-        foreach ($engine_capacities as $capacity) {
-            $capacity_str = number_format($capacity, 1); // Format with one decimal place
-            
-            // Calculate counts for engine_from (cars with engine >= this capacity)
-            $engine_from_count = 0;
-            foreach ($engine_results as $actual_capacity) {
-                if (floatval($actual_capacity) >= floatval($capacity)) {
-                    $engine_from_count++;
-                }
+            // Only assign if not engine capacity (handled above)
+            if ($field_key !== 'engine_capacity') {
+                $updated_counts[$field_key] = $field_counts;
             }
-            $engine_from_counts[$capacity_str] = $engine_from_count;
-            
-            // Calculate counts for engine_to (cars with engine <= this capacity)
-            $engine_to_count = 0;
-            foreach ($engine_results as $actual_capacity) {
-                if (floatval($actual_capacity) <= floatval($capacity)) {
-                    $engine_to_count++;
-                }
-            }
-            $engine_to_counts[$capacity_str] = $engine_to_count;
         }
-        
-        // Add the counts to the results
-        $updated_counts['engine_capacity'] = $engine_from_counts; // Base field for displaying both types
-        $updated_counts['engine_from'] = $engine_from_counts; // Specific counts for from dropdown
-        $updated_counts['engine_to'] = $engine_to_counts; // Specific counts for to dropdown
+        // Note: We don't calculate counts for range inputs (year, mileage, engine) dynamically in this example.
+        // Their options remain static, only the main select filters update counts.
+
+    } else {
+        // If no posts match initially, and we didn't recalculate for multi-selects
+        foreach ($count_fields as $field_key) {
+            $updated_counts[$field_key] = array();
+        }
     }
     
     // Handle potential empty model/variant counts if make/model selected

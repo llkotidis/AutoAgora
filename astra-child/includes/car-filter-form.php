@@ -241,27 +241,19 @@ function display_car_filter_form( $context = 'default' ) {
                     echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
             }
-            // Modified helper function for range options to include counts
-            function render_range_options($range, $counts = array(), $selected_value = '', $suffix = '') {
+            function render_range_options($range, $selected_value = '', $suffix = '') {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
+                    // Format the display value 
                     $numeric_value = floatval($value);
-                    // Format the value attribute to always have one decimal place for consistency (e.g., engine)
-                    $value_attr = number_format($numeric_value, ($suffix === 'L' ? 1 : 0)); 
-                    // Always format display number to one decimal place if suffix is 'L', otherwise integer
-                    $display_value_num = number_format($numeric_value, ($suffix === 'L' ? 1 : 0)); 
+                    $display_value_num = number_format($numeric_value, 1);
                     // Add suffix WITHOUT a preceding space if suffix exists
-                    $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
-
-                    // Get count for this specific formatted value
-                    // Note: Counts array keys must match the formatted $value_attr
-                    $count = isset($counts[$value_attr]) ? $counts[$value_attr] : 0;
-                    $display_text .= ' (' . $count . ')'; // Add count display
-
-                    // Disable if count is 0 (and not the selected value, though select won't hold selection if disabled)
-                    $disabled_attr = ($count === 0) ? ' disabled="disabled"' : ''; 
-
-                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
+                    $display_text_base = $display_value_num . ($suffix ? trim($suffix) : '');
+                    // Format the value attribute to always have one decimal place before escaping
+                    $value_attr = number_format($numeric_value, 1); 
+                    // Initial count display (will be updated by JS)
+                    $display_text_full = $display_text_base . ' (<span class="option-count">0</span>)';
+                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . $display_text_full . "</option>"; // Use wp_kses_post or similar if needed for span
                 }
             }
             ?>
@@ -319,12 +311,12 @@ function display_car_filter_form( $context = 'default' ) {
                 <div class="filter-range-fields">
                     <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
-                        <?php render_range_options($years, array(), '', ''); ?>
+                        <?php render_range_options($years); ?>
                     </select>
                     <span class="range-separator">-</span>
                     <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
-                         <?php render_range_options($years, array(), '', ''); ?>
+                         <?php render_range_options($years); ?>
                    </select>
                 </div>
             </div>
@@ -335,12 +327,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-engine-from-<?php echo esc_attr($context); ?>" name="filter_engine_from" data-filter-key="engine_from">
                         <option value="">From Any</option>
-                         <?php render_range_options($engine_capacities, array(), '', 'L'); ?>
+                         <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-engine-to-<?php echo esc_attr($context); ?>" name="filter_engine_to" data-filter-key="engine_to">
                         <option value="">To Any</option>
-                        <?php render_range_options($engine_capacities, array(), '', 'L'); ?>
+                        <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                 </div>
             </div>
@@ -351,12 +343,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
-                         <?php render_range_options($mileages, array(), '', ' km'); ?>
+                         <?php render_range_options($mileages, '', ' km'); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
-                        <?php render_range_options($mileages, array(), '', ' km'); ?>
+                        <?php render_range_options($mileages, '', ' km'); ?>
                     </select>
                 </div>
             </div>
@@ -741,63 +733,6 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForVariant, defaultText);
                                             break;
                                         // Add cases for any other standard selects if needed
-                                        case 'engine_from':
-                                            // Update counts for engine_from (minimum engine size)
-                                            const engineFromCounts = updatedCounts['engine_from'] || {};
-                                            const engineFromOptions = element.querySelectorAll('option');
-                                            
-                                            // Preserve current selection
-                                            const currentEngineFrom = element.value;
-                                            
-                                            // Update each option
-                                            engineFromOptions.forEach(opt => {
-                                                if (opt.value) { // Skip "Any" option
-                                                    const count = engineFromCounts[opt.value] || 0;
-                                                    
-                                                    // Get the current display text without the count
-                                                    const displayValue = opt.textContent.replace(/\s*\(\d+\)$/, '');
-                                                    
-                                                    // Set new text with count
-                                                    opt.textContent = displayValue + ' (' + count + ')';
-                                                    
-                                                    // Don't disable options with 0 count (per requirements)
-                                                }
-                                            });
-                                            
-                                            // Restore selection
-                                            if (currentEngineFrom) {
-                                                element.value = currentEngineFrom;
-                                            }
-                                            break;
-                                            
-                                        case 'engine_to':
-                                            // Update counts for engine_to (maximum engine size)
-                                            const engineToCounts = updatedCounts['engine_to'] || {};
-                                            const engineToOptions = element.querySelectorAll('option');
-                                            
-                                            // Preserve current selection
-                                            const currentEngineTo = element.value;
-                                            
-                                            // Update each option
-                                            engineToOptions.forEach(opt => {
-                                                if (opt.value) { // Skip "Any" option
-                                                    const count = engineToCounts[opt.value] || 0;
-                                                    
-                                                    // Get the current display text without the count
-                                                    const displayValue = opt.textContent.replace(/\s*\(\d+\)$/, '');
-                                                    
-                                                    // Set new text with count
-                                                    opt.textContent = displayValue + ' (' + count + ')';
-                                                    
-                                                    // Don't disable options with 0 count (per requirements)
-                                                }
-                                            });
-                                            
-                                            // Restore selection
-                                            if (currentEngineTo) {
-                                                element.value = currentEngineTo;
-                                            }
-                                            break;
                                      }
                                 // --- Update Multi Select --- 
                                 } else if (element.matches('.multi-select-filter')) {
@@ -818,8 +753,34 @@ function display_car_filter_form( $context = 'default' ) {
                                     // themselves haven't changed, only the counts beside them.
                                 }
                                 // --- Update Engine From/To Select Counts --- 
-                                // This section is now handled by the specific cases above
-                                // Removing the old code that was not working properly
+                                else if (filterKey === 'engine_from' || filterKey === 'engine_to') {
+                                      // Determine which count array to use
+                                      const countDataKey = (filterKey === 'engine_from') ? 'engine_counts_from' : 'engine_counts_to';
+                                      const engineCounts = updatedCounts[countDataKey] || {};
+                                      const currentVal = element.value; // Preserve selection
+  
+                                      element.querySelectorAll('option').forEach(opt => {
+                                         if (opt.value) { // Skip the "Any" option
+                                             const engineValueKey = opt.value; // e.g., "1.0", "7.0"
+                                             const count = engineCounts[engineValueKey] || 0;
+                                             const countSpan = opt.querySelector('.option-count');
+                                             // Update the count span text
+                                             if (countSpan) {
+                                                 countSpan.textContent = count;
+                                             } else {
+                                                 // Fallback if span wasn't rendered (should be there now)
+                                                 const numericValue = parseFloat(engineValueKey);
+                                                 const displayNum = number_format(numericValue, 1);
+                                                 opt.textContent = displayNum + 'L (' + count + ')';
+                                             }
+                                             // Don't disable based on count
+                                         }
+                                      });
+                                     // Restore selection if possible
+                                     if (currentVal && element.querySelector(`option[value="${currentVal}"]`)) {
+                                         element.value = currentVal;
+                                     }
+                                 }
                             });
                             
                             // Ensure Model/Variant selects are enabled/disabled correctly after update
