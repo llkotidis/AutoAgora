@@ -244,9 +244,9 @@ function display_car_filter_form( $context = 'default' ) {
             function render_range_options($range, $selected_value = '', $suffix = '') {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
-                    // Format the display value: if it's numerically an integer, show as integer, else show with one decimal place.
                     $numeric_value = floatval($value);
-                    $display_value_num = ($numeric_value == floor($numeric_value)) ? number_format($numeric_value, 0) : number_format($numeric_value, 1);
+                    // Always format display number to one decimal place
+                    $display_value_num = number_format($numeric_value, 1); 
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
                     // Format the value attribute to always have one decimal place before escaping
