@@ -346,10 +346,11 @@ function display_car_filter_form( $context = 'default' ) {
 
              <!-- Fuel Type Selector -->
             <div class="filter-form-group filter-group-fuel">
-                <label>Fuel Type</label> <?php // Removed 'for' attribute as target is custom ?>
+                <?php $field_label = "Fuel Type"; // Define label text ?>
+                <label><?php echo esc_html($field_label); ?></label>
                 <div class="multi-select-filter" data-filter-key="fuel_type">
-                    <div class="multi-select-display">
-                        <span>All Fuel Types</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -371,11 +372,12 @@ function display_car_filter_form( $context = 'default' ) {
             </div>
 
             <!-- Transmission Selector -->
-             <div class="filter-form-group filter-group-transmission">
-                <label>Transmission</label>
+            <div class="filter-form-group filter-group-transmission">
+                <?php $field_label = "Transmission"; ?>
+                <label><?php echo esc_html($field_label); ?></label>
                  <div class="multi-select-filter" data-filter-key="transmission">
-                    <div class="multi-select-display">
-                        <span>All Transmissions</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -395,12 +397,13 @@ function display_car_filter_form( $context = 'default' ) {
                  </div>
             </div>
 
-             <!-- Body Type Selector -->
+            <!-- Body Type Selector -->
              <div class="filter-form-group filter-group-bodytype">
-                <label>Body Type</label>
+                 <?php $field_label = "Body Type"; ?>
+                <label><?php echo esc_html($field_label); ?></label>
                  <div class="multi-select-filter" data-filter-key="body_type">
-                    <div class="multi-select-display">
-                        <span>All Body Types</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -420,12 +423,13 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
-             <!-- Drive Type Selector -->
+            <!-- Drive Type Selector -->
              <div class="filter-form-group filter-group-drivetype">
-                <label>Drive Type</label>
+                 <?php $field_label = "Drive Type"; ?>
+                <label><?php echo esc_html($field_label); ?></label>
                  <div class="multi-select-filter" data-filter-key="drive_type">
-                    <div class="multi-select-display">
-                        <span>All Drive Types</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -445,12 +449,13 @@ function display_car_filter_form( $context = 'default' ) {
                  </div>
             </div>
 
-             <!-- Exterior Color Selector -->
-             <div class="filter-form-group filter-group-extcolor">
-                <label>Exterior Color</label>
+            <!-- Exterior Color Selector -->
+            <div class="filter-form-group filter-group-extcolor">
+                <?php $field_label = "Exterior Color"; ?>
+                <label><?php echo esc_html($field_label); ?></label>
                  <div class="multi-select-filter" data-filter-key="exterior_color">
-                    <div class="multi-select-display">
-                        <span>Any Exterior Color</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -470,12 +475,13 @@ function display_car_filter_form( $context = 'default' ) {
                  </div>
             </div>
 
-             <!-- Interior Color Selector -->
+            <!-- Interior Color Selector -->
              <div class="filter-form-group filter-group-intcolor">
-                <label>Interior Color</label>
+                <?php $field_label = "Interior Color"; ?>
+                <label><?php echo esc_html($field_label); ?></label>
                  <div class="multi-select-filter" data-filter-key="interior_color">
-                    <div class="multi-select-display">
-                        <span>Any Interior Color</span>
+                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                        <span>Select <?php echo esc_html($field_label); ?></span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <div class="multi-select-popup">
@@ -552,7 +558,8 @@ function display_car_filter_form( $context = 'default' ) {
                 const displaySpan = multiSelectElement.querySelector('.multi-select-display > span:first-child');
                 const checkboxes = multiSelectElement.querySelectorAll('.multi-select-popup input[type="checkbox"]:checked');
                 const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
-                const defaultText = displaySpan.parentElement.parentElement.querySelector('label')?.textContent || 'Select Options'; // Get default text better
+                // Get default text from data attribute
+                const defaultText = multiSelectElement.querySelector('.multi-select-display').getAttribute('data-default-text') || 'Select Options'; 
 
                 const selectedLabels = [];
                 const selectedValues = [];
@@ -638,14 +645,14 @@ function display_car_filter_form( $context = 'default' ) {
 
                 const currentFilters = getCurrentFilters();
 
-                const formData = new FormData();
+                    const formData = new FormData();
                 formData.append('action', updateAction);
                 formData.append('nonce', updateNonce);
                 for (const key in currentFilters) {
                      formData.append(`filters[${key}]`, currentFilters[key]);
                 }
-                
-                fetch(ajaxUrl, { method: 'POST', body: formData })
+
+                    fetch(ajaxUrl, { method: 'POST', body: formData })
                     .then(response => {
                          if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
