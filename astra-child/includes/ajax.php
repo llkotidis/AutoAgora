@@ -548,7 +548,7 @@ function ajax_update_filter_counts_handler() {
                  $meta_sql = build_meta_sql_clauses($temp_meta_query);
  
                  // Get RAW counts for actual engine_capacity values present in the filtered posts
-                 $sql = $wpdb->prepare(
+                 $sql_for_raw_counts = $wpdb->prepare(
                      "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
                       FROM {$wpdb->posts} p
                       INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
@@ -562,9 +562,9 @@ function ajax_update_filter_counts_handler() {
                  );
                  // Execute the query to get raw counts { 'actual_value': count, ... }
                  $raw_engine_counts = [];
-                 if ($sql) {
-                     error_log("Engine Count SQL: " . $sql); // Temporary Debugging
-                     $results = $wpdb->get_results($sql);
+                 if ($sql_for_raw_counts) {
+                     // error_log("Engine Count SQL: " . $sql_for_raw_counts); // Keep PHP log commented for now
+                     $results = $wpdb->get_results($sql_for_raw_counts);
                      if ($results) {
                          foreach ($results as $row) {
                              // Ensure value is float for comparison
@@ -574,7 +574,7 @@ function ajax_update_filter_counts_handler() {
                          }
                      }
                  }
-                 error_log("Raw Engine Counts: " . print_r($raw_engine_counts, true)); // Temporary Debugging
+                 // error_log("Raw Engine Counts: " . print_r($raw_engine_counts, true)); // Keep PHP log commented
                  
                  // Now, calculate cumulative counts based on the fixed list
                  $cumulative_counts_from = [];
@@ -609,8 +609,18 @@ function ajax_update_filter_counts_handler() {
                  // Add these specific counts to the main response array
                  $updated_counts['engine_counts_from'] = $cumulative_counts_from;
                  $updated_counts['engine_counts_to'] = $cumulative_counts_to;
-                 error_log("Cumulative From: " . print_r($cumulative_counts_from, true)); // Temp Debug
-                 error_log("Cumulative To: " . print_r($cumulative_counts_to, true)); // Temp Debug
+                 // error_log("Cumulative From: " . print_r($cumulative_counts_from, true)); // Keep PHP log commented
+                 // error_log("Cumulative To: " . print_r($cumulative_counts_to, true)); // Keep PHP log commented
+                
+                 // ---> Add debug info for console <--- 
+                 $updated_counts['_debug_engine'] = [
+                    'sql_raw' => $sql_for_raw_counts, // The SQL used
+                    'raw_counts' => $raw_engine_counts,
+                    'cumulative_from' => $cumulative_counts_from,
+                    'cumulative_to' => $cumulative_counts_to
+                 ];
+                 // -------------------------------------
+
                  $sql = ''; // Prevent the generic result processing below for this key
                  $field_counts = []; // Prevent the generic result processing below for this key
             }

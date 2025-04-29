@@ -671,7 +671,19 @@ function display_car_filter_form( $context = 'default' ) {
                     .then(result => {
                         if (result.success && result.data) {
                             const updatedCounts = result.data;
-                           // console.log("Received updated counts:", updatedCounts); // Debugging
+
+                            // --- START Console Logging for Engine Debug ---
+                            if (updatedCounts._debug_engine) {
+                                console.group("Engine Count Debug Info (from Backend)");
+                                console.log("SQL Query for Raw Counts:", updatedCounts._debug_engine.sql_raw);
+                                console.log("Raw Counts Returned:", updatedCounts._debug_engine.raw_counts);
+                                console.log("Calculated Cumulative From:", updatedCounts._debug_engine.cumulative_from);
+                                console.log("Calculated Cumulative To:", updatedCounts._debug_engine.cumulative_to);
+                                console.groupEnd();
+                                // Clean up the debug info from the object if needed
+                                // delete updatedCounts._debug_engine; 
+                            }
+                            // --- END Console Logging ---
 
                             // Update each filter element (standard selects and multi-selects)
                             allFilterElements.forEach(element => {
