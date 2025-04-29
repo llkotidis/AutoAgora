@@ -764,8 +764,8 @@ function display_car_filter_form( $context = 'default' ) {
                                              const count = engineCounts[engineValue] !== undefined ? engineCounts[engineValue] : 0; 
                                              // Reconstruct the display text with the new count
                                              const numericValue = parseFloat(engineValue);
-                                             // Always display with one decimal place
-                                             const displayNum = number_format(numericValue, 1);
+                                             // Always display with one decimal place using native JS toFixed()
+                                             const displayNum = numericValue.toFixed(1);
                                              opt.textContent = displayNum + 'L (' + count + ')'; // Format: 1.0L (5) or 7.0L (2)
                                              // Don't disable based on count, similar to AutoTrader
                                              // opt.disabled = (count === 0);
