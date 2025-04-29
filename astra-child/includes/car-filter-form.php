@@ -244,16 +244,14 @@ function display_car_filter_form( $context = 'default' ) {
             function render_range_options($range, $selected_value = '', $suffix = '') {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
-                    // Format the display value 
                     $numeric_value = floatval($value);
-                    $display_value_num = number_format($numeric_value, 1);
+                    // Always format display number to one decimal place
+                    $display_value_num = number_format($numeric_value, 1); 
                     // Add suffix WITHOUT a preceding space if suffix exists
-                    $display_text_base = $display_value_num . ($suffix ? trim($suffix) : '');
+                    $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
                     // Format the value attribute to always have one decimal place before escaping
                     $value_attr = number_format($numeric_value, 1); 
-                    // Initial count display (will be updated by JS)
-                    $display_text_full = $display_text_base . ' (<span class="option-count">0</span>)';
-                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . $display_text_full . "</option>"; // Use wp_kses_post or similar if needed for span
+                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
                 }
             }
             ?>
@@ -323,15 +321,15 @@ function display_car_filter_form( $context = 'default' ) {
 
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
-                <label>Engine Size</label>
+                <label>Engine (L)</label>
                  <div class="filter-range-fields">
-                    <select id="filter-engine-from-<?php echo esc_attr($context); ?>" name="filter_engine_from" data-filter-key="engine_from">
-                        <option value="">From Any</option>
+                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min" data-filter-key="engine_min">
+                        <option value="">Min Size</option>
                          <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-engine-to-<?php echo esc_attr($context); ?>" name="filter_engine_to" data-filter-key="engine_to">
-                        <option value="">To Any</option>
+                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max" data-filter-key="engine_max">
+                        <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L'); ?>
                     </select>
                 </div>
@@ -541,6 +539,15 @@ function display_car_filter_form( $context = 'default' ) {
             // Store initial state for multi-selects to detect changes
             let multiSelectInitialValues = {}; 
 
+            // --- Helper: JS number_format (basic version) ---
+            function number_format(number, decimals = 0) {
+                number = parseFloat(number);
+                if (isNaN(number)) {
+                    return '';
+                }
+                return number.toFixed(decimals);
+            }
+
             // --- Helper: Get all current filter values --- 
             function getCurrentFilters() {
                 const filters = {};
@@ -641,15 +648,10 @@ function display_car_filter_form( $context = 'default' ) {
                 // If triggered by multi-select closing, check if value actually changed
                 if (triggeredByMultiSelectKey) {
                     const multiSelectElement = form.querySelector(`.multi-select-filter[data-filter-key="${triggeredByMultiSelectKey}"]`);
-                    if (multiSelectElement) { 
-                        const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
-                        if (hiddenInput && hiddenInput.value === multiSelectInitialValues[triggeredByMultiSelectKey]) {
-                            ajaxRequestPending = false;
-                            return; // Value didn't change, no need for AJAX
-                        }
-                    } else {
-                         // Log an error if the element wasn't found, as this is unexpected
-                         console.error(`handleFilterChange: Could not find multi-select element with key: ${triggeredByMultiSelectKey}`);
+                    const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
+                    if (hiddenInput.value === multiSelectInitialValues[triggeredByMultiSelectKey]) {
+                        ajaxRequestPending = false;
+                        return; // Value didn't change, no need for AJAX
                     }
                 }
                 
@@ -676,31 +678,19 @@ function display_car_filter_form( $context = 'default' ) {
                     .then(result => {
                         if (result.success && result.data) {
                             const updatedCounts = result.data;
-
-                            // --- START Console Logging for Engine Debug ---
-                            if (updatedCounts._debug_engine) {
-                                console.group("Engine Count Debug Info (from Backend)");
-                                console.log("SQL Query for Raw Counts:", updatedCounts._debug_engine.sql_raw);
-                                console.log("Raw Counts Returned:", updatedCounts._debug_engine.raw_counts);
-                                console.log("Calculated Cumulative From:", updatedCounts._debug_engine.cumulative_from);
-                                console.log("Calculated Cumulative To:", updatedCounts._debug_engine.cumulative_to);
-                                console.groupEnd();
-                                // Clean up the debug info from the object if needed
-                                // delete updatedCounts._debug_engine; 
-                            }
-                            // --- END Console Logging ---
+                           // console.log("Received updated counts:", updatedCounts); // Debugging
 
                             // Update each filter element (standard selects and multi-selects)
                             allFilterElements.forEach(element => {
                                 const filterKey = element.getAttribute('data-filter-key');
                                 
-                                // Skip range inputs, they don't get counts back
-                                if (filterKey.endsWith('_min') || filterKey.endsWith('_max')) {
-                                    return;
-                                }
-
                                 // --- Update Standard Select --- 
                                 if (element.matches('select')) {
+                                     // Skip range inputs here, handle them separately below
+                                     if (filterKey.endsWith('_min') || filterKey.endsWith('_max')) {
+                                          return;
+                                      }
+                                     
                                      let choicesForThisSelect = {};
                                      let defaultText = 'All'; // Generic default
                                     
@@ -750,7 +740,7 @@ function display_car_filter_form( $context = 'default' ) {
                                              updateSelectOptions(element, choicesForThisSelect, countsForVariant, defaultText);
                                             break;
                                         // Add cases for any other standard selects if needed
-                                     }
+                                    }
                                 // --- Update Multi Select --- 
                                 } else if (element.matches('.multi-select-filter')) {
                                     const countsForThisMultiSelect = updatedCounts[filterKey] || {};
@@ -769,45 +759,70 @@ function display_car_filter_form( $context = 'default' ) {
                                     // We don't need to call updateMultiSelectDisplay here, as the selections 
                                     // themselves haven't changed, only the counts beside them.
                                 }
-                                // --- Update Engine From/To Select Counts --- 
-                                else if (filterKey === 'engine_from' || filterKey === 'engine_to') {
-                                      // Determine which count array to use
-                                      const countDataKey = (filterKey === 'engine_from') ? 'engine_counts_from' : 'engine_counts_to';
-                                      const engineCounts = updatedCounts[countDataKey] || {};
-                                      const currentVal = element.value; // Preserve selection
-                                      console.log(`Updating counts for ${filterKey}. Count data:`, engineCounts); // Added log
-  
-                                      element.querySelectorAll('option').forEach(opt => {
-                                         if (opt.value) { // Skip the "Any" option
-                                             const engineValueKey = opt.value; // e.g., "1.0", "7.0"
-                                             const count = engineCounts[engineValueKey] || 0;
-                                             console.log(`  Option Value: ${engineValueKey}, Found Count: ${count}`); // Added log
-
-                                             // --- Reconstruct the entire option text --- 
-                                             // 1. Get the base numeric value
-                                             const numericValue = parseFloat(engineValueKey);
-                                             // 2. Format it for display (always one decimal place)
-                                             if (!isNaN(numericValue)) { // Check if parsing worked
-                                                 const displayNum = numericValue.toFixed(1);
-                                                 // 3. Set the text content including the count
-                                                 const newText = displayNum + 'L (' + count + ')'; 
-                                                 console.log(`  Setting text for ${engineValueKey} to: ${newText}`); // Added log
-                                                 opt.textContent = newText;
-                                             } else {
-                                                  console.error(`  Failed to parse numeric value for option value: ${engineValueKey}`); // Added log
-                                             }
-                                             // ------------------------------------------
-                                             
-                                             // Don't disable based on count
-                                         }
-                                      });
-                                     // Restore selection if possible
-                                     if (currentVal && element.querySelector(`option[value="${currentVal}"]`)) {
-                                         element.value = currentVal;
-                                     }
-                                 }
                             });
                             
+                            // --- Update Engine Range Selects --- 
+                            const engineCounts = updatedCounts.engine_capacity_counts || {};
+                            const engineMinSelect = form.querySelector('select[data-filter-key="engine_min"]');
+                            const engineMaxSelect = form.querySelector('select[data-filter-key="engine_max"]');
+
+                            function updateEngineOptions(selectElement, currentEngineCounts, suffix) {
+                                const options = selectElement.querySelectorAll('option');
+                                options.forEach(option => {
+                                    if (!option.value) return; // Skip default "Min/Max Size"
+                                    const value = option.value; // e.g., "1.0", "2.0"
+                                    const count = currentEngineCounts[value] || 0;
+                                    // Format display text (e.g., 2.0L (15))
+                                    const numericValue = parseFloat(value);
+                                    const displayValueNum = (numericValue == Math.floor(numericValue)) ? number_format(numericValue, 0) : number_format(numericValue, 1);
+                                     option.textContent = displayValueNum + suffix + ' (' + count + ')';
+                                    // Disable based on count
+                                    option.disabled = (count === 0);
+                                });
+                            }
+                            
+                            if (engineMinSelect) updateEngineOptions(engineMinSelect, engineCounts, 'L');
+                            if (engineMaxSelect) updateEngineOptions(engineMaxSelect, engineCounts, 'L');
+
+                            // --- Apply Min/Max Interaction Logic --- 
+                            if (engineMinSelect && engineMaxSelect) {
+                                const minVal = parseFloat(engineMinSelect.value);
+                                const maxVal = parseFloat(engineMaxSelect.value);
+                                let maxResetNeeded = false;
+                                let minResetNeeded = false;
+
+                                // Disable max options < minVal
+                                engineMaxSelect.querySelectorAll('option').forEach(opt => {
+                                    if (!opt.value) return;
+                                    const optVal = parseFloat(opt.value);
+                                    if (!isNaN(minVal) && optVal < minVal) {
+                                         opt.disabled = true;
+                                    }
+                                    // Check if current selection needs reset
+                                    if (opt.selected && opt.disabled) {
+                                         maxResetNeeded = true;
+                                    }
+                                });
+
+                                // Disable min options > maxVal
+                                engineMinSelect.querySelectorAll('option').forEach(opt => {
+                                     if (!opt.value) return;
+                                     const optVal = parseFloat(opt.value);
+                                     if (!isNaN(maxVal) && optVal > maxVal) {
+                                         opt.disabled = true;
+                                     }
+                                      // Check if current selection needs reset
+                                      if (opt.selected && opt.disabled) {
+                                         minResetNeeded = true;
+                                      }
+                                });
+                                
+                                // Reset if necessary
+                                if(maxResetNeeded) engineMaxSelect.value = '';
+                                if(minResetNeeded) engineMinSelect.value = '';
+                            }
+                            // --- End Engine Range Updates ---
+
                             // Ensure Model/Variant selects are enabled/disabled correctly after update
                             const makeSelect = form.querySelector('#filter-make-' + context);
                             const modelSelect = form.querySelector('#filter-model-' + context);
