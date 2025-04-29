@@ -249,7 +249,9 @@ function display_car_filter_form( $context = 'default' ) {
                     $display_value_num = ($numeric_value == floor($numeric_value)) ? number_format($numeric_value, 0) : number_format($numeric_value, 1);
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
-                    echo "<option value=\"" . esc_attr($value) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
+                    // Format the value attribute to always have one decimal place before escaping
+                    $value_attr = number_format($numeric_value, 1); 
+                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
                 }
             }
             ?>
