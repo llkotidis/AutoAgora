@@ -780,16 +780,15 @@ function display_car_filter_form( $context = 'default' ) {
                                          if (opt.value) { // Skip the "Any" option
                                              const engineValueKey = opt.value; // e.g., "1.0", "7.0"
                                              const count = engineCounts[engineValueKey] || 0;
-                                             const countSpan = opt.querySelector('.option-count');
-                                             // Update the count span text
-                                             if (countSpan) {
-                                                 countSpan.textContent = count;
-                                             } else {
-                                                 // Fallback if span wasn't rendered (should be there now)
-                                                 const numericValue = parseFloat(engineValueKey);
-                                                 const displayNum = number_format(numericValue, 1);
-                                                 opt.textContent = displayNum + 'L (' + count + ')';
-                                             }
+                                             // --- Reconstruct the entire option text --- 
+                                             // 1. Get the base numeric value
+                                             const numericValue = parseFloat(engineValueKey);
+                                             // 2. Format it for display (always one decimal place)
+                                             const displayNum = numericValue.toFixed(1);
+                                             // 3. Set the text content including the count
+                                             opt.textContent = displayNum + 'L (' + count + ')'; 
+                                             // ------------------------------------------
+                                             
                                              // Don't disable based on count
                                          }
                                       });
