@@ -119,6 +119,15 @@ function display_car_filter_form( $context = 'default' ) {
     $drive_type_counts = get_counts_for_meta_key($drive_type_field_key);
     // Note: Make/Model counts handled separately below, Variant via AJAX
 
+    // --- Get Initial Engine Counts --- 
+    $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key);
+    $initial_engine_counts = [];
+    foreach($initial_engine_counts_raw as $value => $count) {
+         // Ensure keys are formatted consistently (e.g., '1.0', '2.0') for matching option values
+         $formatted_key = number_format(floatval($value), 1); 
+         $initial_engine_counts[$formatted_key] = $count;
+    }
+
     // --- Generate Static Ranges ---
     $current_year = date('Y');
     $years = range($current_year, 1990); // Example range
@@ -241,17 +250,28 @@ function display_car_filter_form( $context = 'default' ) {
                     echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
             }
-            function render_range_options($range, $selected_value = '', $suffix = '') {
+            function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = []) {
                 foreach ($range as $value) {
                     $selected_attr = selected($selected_value, $value, false);
+                    
+                    // Format the value attribute to always have one decimal place
                     $numeric_value = floatval($value);
+                    $value_attr = number_format($numeric_value, 1); 
+                    
                     // Always format display number to one decimal place
                     $display_value_num = number_format($numeric_value, 1); 
+                    
+                    // Look up initial count using the formatted value attribute as key
+                    $count = isset($initial_counts[$value_attr]) ? $initial_counts[$value_attr] : 0;
+
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
-                    // Format the value attribute to always have one decimal place before escaping
-                    $value_attr = number_format($numeric_value, 1); 
-                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}>" . esc_html($display_text) . "</option>";
+                    $display_text .= ' (' . $count . ')'; // Append count
+
+                    // Disable if count is 0 (initially)
+                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
+
+                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
                 }
             }
             ?>
@@ -325,12 +345,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min" data-filter-key="engine_min">
                         <option value="">Min Size</option>
-                         <?php render_range_options($engine_capacities, '', 'L'); ?>
+                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
-                        <?php render_range_options($engine_capacities, '', 'L'); ?>
+                        <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
                 </div>
             </div>
@@ -950,7 +970,3 @@ function display_car_filter_form( $context = 'default' ) {
     <?php
     return ob_get_clean();
 }
-
-// Example of how you might call this on a page template:
-// require_once get_stylesheet_directory() . '/includes/car-filter-form.php';
-// echo display_car_filter_form('homepage'); 
