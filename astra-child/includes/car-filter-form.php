@@ -641,10 +641,15 @@ function display_car_filter_form( $context = 'default' ) {
                 // If triggered by multi-select closing, check if value actually changed
                 if (triggeredByMultiSelectKey) {
                     const multiSelectElement = form.querySelector(`.multi-select-filter[data-filter-key="${triggeredByMultiSelectKey}"]`);
-                    const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
-                    if (hiddenInput.value === multiSelectInitialValues[triggeredByMultiSelectKey]) {
-                        ajaxRequestPending = false;
-                        return; // Value didn't change, no need for AJAX
+                    if (multiSelectElement) { 
+                        const hiddenInput = multiSelectElement.querySelector('.multi-select-value');
+                        if (hiddenInput && hiddenInput.value === multiSelectInitialValues[triggeredByMultiSelectKey]) {
+                            ajaxRequestPending = false;
+                            return; // Value didn't change, no need for AJAX
+                        }
+                    } else {
+                         // Log an error if the element wasn't found, as this is unexpected
+                         console.error(`handleFilterChange: Could not find multi-select element with key: ${triggeredByMultiSelectKey}`);
                     }
                 }
                 
