@@ -284,3 +284,134 @@ select.error,
 textarea.error {
   border-color: var(--error-red) !important;
 }
+
+/* == Start: Multi-Select Filter Styles == */
+.multi-select-filter {
+  position: relative; /* Needed for absolute positioning of the popup */
+  margin-bottom: 0.5rem; /* Consistent with other form elements */
+}
+
+.multi-select-display {
+  width: 100%;
+  padding: 8px 8px;
+  border: var(--border);
+  border-radius: var(--border-radius-small);
+  background-color: var(--white);
+  color: var(--text-color);
+  font-size: var(--small-font-size);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 1em;
+  padding-right: 2.5em; /* Make space for arrow */
+  cursor: pointer;
+  display: flex; /* Use flexbox to align text and arrow */
+  justify-content: space-between; /* Push arrow to the right */
+  align-items: center;
+  height: 38px; /* Match typical input height, adjust as needed */
+  box-sizing: border-box;
+}
+
+.multi-select-display span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Show ellipsis if text is too long */
+  flex-grow: 1; /* Allow text to take available space */
+}
+
+.multi-select-display .dropdown-arrow {
+  /* Styling for arrow can be added if different from background SVG */
+  /* For now, relying on background-image */
+  flex-shrink: 0; /* Prevent arrow from shrinking */
+}
+
+/* Focus style for the display element */
+.multi-select-filter.active .multi-select-display,
+.multi-select-display:focus {
+  /* Assuming focus can be set via JS if needed */
+  outline: none;
+  border-color: var(--dark-blue);
+  box-shadow: 0 0 0 2px rgba(11, 114, 193, 0.1);
+}
+
+.multi-select-popup {
+  display: none; /* Hidden by default */
+  position: absolute;
+  top: 100%; /* Position below the display element */
+  left: 0;
+  width: 100%;
+  background-color: var(--white);
+  border: var(--border);
+  border-top: none; /* Avoid double border */
+  border-radius: 0 0 var(--border-radius-small) var(--border-radius-small);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 100; /* Ensure it appears above other elements */
+  max-height: 200px; /* Limit height and allow scrolling */
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Show popup when active */
+.multi-select-filter.active .multi-select-popup {
+  display: block;
+}
+
+.multi-select-popup ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0; /* Add some padding */
+}
+
+.multi-select-popup li {
+  margin: 0;
+  padding: 0;
+}
+
+.multi-select-popup label {
+  display: flex; /* Align checkbox and text */
+  align-items: center;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: normal; /* Override default label weight */
+  margin-bottom: 0; /* Override default label margin */
+  white-space: nowrap; /* Prevent wrapping */
+  font-size: var(--small-font-size);
+  transition: background-color var(--transition-time);
+}
+
+.multi-select-popup label:hover {
+  background-color: #f0f0f0; /* Subtle hover effect */
+}
+
+.multi-select-popup input[type="checkbox"] {
+  margin-right: 0.75rem; /* Space between checkbox and text */
+  width: auto; /* Override global form width */
+  height: auto;
+  margin-bottom: 0; /* Override global form margin */
+  cursor: pointer;
+  /* Optional: Style checkbox appearance */
+}
+
+.multi-select-popup .option-count {
+  margin-left: 0.5em;
+  color: var(--light-text-color);
+  font-size: 0.9em;
+}
+
+/* Disabled state for list items (label/checkbox) */
+/* Since we aren't disabling checkboxes, this might not be needed */
+/*
+.multi-select-popup input[type="checkbox"]:disabled + span {
+     color: #aaa; 
+}
+.multi-select-popup input[type="checkbox"]:disabled {
+     cursor: not-allowed;
+}
+.multi-select-popup label:has(input[type="checkbox"]:disabled) { 
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-color: transparent !important; 
+}
+*/
+
+/* == End: Multi-Select Filter Styles == */
