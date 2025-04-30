@@ -728,10 +728,12 @@ function ajax_update_filter_counts_handler() {
                  $max_sql_params = [$engine_field_key, floatval($size_threshold)];
 
                  // Add constraint for selected min value, if set
+                 /* // Temporarily comment out this block to isolate the issue
                  if ($selected_engine_min !== null) {
                      $max_sql_base .= " AND CAST(meta_value AS DECIMAL(10,1)) >= %f";
                      $max_sql_params[] = $selected_engine_min;
                  }
+                 */
                  // Merge the prepared post IDs at the end for prepare
                  $final_max_params = array_merge($max_sql_params, $prepared_post_ids_for_engine);
                  $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
