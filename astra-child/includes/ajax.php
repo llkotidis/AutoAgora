@@ -846,8 +846,76 @@ function ajax_update_filter_counts_handler() {
     $updated_counts['mileage_max_cumulative_counts'] = $mileage_max_cumulative_counts;
     // --- End Mileage Counts ---
 
-    // Note: We don't calculate counts for year range inputs in this example.
-        
+    // --- Calculate Counts for Year --- 
+    $year_field_key = 'year'; 
+    $year_min_cumulative_counts = [];
+    $year_max_cumulative_counts = [];
+    
+    // Get selected min/max year
+    $selected_year_min = isset($filters['year_min']) && is_numeric($filters['year_min']) ? intval($filters['year_min']) : null;
+    $selected_year_max = isset($filters['year_max']) && is_numeric($filters['year_max']) ? intval($filters['year_max']) : null;
+    $debug_info['selected_year_min'] = $selected_year_min;
+    $debug_info['selected_year_max'] = $selected_year_max;
+
+    // Reuse the same base pool as engine/mileage (matching non-engine/non-mileage/non-year filters)
+    // Needs clarification if this pool should be different
+    $query_args_year_ids = array(
+        'post_type' => 'car', 'post_status' => 'publish',
+        'posts_per_page' => -1, 'fields' => 'ids',
+        'meta_query' => $temp_meta_query_engine // Reusing the engine/mileage base pool logic
+    );
+    $matching_year_pool_query = new WP_Query($query_args_year_ids);
+    $matching_post_ids_for_year = $matching_year_pool_query->get_posts();
+    
+    $post_id_placeholders_year = '0'; 
+    $prepared_post_ids_for_year = [0]; 
+    if (!empty($matching_post_ids_for_year)) {
+         $post_id_placeholders_year = implode(',', array_fill(0, count($matching_post_ids_for_year), '%d'));
+         $prepared_post_ids_for_year = $matching_post_ids_for_year;
+    }
+    $debug_info['matching_ids_for_year'] = $prepared_post_ids_for_year;
+
+    // Define the years list again (needs centralization)
+    $current_year_php = date('Y');
+    $years_list = range($current_year_php, 1990); 
+
+    if (!empty($years_list)) {
+        foreach ($years_list as $year_threshold) {
+            $formatted_year_key = intval($year_threshold); // Use integer key
+
+            if (!empty($matching_post_ids_for_year)) {
+                // Min Year Count (>= threshold AND <= selected_max)
+                $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS UNSIGNED) >= %d AND post_id IN ({$post_id_placeholders_year})";
+                $min_sql_params_base = [$year_field_key, $formatted_year_key];
+                if ($selected_year_max !== null) {
+                    $min_sql_base .= " AND CAST(meta_value AS UNSIGNED) <= %d";
+                    $min_sql_params_base[] = $selected_year_max;
+                }
+                $final_min_params = array_merge($min_sql_params_base, $prepared_post_ids_for_year);
+                $sql_min = $wpdb->prepare($min_sql_base, $final_min_params);
+                $year_min_cumulative_counts[$formatted_year_key] = (int) $wpdb->get_var($sql_min);
+
+                // Max Year Count (<= threshold AND >= selected_min)
+                $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS UNSIGNED) <= %d AND post_id IN ({$post_id_placeholders_year})";
+                $max_sql_params_base = [$year_field_key, $formatted_year_key];
+                if ($selected_year_min !== null) {
+                    $max_sql_base .= " AND CAST(meta_value AS UNSIGNED) >= %d";
+                    $max_sql_params_base[] = $selected_year_min;
+                }
+                $final_max_params = array_merge($max_sql_params_base, $prepared_post_ids_for_year);
+                $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
+                $year_max_cumulative_counts[$formatted_year_key] = (int) $wpdb->get_var($sql_max);
+
+            } else {
+                $year_min_cumulative_counts[$formatted_year_key] = 0;
+                $year_max_cumulative_counts[$formatted_year_key] = 0;
+            }
+        }
+    }
+    $updated_counts['year_min_cumulative_counts'] = $year_min_cumulative_counts;
+    $updated_counts['year_max_cumulative_counts'] = $year_max_cumulative_counts;
+    // --- End Year Counts ---
+
     // --- Add Debug Info to Response --- 
     $updated_counts['_debug_info'] = $debug_info;
 
