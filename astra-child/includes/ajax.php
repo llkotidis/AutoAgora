@@ -553,23 +553,25 @@ function ajax_update_filter_counts_handler() {
         // --- Calculate Counts for Engine Capacity --- 
         $engine_field_key = 'engine_capacity'; // The actual meta key
         $engine_counts = array();
-        // Build a temporary meta query EXCLUDING engine min/max filters
+        // Build a temporary meta query EXCLUDING engine min/max filters for THIS specific query
         $temp_meta_query_engine = array_filter($meta_query, function($clause, $key) use ($engine_field_key) {
              // Keep relation, remove clauses matching engine_capacity (derived from engine_min/engine_max)
              return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== $engine_field_key);
         }, ARRAY_FILTER_USE_BOTH);
         $temp_meta_query_engine = array_values($temp_meta_query_engine); // Reindex
         
-        $meta_sql_cumulative = build_meta_sql_clauses($meta_query); // Use the full meta_query
-
+        // Build SQL clauses based on the temporary meta query (excluding engine filter)
+        $meta_sql_engine = build_meta_sql_clauses($temp_meta_query_engine); 
+        
+        // This query finds exact engine counts based on OTHER filters
         $sql_engine = $wpdb->prepare(
              "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
               FROM {$wpdb->posts} p
               INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
-              . $meta_sql_cumulative['joins'] . 
+              . $meta_sql_engine['joins'] . // Use joins from temp query
              " WHERE p.post_type = 'car'
               AND p.post_status = 'publish'"
-              . $meta_sql_cumulative['where'] . 
+              . $meta_sql_engine['where'] . // Use where from temp query
              " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
               GROUP BY pm_count.meta_value",
              $engine_field_key 
