@@ -336,6 +336,31 @@ document.addEventListener("DOMContentLoaded", function () {
                   countSpan.textContent = count;
                 }
               });
+
+              // --- START Add Reset Logic for Multi-Select ---
+              let needsDisplayUpdate = false;
+              const checkedCheckboxes = element.querySelectorAll(
+                'input[type="checkbox"]:checked'
+              );
+
+              checkedCheckboxes.forEach((cb) => {
+                const value = cb.value;
+                const count = countsForThisMultiSelect[value] || 0;
+                if (count === 0) {
+                  console.log(
+                    `Multi-select reset: Unchecking ${filterKey} - ${value} due to zero count.`
+                  ); // Debug
+                  cb.checked = false;
+                  needsDisplayUpdate = true;
+                }
+              });
+
+              // If any checkbox was unchecked, update the display and hidden input
+              if (needsDisplayUpdate) {
+                console.log(`Updating display for multi-select: ${filterKey}`); // Debug
+                updateMultiSelectDisplay(element);
+              }
+              // --- END Add Reset Logic ---
             }
           });
 
