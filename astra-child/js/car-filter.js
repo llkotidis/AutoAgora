@@ -627,29 +627,11 @@ document.addEventListener("DOMContentLoaded", function () {
   multiSelectFilters.forEach((msFilter) => {
     updateMultiSelectDisplay(msFilter);
   });
-  // Consider if an initial AJAX call is needed on page load
-  // if filters might be pre-populated (e.g., from URL parameters or default state)
-  // Check if any filters have a non-empty value initially
-  let needsInitialUpdate = false;
-  allFilterElements.forEach((element) => {
-    let value = "";
-    if (element.matches("select")) {
-      value = element.value;
-    } else if (element.matches(".multi-select-filter")) {
-      const hiddenInput = element.querySelector(".multi-select-value");
-      value = hiddenInput ? hiddenInput.value : "";
-    }
-    if (value) {
-      needsInitialUpdate = true;
-    }
-  });
 
-  if (needsInitialUpdate) {
-    console.log(
-      "Initial filters detected, running initial handleFilterChange."
-    );
-    handleFilterChange(); // Run initial update if filters are pre-populated
-  } else {
-    console.log("No initial filters detected, skipping initial AJAX call.");
-  }
+  // --- New Logic: Always run initial update on page load ---
+  console.log(
+    "DOM ready. Running initial handleFilterChange to get base counts."
+  );
+  handleFilterChange();
+  // --- End New Logic ---
 });
