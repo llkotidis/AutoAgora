@@ -436,270 +436,318 @@ function ajax_update_filter_counts_handler() {
 
     // 4. Calculate Counts for Each Filter Based on Matching IDs
     $updated_counts = array();
+    // Define the known filter keys and their configs again (or get from a central place)
+    $filter_keys = array(
+        'location'       => ['type' => 'simple', 'multi' => false],
+        'make'           => ['type' => 'simple', 'multi' => false],
+        'model'          => ['type' => 'simple', 'multi' => false],
+        'variant'        => ['type' => 'simple', 'multi' => false],
+        'fuel_type'      => ['type' => 'simple', 'multi' => true],
+        'transmission'   => ['type' => 'simple', 'multi' => true],
+        'exterior_color' => ['type' => 'simple', 'multi' => true],
+        'interior_color' => ['type' => 'simple', 'multi' => true],
+        'body_type'      => ['type' => 'simple', 'multi' => true],
+        'drive_type'     => ['type' => 'simple', 'multi' => true],
+        'year_min'       => ['type' => 'range_min', 'multi' => false],
+        'year_max'       => ['type' => 'range_max', 'multi' => false],
+        'engine_min'     => ['type' => 'range_min', 'multi' => false],
+        'engine_max'     => ['type' => 'range_max', 'multi' => false],
+        'mileage_min'    => ['type' => 'range_min', 'multi' => false],
+        'mileage_max'    => ['type' => 'range_max', 'multi' => false],
+    );
     $all_field_keys_to_count = array_keys($filter_keys); // Get all keys including ranges initially
     $count_fields = array_filter($all_field_keys_to_count, function($key) use ($filter_keys) {
         // Only get counts for fields that are not range min/max
         return $filter_keys[$key]['type'] === 'simple';
     });
 
-    if (!empty($matching_post_ids) || true) { // Calculate counts even if initial match is empty for multi-select logic
-        global $wpdb;
-        $post_id_placeholders = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; // Handle empty case
-        $prepared_post_ids = !empty($matching_post_ids) ? $matching_post_ids : [0]; // Ensure array for prepare
-
-        // --- Helper function to build JOIN/WHERE clauses for a meta query --- 
-        // (Simplified version - might need refinement for complex meta queries)
-        /*
-        function build_meta_sql_clauses($meta_query_array) {
-            global $wpdb;
-            $sql_joins = '';
-            $sql_where = '';
-            $join_alias_count = 0;
-
-            foreach ($meta_query_array as $index => $clause) {
-                if (isset($clause['relation'])) continue; // Skip relation clause
-
-                $join_alias_count++;
-                $alias = 'mt' . $join_alias_count;
-                
-                $sql_joins .= $wpdb->prepare(" INNER JOIN {$wpdb->postmeta} AS {$alias} ON ( p.ID = {$alias}.post_id ) ", []);
-
-                $meta_key = $clause['key'];
-                $meta_value = $clause['value'];
-                $compare = isset($clause['compare']) ? $clause['compare'] : '=';
-                $type = isset($clause['type']) ? $clause['type'] : 'CHAR';
-
-                 // Simple value comparison
-                 if (!is_array($meta_value)) {
-                     $sql_where .= $wpdb->prepare(
-                         " AND ( {$alias}.meta_key = %s AND {$alias}.meta_value " . $compare . " %s ) ", 
-                         $meta_key, $meta_value
-                     );
-                 } 
-                 // IN comparison for arrays
-                 elseif ($compare === 'IN' && is_array($meta_value)) {
-                     if (!empty($meta_value)) {
-                         $value_placeholders = implode(',', array_fill(0, count($meta_value), '%s'));
-                         $sql_where .= $wpdb->prepare(
-                             " AND ( {$alias}.meta_key = %s AND {$alias}.meta_value IN ({$value_placeholders}) ) ", 
-                             array_merge([$meta_key], $meta_value)
-                         );
-                     }
-                 } 
-                 // Add more comparison handling if needed (BETWEEN, LIKE, etc.)
-                 // Also handle type casting (NUMERIC, DATE etc.) if required
-            }
-            return ['joins' => $sql_joins, 'where' => $sql_where];
+    // --- Calculate $temp_meta_query_engine correctly --- 
+    // Build a meta query containing only non-engine filters
+    $temp_meta_query_engine = array('relation' => 'AND'); 
+    foreach ($filter_keys as $key => $config) {
+        // Skip engine min/max keys when building this query
+        if (in_array($key, ['engine_min', 'engine_max'])) {
+            continue;
         }
-        */
-        // --- End Helper Commented Out ---
+        
+        $type = $config['type'];
+        $is_multi = $config['multi'];
+        $base_key = str_replace(array('_min', '_max'), '', $key);
+        $value = isset($filters[$key]) ? $filters[$key] : '';
 
-        foreach ($count_fields as $field_key) {
-            $config = $filter_keys[$field_key];
-            $is_multi = $config['multi'];
-            $field_counts = array();
-            $sql = '';
-
-            if ($is_multi) {
-                // For multi-select, calculate counts based on all OTHER filters applied
-                $temp_meta_query = array_filter($meta_query, function($clause, $key) use ($field_key) {
-                    // Keep relation, remove the clause matching the current field key
-                     return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== $field_key);
-                }, ARRAY_FILTER_USE_BOTH);
-                $temp_meta_query = array_values($temp_meta_query); // Reindex array
-
-                // Build SQL based on the temporary meta query
-                /*
-                $meta_sql = build_meta_sql_clauses($temp_meta_query);
-                
-                 // Get counts for the current field_key, but filter posts using the temporary meta query
-                $sql = $wpdb->prepare(
-                     "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
-                      FROM {$wpdb->posts} p
-                      INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
-                      . $meta_sql['joins'] . // Joins needed to filter by other criteria
-                     " WHERE p.post_type = 'car'
-                      AND p.post_status = 'publish'"
-                      . $meta_sql['where'] . // Where clauses for other criteria
-                     " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
-                      GROUP BY pm_count.meta_value",
-                     $field_key // Bind the meta_key for counting
+        if (!empty($value)) {
+             // (Sanitization logic copied from main loop above - needs to be consistent)
+             if ($is_multi) {
+                 $value_array = explode(',', $value);
+                 $sanitized_value = array_map('sanitize_text_field', $value_array);
+                 $sanitized_value = array_filter($sanitized_value); 
+                 if (empty($sanitized_value)) continue;
+             } else {
+                 // Special handling for numeric range values
+                 if ($type === 'range_min' || $type === 'range_max') {
+                     $sanitized_value = floatval($value); // Ensure numeric type for comparison
+                 } else {
+                     $sanitized_value = sanitize_text_field($value);
+                 }
+             }
+             
+             // Add clause to $temp_meta_query_engine
+             if ($type === 'simple') {
+                 if ($is_multi && is_array($sanitized_value)) {
+                     $temp_meta_query_engine[] = array(
+                         'key'     => $base_key,
+                         'value'   => $sanitized_value,
+                         'compare' => 'IN', 
+                    );
+                 } elseif (!$is_multi) {
+                     $temp_meta_query_engine[] = array(
+                         'key'     => $base_key,
+                         'value'   => $sanitized_value,
+                         'compare' => '=',
+                     );
+                 }
+            } elseif ($type === 'range_min') { // Keep other range filters (year, mileage)
+                 $temp_meta_query_engine[] = array(
+                    'key'     => $base_key,
+                    'value'   => $sanitized_value, // Already floatval'd
+                    'compare' => '>=',
+                    'type'    => 'NUMERIC',
                  );
-                */
+            } elseif ($type === 'range_max') {
+                 $temp_meta_query_engine[] = array(
+                    'key'     => $base_key,
+                    'value'   => $sanitized_value, // Already floatval'd
+                    'compare' => '<=',
+                    'type'    => 'NUMERIC',
+                 );
+            }
+        }
+    }
+    // --- End Calculation ---
+
+    // Use $temp_meta_query_engine to get the base pool of IDs for engine calcs
+    $query_args_for_ids = array(
+        'post_type'      => 'car',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1, // Get all matching posts
+        'fields'         => 'ids', // Only get post IDs for efficiency
+        'meta_query'     => $temp_meta_query_engine, // Use the query *without* engine filters
+    );
+    $matching_engine_pool_query = new WP_Query($query_args_for_ids);
+    $matching_post_ids_for_engine = $matching_engine_pool_query->get_posts();
+    
+    // Prepare for SQL IN clause for engine queries
+    $post_id_placeholders_engine = '0'; // Default if no IDs match
+    $prepared_post_ids_for_engine = [0]; 
+    if (!empty($matching_post_ids_for_engine)) {
+         $post_id_placeholders_engine = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
+         $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
+    }
+    // --- Store IDs in Debug Info --- 
+    $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
+
+    // Calculate counts for other fields (using the original full $matching_post_ids if needed? Or recalculate pools?)
+    // ... (Existing logic for counting $count_fields - needs review for correctness based on filtering strategy) ...
+    // NOTE: The logic below for multi-select fields needs careful review. 
+    // It recalculates a pool excluding only the current multi-select field, which might be correct.
+    // For single-select fields, it uses the original $matching_post_ids which might be incorrect 
+    // if the goal is to show counts relative to *all other active filters*. Let's assume current logic is intended for now.
+    
+    global $wpdb;
+    // Use the original $matching_post_ids for simple fields for now
+    $post_id_placeholders_simple = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; 
+    $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
+
+    foreach ($count_fields as $field_key) {
+        $config = $filter_keys[$field_key];
+        $is_multi = $config['multi'];
+        $field_counts = array();
+        $sql = '';
+
+        if ($is_multi) {
+            // Build a temporary meta query EXCLUDING the current multi-select field
+            $temp_meta_query_multi = array('relation' => 'AND');
+            foreach ($filter_keys as $other_key => $other_config) {
+                if ($other_key === $field_key) continue; // Skip the field we are counting
+                
+                $other_value = isset($filters[$other_key]) ? $filters[$other_key] : '';
+                if (!empty($other_value)) {
+                    // Re-add the full clause building logic here
+                    $other_type = $other_config['type'];
+                    $other_is_multi = $other_config['multi'];
+                    $other_base_key = str_replace(array('_min', '_max'), '', $other_key);
+
+                    if ($other_is_multi) {
+                        $other_value_array = explode(',', $other_value);
+                        $other_sanitized_value = array_map('sanitize_text_field', $other_value_array);
+                        $other_sanitized_value = array_filter($other_sanitized_value);
+                        if (empty($other_sanitized_value)) continue;
+                    } else {
+                        if ($other_type === 'range_min' || $other_type === 'range_max') {
+                            $other_sanitized_value = floatval($other_value);
+                        } else {
+                            $other_sanitized_value = sanitize_text_field($other_value);
+                        }
+                    }
+                    
+                    // Add clause
+                     if ($other_type === 'simple') {
+                         if ($other_is_multi && is_array($other_sanitized_value)) {
+                             $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => 'IN');
+                         } elseif (!$other_is_multi) {
+                             $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '=');
+                         }
+                    } elseif ($other_type === 'range_min') { 
+                         $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '>=', 'type' => 'NUMERIC');
+                    } elseif ($other_type === 'range_max') {
+                         $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '<=', 'type' => 'NUMERIC');
+                    }
+                }
+            }
+
+            // Use WP_Query to get IDs for this specific multi-select context
+            $query_args_multi = array(
+                'post_type' => 'car', 'post_status' => 'publish',
+                'posts_per_page' => -1, 'fields' => 'ids',
+                'meta_query' => $temp_meta_query_multi
+            );
+            $multi_match_ids = get_posts($query_args_multi);
+            
+            if (!empty($multi_match_ids)) {
+                 $multi_placeholders = implode(',', array_fill(0, count($multi_match_ids), '%d'));
+                 $sql = $wpdb->prepare(
+                     "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                      FROM {$wpdb->postmeta} 
+                      WHERE meta_key = %s 
+                      AND post_id IN ({$multi_placeholders})
+                      AND meta_value IS NOT NULL AND meta_value != ''
+                      GROUP BY meta_value",
+                     array_merge([$field_key], $multi_match_ids)
+                 );
+             } else {
+                 $sql = ''; // No posts match other filters
+                 $field_counts = array();
+             }
+
+        } else {
+             // For single-select, use the initially calculated matching_post_ids
+             // TODO: Confirm if this is the desired behavior or if it should also use a pool based on *other* filters
+             if (!empty($matching_post_ids)) {
+                 $sql = $wpdb->prepare(
+                     "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                      FROM {$wpdb->postmeta} 
+                      WHERE meta_key = %s 
+                      AND post_id IN ({$post_id_placeholders_simple})
+                      AND meta_value IS NOT NULL AND meta_value != ''
+                      GROUP BY meta_value",
+                     array_merge([$field_key], $prepared_post_ids_simple)
+                 );
+             } else {
+                 $sql = ''; 
+                 $field_counts = array();
+             }
+        }
+
+        if ($sql) { // Only query if SQL was generated
+             $results = $wpdb->get_results($sql, OBJECT_K);
+             if ($results) {
+                 foreach ($results as $value => $data) {
+                     $field_counts[$value] = (int)$data->count;
+                 }
+             }
+        }
+        $updated_counts[$field_key] = $field_counts;
+    }
+            
+    // --- Calculate Counts for Engine Capacity --- 
+    $engine_field_key = 'engine_capacity'; // The actual meta key
+    $engine_counts = array();
+
+    // --- Calculate Exact Engine Counts (using the reliable IDs from $prepared_post_ids_for_engine) --- 
+    if (!empty($matching_post_ids_for_engine)) {
+         $sql_engine = $wpdb->prepare(
+            "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+             FROM {$wpdb->postmeta} 
+             WHERE meta_key = %s 
+             AND post_id IN ({$post_id_placeholders_engine}) 
+             AND meta_value IS NOT NULL AND meta_value != ''
+             GROUP BY meta_value",
+            array_merge([$engine_field_key], $prepared_post_ids_for_engine) 
+        );
+        $engine_results = $wpdb->get_results($sql_engine, OBJECT_K);
+        if ($engine_results) {
+            foreach ($engine_results as $value => $data) {
+                $formatted_key = number_format(floatval($value), 1); 
+                $engine_counts[$formatted_key] = (int)$data->count;
+            }
+        }
+    }
+    // If $matching_post_ids_for_engine was empty, $engine_counts remains empty, which is correct.
+    $updated_counts[$engine_field_key.'_counts'] = $engine_counts;
+    // --- End Exact Engine Capacity Count --- 
+
+    // --- Calculate Cumulative Engine Counts (using the reliable IDs from $prepared_post_ids_for_engine) --- 
+    $engine_min_cumulative_counts = [];
+    $engine_max_cumulative_counts = [];
+    // Define the engine capacity list here as it's not available from the form's scope
+    $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
+    $engine_size_list_for_query = $engine_capacities; // Use the locally defined list
+
+    if (!empty($engine_size_list_for_query)) {
+        foreach ($engine_size_list_for_query as $size_threshold) {
+             $formatted_threshold_key = number_format(floatval($size_threshold), 1);
+             
+             // Calculate counts only if there are posts matching the other filters
+             if (!empty($matching_post_ids_for_engine)) {
+                 // Min Count (>= threshold)
+                 $sql_min = $wpdb->prepare(
+                     "SELECT COUNT(DISTINCT post_id) 
+                      FROM {$wpdb->postmeta} 
+                      WHERE meta_key = %s 
+                      AND CAST(meta_value AS DECIMAL(10,1)) >= %f
+                      AND post_id IN ({$post_id_placeholders_engine})", 
+                     array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
+                 );
+                 $min_count_result = (int) $wpdb->get_var($sql_min);
+                 $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
+
+                 // --- Log specific threshold (Store in Debug Info) --- 
+                 if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
+                     $debug_info['query_4_5_min'] = ['sql' => $sql_min, 'result' => $min_count_result];
+                 }
+                 // --- End Log ---
+                 
+                 // Max Count (<= threshold)
+                 $sql_max = $wpdb->prepare(
+                     "SELECT COUNT(DISTINCT post_id) 
+                      FROM {$wpdb->postmeta} 
+                      WHERE meta_key = %s 
+                      AND CAST(meta_value AS DECIMAL(10,1)) <= %f
+                      AND post_id IN ({$post_id_placeholders_engine})",
+                     array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
+                 );
+                 $max_count_result = (int) $wpdb->get_var($sql_max);
+                 $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
+
+                 // --- Log specific threshold (Store in Debug Info) ---
+                  if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
+                      $debug_info['query_4_5_max'] = ['sql' => $sql_max, 'result' => $max_count_result];
+                 }
+                 // --- End Log ---
 
             } else {
-                 // For single-select, calculate counts based on the initial matching_post_ids
-                 if (!empty($matching_post_ids)) {
-                     $sql = $wpdb->prepare(
-                         "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                          FROM {$wpdb->postmeta} 
-                          WHERE meta_key = %s 
-                          AND post_id IN ({$post_id_placeholders})
-                          AND meta_value IS NOT NULL AND meta_value != ''
-                          GROUP BY meta_value",
-                         array_merge([$field_key], $prepared_post_ids)
-                     );
-                 } else {
-                     // If no initial posts matched, single selects will have 0 counts
-                     $sql = ''; // No need to query
-                     $field_counts = array(); // Empty counts
-                 }
-            }
-
-            if ($sql) { // Only query if SQL was generated
-                 $results = $wpdb->get_results($sql, OBJECT_K);
-                 if ($results) {
-                     foreach ($results as $value => $data) {
-                         $field_counts[$value] = (int)$data->count;
-                     }
-                 }
-            }
-            $updated_counts[$field_key] = $field_counts;
-        }
-        
-        // --- Calculate Counts for Engine Capacity --- 
-        $engine_field_key = 'engine_capacity'; // The actual meta key
-        $engine_counts = array();
-        // Build a temporary meta query EXCLUDING engine min/max filters
-        $temp_meta_query_engine = array_filter($meta_query, function($clause, $key) use ($engine_field_key) {
-             // Keep relation, remove clauses matching engine_capacity (derived from engine_min/engine_max)
-             return isset($clause['relation']) || (isset($clause['key']) && $clause['key'] !== $engine_field_key);
-        }, ARRAY_FILTER_USE_BOTH);
-        $temp_meta_query_engine = array_values($temp_meta_query_engine); // Reindex
-        
-        // --- START REPLACEMENT for build_meta_sql_clauses --- 
-        // Use WP_Query to get IDs matching all *other* filters
-        $query_args_for_ids = array(
-            'post_type'      => 'car',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1, // Get all matching posts
-            'fields'         => 'ids', // Only get post IDs for efficiency
-            'meta_query'     => $temp_meta_query_engine, // Use the query *without* engine filters
-        );
-        $matching_engine_pool_query = new WP_Query($query_args_for_ids);
-        $matching_post_ids_for_engine = $matching_engine_pool_query->get_posts();
-        
-        // Prepare for SQL IN clause
-        $post_id_placeholders = '0'; // Default if no IDs match
-        $prepared_post_ids_for_engine = [0]; 
-        if (!empty($matching_post_ids_for_engine)) {
-             $post_id_placeholders = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
-             $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
-        }
-        // --- Log the IDs (Store in Debug Info) --- 
-        // error_log('[Car Filter Debug] Post IDs matching other filters: ' . print_r($prepared_post_ids_for_engine, true));
-        $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
-        // --- End Log ---
-        // --- END REPLACEMENT for build_meta_sql_clauses ---
-
-        // --- Calculate Exact Engine Counts (using the reliable IDs) --- 
-        if (!empty($matching_post_ids_for_engine)) {
-             $sql_engine = $wpdb->prepare(
-                "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                 FROM {$wpdb->postmeta} 
-                 WHERE meta_key = %s 
-                 AND post_id IN ({$post_id_placeholders}) 
-                 AND meta_value IS NOT NULL AND meta_value != ''
-                 GROUP BY meta_value",
-                array_merge([$engine_field_key], $prepared_post_ids_for_engine) 
-            );
-            $engine_results = $wpdb->get_results($sql_engine, OBJECT_K);
-            if ($engine_results) {
-                foreach ($engine_results as $value => $data) {
-                    $formatted_key = number_format(floatval($value), 1); 
-                    $engine_counts[$formatted_key] = (int)$data->count;
-                }
+                // If no posts match other filters, all counts are 0
+                 $engine_min_cumulative_counts[$formatted_threshold_key] = 0;
+                 $engine_max_cumulative_counts[$formatted_threshold_key] = 0;
             }
         }
-        // If $matching_post_ids_for_engine was empty, $engine_counts remains empty, which is correct.
-        $updated_counts[$engine_field_key.'_counts'] = $engine_counts;
-        // --- End Exact Engine Capacity Count --- 
+    } // End if (!empty(...))
+    $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
+    $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
+    // --- End Cumulative Engine Counts ---
 
-        // --- Calculate Cumulative Engine Counts (using the reliable IDs) --- 
-        $engine_min_cumulative_counts = [];
-        $engine_max_cumulative_counts = [];
-        // Define the engine capacity list here as it's not available from the form's scope
-        $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
-        $engine_size_list_for_query = $engine_capacities; // Use the locally defined list
-
-        if (!empty($engine_size_list_for_query)) {
-            foreach ($engine_size_list_for_query as $size_threshold) {
-                 $formatted_threshold_key = number_format(floatval($size_threshold), 1);
-                 
-                 // Calculate counts only if there are posts matching the other filters
-                 if (!empty($matching_post_ids_for_engine)) {
-                     // Min Count (>= threshold)
-                     $sql_min = $wpdb->prepare(
-                         "SELECT COUNT(DISTINCT post_id) 
-                          FROM {$wpdb->postmeta} 
-                          WHERE meta_key = %s 
-                          AND CAST(meta_value AS DECIMAL(10,1)) >= %f
-                          AND post_id IN ({$post_id_placeholders})", 
-                         array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
-                     );
-                     $min_count_result = (int) $wpdb->get_var($sql_min);
-                     $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
-
-                     // --- Log specific threshold (Store in Debug Info) --- 
-                     if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                         // error_log('[Car Filter Debug] Min Count Query for 4.5: ' . $sql_min);
-                         // error_log('[Car Filter Debug] Min Count Result for 4.5: ' . $min_count_result);
-                         $debug_info['query_4_5_min'] = ['sql' => $sql_min, 'result' => $min_count_result];
-                     }
-                     // --- End Log ---
-                     
-                     // Max Count (<= threshold)
-                     $sql_max = $wpdb->prepare(
-                         "SELECT COUNT(DISTINCT post_id) 
-                          FROM {$wpdb->postmeta} 
-                          WHERE meta_key = %s 
-                          AND CAST(meta_value AS DECIMAL(10,1)) <= %f
-                          AND post_id IN ({$post_id_placeholders})",
-                         array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
-                     );
-                     $max_count_result = (int) $wpdb->get_var($sql_max);
-                     $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
-
-                     // --- Log specific threshold (Store in Debug Info) ---
-                      if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                         // error_log('[Car Filter Debug] Max Count Query for 4.5: ' . $sql_max);
-                         // error_log('[Car Filter Debug] Max Count Result for 4.5: ' . $max_count_result);
-                          $debug_info['query_4_5_max'] = ['sql' => $sql_max, 'result' => $max_count_result];
-                     }
-                     // --- End Log ---
-
-                } else {
-                    // If no posts match other filters, all counts are 0
-                     $engine_min_cumulative_counts[$formatted_threshold_key] = 0;
-                     $engine_max_cumulative_counts[$formatted_threshold_key] = 0;
-                }
-            }
-        } // End if (!empty(...))
-        $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
-        $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
-        // --- End Cumulative Engine Counts ---
-
-        // Note: We don't calculate counts for year/mileage range inputs in this example.
+    // Note: We don't calculate counts for year/mileage range inputs in this example.
         
-    } else {
-        // If no posts match initially, and we didn't recalculate for multi-selects/engine
-        foreach ($count_fields as $field_key) {
-            $updated_counts[$field_key] = array();
-        }
-        // Ensure engine counts are initialized if no posts match
-        $updated_counts['engine_capacity_counts'] = array();
-        $updated_counts['engine_min_cumulative_counts'] = array();
-        $updated_counts['engine_max_cumulative_counts'] = array();
-    }
-    
-    // Handle potential empty model/variant counts if make/model selected
-    if (empty($updated_counts['model'])) {
-        $updated_counts['model'] = array();
-    }
-     if (empty($updated_counts['variant'])) {
-        $updated_counts['variant'] = array();
-    }
-
     // --- Add Debug Info to Response --- 
     $updated_counts['_debug_info'] = $debug_info;
 
