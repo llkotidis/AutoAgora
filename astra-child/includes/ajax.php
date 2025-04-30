@@ -551,95 +551,109 @@ function ajax_update_filter_counts_handler() {
     $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
 
     foreach ($count_fields as $field_key) {
+        // --- START New Logic for Single/Multi Select Counts ---
         $config = $filter_keys[$field_key];
         $is_multi = $config['multi'];
         $field_counts = array();
         $sql = '';
 
+        // Determine the correct pool of IDs based on hierarchy or exclusion
+        $contextual_meta_query = ['relation' => 'AND'];
+        // IMPORTANT: Reset $relevant_filters to the original $filters for each field calculation
+        $relevant_filters = $filters; 
+
         if ($is_multi) {
-            // Build a temporary meta query EXCLUDING the current multi-select field
-            $temp_meta_query_multi = array('relation' => 'AND');
-            foreach ($filter_keys as $other_key => $other_config) {
-                if ($other_key === $field_key) continue; // Skip the field we are counting
-                
-                $other_value = isset($filters[$other_key]) ? $filters[$other_key] : '';
-                if (!empty($other_value)) {
-                    // Re-add the full clause building logic here
-                    $other_type = $other_config['type'];
-                    $other_is_multi = $other_config['multi'];
-                    $other_base_key = str_replace(array('_min', '_max'), '', $other_key);
-
-                    if ($other_is_multi) {
-                        $other_value_array = explode(',', $other_value);
-                        $other_sanitized_value = array_map('sanitize_text_field', $other_value_array);
-                        $other_sanitized_value = array_filter($other_sanitized_value);
-                        if (empty($other_sanitized_value)) continue;
-                    } else {
-                        if ($other_type === 'range_min' || $other_type === 'range_max') {
-                            $other_sanitized_value = floatval($other_value);
-                        } else {
-                            $other_sanitized_value = sanitize_text_field($other_value);
-                        }
-                    }
-                    
-                    // Add clause
-                     if ($other_type === 'simple') {
-                         if ($other_is_multi && is_array($other_sanitized_value)) {
-                             $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => 'IN');
-                         } elseif (!$other_is_multi) {
-                             $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '=');
-                         }
-                    } elseif ($other_type === 'range_min') { 
-                         $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '>=', 'type' => 'NUMERIC');
-                    } elseif ($other_type === 'range_max') {
-                         $temp_meta_query_multi[] = array('key' => $other_base_key, 'value' => $other_sanitized_value, 'compare' => '<=', 'type' => 'NUMERIC');
-                    }
-                }
-            }
-
-            // Use WP_Query to get IDs for this specific multi-select context
-            $query_args_multi = array(
-                'post_type' => 'car', 'post_status' => 'publish',
-                'posts_per_page' => -1, 'fields' => 'ids',
-                'meta_query' => $temp_meta_query_multi
-            );
-            $multi_match_ids = get_posts($query_args_multi);
-            
-            if (!empty($multi_match_ids)) {
-                 $multi_placeholders = implode(',', array_fill(0, count($multi_match_ids), '%d'));
-                 $sql = $wpdb->prepare(
-                     "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                      FROM {$wpdb->postmeta} 
-                      WHERE meta_key = %s 
-                      AND post_id IN ({$multi_placeholders})
-                      AND meta_value IS NOT NULL AND meta_value != ''
-                      GROUP BY meta_value",
-                     array_merge([$field_key], $multi_match_ids)
-                 );
-             } else {
-                 $sql = ''; // No posts match other filters
-                 $field_counts = array();
-             }
-
+            // For multi-select, base counts on filters EXCEPT the current one
+            unset($relevant_filters[$field_key]);
         } else {
-             // For single-select, use the initially calculated matching_post_ids
-             // TODO: Confirm if this is the desired behavior or if it should also use a pool based on *other* filters
-             if (!empty($matching_post_ids)) {
-                 $sql = $wpdb->prepare(
-                     "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                      FROM {$wpdb->postmeta} 
-                      WHERE meta_key = %s 
-                      AND post_id IN ({$post_id_placeholders_simple})
-                      AND meta_value IS NOT NULL AND meta_value != ''
-                      GROUP BY meta_value",
-                     array_merge([$field_key], $prepared_post_ids_simple)
-                 );
-             } else {
-                 $sql = ''; 
-                 $field_counts = array();
-             }
+            // For single-select (Make, Model, Variant), base counts on hierarchy
+             switch ($field_key) {
+                case 'make':
+                    unset($relevant_filters['model']);
+                    unset($relevant_filters['variant']);
+                    break;
+                case 'model':
+                    unset($relevant_filters['variant']);
+                    break;
+                case 'variant':
+                    // No change needed
+                    break;
+                // Add other simple fields if they have dependencies
+            }
         }
 
+        // Build the contextual meta query based on remaining $relevant_filters
+        foreach ($filter_keys as $context_key => $context_config) {
+             // Skip the field we are currently counting
+             if ($context_key === $field_key) continue;
+             // Only include filters present in $relevant_filters
+             if (isset($relevant_filters[$context_key]) && !empty($relevant_filters[$context_key])) {
+                  $context_value = $relevant_filters[$context_key];
+                  $context_base_key = str_replace(array('_min', '_max'), '', $context_key);
+                  $context_type = $context_config['type'];
+                  $context_is_multi = $context_config['multi'];
+
+                 // Full sanitization and clause building logic
+                 if ($context_is_multi) {
+                     $context_value_array = explode(',', $context_value);
+                     $context_sanitized_value = array_map('sanitize_text_field', $context_value_array);
+                     $context_sanitized_value = array_filter($context_sanitized_value);
+                     if (empty($context_sanitized_value)) continue;
+                 } elseif ($context_type === 'range_min' || $context_type === 'range_max') {
+                     // Make sure to use floatval for numeric ranges here
+                     $context_sanitized_value = floatval($context_value);
+                 } else {
+                     $context_sanitized_value = sanitize_text_field($context_value);
+                 }
+
+                 // Add clause
+                 if ($context_type === 'simple') {
+                     if ($context_is_multi && is_array($context_sanitized_value)) {
+                         $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => 'IN');
+                     } elseif (!$context_is_multi) {
+                         $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '=');
+                     }
+                 } elseif ($context_type === 'range_min') { 
+                     $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '>=', 'type' => 'NUMERIC');
+                 } elseif ($context_type === 'range_max') {
+                     $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '<=', 'type' => 'NUMERIC');
+                 }
+            }
+        }
+        
+        // Query for IDs based on this contextual query
+         $query_args_context = array(
+            'post_type' => 'car', 'post_status' => 'publish',
+            'posts_per_page' => -1, 'fields' => 'ids',
+            'meta_query' => $contextual_meta_query
+        );
+        $contextual_matching_ids = get_posts($query_args_context);
+        
+        // Prepare IDs for SQL
+        $contextual_placeholders = '0';
+        $contextual_prepared_ids = [0];
+        if (!empty($contextual_matching_ids)) {
+            $contextual_placeholders = implode(',', array_fill(0, count($contextual_matching_ids), '%d'));
+            $contextual_prepared_ids = $contextual_matching_ids;
+        }
+
+        // Prepare the SQL to count the current field based on contextual IDs
+         if (!empty($contextual_matching_ids)) {
+             $sql = $wpdb->prepare(
+                 "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                  FROM {$wpdb->postmeta} 
+                  WHERE meta_key = %s 
+                  AND post_id IN ({$contextual_placeholders})
+                  AND meta_value IS NOT NULL AND meta_value != ''
+                  GROUP BY meta_value",
+                 array_merge([$field_key], $contextual_prepared_ids)
+             );
+         } else {
+             $sql = ''; 
+             $field_counts = array();
+         }
+        // --- END New Logic ---
+        
         if ($sql) { // Only query if SQL was generated
              $results = $wpdb->get_results($sql, OBJECT_K);
              if ($results) {
