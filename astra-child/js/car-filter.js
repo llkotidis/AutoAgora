@@ -347,17 +347,31 @@ document.addEventListener("DOMContentLoaded", function () {
           const engineMaxCumulativeCounts =
             updatedCounts.engine_max_cumulative_counts || {};
 
+          console.log("Min Cumulative Counts:", engineMinCumulativeCounts); // Debug
+          console.log("Max Cumulative Counts:", engineMaxCumulativeCounts); // Debug
+
           function updateEngineOptions(selectElement, isMinSelect, suffix) {
-            if (!selectElement) return; // Exit if select not found
+            if (!selectElement) return;
             const cumulativeCounts = isMinSelect
               ? engineMinCumulativeCounts
               : engineMaxCumulativeCounts;
+            const selectType = isMinSelect ? "Min" : "Max"; // For logging
+            // console.log(`Updating ${selectType} Engine Options. Counts Object:`, cumulativeCounts); // Optional broader log
+
             const options = selectElement.querySelectorAll("option");
             options.forEach((option) => {
               if (!option.value) return;
-              const value = option.value;
-
+              const value = option.value; // e.g., "4.0"
+              // Explicitly look up the count
               const count = cumulativeCounts[value] || 0;
+
+              // *** Add Specific Log Here ***
+              console.log(
+                `[updateEngineOptions ${selectType}] Option Value: "${value}", Count Found: ${count}`
+              );
+              // *** End Log ***
+
+              // Format display text (e.g., 2.0L (15))
               const numericValue = parseFloat(value);
               const displayValueNum = number_format(numericValue, 1);
               option.textContent =
