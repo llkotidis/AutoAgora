@@ -126,7 +126,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const option = document.createElement("option");
         option.value = value;
         option.textContent = label + " (" + count + ")";
-        option.disabled = count === 0;
+        // Conditionally disable options based on filter key
+        if (filterKey !== "location") {
+          option.disabled = count === 0;
+        } // For 'location', never disable based on AJAX count
         selectElement.appendChild(option);
       });
 

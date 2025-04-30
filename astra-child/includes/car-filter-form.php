@@ -257,7 +257,7 @@ function display_car_filter_form( $context = 'default' ) {
                 foreach ($choices as $value => $label) {
                     $count = isset($counts[$value]) ? $counts[$value] : 0;
                     // Initial render - disable based on initial counts
-                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
+                    $disabled_attr = ''; // Never disable initially
                     $display_text = esc_html($label);
                     $display_text .= ' (' . $count . ')';
                     $selected_attr = selected($selected_value, $value, false);
