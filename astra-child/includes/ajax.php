@@ -583,6 +583,9 @@ function ajax_update_filter_counts_handler() {
              $post_id_placeholders = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
              $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
         }
+        // --- Log the IDs --- 
+        error_log('[Car Filter Debug] Post IDs matching other filters: ' . print_r($prepared_post_ids_for_engine, true));
+        // --- End Log ---
         // --- END REPLACEMENT for build_meta_sql_clauses ---
 
         // --- Calculate Exact Engine Counts (using the reliable IDs) --- 
@@ -630,7 +633,15 @@ function ajax_update_filter_counts_handler() {
                           AND post_id IN ({$post_id_placeholders})", 
                          array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
                      );
-                     $engine_min_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_min);
+                     $min_count_result = (int) $wpdb->get_var($sql_min);
+                     $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
+
+                     // --- Log specific threshold --- 
+                     if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
+                         error_log('[Car Filter Debug] Min Count Query for 4.5: ' . $sql_min);
+                         error_log('[Car Filter Debug] Min Count Result for 4.5: ' . $min_count_result);
+                     }
+                     // --- End Log ---
                      
                      // Max Count (<= threshold)
                      $sql_max = $wpdb->prepare(
@@ -641,7 +652,16 @@ function ajax_update_filter_counts_handler() {
                           AND post_id IN ({$post_id_placeholders})",
                          array_merge([$engine_field_key, floatval($size_threshold)], $prepared_post_ids_for_engine)
                      );
-                     $engine_max_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_max);
+                     $max_count_result = (int) $wpdb->get_var($sql_max);
+                     $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
+
+                     // --- Log specific threshold ---
+                      if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
+                         error_log('[Car Filter Debug] Max Count Query for 4.5: ' . $sql_max);
+                         error_log('[Car Filter Debug] Max Count Result for 4.5: ' . $max_count_result);
+                     }
+                     // --- End Log ---
+
                 } else {
                     // If no posts match other filters, all counts are 0
                      $engine_min_cumulative_counts[$formatted_threshold_key] = 0;
