@@ -253,13 +253,16 @@ function display_car_filter_form( $context = 'default' ) {
             <h2>Find Your Car</h2> 
 
             <?php // Helper function for generating select options 
-            function render_select_options($choices, $counts, $selected_value = '') {
+            function render_select_options($choices, $counts, $selected_value = '', $show_count = true) {
                 foreach ($choices as $value => $label) {
                     $count = isset($counts[$value]) ? $counts[$value] : 0;
                     // Initial render - disable based on initial counts
-                    $disabled_attr = ''; // Never disable initially
+                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
                     $display_text = esc_html($label);
-                    $display_text .= ' (' . $count . ')';
+                    // Conditionally add count
+                    if ($show_count) {
+                        $display_text .= ' (' . $count . ')';
+                    }
                     $selected_attr = selected($selected_value, $value, false);
                     echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
@@ -317,7 +320,7 @@ function display_car_filter_form( $context = 'default' ) {
                 <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
                 <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location" data-filter-key="location">
                     <option value="">All Locations</option>
-                    <?php render_select_options($all_possible_locations, $published_location_counts); ?>
+                    <?php render_select_options($all_possible_locations, $published_location_counts, '', false); ?>
                 </select>
             </div>
 

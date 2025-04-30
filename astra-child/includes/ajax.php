@@ -458,11 +458,11 @@ function ajax_update_filter_counts_handler() {
     $all_field_keys_to_count = array_keys($filter_keys); // Get all keys including ranges initially
     $count_fields = array_filter($all_field_keys_to_count, function($key) use ($filter_keys) {
         // Only get counts for fields that are not range min/max
-        return $filter_keys[$key]['type'] === 'simple';
+        // Also exclude 'location' as it should remain static
+        return $filter_keys[$key]['type'] === 'simple' && $key !== 'location';
     });
 
-    // --- Calculate $temp_meta_query_engine correctly --- 
-    // Build a meta query containing only non-engine filters
+    // Calculate $temp_meta_query_engine correctly --- 
     $temp_meta_query_engine = array('relation' => 'AND'); 
     foreach ($filter_keys as $key => $config) {
         // Skip engine min/max keys when building this query

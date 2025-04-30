@@ -126,10 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const option = document.createElement("option");
         option.value = value;
         option.textContent = label + " (" + count + ")";
-        // Conditionally disable options based on filter key
-        if (filterKey !== "location") {
-          option.disabled = count === 0;
-        } // For 'location', never disable based on AJAX count
+        option.disabled = count === 0;
         selectElement.appendChild(option);
       });
 
@@ -305,6 +302,9 @@ document.addEventListener("DOMContentLoaded", function () {
                   break;
                 // Add default case for other standard selects if they exist
                 default:
+                  // Skip updating location, as its state is static based on initial render
+                  if (filterKey === "location") break;
+
                   // Handle generic single-select dropdowns like 'location'
                   const genericChoices = allChoices[filterKey] || {};
                   const genericCounts = updatedCounts[filterKey] || {};
@@ -426,16 +426,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 minResetNeeded = true;
               }
             });
+
+            // Re-enable auto-reset check for Engine
+            let engineMinResetNeeded = false;
+            let engineMaxResetNeeded = false;
+            engineMinSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) engineMinResetNeeded = true;
+            });
+            engineMaxSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) engineMaxResetNeeded = true;
+            });
+            if (engineMinResetNeeded) engineMinSelect.value = "";
+            if (engineMaxResetNeeded) engineMaxSelect.value = "";
           }
-          const makeSelect = form.querySelector("#filter-make-" + context);
-          const modelSelect = form.querySelector("#filter-model-" + context);
-          const variantSelect = form.querySelector(
-            "#filter-variant-" + context
-          );
-          if (modelSelect)
-            modelSelect.disabled = !makeSelect || !makeSelect.value;
-          if (variantSelect)
-            variantSelect.disabled = !modelSelect || !modelSelect.value;
           // --- End Engine Range Updates ---
 
           // --- Update Mileage Range Selects ---
@@ -507,12 +510,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 opt.disabled = true;
               }
             });
-            // NOTE: We keep the auto-reset commented out based on previous engine behavior
-            // let maxResetNeeded = false;
-            // let minResetNeeded = false;
-            // ... (logic to check opt.selected && opt.disabled) ...
-            // if (maxResetNeeded) mileageMaxSelect.value = '';
-            // if (minResetNeeded) mileageMinSelect.value = '';
+
+            // Add auto-reset check for Mileage
+            let mileageMinResetNeeded = false;
+            let mileageMaxResetNeeded = false;
+            mileageMinSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) mileageMinResetNeeded = true;
+            });
+            mileageMaxSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) mileageMaxResetNeeded = true;
+            });
+            if (mileageMinResetNeeded) mileageMinSelect.value = "";
+            if (mileageMaxResetNeeded) mileageMaxSelect.value = "";
           }
           // --- End Mileage Range Updates ---
 
@@ -575,11 +584,86 @@ document.addEventListener("DOMContentLoaded", function () {
                 opt.disabled = true;
               }
             });
-            // Keep auto-reset commented out
+
+            // Add auto-reset check for Year
+            let yearMinResetNeeded = false;
+            let yearMaxResetNeeded = false;
+            yearMinSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) yearMinResetNeeded = true;
+            });
+            yearMaxSelect.querySelectorAll("option").forEach((opt) => {
+              if (opt.selected && opt.disabled) yearMaxResetNeeded = true;
+            });
+            if (yearMinResetNeeded) yearMinSelect.value = "";
+            if (yearMaxResetNeeded) yearMaxSelect.value = "";
           }
           // --- End Year Range Updates ---
 
-          // Ensure Model/Variant selects are enabled/disabled correctly after update
+          // --- Reset Standard Selects if Selection Becomes Invalid ---
+          form
+            .querySelectorAll("select[data-filter-key]")
+            .forEach((selectElement) => {
+              const filterKey = selectElement.getAttribute("data-filter-key");
+              // Skip location and range inputs (handled above)
+              if (
+                filterKey === "location" ||
+                filterKey.endsWith("_min") ||
+                filterKey.endsWith("_max")
+              ) {
+                return;
+              }
+              // Check if a value is selected and if that selected option is now disabled
+              if (
+                selectElement.value &&
+                selectElement.options[selectElement.selectedIndex]?.disabled
+              ) {
+                console.log(`Resetting invalid selection for: ${filterKey}`); // Debug
+                selectElement.value = "";
+                // If Model/Variant was reset, potentially re-trigger AJAX to update subsequent fields?
+                // For now, just reset. A change event isn't fired automatically by setting .value
+                if (filterKey === "make") {
+                  // If make was reset, disable model/variant
+                  const modelSelect = form.querySelector(
+                    'select[data-filter-key="model"]'
+                  );
+                  const variantSelect = form.querySelector(
+                    'select[data-filter-key="variant"]'
+                  );
+                  if (modelSelect) {
+                    modelSelect.innerHTML =
+                      '<option value="">Select Make First</option>';
+                    modelSelect.disabled = true;
+                  }
+                  if (variantSelect) {
+                    variantSelect.innerHTML =
+                      '<option value="">Select Model First</option>';
+                    variantSelect.disabled = true;
+                  }
+                } else if (filterKey === "model") {
+                  // If model was reset, disable variant
+                  const variantSelect = form.querySelector(
+                    'select[data-filter-key="variant"]'
+                  );
+                  if (variantSelect) {
+                    variantSelect.innerHTML =
+                      '<option value="">Select Model First</option>';
+                    variantSelect.disabled = true;
+                  }
+                }
+              }
+            });
+          // --- End Reset Standard Selects ---
+
+          // Ensure Model/Variant selects are enabled/disabled correctly after update (redundant check?)
+          const makeSelect = form.querySelector("#filter-make-" + context);
+          const modelSelect = form.querySelector("#filter-model-" + context);
+          const variantSelect = form.querySelector(
+            "#filter-variant-" + context
+          );
+          if (modelSelect)
+            modelSelect.disabled = !makeSelect || !makeSelect.value;
+          if (variantSelect)
+            variantSelect.disabled = !modelSelect || !modelSelect.value;
         } else {
           console.error(
             "AJAX error fetching filter counts:",
