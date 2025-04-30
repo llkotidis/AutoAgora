@@ -767,7 +767,86 @@ function ajax_update_filter_counts_handler() {
     $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
     // --- End Cumulative Engine Counts ---
 
-    // Note: We don't calculate counts for year/mileage range inputs in this example.
+    // --- Calculate Counts for Mileage --- 
+    $mileage_field_key = 'mileage'; 
+    $mileage_min_cumulative_counts = [];
+    $mileage_max_cumulative_counts = [];
+    
+    // Get selected min/max mileage
+    $selected_mileage_min = isset($filters['mileage_min']) && is_numeric($filters['mileage_min']) ? intval($filters['mileage_min']) : null;
+    $selected_mileage_max = isset($filters['mileage_max']) && is_numeric($filters['mileage_max']) ? intval($filters['mileage_max']) : null;
+    $debug_info['selected_mileage_min'] = $selected_mileage_min;
+    $debug_info['selected_mileage_max'] = $selected_mileage_max;
+
+    // Use the same base pool of IDs as engine (those matching non-engine/non-mileage filters)
+    // NOTE: This assumes mileage filters should behave like engine filters relative to other filters.
+    // If mileage should consider engine filters, $temp_meta_query_engine needs adjustment.
+    $query_args_mileage_ids = array(
+        'post_type' => 'car', 'post_status' => 'publish',
+        'posts_per_page' => -1, 'fields' => 'ids',
+         // Build a meta query excluding mileage AND engine filters? 
+         // For now, let's assume we reuse the engine pool logic
+         // Need to rebuild $temp_meta_query_mileage similar to $temp_meta_query_engine, excluding mileage_min/max
+        'meta_query' => $temp_meta_query_engine // Reusing engine pool logic for now
+    );
+    $matching_mileage_pool_query = new WP_Query($query_args_mileage_ids);
+    $matching_post_ids_for_mileage = $matching_mileage_pool_query->get_posts();
+    
+    $post_id_placeholders_mileage = '0'; 
+    $prepared_post_ids_for_mileage = [0]; 
+    if (!empty($matching_post_ids_for_mileage)) {
+         $post_id_placeholders_mileage = implode(',', array_fill(0, count($matching_post_ids_for_mileage), '%d'));
+         $prepared_post_ids_for_mileage = $matching_post_ids_for_mileage;
+    }
+    $debug_info['matching_ids_for_mileage'] = $prepared_post_ids_for_mileage;
+
+    // Define the mileage options list again (needs centralization)
+    $mileages_list = [];
+    for ($i = 0; $i <= 50000; $i += 5000) { $mileages_list[] = $i; }
+    for ($i = 60000; $i <= 150000; $i += 10000) { $mileages_list[] = $i; }
+    for ($i = 200000; $i <= 300000; $i += 50000) { $mileages_list[] = $i; }
+
+    if (!empty($mileages_list)) {
+        foreach ($mileages_list as $mileage_threshold) {
+            $formatted_mileage_key = intval($mileage_threshold); // Use integer key
+
+            if (!empty($matching_post_ids_for_mileage)) {
+                // Min Mileage Count (>= threshold AND <= selected_max)
+                $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS UNSIGNED) >= %d AND post_id IN ({$post_id_placeholders_mileage})";
+                $min_sql_params_base = [$mileage_field_key, $formatted_mileage_key];
+                if ($selected_mileage_max !== null) {
+                    $min_sql_base .= " AND CAST(meta_value AS UNSIGNED) <= %d";
+                    $min_sql_params_base[] = $selected_mileage_max;
+                }
+                $final_min_params = array_merge($min_sql_params_base, $prepared_post_ids_for_mileage);
+                $sql_min = $wpdb->prepare($min_sql_base, $final_min_params);
+                $mileage_min_cumulative_counts[$formatted_mileage_key] = (int) $wpdb->get_var($sql_min);
+
+                // Max Mileage Count (<= threshold AND >= selected_min)
+                $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS UNSIGNED) <= %d AND post_id IN ({$post_id_placeholders_mileage})";
+                $max_sql_params_base = [$mileage_field_key, $formatted_mileage_key];
+                if ($selected_mileage_min !== null) {
+                    $max_sql_base .= " AND CAST(meta_value AS UNSIGNED) >= %d";
+                    $max_sql_params_base[] = $selected_mileage_min;
+                }
+                $final_max_params = array_merge($max_sql_params_base, $prepared_post_ids_for_mileage);
+                $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
+                $mileage_max_cumulative_counts[$formatted_mileage_key] = (int) $wpdb->get_var($sql_max);
+                
+                 // Add specific debug if needed
+                 // if ($formatted_mileage_key == 10000) { ... } 
+
+            } else {
+                $mileage_min_cumulative_counts[$formatted_mileage_key] = 0;
+                $mileage_max_cumulative_counts[$formatted_mileage_key] = 0;
+            }
+        }
+    }
+    $updated_counts['mileage_min_cumulative_counts'] = $mileage_min_cumulative_counts;
+    $updated_counts['mileage_max_cumulative_counts'] = $mileage_max_cumulative_counts;
+    // --- End Mileage Counts ---
+
+    // Note: We don't calculate counts for year range inputs in this example.
         
     // --- Add Debug Info to Response --- 
     $updated_counts['_debug_info'] = $debug_info;
