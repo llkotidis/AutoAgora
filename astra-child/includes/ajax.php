@@ -701,41 +701,50 @@ function ajax_update_filter_counts_handler() {
              if (!empty($matching_post_ids_for_engine)) {
                  
                  // --- Min Count Calculation (>= threshold AND <= selected_max) --- 
-                 $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) >= %f AND post_id IN ({$post_id_placeholders_engine})";
-                 $min_sql_params = [$engine_field_key, floatval($size_threshold)];
+                 $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) >= %f";
+                 $min_sql_params_base = [$engine_field_key, floatval($size_threshold)];
                  
                  // Add constraint for selected max value, if set
                  if ($selected_engine_max !== null) {
                      $min_sql_base .= " AND CAST(meta_value AS DECIMAL(10,1)) <= %f";
-                     $min_sql_params[] = $selected_engine_max;
+                     $min_sql_params_base[] = $selected_engine_max;
                  }
-                 // Merge the prepared post IDs at the end for prepare
-                 $final_min_params = array_merge($min_sql_params, $prepared_post_ids_for_engine);
+
+                 // Add IN clause part
+                 $min_sql_base .= " AND post_id IN ({$post_id_placeholders_engine})";
+
+                 // Final params: base params + post IDs
+                 $final_min_params = array_merge($min_sql_params_base, $prepared_post_ids_for_engine);
+
+                 // Prepare final query
                  $sql_min = $wpdb->prepare($min_sql_base, $final_min_params);
-                 
+
                  $min_count_result = (int) $wpdb->get_var($sql_min);
                  $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
 
                  // --- Log specific threshold (Store in Debug Info) --- 
                  if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                     // Log the final SQL query string AFTER replacement
                      $debug_info['query_4_5_min'] = ['sql' => $sql_min, 'result' => $min_count_result]; 
                  }
                  // --- End Log ---
                  
                  // --- Max Count Calculation (<= threshold AND >= selected_min) --- 
-                 $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) <= %f AND post_id IN ({$post_id_placeholders_engine})";
-                 $max_sql_params = [$engine_field_key, floatval($size_threshold)];
+                 $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) <= %f";
+                 $max_sql_params_base = [$engine_field_key, floatval($size_threshold)];
 
                  // Add constraint for selected min value, if set
-                 /* // Temporarily comment out this block to isolate the issue
                  if ($selected_engine_min !== null) {
                      $max_sql_base .= " AND CAST(meta_value AS DECIMAL(10,1)) >= %f";
-                     $max_sql_params[] = $selected_engine_min;
+                     $max_sql_params_base[] = $selected_engine_min;
                  }
-                 */
-                 // Merge the prepared post IDs at the end for prepare
-                 $final_max_params = array_merge($max_sql_params, $prepared_post_ids_for_engine);
+
+                 // Add IN clause part
+                 $max_sql_base .= " AND post_id IN ({$post_id_placeholders_engine})";
+
+                 // Final params: base params + post IDs
+                 $final_max_params = array_merge($max_sql_params_base, $prepared_post_ids_for_engine);
+
+                 // Prepare final query
                  $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
                  
                  $max_count_result = (int) $wpdb->get_var($sql_max);
@@ -743,7 +752,6 @@ function ajax_update_filter_counts_handler() {
 
                  // --- Log specific threshold (Store in Debug Info) ---
                   if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                      // Log the final SQL query string AFTER replacement
                       $debug_info['query_4_5_max'] = ['sql' => $sql_max, 'result' => $max_count_result]; 
                  }
                  // --- End Log ---
