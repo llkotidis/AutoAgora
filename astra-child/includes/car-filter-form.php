@@ -133,7 +133,20 @@ function display_car_filter_form( $context = 'default' ) {
     $years = range($current_year, 1990); // Example range
     // Use the specific list provided by the user
     $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
-    $mileages = range(0, 300000, 10000); // Example range
+    // Generate stepped mileage options
+    $mileages = [];
+    for ($i = 0; $i <= 50000; $i += 5000) { $mileages[] = $i; }
+    for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
+    for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
+
+    // --- Get Initial Mileage Counts ---
+    $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
+    $initial_mileage_counts = [];
+    foreach($initial_mileage_counts_raw as $value => $count) {
+         // Ensure keys are integers for matching option values
+         $formatted_key = intval($value); 
+         $initial_mileage_counts[$formatted_key] = $count;
+    }
 
     // --- Get Make/Model/Variant Data from JSONs ---
     // (Existing code to read JSONs and build $make_model_variant_data)
@@ -252,17 +265,18 @@ function display_car_filter_form( $context = 'default' ) {
             }
             function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = []) {
                 foreach ($range as $value) {
-                    $selected_attr = selected($selected_value, $value, false);
-                    
-                    // Format the value attribute to always have one decimal place
-                    $numeric_value = floatval($value);
-                    $value_attr = number_format($numeric_value, 1); 
-                    
-                    // Always format display number to one decimal place
-                    $display_value_num = number_format($numeric_value, 1); 
-                    
+                    // Ensure value is treated as integer for lookup and attribute
+                    $numeric_value = intval($value); 
+                    $selected_attr = selected($selected_value, $numeric_value, false);
+                    $value_attr = $numeric_value; // Use integer for value attribute
+
+                    // Format display number with commas
+                    $display_value_num = number_format($numeric_value); 
+                   
                     // Look up initial count using the formatted value attribute as key
-                    $count = isset($initial_counts[$value_attr]) ? $initial_counts[$value_attr] : 0;
+                    // Use intval for key matching if counts keys might be strings from DB
+                    $count_key = intval($value_attr);
+                    $count = isset($initial_counts[$count_key]) ? $initial_counts[$count_key] : 0; 
 
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
@@ -361,12 +375,12 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
-                         <?php render_range_options($mileages, '', ' km'); ?>
+                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                      <span class="range-separator">-</span>
                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
-                        <?php render_range_options($mileages, '', ' km'); ?>
+                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                 </div>
             </div>
