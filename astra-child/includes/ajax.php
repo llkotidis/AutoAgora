@@ -349,7 +349,7 @@ function ajax_update_filter_counts_handler() {
 
     $sanitized_filters = array();
     $meta_query = array('relation' => 'AND'); 
-    
+
     // Define filter keys (copy from later or centralize)
     $filter_keys = array(
         'location'       => ['type' => 'simple', 'multi' => false],
@@ -550,19 +550,19 @@ function ajax_update_filter_counts_handler() {
     $post_id_placeholders_simple = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; 
     $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
 
-    foreach ($count_fields as $field_key) {
+        foreach ($count_fields as $field_key) {
         // --- START New Logic for Single/Multi Select Counts ---
-        $config = $filter_keys[$field_key];
-        $is_multi = $config['multi'];
-        $field_counts = array();
-        $sql = '';
+            $config = $filter_keys[$field_key];
+            $is_multi = $config['multi'];
+            $field_counts = array();
+            $sql = '';
 
         // Determine the correct pool of IDs based on hierarchy or exclusion
         $contextual_meta_query = ['relation' => 'AND'];
         // IMPORTANT: Reset $relevant_filters to the original $filters for each field calculation
         $relevant_filters = $filters; 
 
-        if ($is_multi) {
+            if ($is_multi) {
             // For multi-select, base counts on filters EXCEPT the current one
             unset($relevant_filters[$field_key]);
         } else {
@@ -639,39 +639,39 @@ function ajax_update_filter_counts_handler() {
 
         // Prepare the SQL to count the current field based on contextual IDs
          if (!empty($contextual_matching_ids)) {
-             $sql = $wpdb->prepare(
-                 "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                  FROM {$wpdb->postmeta} 
-                  WHERE meta_key = %s 
+                     $sql = $wpdb->prepare(
+                         "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                          FROM {$wpdb->postmeta} 
+                          WHERE meta_key = %s 
                   AND post_id IN ({$contextual_placeholders})
-                  AND meta_value IS NOT NULL AND meta_value != ''
-                  GROUP BY meta_value",
+                          AND meta_value IS NOT NULL AND meta_value != ''
+                          GROUP BY meta_value",
                  array_merge([$field_key], $contextual_prepared_ids)
-             );
-         } else {
+                     );
+                 } else {
              $sql = ''; 
              $field_counts = array();
-         }
-        // --- END New Logic ---
-        
-        if ($sql) { // Only query if SQL was generated
-             $results = $wpdb->get_results($sql, OBJECT_K);
-             if ($results) {
-                 foreach ($results as $value => $data) {
-                     $field_counts[$value] = (int)$data->count;
                  }
-             }
+        // --- END New Logic ---
+
+            if ($sql) { // Only query if SQL was generated
+                 $results = $wpdb->get_results($sql, OBJECT_K);
+                 if ($results) {
+                     foreach ($results as $value => $data) {
+                         $field_counts[$value] = (int)$data->count;
+                     }
+                 }
+            }
+            $updated_counts[$field_key] = $field_counts;
         }
-        $updated_counts[$field_key] = $field_counts;
-    }
-            
-    // --- Calculate Counts for Engine Capacity --- 
-    $engine_field_key = 'engine_capacity'; // The actual meta key
-    $engine_counts = array();
+        
+        // --- Calculate Counts for Engine Capacity --- 
+        $engine_field_key = 'engine_capacity'; // The actual meta key
+        $engine_counts = array();
 
     // --- Calculate Exact Engine Counts (using the reliable IDs from $prepared_post_ids_for_engine) --- 
     if (!empty($matching_post_ids_for_engine)) {
-         $sql_engine = $wpdb->prepare(
+        $sql_engine = $wpdb->prepare(
             "SELECT meta_value, COUNT(DISTINCT post_id) as count 
              FROM {$wpdb->postmeta} 
              WHERE meta_key = %s 
@@ -681,20 +681,20 @@ function ajax_update_filter_counts_handler() {
             array_merge([$engine_field_key], $prepared_post_ids_for_engine) 
         );
         $engine_results = $wpdb->get_results($sql_engine, OBJECT_K);
-        if ($engine_results) {
-            foreach ($engine_results as $value => $data) {
-                $formatted_key = number_format(floatval($value), 1); 
-                $engine_counts[$formatted_key] = (int)$data->count;
-            }
-        }
+         if ($engine_results) {
+             foreach ($engine_results as $value => $data) {
+                 $formatted_key = number_format(floatval($value), 1); 
+                 $engine_counts[$formatted_key] = (int)$data->count;
+             }
+         }
     }
     // If $matching_post_ids_for_engine was empty, $engine_counts remains empty, which is correct.
     $updated_counts[$engine_field_key.'_counts'] = $engine_counts;
     // --- End Exact Engine Capacity Count --- 
 
     // --- Calculate Cumulative Engine Counts (now considering opposite selected bound) --- 
-    $engine_min_cumulative_counts = [];
-    $engine_max_cumulative_counts = [];
+        $engine_min_cumulative_counts = [];
+        $engine_max_cumulative_counts = [];
     
     // Get the currently selected min/max values to refine counts
     $selected_engine_min = isset($filters['engine_min']) && is_numeric($filters['engine_min']) ? floatval($filters['engine_min']) : null;
@@ -706,10 +706,10 @@ function ajax_update_filter_counts_handler() {
     $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
     $engine_size_list_for_query = $engine_capacities; // Use the locally defined list
 
-    if (!empty($engine_size_list_for_query)) {
-        foreach ($engine_size_list_for_query as $size_threshold) {
-             $formatted_threshold_key = number_format(floatval($size_threshold), 1);
-             
+        if (!empty($engine_size_list_for_query)) {
+            foreach ($engine_size_list_for_query as $size_threshold) {
+                 $formatted_threshold_key = number_format(floatval($size_threshold), 1);
+                 
              // Calculate counts only if there are posts matching the other filters
              if (!empty($matching_post_ids_for_engine)) {
                  
@@ -776,9 +776,9 @@ function ajax_update_filter_counts_handler() {
             }
         }
     } // End if (!empty(...))
-    $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
-    $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
-    // --- End Cumulative Engine Counts ---
+        $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
+        $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
+        // --- End Cumulative Engine Counts --- 
 
     // --- Calculate Counts for Mileage --- 
     $mileage_field_key = 'mileage'; 
@@ -848,8 +848,8 @@ function ajax_update_filter_counts_handler() {
                 
                  // Add specific debug if needed
                  // if ($formatted_mileage_key == 10000) { ... } 
-
-            } else {
+        
+    } else {
                 $mileage_min_cumulative_counts[$formatted_mileage_key] = 0;
                 $mileage_max_cumulative_counts[$formatted_mileage_key] = 0;
             }
@@ -909,14 +909,29 @@ function ajax_update_filter_counts_handler() {
                 $year_min_cumulative_counts[$formatted_year_key] = (int) $wpdb->get_var($sql_min);
 
                 // Max Year Count (<= threshold AND >= selected_min)
-                $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS UNSIGNED) <= %d AND post_id IN ({$post_id_placeholders_year})";
-                $max_sql_params_base = [$year_field_key, $formatted_year_key];
+                $sql_parts = [];
+                $sql_params = [];
+
+                // Base condition
+                $sql_parts[] = "meta_key = %s";
+                $sql_params[] = $year_field_key;
+                $sql_parts[] = "CAST(meta_value AS UNSIGNED) <= %d";
+                $sql_params[] = $formatted_year_key;
+
+                // Add constraint for selected min value, if set
                 if ($selected_year_min !== null) {
-                    $max_sql_base .= " AND CAST(meta_value AS UNSIGNED) >= %d";
-                    $max_sql_params_base[] = $selected_year_min;
+                    $sql_parts[] = "CAST(meta_value AS UNSIGNED) >= %d";
+                    $sql_params[] = $selected_year_min;
                 }
-                $final_max_params = array_merge($max_sql_params_base, $prepared_post_ids_for_year);
-                $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
+                
+                // Construct the WHERE clause
+                $where_clause = implode(' AND ', $sql_parts);
+                
+                // Prepare the final query, including the IN clause placeholders
+                $sql_max = $wpdb->prepare(
+                    "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE {$where_clause} AND post_id IN ({$post_id_placeholders_year})", 
+                    array_merge($sql_params, $prepared_post_ids_for_year) // Merge value params and ID params
+                );
                 $year_max_cumulative_counts[$formatted_year_key] = (int) $wpdb->get_var($sql_max);
 
             } else {
