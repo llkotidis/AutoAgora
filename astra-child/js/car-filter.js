@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("car-filter-form-" + context);
   // Ensure form exists before proceeding
   if (!form) {
-    // console.error(`Car Filter Error: Form with ID 'car-filter-form-${context}' not found.`);
-    // Don't log error here, form might not be present on all pages using this script
     return;
   }
 
@@ -187,8 +185,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    // console.log("Triggering AJAX Update. Filters:", getCurrentFilters()); // Debugging
-
     const currentFilters = getCurrentFilters();
 
     const formData = new FormData();
@@ -228,13 +224,7 @@ document.addEventListener("DOMContentLoaded", function () {
               "[PHP Debug Info Received]:",
               updatedCounts._debug_info
             );
-            // Optionally remove it from the main counts object if not needed elsewhere
-            // delete updatedCounts._debug_info;
           }
-          // --- End Log ---
-          // console.log("Received updated counts:", updatedCounts); // Debugging
-
-          // Update each filter element (standard selects and multi-selects)
           allFilterElements.forEach((element) => {
             const filterKey = element.getAttribute("data-filter-key");
 
@@ -249,7 +239,6 @@ document.addEventListener("DOMContentLoaded", function () {
               let defaultText = "All"; // Generic default
 
               switch (filterKey) {
-                // ... Cases for make, model, variant (as before)
                 case "make":
                   const makeOptions = element.querySelectorAll("option");
                   const countsForMake = updatedCounts.make || {}; // Ensure counts object exists
@@ -363,16 +352,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (countSpan) {
                   countSpan.textContent = count;
                 }
-                // DO NOT disable checkbox based on count per user request
-                // cb.disabled = (count === 0); // <-- Removed/Commented
               });
-              // We don't need to call updateMultiSelectDisplay here, as the selections
-              // themselves haven't changed, only the counts beside them.
             }
           });
 
-          // --- Update Engine Range Selects ---
-          // const engineCounts = updatedCounts.engine_capacity_counts || {}; // Exact counts - currently unused in JS display
           const engineMinSelect = form.querySelector(
             'select[data-filter-key="engine_min"]'
           );
@@ -394,25 +377,15 @@ document.addEventListener("DOMContentLoaded", function () {
               : engineMaxCumulativeCounts;
             const options = selectElement.querySelectorAll("option");
             options.forEach((option) => {
-              if (!option.value) return; // Skip default "Min/Max Size"
-              const value = option.value; // e.g., "1.0", "2.0"
-              // *** IMPORTANT: Log the value from option and the lookup ***
-              // console.log(`Checking option value: "${value}", Type: ${typeof value}`);
-              // console.log(`Looking up count in cumulativeCounts["${value}"]`);
-              const count = cumulativeCounts[value] || 0;
-              // console.log(`Count found: ${count}`);
-              // *** End log ***
+              if (!option.value) return;
+              const value = option.value;
 
-              // Format display text (e.g., 2.0L (15))
+              const count = cumulativeCounts[value] || 0;
               const numericValue = parseFloat(value);
-              // Correct formatting: show .0 only if not a whole number originally or if value is 0.0
-              const displayValueNum = number_format(numericValue, 1); // Always format to 1 decimal for display consistency? Or only if needed? Let's try 1 always for now.
-              // Original logic: const displayValueNum = (numericValue == Math.floor(numericValue) && numericValue !== 0.0) ? number_format(numericValue, 0) : number_format(numericValue, 1);
+              const displayValueNum = number_format(numericValue, 1);
               option.textContent =
                 displayValueNum + suffix + " (" + count + ")";
-              // Disable based on cumulative count
               option.disabled = count === 0;
-              // If it becomes disabled and is selected, reset parent select (handled below)
             });
           }
 
@@ -459,14 +432,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 minResetNeeded = true;
               }
             });
-
-            // Reset if necessary
-            // if (maxResetNeeded) engineMaxSelect.value = ''; // Commented out - prevent auto-reset
-            // if (minResetNeeded) engineMinSelect.value = ''; // Commented out - prevent auto-reset
           }
-          // --- End Engine Range Updates ---
-
-          // Ensure Model/Variant selects are enabled/disabled correctly after update
           const makeSelect = form.querySelector("#filter-make-" + context);
           const modelSelect = form.querySelector("#filter-model-" + context);
           const variantSelect = form.querySelector(
@@ -484,15 +450,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
-        console.error("Fetch error:", error); // Log fetch errors
+        console.error("Fetch error:", error);
       })
       .finally(() => {
-        ajaxRequestPending = false; // Allow next request
-        console.log("Fetch finished. ajaxRequestPending:", ajaxRequestPending); // Log final flag state
+        ajaxRequestPending = false;
+        console.log("Fetch finished. ajaxRequestPending:", ajaxRequestPending);
       });
   }
 
-  // --- Event Listeners for Standard Selects ---
   filterSelects.forEach((select) => {
     select.addEventListener("change", function () {
       console.log("Select changed:", this.id, "New value:", this.value); // Log select changes
@@ -500,7 +465,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // --- Event Listeners for Multi-Select Filters ---
   multiSelectFilters.forEach((msFilter) => {
     const display = msFilter.querySelector(".multi-select-display");
     const popup = msFilter.querySelector(".multi-select-popup");
@@ -508,37 +472,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const filterKey = msFilter.getAttribute("data-filter-key");
     const hiddenInput = msFilter.querySelector(".multi-select-value");
 
-    // Toggle Popup
     display.addEventListener("click", (event) => {
-      console.log("Multi-select display clicked:", filterKey); // Log clicks
-      event.stopPropagation(); // Prevent closing immediately via document listener
+      console.log("Multi-select display clicked:", filterKey);
+      event.stopPropagation();
       const isActive = msFilter.classList.contains("active");
-      // Close all other popups first
       document
         .querySelectorAll(".multi-select-filter.active")
         .forEach((activeMs) => {
           if (activeMs !== msFilter) {
             activeMs.classList.remove("active");
-            // Check if value changed on close and trigger AJAX if needed
             const otherKey = activeMs.getAttribute("data-filter-key");
             const otherHidden = activeMs.querySelector(".multi-select-value");
             if (
               otherHidden &&
               multiSelectInitialValues[otherKey] !== otherHidden.value
             ) {
-              // Check otherHidden exists
               console.log("Closing other multi-select with change:", otherKey);
               handleFilterChange(otherKey);
             }
           }
         });
-      // Toggle current popup
       msFilter.classList.toggle("active");
       if (msFilter.classList.contains("active")) {
-        // Store current value when opened
         multiSelectInitialValues[filterKey] = hiddenInput
           ? hiddenInput.value
-          : ""; // Check hiddenInput exists
+          : "";
         console.log(
           "Opened multi-select:",
           filterKey,
@@ -546,7 +504,6 @@ document.addEventListener("DOMContentLoaded", function () {
           multiSelectInitialValues[filterKey]
         );
       } else {
-        // Check if value changed on close and trigger AJAX if needed
         if (
           hiddenInput &&
           multiSelectInitialValues[filterKey] !== hiddenInput.value
@@ -560,7 +517,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // Handle Checkbox Changes (Update Display/Hidden Input ONLY)
     checkboxes.forEach((cb) => {
       cb.addEventListener("change", () => {
         console.log(
@@ -572,25 +528,21 @@ document.addEventListener("DOMContentLoaded", function () {
           cb.checked
         );
         updateMultiSelectDisplay(msFilter);
-        // DO NOT trigger handleFilterChange here
       });
     });
   });
 
-  // --- Global Click Listener to Close Popups ---
   document.addEventListener("click", (event) => {
     const openPopup = document.querySelector(".multi-select-filter.active");
     if (openPopup && !openPopup.contains(event.target)) {
       const filterKey = openPopup.getAttribute("data-filter-key");
       console.log("Document click closing multi-select:", filterKey);
       openPopup.classList.remove("active");
-      // Check if value changed on close and trigger AJAX if needed
       const hiddenInput = openPopup.querySelector(".multi-select-value");
       if (
         hiddenInput &&
         multiSelectInitialValues[filterKey] !== hiddenInput.value
       ) {
-        // Check hiddenInput exists
         console.log(
           "Closing multi-select via doc click with change:",
           filterKey
@@ -600,27 +552,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // --- Reset Button Listener (Optional) ---
   if (resetButton) {
     resetButton.addEventListener("click", () => {
-      console.log("Reset button clicked"); // Log reset
-      form.reset(); // Reset native form elements
-      // Also manually reset multi-selects
+      console.log("Reset button clicked");
+      form.reset();
       multiSelectFilters.forEach((msFilter) => {
         const hiddenInput = msFilter.querySelector(".multi-select-value");
-        if (hiddenInput) hiddenInput.value = ""; // Check hiddenInput exists
+        if (hiddenInput) hiddenInput.value = "";
         msFilter
           .querySelectorAll('input[type="checkbox"]')
           .forEach((cb) => (cb.checked = false));
-        updateMultiSelectDisplay(msFilter); // Update display to default
+        updateMultiSelectDisplay(msFilter);
       });
-      // Manually trigger update after reset to refresh counts/options
       handleFilterChange();
     });
   }
 
-  // --- Initial Setup ---
-  // Disable Model/Variant initially if Make/Model aren't pre-selected
   const initialMakeSelect = form.querySelector("#filter-make-" + context);
   const initialModelSelect = form.querySelector("#filter-model-" + context);
   const initialVariantSelect = form.querySelector("#filter-variant-" + context);
@@ -639,10 +586,8 @@ document.addEventListener("DOMContentLoaded", function () {
     updateMultiSelectDisplay(msFilter);
   });
 
-  // --- New Logic: Always run initial update on page load ---
   console.log(
     "DOM ready. Running initial handleFilterChange to get base counts."
   );
   handleFilterChange();
-  // --- End New Logic ---
 });

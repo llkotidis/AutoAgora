@@ -545,13 +545,6 @@ function ajax_update_filter_counts_handler() {
     }
     // --- Store IDs in Debug Info --- 
     $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
-
-    // Calculate counts for other fields (using the original full $matching_post_ids if needed? Or recalculate pools?)
-    // ... (Existing logic for counting $count_fields - needs review for correctness based on filtering strategy) ...
-    // NOTE: The logic below for multi-select fields needs careful review. 
-    // It recalculates a pool excluding only the current multi-select field, which might be correct.
-    // For single-select fields, it uses the original $matching_post_ids which might be incorrect 
-    // if the goal is to show counts relative to *all other active filters*. Let's assume current logic is intended for now.
     
     global $wpdb;
     // Use the original $matching_post_ids for simple fields for now
