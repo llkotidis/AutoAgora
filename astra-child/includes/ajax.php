@@ -560,15 +560,16 @@ function ajax_update_filter_counts_handler() {
         }, ARRAY_FILTER_USE_BOTH);
         $temp_meta_query_engine = array_values($temp_meta_query_engine); // Reindex
         
-        $meta_sql_engine = build_meta_sql_clauses($temp_meta_query_engine);
+        $meta_sql_cumulative = build_meta_sql_clauses($meta_query); // Use the full meta_query
+
         $sql_engine = $wpdb->prepare(
              "SELECT pm_count.meta_value, COUNT(DISTINCT p.ID) as count 
               FROM {$wpdb->posts} p
               INNER JOIN {$wpdb->postmeta} pm_count ON (p.ID = pm_count.post_id AND pm_count.meta_key = %s)"
-              . $meta_sql_engine['joins'] . 
+              . $meta_sql_cumulative['joins'] . 
              " WHERE p.post_type = 'car'
               AND p.post_status = 'publish'"
-              . $meta_sql_engine['where'] . 
+              . $meta_sql_cumulative['where'] . 
              " AND pm_count.meta_value IS NOT NULL AND pm_count.meta_value != ''
               GROUP BY pm_count.meta_value",
              $engine_field_key 
@@ -586,6 +587,10 @@ function ajax_update_filter_counts_handler() {
         // --- End Engine Capacity Count --- 
 
         // --- Calculate Cumulative Engine Counts --- 
+        // Note: Use the *original* meta_query that includes any selected engine filters
+        // to calculate cumulative counts accurately reflecting the current selection.
+        $meta_sql_cumulative = build_meta_sql_clauses($meta_query); // Use the full meta_query
+
         $engine_min_cumulative_counts = [];
         $engine_max_cumulative_counts = [];
         // Define the engine capacity list here as it's not available from the form's scope
@@ -621,9 +626,9 @@ function ajax_update_filter_counts_handler() {
                      "SELECT COUNT(DISTINCT p.ID) 
                       FROM {$wpdb->posts} p
                       INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s AND CAST(pm.meta_value AS DECIMAL(10,1)) >= %f)"
-                      . $meta_sql_engine['joins'] .
+                      . $meta_sql_cumulative['joins'] .
                      " WHERE p.post_type = 'car' AND p.post_status = 'publish'" 
-                      . $meta_sql_engine['where'],
+                      . $meta_sql_cumulative['where'],
                      $engine_field_key, floatval($size_threshold)
                  );
                  $engine_min_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_min);
@@ -633,9 +638,9 @@ function ajax_update_filter_counts_handler() {
                      "SELECT COUNT(DISTINCT p.ID) 
                       FROM {$wpdb->posts} p
                       INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s AND CAST(pm.meta_value AS DECIMAL(10,1)) <= %f)"
-                      . $meta_sql_engine['joins'] .
+                      . $meta_sql_cumulative['joins'] .
                      " WHERE p.post_type = 'car' AND p.post_status = 'publish'" 
-                      . $meta_sql_engine['where'],
+                      . $meta_sql_cumulative['where'],
                      $engine_field_key, floatval($size_threshold)
                  );
                  $engine_max_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_max);
