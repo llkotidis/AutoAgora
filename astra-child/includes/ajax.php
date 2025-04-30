@@ -588,9 +588,12 @@ function ajax_update_filter_counts_handler() {
         // --- Calculate Cumulative Engine Counts --- 
         $engine_min_cumulative_counts = [];
         $engine_max_cumulative_counts = [];
-        $all_engine_sizes = $GLOBALS['wp_filter']['astra_child_engine_sizes'] ?? []; // Need to make sizes available globally or pass differently
+        // Define the engine capacity list here as it's not available from the form's scope
+        $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
+        $engine_size_list_for_query = $engine_capacities; // Use the locally defined list
+        // $all_engine_sizes = $GLOBALS['wp_filter']['astra_child_engine_sizes'] ?? []; // Need to make sizes available globally or pass differently
         // A better approach: Get distinct available engine sizes from the filtered results
-        $distinct_engine_sql = $wpdb->prepare(
+        /* $distinct_engine_sql = $wpdb->prepare(
              "SELECT DISTINCT pm.meta_value 
               FROM {$wpdb->posts} p
               INNER JOIN {$wpdb->postmeta} pm ON (p.ID = pm.post_id AND pm.meta_key = %s)"
@@ -606,7 +609,8 @@ function ajax_update_filter_counts_handler() {
         
         // Pre-calculate total count for efficiency if needed, or query per size
         // For simplicity, query per size threshold here:
-        $engine_size_list_for_query = $engine_capacities ?? []; // Use the list defined in car-filter-form.php
+        */
+        // Use the locally defined list now in $engine_size_list_for_query
 
         if (!empty($engine_size_list_for_query)) {
             foreach ($engine_size_list_for_query as $size_threshold) {
@@ -636,10 +640,10 @@ function ajax_update_filter_counts_handler() {
                  );
                  $engine_max_cumulative_counts[$formatted_threshold_key] = (int) $wpdb->get_var($sql_max);
             }
-        }
+        } // End if (!empty(...))
         $updated_counts['engine_min_cumulative_counts'] = $engine_min_cumulative_counts;
         $updated_counts['engine_max_cumulative_counts'] = $engine_max_cumulative_counts;
-        // --- End Cumulative Engine Counts --- 
+        // --- End Cumulative Engine Counts ---
 
         // Note: We don't calculate counts for year/mileage range inputs in this example.
         
