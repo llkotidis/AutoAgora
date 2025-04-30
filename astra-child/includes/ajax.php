@@ -701,7 +701,7 @@ function ajax_update_filter_counts_handler() {
              if (!empty($matching_post_ids_for_engine)) {
                  
                  // --- Min Count Calculation (>= threshold AND <= selected_max) --- 
-                 $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) >= %f AND post_id IN (##POST_IDS##)";
+                 $min_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) >= %f AND post_id IN ({$post_id_placeholders_engine})";
                  $min_sql_params = [$engine_field_key, floatval($size_threshold)];
                  
                  // Add constraint for selected max value, if set
@@ -709,10 +709,9 @@ function ajax_update_filter_counts_handler() {
                      $min_sql_base .= " AND CAST(meta_value AS DECIMAL(10,1)) <= %f";
                      $min_sql_params[] = $selected_engine_max;
                  }
-                 // Prepare the query with value placeholders ONLY
-                 $sql_min_prepared_values = $wpdb->prepare($min_sql_base, $min_sql_params);
-                 // Manually insert the post ID list (already safe) 
-                 $sql_min = str_replace("##POST_IDS##", $post_id_placeholders_engine, $sql_min_prepared_values); 
+                 // Merge the prepared post IDs at the end for prepare
+                 $final_min_params = array_merge($min_sql_params, $prepared_post_ids_for_engine);
+                 $sql_min = $wpdb->prepare($min_sql_base, $final_min_params);
                  
                  $min_count_result = (int) $wpdb->get_var($sql_min);
                  $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
@@ -725,7 +724,7 @@ function ajax_update_filter_counts_handler() {
                  // --- End Log ---
                  
                  // --- Max Count Calculation (<= threshold AND >= selected_min) --- 
-                 $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) <= %f AND post_id IN (##POST_IDS##)";
+                 $max_sql_base = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND CAST(meta_value AS DECIMAL(10,1)) <= %f AND post_id IN ({$post_id_placeholders_engine})";
                  $max_sql_params = [$engine_field_key, floatval($size_threshold)];
 
                  // Add constraint for selected min value, if set
@@ -733,10 +732,9 @@ function ajax_update_filter_counts_handler() {
                      $max_sql_base .= " AND CAST(meta_value AS DECIMAL(10,1)) >= %f";
                      $max_sql_params[] = $selected_engine_min;
                  }
-                  // Prepare the query with value placeholders ONLY
-                 $sql_max_prepared_values = $wpdb->prepare($max_sql_base, $max_sql_params);
-                  // Manually insert the post ID list (already safe)
-                 $sql_max = str_replace("##POST_IDS##", $post_id_placeholders_engine, $sql_max_prepared_values);
+                 // Merge the prepared post IDs at the end for prepare
+                 $final_max_params = array_merge($max_sql_params, $prepared_post_ids_for_engine);
+                 $sql_max = $wpdb->prepare($max_sql_base, $final_max_params);
                  
                  $max_count_result = (int) $wpdb->get_var($sql_max);
                  $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
