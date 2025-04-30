@@ -341,19 +341,16 @@ add_action('wp_ajax_nopriv_get_variant_counts', 'get_variant_counts_ajax_handler
  * AJAX handler to dynamically update counts for all filter fields.
  */
 function ajax_update_filter_counts_handler() {
-    // 1. Verify Nonce
     check_ajax_referer('car_filter_update_nonce', 'nonce'); 
-
-    // --- Initialize Debug Info --- 
     $debug_info = [];
 
-    // 2. Get and Sanitize All Filter Inputs
     $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : array();
-    $sanitized_filters = array();
-    $meta_query = array('relation' => 'AND'); // Start meta query
+    $debug_info['received_filters'] = $filters; // Log received filters
 
-    // Define filter keys and their types (simple meta, range_min, range_max)
-    // Mark multi-select fields
+    $sanitized_filters = array();
+    $meta_query = array('relation' => 'AND'); 
+    
+    // Define filter keys (copy from later or centralize)
     $filter_keys = array(
         'location'       => ['type' => 'simple', 'multi' => false],
         'make'           => ['type' => 'simple', 'multi' => false],
@@ -373,7 +370,7 @@ function ajax_update_filter_counts_handler() {
         'mileage_max'    => ['type' => 'range_max', 'multi' => false],
     );
 
-    // Build meta_query from received filters
+    // Build the MAIN meta_query from received filters
     foreach ($filter_keys as $key => $config) {
         $type = $config['type'];
         $is_multi = $config['multi'];
@@ -423,16 +420,18 @@ function ajax_update_filter_counts_handler() {
             }
         }
     }
+    $debug_info['built_main_meta_query'] = $meta_query; // Log the built query
 
-    // 3. Query for Matching Post IDs
+    // 3. Query for Matching Post IDs (Initial Query)
     $query_args = array(
         'post_type'      => 'car',
         'post_status'    => 'publish',
-        'posts_per_page' => -1, // Get all matching posts
-        'fields'         => 'ids', // Only get post IDs for efficiency
+        'posts_per_page' => -1, 
+        'fields'         => 'ids', 
         'meta_query'     => $meta_query,
     );
     $matching_post_ids = get_posts($query_args);
+    $debug_info['initial_matching_post_ids'] = $matching_post_ids; // Log initial results
 
     // 4. Calculate Counts for Each Filter Based on Matching IDs
     $updated_counts = array();
