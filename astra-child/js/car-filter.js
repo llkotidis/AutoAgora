@@ -194,37 +194,17 @@ document.addEventListener("DOMContentLoaded", function () {
       formData.append(`filters[${key}]`, currentFilters[key]);
     }
 
-    // --- Add console log before fetch ---
-    console.log(
-      "handleFilterChange: Attempting fetch to",
-      ajaxUrl,
-      "Action:",
-      updateAction
-    );
-    console.log("Current Filters Sent:", currentFilters);
-    console.log("Nonce Sent:", updateNonce);
-    console.log("ajaxRequestPending:", ajaxRequestPending);
-    // --- End log ---
-
     fetch(ajaxUrl, { method: "POST", body: formData })
       .then((response) => {
-        console.log("Fetch response received:", response); // Log response object
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
       })
       .then((result) => {
-        console.log("Parsed JSON result:", result); // Log parsed result
         if (result.success && result.data) {
           const updatedCounts = result.data;
-          // --- Log PHP Debug Info ---
-          if (updatedCounts._debug_info) {
-            console.warn(
-              "[PHP Debug Info Received]:",
-              updatedCounts._debug_info
-            );
-          }
+
           allFilterElements.forEach((element) => {
             const filterKey = element.getAttribute("data-filter-key");
 
@@ -366,9 +346,6 @@ document.addEventListener("DOMContentLoaded", function () {
             updatedCounts.engine_min_cumulative_counts || {};
           const engineMaxCumulativeCounts =
             updatedCounts.engine_max_cumulative_counts || {};
-
-          console.log("Min Cumulative Counts:", engineMinCumulativeCounts); // Debug
-          console.log("Max Cumulative Counts:", engineMaxCumulativeCounts); // Debug
 
           function updateEngineOptions(selectElement, isMinSelect, suffix) {
             if (!selectElement) return; // Exit if select not found
