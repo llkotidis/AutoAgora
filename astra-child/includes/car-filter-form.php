@@ -264,7 +264,12 @@ function display_car_filter_form( $context = 'default' ) {
                     echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
             }
-            function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = []) {
+            function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = [], $reverse_order = false) {
+                // Reverse the range if requested
+                if ($reverse_order) {
+                    $range = array_reverse($range, false); // false preserves keys if they were associative, not needed here but good practice
+                }
+
                 foreach ($range as $value) {
                     // Ensure value is treated as integer for lookup and attribute
                     $numeric_value = intval($value); 
@@ -344,12 +349,12 @@ function display_car_filter_form( $context = 'default' ) {
                 <div class="filter-range-fields">
                     <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
-                        <?php render_range_options($years, '', '', $js_data['initialYearCounts']); ?>
+                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
                     </select>
                     <span class="range-separator">-</span>
                     <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
-                         <?php render_range_options($years, '', '', $js_data['initialYearCounts']); ?>
+                         <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
                    </select>
                 </div>
             </div>
