@@ -451,8 +451,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             // Reset if necessary
-            if (maxResetNeeded) engineMaxSelect.value = "";
-            if (minResetNeeded) engineMinSelect.value = "";
+            // if (maxResetNeeded) engineMaxSelect.value = ''; // Commented out - prevent auto-reset
+            // if (minResetNeeded) engineMinSelect.value = ''; // Commented out - prevent auto-reset
           }
           // --- End Engine Range Updates ---
 
