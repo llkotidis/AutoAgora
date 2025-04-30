@@ -222,6 +222,16 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Parsed JSON result:", result); // Log parsed result
         if (result.success && result.data) {
           const updatedCounts = result.data;
+          // --- Log PHP Debug Info ---
+          if (updatedCounts._debug_info) {
+            console.warn(
+              "[PHP Debug Info Received]:",
+              updatedCounts._debug_info
+            );
+            // Optionally remove it from the main counts object if not needed elsewhere
+            // delete updatedCounts._debug_info;
+          }
+          // --- End Log ---
           // console.log("Received updated counts:", updatedCounts); // Debugging
 
           // Update each filter element (standard selects and multi-selects)

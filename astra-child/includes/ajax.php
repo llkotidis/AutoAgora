@@ -344,6 +344,9 @@ function ajax_update_filter_counts_handler() {
     // 1. Verify Nonce
     check_ajax_referer('car_filter_update_nonce', 'nonce'); 
 
+    // --- Initialize Debug Info --- 
+    $debug_info = [];
+
     // 2. Get and Sanitize All Filter Inputs
     $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : array();
     $sanitized_filters = array();
@@ -583,8 +586,9 @@ function ajax_update_filter_counts_handler() {
              $post_id_placeholders = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
              $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
         }
-        // --- Log the IDs --- 
-        error_log('[Car Filter Debug] Post IDs matching other filters: ' . print_r($prepared_post_ids_for_engine, true));
+        // --- Log the IDs (Store in Debug Info) --- 
+        // error_log('[Car Filter Debug] Post IDs matching other filters: ' . print_r($prepared_post_ids_for_engine, true));
+        $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
         // --- End Log ---
         // --- END REPLACEMENT for build_meta_sql_clauses ---
 
@@ -636,10 +640,11 @@ function ajax_update_filter_counts_handler() {
                      $min_count_result = (int) $wpdb->get_var($sql_min);
                      $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
 
-                     // --- Log specific threshold --- 
+                     // --- Log specific threshold (Store in Debug Info) --- 
                      if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                         error_log('[Car Filter Debug] Min Count Query for 4.5: ' . $sql_min);
-                         error_log('[Car Filter Debug] Min Count Result for 4.5: ' . $min_count_result);
+                         // error_log('[Car Filter Debug] Min Count Query for 4.5: ' . $sql_min);
+                         // error_log('[Car Filter Debug] Min Count Result for 4.5: ' . $min_count_result);
+                         $debug_info['query_4_5_min'] = ['sql' => $sql_min, 'result' => $min_count_result];
                      }
                      // --- End Log ---
                      
@@ -655,10 +660,11 @@ function ajax_update_filter_counts_handler() {
                      $max_count_result = (int) $wpdb->get_var($sql_max);
                      $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
 
-                     // --- Log specific threshold ---
+                     // --- Log specific threshold (Store in Debug Info) ---
                       if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                         error_log('[Car Filter Debug] Max Count Query for 4.5: ' . $sql_max);
-                         error_log('[Car Filter Debug] Max Count Result for 4.5: ' . $max_count_result);
+                         // error_log('[Car Filter Debug] Max Count Query for 4.5: ' . $sql_max);
+                         // error_log('[Car Filter Debug] Max Count Result for 4.5: ' . $max_count_result);
+                          $debug_info['query_4_5_max'] = ['sql' => $sql_max, 'result' => $max_count_result];
                      }
                      // --- End Log ---
 
@@ -680,6 +686,10 @@ function ajax_update_filter_counts_handler() {
         foreach ($count_fields as $field_key) {
             $updated_counts[$field_key] = array();
         }
+        // Ensure engine counts are initialized if no posts match
+        $updated_counts['engine_capacity_counts'] = array();
+        $updated_counts['engine_min_cumulative_counts'] = array();
+        $updated_counts['engine_max_cumulative_counts'] = array();
     }
     
     // Handle potential empty model/variant counts if make/model selected
@@ -690,6 +700,8 @@ function ajax_update_filter_counts_handler() {
         $updated_counts['variant'] = array();
     }
 
+    // --- Add Debug Info to Response --- 
+    $updated_counts['_debug_info'] = $debug_info;
 
     // 5. Send JSON Response
     wp_send_json_success($updated_counts);
