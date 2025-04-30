@@ -270,26 +270,42 @@ function display_car_filter_form( $context = 'default' ) {
                     $range = array_reverse($range, false); // false preserves keys if they were associative, not needed here but good practice
                 }
 
+                $is_engine = ($suffix === 'L'); // Check if it's the engine field
+
                 foreach ($range as $value) {
                     // Ensure value is treated as integer for lookup and attribute
-                    $numeric_value = intval($value); 
-                    $selected_attr = selected($selected_value, $numeric_value, false);
-                    $value_attr = $numeric_value; // Use integer for value attribute
+                    // $numeric_value = intval($value); // Old logic - incorrect for engine
+                    
+                    // Determine value type based on suffix
+                    if ($is_engine) {
+                         $numeric_value = floatval($value);
+                         $value_attr = number_format($numeric_value, 1); // Format value="4.0"
+                         $count_key = $value_attr; // Use the formatted string "4.0" as key
+                         $display_value_num = $value_attr; // Display 4.0, 4.5 etc.
+                    } else {
+                         $numeric_value = intval($value); 
+                         $value_attr = $numeric_value; // Format value="10000"
+                         $count_key = $numeric_value; // Use integer as key
+                         $display_value_num = number_format($numeric_value); // Display 10,000
+                    }
+                    
+                    $selected_attr = selected($selected_value, $value_attr, false); // Compare against formatted value_attr
+                    // $value_attr = $numeric_value; // Use integer for value attribute
 
                     // Format display number with commas
-                    $display_value_num = number_format($numeric_value); 
-                   
-                    // Look up initial count using the formatted value attribute as key
+                    // $display_value_num = number_format($numeric_value); 
+           
+                    // Look up initial count using the appropriate key
                     // Use intval for key matching if counts keys might be strings from DB
-                    $count_key = intval($value_attr);
+                    // $count_key = intval($value_attr);
                     $count = isset($initial_counts[$count_key]) ? $initial_counts[$count_key] : 0; 
-
+ 
                     // Add suffix WITHOUT a preceding space if suffix exists
                     $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
                     $display_text .= ' (' . $count . ')'; // Append count
 
                     // Disable if count is 0 (initially)
-                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
+                    $disabled_attr = ($count == 0 && $selected_value !== $value_attr) ? ' disabled="disabled"' : '';
 
                     echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
                 }
