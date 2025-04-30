@@ -344,9 +344,6 @@ function ajax_update_filter_counts_handler() {
     // 1. Verify Nonce
     check_ajax_referer('car_filter_update_nonce', 'nonce'); 
 
-    // --- Initialize Debug Info --- 
-    $debug_info = [];
-
     // 2. Get and Sanitize All Filter Inputs
     $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : array();
     $sanitized_filters = array();
@@ -537,27 +534,16 @@ function ajax_update_filter_counts_handler() {
     $matching_post_ids_for_engine = $matching_engine_pool_query->get_posts();
     
     // Prepare for SQL IN clause for engine queries
-    $post_id_placeholders_engine = '0'; // Default if no IDs match
+    $post_id_placeholders_engine = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
     $prepared_post_ids_for_engine = [0]; 
     if (!empty($matching_post_ids_for_engine)) {
          $post_id_placeholders_engine = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
          $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
     }
     // --- Store IDs in Debug Info --- 
-    $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
+    // $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine; // Removed
 
-    // Calculate counts for other fields (using the original full $matching_post_ids if needed? Or recalculate pools?)
-    // ... (Existing logic for counting $count_fields - needs review for correctness based on filtering strategy) ...
-    // NOTE: The logic below for multi-select fields needs careful review. 
-    // It recalculates a pool excluding only the current multi-select field, which might be correct.
-    // For single-select fields, it uses the original $matching_post_ids which might be incorrect 
-    // if the goal is to show counts relative to *all other active filters*. Let's assume current logic is intended for now.
-    
-    global $wpdb;
-    // Use the original $matching_post_ids for simple fields for now
-    $post_id_placeholders_simple = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; 
-    $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
-
+    // Calculate counts for other fields
     foreach ($count_fields as $field_key) {
         $config = $filter_keys[$field_key];
         $is_multi = $config['multi'];
@@ -637,10 +623,10 @@ function ajax_update_filter_counts_handler() {
                      "SELECT meta_value, COUNT(DISTINCT post_id) as count 
                       FROM {$wpdb->postmeta} 
                       WHERE meta_key = %s 
-                      AND post_id IN ({$post_id_placeholders_simple})
+                      AND post_id IN ({$post_id_placeholders_engine})
                       AND meta_value IS NOT NULL AND meta_value != ''
                       GROUP BY meta_value",
-                     array_merge([$field_key], $prepared_post_ids_simple)
+                     array_merge([$field_key], $prepared_post_ids_for_engine)
                  );
              } else {
                  $sql = ''; 
@@ -711,12 +697,6 @@ function ajax_update_filter_counts_handler() {
                  $min_count_result = (int) $wpdb->get_var($sql_min);
                  $engine_min_cumulative_counts[$formatted_threshold_key] = $min_count_result;
 
-                 // --- Log specific threshold (Store in Debug Info) --- 
-                 if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                     $debug_info['query_4_5_min'] = ['sql' => $sql_min, 'result' => $min_count_result];
-                 }
-                 // --- End Log ---
-                 
                  // Max Count (<= threshold)
                  $sql_max = $wpdb->prepare(
                      "SELECT COUNT(DISTINCT post_id) 
@@ -728,12 +708,6 @@ function ajax_update_filter_counts_handler() {
                  );
                  $max_count_result = (int) $wpdb->get_var($sql_max);
                  $engine_max_cumulative_counts[$formatted_threshold_key] = $max_count_result;
-
-                 // --- Log specific threshold (Store in Debug Info) ---
-                  if (abs($size_threshold - 4.5) < 0.01) { // Check for 4.5 threshold
-                      $debug_info['query_4_5_max'] = ['sql' => $sql_max, 'result' => $max_count_result];
-                 }
-                 // --- End Log ---
 
             } else {
                 // If no posts match other filters, all counts are 0
@@ -749,7 +723,7 @@ function ajax_update_filter_counts_handler() {
     // Note: We don't calculate counts for year/mileage range inputs in this example.
         
     // --- Add Debug Info to Response --- 
-    $updated_counts['_debug_info'] = $debug_info;
+    // $updated_counts['_debug_info'] = $debug_info; // Removed
 
     // 5. Send JSON Response
     wp_send_json_success($updated_counts);

@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    // console.log("Triggering AJAX Update. Filters:", getCurrentFilters()); // Debugging
+    // console.log("Triggering AJAX Update. Filters:", getCurrentFilters()); // Removed
 
     const currentFilters = getCurrentFilters();
 
@@ -198,41 +198,18 @@ document.addEventListener("DOMContentLoaded", function () {
       formData.append(`filters[${key}]`, currentFilters[key]);
     }
 
-    // --- Add console log before fetch ---
-    console.log(
-      "handleFilterChange: Attempting fetch to",
-      ajaxUrl,
-      "Action:",
-      updateAction
-    );
-    console.log("Current Filters Sent:", currentFilters);
-    console.log("Nonce Sent:", updateNonce);
-    console.log("ajaxRequestPending:", ajaxRequestPending);
-    // --- End log ---
-
     fetch(ajaxUrl, { method: "POST", body: formData })
       .then((response) => {
-        console.log("Fetch response received:", response); // Log response object
+        // console.log('Fetch response received:', response); // Log response object
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
       })
       .then((result) => {
-        console.log("Parsed JSON result:", result); // Log parsed result
+        // console.log("Parsed JSON result:", result); // Log parsed result
         if (result.success && result.data) {
           const updatedCounts = result.data;
-          // --- Log PHP Debug Info ---
-          if (updatedCounts._debug_info) {
-            console.warn(
-              "[PHP Debug Info Received]:",
-              updatedCounts._debug_info
-            );
-            // Optionally remove it from the main counts object if not needed elsewhere
-            // delete updatedCounts._debug_info;
-          }
-          // --- End Log ---
-          // console.log("Received updated counts:", updatedCounts); // Debugging
 
           // Update each filter element (standard selects and multi-selects)
           allFilterElements.forEach((element) => {
@@ -384,9 +361,6 @@ document.addEventListener("DOMContentLoaded", function () {
           const engineMaxCumulativeCounts =
             updatedCounts.engine_max_cumulative_counts || {};
 
-          console.log("Min Cumulative Counts:", engineMinCumulativeCounts); // Debug
-          console.log("Max Cumulative Counts:", engineMaxCumulativeCounts); // Debug
-
           function updateEngineOptions(selectElement, isMinSelect, suffix) {
             if (!selectElement) return; // Exit if select not found
             const cumulativeCounts = isMinSelect
@@ -396,12 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
             options.forEach((option) => {
               if (!option.value) return; // Skip default "Min/Max Size"
               const value = option.value; // e.g., "1.0", "2.0"
-              // *** IMPORTANT: Log the value from option and the lookup ***
-              // console.log(`Checking option value: "${value}", Type: ${typeof value}`);
-              // console.log(`Looking up count in cumulativeCounts["${value}"]`);
               const count = cumulativeCounts[value] || 0;
-              // console.log(`Count found: ${count}`);
-              // *** End log ***
 
               // Format display text (e.g., 2.0L (15))
               const numericValue = parseFloat(value);
@@ -488,14 +457,14 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .finally(() => {
         ajaxRequestPending = false; // Allow next request
-        console.log("Fetch finished. ajaxRequestPending:", ajaxRequestPending); // Log final flag state
+        // console.log("Fetch finished. ajaxRequestPending:", ajaxRequestPending); // Removed
       });
   }
 
   // --- Event Listeners for Standard Selects ---
   filterSelects.forEach((select) => {
     select.addEventListener("change", function () {
-      console.log("Select changed:", this.id, "New value:", this.value); // Log select changes
+      // console.log("Select changed:", this.id, "New value:", this.value); // Removed
       handleFilterChange();
     });
   });
@@ -510,7 +479,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Toggle Popup
     display.addEventListener("click", (event) => {
-      console.log("Multi-select display clicked:", filterKey); // Log clicks
+      // console.log("Multi-select display clicked:", filterKey); // Removed
       event.stopPropagation(); // Prevent closing immediately via document listener
       const isActive = msFilter.classList.contains("active");
       // Close all other popups first
@@ -527,7 +496,7 @@ document.addEventListener("DOMContentLoaded", function () {
               multiSelectInitialValues[otherKey] !== otherHidden.value
             ) {
               // Check otherHidden exists
-              console.log("Closing other multi-select with change:", otherKey);
+              // console.log("Closing other multi-select with change:", otherKey); // Removed
               handleFilterChange(otherKey);
             }
           }
@@ -539,12 +508,7 @@ document.addEventListener("DOMContentLoaded", function () {
         multiSelectInitialValues[filterKey] = hiddenInput
           ? hiddenInput.value
           : ""; // Check hiddenInput exists
-        console.log(
-          "Opened multi-select:",
-          filterKey,
-          "Initial value:",
-          multiSelectInitialValues[filterKey]
-        );
+        // console.log('Opened multi-select...'); // Removed block
       } else {
         // Check if value changed on close and trigger AJAX if needed
         if (
@@ -552,10 +516,10 @@ document.addEventListener("DOMContentLoaded", function () {
           multiSelectInitialValues[filterKey] !== hiddenInput.value
         ) {
           // Check hiddenInput exists
-          console.log("Closing multi-select with change:", filterKey);
+          // console.log("Closing multi-select with change:", filterKey); // Removed
           handleFilterChange(filterKey);
         } else {
-          console.log("Closing multi-select without change:", filterKey);
+          // console.log("Closing multi-select without change:", filterKey); // Removed
         }
       }
     });
@@ -563,14 +527,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Handle Checkbox Changes (Update Display/Hidden Input ONLY)
     checkboxes.forEach((cb) => {
       cb.addEventListener("change", () => {
-        console.log(
-          "Checkbox changed:",
-          filterKey,
-          "Value:",
-          cb.value,
-          "Checked:",
-          cb.checked
-        );
+        // console.log('Checkbox changed...'); // Removed block
         updateMultiSelectDisplay(msFilter);
         // DO NOT trigger handleFilterChange here
       });
@@ -582,7 +539,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const openPopup = document.querySelector(".multi-select-filter.active");
     if (openPopup && !openPopup.contains(event.target)) {
       const filterKey = openPopup.getAttribute("data-filter-key");
-      console.log("Document click closing multi-select:", filterKey);
+      // console.log("Document click closing multi-select:", filterKey); // Removed
       openPopup.classList.remove("active");
       // Check if value changed on close and trigger AJAX if needed
       const hiddenInput = openPopup.querySelector(".multi-select-value");
@@ -591,10 +548,7 @@ document.addEventListener("DOMContentLoaded", function () {
         multiSelectInitialValues[filterKey] !== hiddenInput.value
       ) {
         // Check hiddenInput exists
-        console.log(
-          "Closing multi-select via doc click with change:",
-          filterKey
-        );
+        // console.log('Closing multi-select via doc click...'); // Removed block
         handleFilterChange(filterKey);
       }
     }
@@ -603,7 +557,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Reset Button Listener (Optional) ---
   if (resetButton) {
     resetButton.addEventListener("click", () => {
-      console.log("Reset button clicked"); // Log reset
+      // console.log("Reset button clicked"); // Removed
       form.reset(); // Reset native form elements
       // Also manually reset multi-selects
       multiSelectFilters.forEach((msFilter) => {
@@ -640,9 +594,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // --- New Logic: Always run initial update on page load ---
-  console.log(
-    "DOM ready. Running initial handleFilterChange to get base counts."
-  );
+  // console.log("DOM ready. Running initial handleFilterChange to get base counts."); // Removed
   handleFilterChange();
   // --- End New Logic ---
 });
