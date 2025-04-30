@@ -431,7 +431,6 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .finally(() => {
         ajaxRequestPending = false;
-        console.log("Fetch finished. ajaxRequestPending:", ajaxRequestPending);
       });
   }
 
