@@ -225,6 +225,7 @@ function display_car_filter_form( $context = 'default' ) {
             'driveType' => $drive_type_counts,
             // Variant counts are now fetched via the main update AJAX
         ],
+        'initialYearCounts' => get_counts_for_meta_key($year_field_key),
         'choices' => [
              'location' => $all_possible_locations,
              // Make choices are derived from $all_makes_from_files in the PHP
@@ -343,12 +344,12 @@ function display_car_filter_form( $context = 'default' ) {
                 <div class="filter-range-fields">
                     <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
-                        <?php render_range_options($years); ?>
+                        <?php render_range_options($years, '', '', $js_data['initialYearCounts']); ?>
                     </select>
                     <span class="range-separator">-</span>
                     <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
-                         <?php render_range_options($years); ?>
+                         <?php render_range_options($years, '', '', $js_data['initialYearCounts']); ?>
                    </select>
                 </div>
             </div>
