@@ -424,9 +424,10 @@ function display_car_filter_form( $context = 'default' ) {
                             <?php
                             foreach ($fuel_type_choices as $value => $label) {
                                 $count = isset($fuel_type_counts[$value]) ? $fuel_type_counts[$value] : 0;
-                                // Never disable initially for multi-select
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>'; // Add class to li
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>'; // Add disabled attr
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }
@@ -451,8 +452,10 @@ function display_car_filter_form( $context = 'default' ) {
                             <?php
                             foreach ($transmission_choices as $value => $label) {
                                 $count = isset($transmission_counts[$value]) ? $transmission_counts[$value] : 0;
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }
@@ -477,8 +480,10 @@ function display_car_filter_form( $context = 'default' ) {
                             <?php
                             foreach ($body_type_choices as $value => $label) {
                                 $count = isset($body_type_counts[$value]) ? $body_type_counts[$value] : 0;
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }
@@ -503,8 +508,10 @@ function display_car_filter_form( $context = 'default' ) {
                              <?php
                             foreach ($drive_type_choices as $value => $label) {
                                 $count = isset($drive_type_counts[$value]) ? $drive_type_counts[$value] : 0;
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }
@@ -529,8 +536,10 @@ function display_car_filter_form( $context = 'default' ) {
                             <?php
                             foreach ($ext_color_choices as $value => $label) {
                                 $count = isset($ext_color_counts[$value]) ? $ext_color_counts[$value] : 0;
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }
@@ -555,8 +564,10 @@ function display_car_filter_form( $context = 'default' ) {
                              <?php
                             foreach ($int_color_choices as $value => $label) {
                                 $count = isset($int_color_counts[$value]) ? $int_color_counts[$value] : 0;
-                                echo '<li><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'">';
+                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                echo '<li'. $li_class .'><label>';
+                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
                                 echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
                                 echo '</label></li>';
                             }

@@ -331,36 +331,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 const count = countsForThisMultiSelect[value] || 0;
                 const countSpan = cb
                   .closest("label")
-                  ?.querySelector(".option-count"); // Optional chaining
+                  ?.querySelector(".option-count");
+                const listItem = cb.closest("li"); // Get the parent li
+
                 if (countSpan) {
                   countSpan.textContent = count;
                 }
-              });
-
-              // --- START Add Reset Logic for Multi-Select ---
-              let needsDisplayUpdate = false;
-              const checkedCheckboxes = element.querySelectorAll(
-                'input[type="checkbox"]:checked'
-              );
-
-              checkedCheckboxes.forEach((cb) => {
-                const value = cb.value;
-                const count = countsForThisMultiSelect[value] || 0;
-                if (count === 0) {
-                  console.log(
-                    `Multi-select reset: Unchecking ${filterKey} - ${value} due to zero count.`
-                  ); // Debug
-                  cb.checked = false;
-                  needsDisplayUpdate = true;
+                // Set disabled state based on count
+                cb.disabled = count === 0;
+                // Add/Remove class for visual styling
+                if (listItem) {
+                  if (count === 0) {
+                    listItem.classList.add("disabled-option");
+                  } else {
+                    listItem.classList.remove("disabled-option");
+                  }
                 }
               });
-
-              // If any checkbox was unchecked, update the display and hidden input
-              if (needsDisplayUpdate) {
-                console.log(`Updating display for multi-select: ${filterKey}`); // Debug
-                updateMultiSelectDisplay(element);
-              }
-              // --- END Add Reset Logic ---
             }
           });
 

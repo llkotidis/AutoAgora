@@ -393,7 +393,6 @@ textarea.error {
 }
 
 .multi-select-popup .option-count {
-  margin-left: 0.5em;
   color: var(--light-text-color);
   font-size: 0.9em;
 }
