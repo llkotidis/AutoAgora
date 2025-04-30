@@ -498,6 +498,71 @@ document.addEventListener("DOMContentLoaded", function () {
             // if (minResetNeeded) mileageMinSelect.value = '';
           }
           // --- End Mileage Range Updates ---
+
+          // --- Update Year Range Selects ---
+          const yearMinSelect = form.querySelector(
+            'select[data-filter-key="year_min"]'
+          );
+          const yearMaxSelect = form.querySelector(
+            'select[data-filter-key="year_max"]'
+          );
+          const yearMinCumulativeCounts =
+            updatedCounts.year_min_cumulative_counts || {};
+          const yearMaxCumulativeCounts =
+            updatedCounts.year_max_cumulative_counts || {};
+
+          console.log("Min Year Counts:", yearMinCumulativeCounts); // Debug
+          console.log("Max Year Counts:", yearMaxCumulativeCounts); // Debug
+
+          function updateYearOptions(selectElement, isMinSelect) {
+            if (!selectElement) return;
+            const cumulativeCounts = isMinSelect
+              ? yearMinCumulativeCounts
+              : yearMaxCumulativeCounts;
+            const options = selectElement.querySelectorAll("option");
+            options.forEach((option) => {
+              if (!option.value) return;
+              const value = option.value; // Year string e.g., "2023"
+              const count = cumulativeCounts[value] || 0;
+              option.textContent = value + " (" + count + ")"; // Display year and count
+              option.disabled = count === 0;
+            });
+          }
+
+          updateYearOptions(yearMinSelect, true);
+          updateYearOptions(yearMaxSelect, false);
+
+          // --- Apply Min/Max Interaction Logic (Year) ---
+          if (yearMinSelect && yearMaxSelect) {
+            const minValStr = yearMinSelect.value;
+            const maxValStr = yearMaxSelect.value;
+            const minVal = minValStr ? parseInt(minValStr, 10) : NaN;
+            const maxVal = maxValStr ? parseInt(maxValStr, 10) : NaN;
+
+            // Disable max options < minVal
+            yearMaxSelect.querySelectorAll("option").forEach((opt) => {
+              if (!opt.value) return;
+              const optVal = parseInt(opt.value, 10);
+              opt.disabled = (yearMaxCumulativeCounts[opt.value] || 0) === 0;
+              if (!opt.disabled && !isNaN(minVal) && optVal < minVal) {
+                opt.disabled = true;
+              }
+            });
+
+            // Disable min options > maxVal
+            yearMinSelect.querySelectorAll("option").forEach((opt) => {
+              if (!opt.value) return;
+              const optVal = parseInt(opt.value, 10);
+              opt.disabled = (yearMinCumulativeCounts[opt.value] || 0) === 0;
+              if (!opt.disabled && !isNaN(maxVal) && optVal > maxVal) {
+                opt.disabled = true;
+              }
+            });
+            // Keep auto-reset commented out
+          }
+          // --- End Year Range Updates ---
+
+          // Ensure Model/Variant selects are enabled/disabled correctly after update
         } else {
           console.error(
             "AJAX error fetching filter counts:",
