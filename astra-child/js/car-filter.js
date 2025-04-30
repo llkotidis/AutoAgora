@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", function () {
           updateEngineOptions(engineMinSelect, true, "L");
           updateEngineOptions(engineMaxSelect, false, "L");
 
-          // --- Apply Min/Max Interaction Logic ---
+          // --- Apply Min/Max Interaction Logic (Engine) ---
           if (engineMinSelect && engineMaxSelect) {
             const minValStr = engineMinSelect.value;
             const maxValStr = engineMaxSelect.value;
@@ -419,6 +419,85 @@ document.addEventListener("DOMContentLoaded", function () {
             modelSelect.disabled = !makeSelect || !makeSelect.value;
           if (variantSelect)
             variantSelect.disabled = !modelSelect || !modelSelect.value;
+          // --- End Engine Range Updates ---
+
+          // --- Update Mileage Range Selects ---
+          const mileageMinSelect = form.querySelector(
+            'select[data-filter-key="mileage_min"]'
+          );
+          const mileageMaxSelect = form.querySelector(
+            'select[data-filter-key="mileage_max"]'
+          );
+          const mileageMinCumulativeCounts =
+            updatedCounts.mileage_min_cumulative_counts || {};
+          const mileageMaxCumulativeCounts =
+            updatedCounts.mileage_max_cumulative_counts || {};
+
+          console.log("Min Mileage Counts:", mileageMinCumulativeCounts); // Debug
+          console.log("Max Mileage Counts:", mileageMaxCumulativeCounts); // Debug
+
+          function updateMileageOptions(selectElement, isMinSelect, suffix) {
+            if (!selectElement) return;
+            const cumulativeCounts = isMinSelect
+              ? mileageMinCumulativeCounts
+              : mileageMaxCumulativeCounts;
+            const options = selectElement.querySelectorAll("option");
+            options.forEach((option) => {
+              if (!option.value) return;
+              const value = option.value; // Expecting integer string e.g., "10000"
+              const count = cumulativeCounts[value] || 0;
+
+              // Format display text (e.g., 10,000 km (15))
+              const numericValue = parseInt(value, 10);
+              // Basic number format with commas for display
+              const displayValueNum = numericValue.toLocaleString();
+              option.textContent =
+                displayValueNum + suffix + " (" + count + ")";
+              option.disabled = count === 0;
+            });
+          }
+
+          updateMileageOptions(mileageMinSelect, true, " km");
+          updateMileageOptions(mileageMaxSelect, false, " km");
+
+          // --- Apply Min/Max Interaction Logic (Mileage) ---
+          if (mileageMinSelect && mileageMaxSelect) {
+            const minValStr = mileageMinSelect.value;
+            const maxValStr = mileageMaxSelect.value;
+            const minVal = minValStr ? parseInt(minValStr, 10) : NaN;
+            const maxVal = maxValStr ? parseInt(maxValStr, 10) : NaN;
+
+            // Disable max options < minVal
+            mileageMaxSelect.querySelectorAll("option").forEach((opt) => {
+              if (!opt.value) return;
+              const optVal = parseInt(opt.value, 10);
+              // Reset disabled based on count first
+              opt.disabled = (mileageMaxCumulativeCounts[opt.value] || 0) === 0;
+              // Then disable if below min
+              if (!opt.disabled && !isNaN(minVal) && optVal < minVal) {
+                opt.disabled = true;
+              }
+            });
+
+            // Disable min options > maxVal
+            mileageMinSelect.querySelectorAll("option").forEach((opt) => {
+              if (!opt.value) return;
+              const optVal = parseInt(opt.value, 10);
+              // Reset disabled based on count first
+              opt.disabled = (mileageMinCumulativeCounts[opt.value] || 0) === 0;
+              // Then disable if above max
+              if (!opt.disabled && !isNaN(maxVal) && optVal > maxVal) {
+                opt.disabled = true;
+              }
+            });
+            // NOTE: We keep the auto-reset commented out based on previous engine behavior
+            // let maxResetNeeded = false;
+            // let minResetNeeded = false;
+            // ... (logic to check opt.selected && opt.disabled) ...
+            // if (maxResetNeeded) mileageMaxSelect.value = '';
+            // if (minResetNeeded) mileageMinSelect.value = '';
+          }
+          // --- End Mileage Range Updates ---
         } else {
           console.error(
             "AJAX error fetching filter counts:",
