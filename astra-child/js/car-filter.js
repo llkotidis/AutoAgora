@@ -422,14 +422,14 @@ document.addEventListener("DOMContentLoaded", function () {
             engineMaxSelect.querySelectorAll("option").forEach((opt) => {
               if (!opt.value) return;
               const optVal = parseFloat(opt.value);
-              // Re-enable first (in case min was cleared) then disable if needed
-              // opt.disabled = cumulativeCounts[opt.value] === 0; // Reset disabled based on count first
-              if (!isNaN(minVal) && optVal < minVal) {
+              // First, reset disabled state based on its own count
+              opt.disabled = (engineMaxCumulativeCounts[opt.value] || 0) === 0;
+              // Then, disable if below the selected min value (if the option wasn't already disabled by count)
+              if (!opt.disabled && !isNaN(minVal) && optVal < minVal) {
                 opt.disabled = true;
               }
-              // Check if current selection needs reset due to interaction OR count becoming 0
+              // Check if current selection needs reset (because it became disabled either by count or interaction)
               if (opt.selected && opt.disabled) {
-                // Already checked count disabled in updateEngineOptions
                 maxResetNeeded = true;
               }
             });
@@ -438,9 +438,10 @@ document.addEventListener("DOMContentLoaded", function () {
             engineMinSelect.querySelectorAll("option").forEach((opt) => {
               if (!opt.value) return;
               const optVal = parseFloat(opt.value);
-              // Re-enable first (in case max was cleared) then disable if needed
-              // opt.disabled = cumulativeCounts[opt.value] === 0; // Reset disabled based on count first
-              if (!isNaN(maxVal) && optVal > maxVal) {
+              // First, reset disabled state based on its own count
+              opt.disabled = (engineMinCumulativeCounts[opt.value] || 0) === 0;
+              // Then, disable if above the selected max value (if the option wasn't already disabled by count)
+              if (!opt.disabled && !isNaN(maxVal) && optVal > maxVal) {
                 opt.disabled = true;
               }
               // Check if current selection needs reset
