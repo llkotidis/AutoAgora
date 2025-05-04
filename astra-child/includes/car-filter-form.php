@@ -318,7 +318,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Location Selector -->
             <div class="filter-form-group filter-group-location">
                 <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
-                <select id="filter-location-<?php echo esc_attr($context); ?>" name="filter_location" data-filter-key="location">
+                <select id="filter-location-<?php echo esc_attr($context); ?>" name="location" data-filter-key="location">
                     <option value="">All Locations</option>
                     <?php render_select_options($all_possible_locations, $published_location_counts, '', false); ?>
                 </select>
@@ -327,7 +327,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Make Selector -->
             <div class="filter-form-group filter-group-make">
                 <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
-                <select id="filter-make-<?php echo esc_attr($context); ?>" name="filter_make" data-filter-key="make">
+                <select id="filter-make-<?php echo esc_attr($context); ?>" name="make" data-filter-key="make">
                     <option value="">All Makes</option>
                      <?php 
                     if (!empty($all_makes_from_files)):
@@ -342,7 +342,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Model Selector -->
             <div class="filter-form-group filter-group-model">
                 <label for="filter-model-<?php echo esc_attr($context); ?>">Model</label>
-                <select id="filter-model-<?php echo esc_attr($context); ?>" name="filter_model" data-filter-key="model" disabled>
+                <select id="filter-model-<?php echo esc_attr($context); ?>" name="model" data-filter-key="model" disabled>
                     <option value="">Select Make First</option>
                     <?php
                         // Initially empty or potentially pre-populated if make is pre-selected
@@ -354,7 +354,7 @@ function display_car_filter_form( $context = 'default' ) {
             <!-- Variant Selector -->
             <div class="filter-form-group filter-group-variant">
                 <label for="filter-variant-<?php echo esc_attr($context); ?>">Variant</label>
-                <select id="filter-variant-<?php echo esc_attr($context); ?>" name="filter_variant" data-filter-key="variant" disabled>
+                <select id="filter-variant-<?php echo esc_attr($context); ?>" name="variant" data-filter-key="variant" disabled>
                     <option value="">Select Model First</option>
                      <?php
                         // Initially empty, JS will handle dynamic population based on Model selection and AJAX counts
@@ -366,12 +366,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-year">
                 <label>Year</label>
                 <div class="filter-range-fields">
-                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="filter_year_min" data-filter-key="year_min">
+                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
                         <option value="">Min Year</option>
                         <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
                     </select>
                     <span class="range-separator">-</span>
-                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="filter_year_max" data-filter-key="year_max">
+                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
                         <option value="">Max Year</option>
                          <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
                    </select>
@@ -382,12 +382,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>
                  <div class="filter-range-fields">
-                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="filter_engine_min" data-filter-key="engine_min">
+                    <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="engine_min" data-filter-key="engine_min">
                         <option value="">Min Size</option>
                          <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="filter_engine_max" data-filter-key="engine_max">
+                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
@@ -398,12 +398,12 @@ function display_car_filter_form( $context = 'default' ) {
             <div class="filter-form-group filter-group-mileage">
                 <label>Mileage (km)</label>
                  <div class="filter-range-fields">
-                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="filter_mileage_min" data-filter-key="mileage_min">
+                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
                          <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                      <span class="range-separator">-</span>
-                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="filter_mileage_max" data-filter-key="mileage_max">
+                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
@@ -434,7 +434,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                    <input type="hidden" name="filter_fuel_type" class="multi-select-value">
+                    <input type="hidden" name="fuel_type" class="multi-select-value">
                 </div>
             </div>
 
@@ -462,7 +462,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                    <input type="hidden" name="filter_transmission" class="multi-select-value">
+                    <input type="hidden" name="transmission" class="multi-select-value">
                  </div>
             </div>
 
@@ -490,7 +490,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                     <input type="hidden" name="filter_body_type" class="multi-select-value">
+                     <input type="hidden" name="body_type" class="multi-select-value">
                 </div>
             </div>
 
@@ -518,7 +518,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                     <input type="hidden" name="filter_drive_type" class="multi-select-value">
+                     <input type="hidden" name="drive_type" class="multi-select-value">
                  </div>
             </div>
 
@@ -546,7 +546,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                    <input type="hidden" name="filter_exterior_color" class="multi-select-value">
+                    <input type="hidden" name="exterior_color" class="multi-select-value">
                  </div>
             </div>
 
@@ -574,7 +574,7 @@ function display_car_filter_form( $context = 'default' ) {
                             ?>
                         </ul>
                     </div>
-                    <input type="hidden" name="filter_interior_color" class="multi-select-value">
+                    <input type="hidden" name="interior_color" class="multi-select-value">
                 </div>
             </div>
 
