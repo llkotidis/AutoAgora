@@ -717,9 +717,12 @@
       const hiddenInput = msFilter.querySelector(".multi-select-value");
 
       display.addEventListener("click", (event) => {
-        console.log("Multi-select display clicked:", filterKey);
+        console.log("[MultiSelect Click] Handler START for key:", filterKey);
         event.stopPropagation();
         const isActive = msFilter.classList.contains("active");
+        console.log("[MultiSelect Click] Is currently active?", isActive);
+
+        // Close other popups
         document
           .querySelectorAll(".multi-select-filter.active")
           .forEach((activeMs) => {
@@ -739,7 +742,18 @@
               }
             }
           });
+
+        // Toggle the current one
+        console.log(
+          "[MultiSelect Click] About to toggle active class on:",
+          msFilter
+        );
         msFilter.classList.toggle("active");
+        console.log(
+          "[MultiSelect Click] Class list after toggle:",
+          msFilter.classList
+        );
+
         if (msFilter.classList.contains("active")) {
           multiSelectInitialValues[filterKey] = hiddenInput
             ? hiddenInput.value
