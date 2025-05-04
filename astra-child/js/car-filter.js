@@ -819,54 +819,32 @@ document.addEventListener("DOMContentLoaded", function () {
     updateMultiSelectDisplay(msFilter);
   });
 
-  // --- Custom Form Submission Logic ---
+  // --- Override Form Submission ---
   if (form) {
     form.addEventListener("submit", function (event) {
       event.preventDefault(); // Stop the default GET submission
+      console.log("Form submission intercepted.");
 
-      const baseUrl = form.action; // Get the action URL (/car_listings/)
-      const params = [];
+      const currentFilters = getCurrentFilters(); // Use existing helper
+      const params = new URLSearchParams();
 
-      // Iterate over all filter elements (selects and hidden inputs)
-      allFilterElements.forEach((element) => {
-        let value = null;
-        const name = element.getAttribute("name"); // Get the name attribute
-
-        if (!name) return; // Skip elements without a name
-
-        if (element.matches("select")) {
-          value = element.value;
-        } else if (element.matches(".multi-select-filter")) {
-          // Find the hidden input within the multi-select wrapper
-          const hiddenInput = element.querySelector(".multi-select-value");
-          if (hiddenInput) {
-            value = hiddenInput.value;
-          }
-        } else if (element.matches('input[type="hidden"].multi-select-value')) {
-          // Directly handle the hidden input if it's caught by allFilterElements
-          // (This might be redundant if .multi-select-filter logic catches it, but safe to include)
-          value = element.value;
+      // Add only non-empty filters to the URL parameters
+      for (const key in currentFilters) {
+        if (currentFilters[key] && currentFilters[key] !== "") {
+          params.append(key, currentFilters[key]);
         }
-
-        // Add to params only if the value is not empty or null
-        if (value !== null && value !== "") {
-          // Encode both name and value just in case
-          params.push(
-            encodeURIComponent(name) + "=" + encodeURIComponent(value)
-          );
-        }
-      });
-
-      let finalUrl = baseUrl;
-      if (params.length > 0) {
-        finalUrl += "?" + params.join("&");
       }
 
+      // Construct the final URL
+      const baseUrl = form.action; // Get the action URL from the form (/car_listings/)
+      const queryString = params.toString();
+      const finalUrl = baseUrl + (queryString ? "?" + queryString : ""); // Add query string only if not empty
+
       console.log("Redirecting to:", finalUrl);
-      window.location.href = finalUrl; // Perform the redirect
+      window.location.href = finalUrl; // Redirect the browser
     });
   }
-  // --- End Custom Form Submission Logic ---
+  // --- End Override Form Submission ---
 
   console.log(
     "DOM ready. Running initial handleFilterChange to get base counts."
