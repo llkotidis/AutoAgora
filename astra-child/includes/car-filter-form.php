@@ -248,7 +248,7 @@ function display_car_filter_form( $context = 'default' ) {
     ob_start();
     ?>
     <div class="car-filter-form-container context-<?php echo esc_attr($context); ?>">
-        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action=""> 
+        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="/car_listings/"> 
             
             <h2>Find Your Car</h2> 
 
