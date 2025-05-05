@@ -864,7 +864,7 @@
     });
 
     // --- Override Form Submission ---
-    if (form) {
+    if (form && context !== "listings_page") {
       form.addEventListener("submit", function (event) {
         event.preventDefault(); // Stop the default GET submission
         console.log("Form submission intercepted.");
