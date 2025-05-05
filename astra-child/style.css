@@ -352,7 +352,7 @@ textarea.error {
 }
 
 /* Show popup when active */
-.multi-select-filter.active .multi-select-popup {
+.multi-select-filter .active .multi-select-popup {
   display: block;
 }
 
