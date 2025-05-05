@@ -66,12 +66,10 @@ function display_car_listings($atts) {
                     <h2>Filter Cars</h2>
                     <button class="close-filters">&times;</button>
                 </div>
-            <form method="get" class="filters-form">
                 <?php 
                 // Display the new filter form with 'listings_page' context
                 echo display_car_filter_form('listings_page'); 
                 ?>
-            </form>
             </div>
         </div>
 
