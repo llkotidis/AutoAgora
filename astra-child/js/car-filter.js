@@ -1,6 +1,8 @@
 (function ($) {
   // Start jQuery no-conflict wrapper
   document.addEventListener("DOMContentLoaded", function () {
+    console.log("[CarFilter] DOMContentLoaded event fired.");
+
     // Note: The 'carFilterData' object will be provided by wp_localize_script in PHP
 
     if (typeof carFilterData === "undefined") {
@@ -18,15 +20,27 @@
     const makeModelVariantStructure = filterData.makeModelVariantStructure;
     const allChoices = filterData.choices; // All possible static choices (ACF)
 
+    console.log("[CarFilter] Initializing filters for context:", context);
+
     const form = document.getElementById("car-filter-form-" + context);
     // Ensure form exists before proceeding
     if (!form) {
+      console.error(
+        "[CarFilter] Form element not found with ID:",
+        "car-filter-form-" + context
+      );
       return;
     }
+    console.log("[CarFilter] Form element found:", form);
 
     const container = form.closest(".car-filter-form-container");
     const filterSelects = form.querySelectorAll("select[data-filter-key]");
     const multiSelectFilters = form.querySelectorAll(".multi-select-filter"); // Get multi-selects
+    console.log(
+      "[CarFilter] Found multiSelectFilters elements:",
+      multiSelectFilters.length,
+      multiSelectFilters
+    );
     const allFilterElements = form.querySelectorAll("[data-filter-key]"); // All elements with filter keys
     const resetButton = form.querySelector(".filter-reset-button");
 
