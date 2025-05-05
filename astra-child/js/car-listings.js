@@ -531,7 +531,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
 
           // Update filter counts and dependent dropdowns based on the change
-          updateAllFilterDisplays();
+          // updateAllFilterDisplays(); // Temporarily commented out to test if it causes all filters to clear
 
           // Re-submit the form via AJAX
           submitFiltersWithAjax(1);
