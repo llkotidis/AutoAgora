@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const filtersButton = document.querySelector(".filters-button");
   const filtersPopup = document.getElementById("filtersPopup");
   const closeFilters = document.querySelector(".close-filters");
-  const filterForm = document.querySelector(".filters-form");
+  const filterForm = document.getElementById("car-filter-form-listings_page");
 
   // Check if essential elements exist
   if (!filtersButton || !filtersPopup || !closeFilters || !filterForm) {
