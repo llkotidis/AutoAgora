@@ -417,7 +417,7 @@ function display_car_filter_form( $context = 'default' ) {
                 <div class="multi-select-filter" data-filter-key="fuel_type">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
@@ -445,7 +445,7 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="multi-select-filter" data-filter-key="transmission">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
@@ -473,7 +473,7 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="multi-select-filter" data-filter-key="body_type">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
@@ -501,7 +501,7 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="multi-select-filter" data-filter-key="drive_type">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
@@ -529,7 +529,7 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="multi-select-filter" data-filter-key="exterior_color">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
@@ -557,7 +557,7 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="multi-select-filter" data-filter-key="interior_color">
                     <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
                         <span>Select <?php echo esc_html($field_label); ?></span>
-                        <span class="dropdown-arrow">▼</span>
+                        
                     </div>
                     <div class="multi-select-popup">
                         <ul>
