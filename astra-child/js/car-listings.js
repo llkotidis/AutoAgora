@@ -510,8 +510,8 @@ document.addEventListener("DOMContentLoaded", function () {
             checkboxes.forEach((cb) => {
               if (cb.value === valueToRemove) {
                 cb.checked = false;
-                // Manually trigger change event for consistency if needed elsewhere
-                // cb.dispatchEvent(new Event('change', { bubbles: true }));
+                // Trigger change event on the checkbox itself for consistency
+                cb.dispatchEvent(new Event("change", { bubbles: true }));
               }
             });
           } else if (key.endsWith("_min") || key.endsWith("_max")) {
@@ -519,19 +519,21 @@ document.addEventListener("DOMContentLoaded", function () {
             const select = filterForm.querySelector(`select[name="${key}"]`);
             if (select) {
               select.value = ""; // Reset to 'Any'
-              // select.dispatchEvent(new Event('change', { bubbles: true }));
+              // Trigger change event on the select itself
+              select.dispatchEvent(new Event("change", { bubbles: true }));
             }
           } else {
             // Single select (make, model, location etc.)
             const select = filterForm.querySelector(`select[name="${key}"]`);
             if (select) {
               select.value = ""; // Reset to 'All'
-              // select.dispatchEvent(new Event('change', { bubbles: true }));
+              // Trigger change event on the select itself
+              select.dispatchEvent(new Event("change", { bubbles: true }));
             }
           }
 
           // Update filter counts and dependent dropdowns based on the change
-          // updateAllFilterDisplays(); // Temporarily commented out to test if it causes all filters to clear
+          updateAllFilterDisplays(); // Re-enabled this call
 
           // Re-submit the form via AJAX
           submitFiltersWithAjax(1);
