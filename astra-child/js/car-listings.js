@@ -55,6 +55,100 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // --- NEW: Core function to sync form state from URL and update dependent counts ---
+  function syncFormAndPopulateCountsFromUrl(urlString) {
+    if (!filterForm) return;
+    const params = new URLSearchParams(urlString);
+
+    // Sync Make, Model, Variant
+    const makeSelect = filterForm.querySelector('select[name="make"]');
+    const modelSelect = filterForm.querySelector('select[name="model"]');
+    const variantSelect = filterForm.querySelector('select[name="variant"]');
+
+    const urlMake = params.get("make");
+    const urlModel = params.get("model");
+    const urlVariant = params.get("variant");
+
+    if (makeSelect) {
+      makeSelect.value = urlMake || "";
+      // populateModels needs to be called after make is set,
+      // and populateVariants after model is set.
+      // These functions also handle disabling/enabling.
+      if (typeof populateModels === "function") populateModels();
+    }
+    if (modelSelect) {
+      // populateModels might have already set the model if it was in carData
+      // but ensure URL value takes precedence if it's a valid option after populating.
+      if (
+        urlModel &&
+        Array.from(modelSelect.options).some((opt) => opt.value === urlModel)
+      ) {
+        modelSelect.value = urlModel;
+      } else if (!urlMake) {
+        // If no make, ensure model is cleared
+        modelSelect.value = "";
+      }
+      if (typeof populateVariants === "function") populateVariants();
+    }
+    if (variantSelect) {
+      if (
+        urlVariant &&
+        Array.from(variantSelect.options).some(
+          (opt) => opt.value === urlVariant
+        )
+      ) {
+        variantSelect.value = urlVariant;
+      } else if (!urlModel) {
+        // If no model, ensure variant is cleared
+        variantSelect.value = "";
+      }
+    }
+
+    // Sync Checkboxes
+    filterForm
+      .querySelectorAll('.checkbox-group input[type="checkbox"]')
+      .forEach((cb) => {
+        const key = cb.name; // e.g., fuel_type[]
+        const value = cb.value;
+        cb.checked = params.getAll(key).includes(value);
+      });
+
+    // Sync other Selects (Location, Range Filters)
+    ["price", "year", "mileage", "engine_capacity", "location"].forEach(
+      (field) => {
+        const isRange =
+          field !== "location" &&
+          (field === "price" ||
+            field === "year" ||
+            field === "mileage" ||
+            field === "engine_capacity");
+
+        if (isRange) {
+          const minParam = field + "_min";
+          const maxParam = field + "_max";
+          const minSelect = filterForm.querySelector(
+            `select[name="${minParam}"]`
+          );
+          const maxSelect = filterForm.querySelector(
+            `select[name="${maxParam}"]`
+          );
+          if (minSelect) minSelect.value = params.get(minParam) || "";
+          if (maxSelect) maxSelect.value = params.get(maxParam) || "";
+        } else {
+          // Single select like location
+          const select = filterForm.querySelector(`select[name="${field}"]`);
+          if (select) select.value = params.get(field) || "";
+        }
+      }
+    );
+
+    // After form is synced from URL, update the counts and enabled/disabled states
+    // of options within the filter popup.
+    if (typeof updateAllFilterDisplays === "function") {
+      updateAllFilterDisplays();
+    }
+  }
+
   // --- NEW: Helper function to get current filters from the form ---
   function getFiltersFromForm() {
     const formData = new FormData(filterForm);
@@ -77,49 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
     return filters;
-  }
-
-  // --- NEW: Central function to filter car listings ---
-  function filterCars(listings, filters) {
-    return listings.filter((car) => {
-      let match = true;
-      for (const key in filters) {
-        const filterValue = filters[key];
-        const carValue = car[key.replace(/_min$|_max$/, "")]; // Get corresponding car field (e.g., price for price_min)
-
-        if (key.endsWith("_min")) {
-          const min = parseFloat(filterValue);
-          if (!isNaN(min) && parseFloat(carValue) < min) {
-            match = false;
-            break;
-          }
-        } else if (key.endsWith("_max")) {
-          const max = parseFloat(filterValue);
-          if (!isNaN(max) && parseFloat(carValue) > max) {
-            match = false;
-            break;
-          }
-        } else if (Array.isArray(filterValue)) {
-          // Checkbox group (array of selected values)
-          if (
-            filterValue.length > 0 &&
-            !filterValue.includes(String(carValue))
-          ) {
-            // Ensure comparison uses string if needed
-            match = false;
-            break;
-          }
-        } else {
-          // Exact match (select dropdowns like make, model, location)
-          if (String(carValue) !== String(filterValue)) {
-            // Ensure comparison uses string
-            match = false;
-            break;
-          }
-        }
-      }
-      return match;
-    });
   }
 
   function updateAllFilterDisplays() {
@@ -457,15 +508,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const activeFiltersContainer = document.querySelector(
       ".active-filters-container"
     );
-    if (!activeFiltersContainer) return; // Exit if bar isn't present
+    if (!activeFiltersContainer) return;
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search); // Always read from current URL
     activeFiltersContainer.innerHTML = "";
     const processedValues = new Set();
 
     params.forEach((value, key) => {
       if (value && key !== "paged") {
-        const baseKey = key.replace(/\[\]$/, "");
+        const baseKey = key.replace(/\\\[\\\]$/, "");
         const label = formatFilterLabel(baseKey);
 
         if (key.endsWith("[]")) {
@@ -491,121 +542,59 @@ document.addEventListener("DOMContentLoaded", function () {
     activeFiltersContainer
       .querySelectorAll(".remove-filter")
       .forEach((button) => {
-        // Clone the button to remove any previously attached event listeners
         const newButton = button.cloneNode(true);
         button.parentNode.replaceChild(newButton, button);
 
         newButton.addEventListener("click", function (e) {
-          e.preventDefault(); // Prevent default link behavior
-          e.stopPropagation(); // Prevent event from bubbling up
+          e.preventDefault();
+          e.stopPropagation();
 
           if (!filterForm) {
             console.error(
-              "Car Listings: Filter form (car-filter-form-listings_page) not found. Cannot clear filter."
+              "Car Listings: Filter form not found. Cannot clear filter."
             );
             return;
           }
 
-          const filterKey = this.dataset.key;
-          const valueToRemove = this.dataset.value; // Used for multi-value filters like checkboxes
+          const filterKeyToRemove = this.dataset.key;
+          const valueToRemove = this.dataset.value; // For multi-value (checkboxes)
 
-          if (!filterKey) {
+          if (!filterKeyToRemove) {
             console.warn(
-              "Car Listings: Filter key not found on remove button. Cannot clear filter."
+              "Car Listings: Filter key not found on remove button."
             );
             return;
           }
 
-          let formElementChanged = false;
+          const currentParams = new URLSearchParams(window.location.search);
 
-          // Handle checkbox groups (e.g., fuel_type[], body_type[])
-          if (filterKey.endsWith("[]")) {
-            const checkboxes = filterForm.querySelectorAll(
-              `input[type="checkbox"][name="${filterKey}"]`
-            );
-            checkboxes.forEach((cb) => {
-              if (cb.value === valueToRemove) {
-                if (cb.checked) {
-                  cb.checked = false;
-                  // Dispatch change event for consistency and to trigger other listeners
-                  cb.dispatchEvent(new Event("change", { bubbles: true }));
-                  formElementChanged = true;
-                }
+          if (filterKeyToRemove.endsWith("[]") && valueToRemove) {
+            const existingValues = currentParams.getAll(filterKeyToRemove);
+            currentParams.delete(filterKeyToRemove); // Delete all first
+            existingValues.forEach((val) => {
+              if (val !== valueToRemove) {
+                // Add back non-matching values
+                currentParams.append(filterKeyToRemove, val);
               }
             });
-          }
-          // Handle range selects (e.g., price_min, year_max)
-          else if (filterKey.endsWith("_min") || filterKey.endsWith("_max")) {
-            const selectElement = filterForm.querySelector(
-              `select[name="${filterKey}"]`
-            );
-            if (selectElement) {
-              if (selectElement.value !== "") {
-                selectElement.value = ""; // Reset to default/placeholder (e.g., "Any")
-                selectElement.dispatchEvent(
-                  new Event("change", { bubbles: true })
-                );
-                formElementChanged = true;
-              }
-            } else {
-              console.warn(
-                `Car Listings: Select element for range filter key "${filterKey}" not found.`
-              );
-            }
-          }
-          // Handle single select dropdowns (e.g., make, model, location)
-          else {
-            const selectElement = filterForm.querySelector(
-              `select[name="${filterKey}"]`
-            );
-            if (selectElement) {
-              if (selectElement.value !== "") {
-                selectElement.value = ""; // Reset to default/placeholder (e.g., "All")
-                selectElement.dispatchEvent(
-                  new Event("change", { bubbles: true })
-                );
-                formElementChanged = true;
-              }
-            } else {
-              console.warn(
-                `Car Listings: Select element for filter key "${filterKey}" not found.`
-              );
-            }
-          }
-
-          if (formElementChanged) {
-            // Update all filter display counts and dependent dropdowns immediately
-            // This function should read the current state of the form
-            if (typeof updateAllFilterDisplays === "function") {
-              updateAllFilterDisplays();
-            } else {
-              console.warn(
-                "Car Listings: updateAllFilterDisplays function not found after clearing filter."
-              );
-            }
-
-            // Re-submit the form via AJAX. This function is responsible for:
-            // 1. Reading the updated form data.
-            // 2. Performing the AJAX request.
-            // 3. Updating the URL via history.pushState.
-            // 4. Re-rendering listings and active filter chips on success.
-            if (typeof submitFiltersWithAjax === "function") {
-              submitFiltersWithAjax(1); // Submit for page 1 as filters have changed
-            } else {
-              console.error(
-                "Car Listings: submitFiltersWithAjax function not found. Cannot refresh listings."
-              );
-            }
           } else {
-            // This branch could be reached if the chip was clicked but the corresponding
-            // form element was already in a cleared state, or if the element wasn't found.
-            // No action needed if no change was made to the form.
-            console.info(
-              `Car Listings: No form element changed for filter key "${filterKey}" (value: "${valueToRemove}"). Filter removal might have been redundant or element not found.`
-            );
+            currentParams.delete(filterKeyToRemove);
           }
-        }); // End of newButton click listener
-      }); // End of forEach loop for .remove-filter buttons
+
+          currentParams.delete("paged"); // Reset to page 1
+
+          const newQueryString = currentParams.toString();
+          const newUrl =
+            window.location.pathname +
+            (newQueryString ? "?" + newQueryString : "");
+
+          history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+          syncFormAndPopulateCountsFromUrl(window.location.search); // Sync form from new URL
+          updateActiveFiltersDisplay(); // Re-render chips from new URL
+          submitFiltersWithAjax(1); // Fetch new listings for page 1
+        });
+      });
   }
 
   function createFilterChip(label, value, key, dataValue = null) {
@@ -654,52 +643,58 @@ document.addEventListener("DOMContentLoaded", function () {
 
   filterForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    submitFiltersWithAjax(1); // Submit with page 1 on explicit form submission
+    const currentParams = new URLSearchParams(new FormData(filterForm));
+    currentParams.delete("paged");
+
+    const newQueryString = currentParams.toString();
+    const newUrl =
+      window.location.pathname + (newQueryString ? "?" + newQueryString : "");
+    history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+    // syncFormAndPopulateCountsFromUrl(window.location.search); // Form is source, counts updated by it
+    updateAllFilterDisplays(); // Ensure counts are fresh based on form before AJAX
+    updateActiveFiltersDisplay(); // Chips from new URL
+    submitFiltersWithAjax(1);
   });
 
   function submitFiltersWithAjax(page = 1) {
-    const formData = new FormData(filterForm);
-    const filters = {};
-    const params = new URLSearchParams(); // For URL update
+    const formData = new FormData(filterForm); // Form should be in sync with URL due to prior calls
+    // const filters = {}; // Not strictly needed if using FormData directly for ajaxData
+    // const params = new URLSearchParams(); // URL is already updated by the caller
 
     // Convert FormData to a plain object for easier handling in PHP
     // and build URL params for history.pushState
-    for (const [key, value] of formData.entries()) {
-      if (value) {
-        const cleanKey = key.replace(/\[\]$/, ""); // Remove [] for object keys
-        if (key.endsWith("[]")) {
-          if (!filters[cleanKey]) {
-            filters[cleanKey] = [];
-          }
-          filters[cleanKey].push(value);
-          params.append(key, value); // Keep [] for URL params
-        } else {
-          filters[key] = value;
-          params.set(key, value); // Set for URL params
-        }
-      }
-    }
-
-    // Add pagination to URL params if not page 1
-    if (page > 1) {
-      params.set("paged", page);
-    } else {
-      params.delete("paged"); // Clean URL for page 1
-    }
+    // This part is removed as URL is updated by caller.
+    // for (const [key, value] of formData.entries()) { ... }
 
     // Add AJAX action, nonce, and paged info
-    const ajaxData = new FormData();
+    const ajaxData = new FormData(filterForm); // Use current form state
     ajaxData.append("action", "filter_car_listings");
-    ajaxData.append("nonce", carListingsData.filter_nonce); // Use the nonce from localized data
+    ajaxData.append("nonce", carListingsData.filter_nonce);
     ajaxData.append("paged", page);
-    // Append filters as individual fields
-    for (const key in filters) {
-      if (Array.isArray(filters[key])) {
-        filters[key].forEach((val) =>
-          ajaxData.append(`filters[${key}][]`, val)
+
+    // The FormData directly from filterForm already contains all filter fields.
+    // We don't need to manually append `filters[key]` if PHP AJAX handler is robust.
+    // Assuming the PHP handler `filter_car_listings` can read from `$_POST` directly
+    // or from `$_POST['filters']` if that's how it's structured.
+    // Let's assume existing PHP expects filters wrapped in a 'filters' array in POST.
+    // To achieve this with FormData, we need to reconstruct it or adjust PHP.
+    // For now, let's try to match the previous ajaxData construction logic,
+    // but based on the current filterForm state.
+
+    const finalAjaxData = new FormData(); // Create a new FormData for specific AJAX structure
+    finalAjaxData.append("action", "filter_car_listings");
+    finalAjaxData.append("nonce", carListingsData.filter_nonce);
+    finalAjaxData.append("paged", page);
+
+    const currentFormFilters = getFiltersFromForm(); // Get structured filters from form
+    for (const key in currentFormFilters) {
+      if (Array.isArray(currentFormFilters[key])) {
+        currentFormFilters[key].forEach((val) =>
+          finalAjaxData.append(`filters[${key}][]`, val)
         );
       } else {
-        ajaxData.append(`filters[${key}]`, filters[key]);
+        finalAjaxData.append(`filters[${key}]`, currentFormFilters[key]);
       }
     }
 
@@ -718,7 +713,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetch(carListingsData.ajaxurl, {
       method: "POST",
-      body: ajaxData,
+      body: finalAjaxData, // Use the structured finalAjaxData
       credentials: "same-origin",
     })
       .then((response) => {
@@ -745,16 +740,10 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.innerHTML = data.data.pagination_html;
           }
 
-          // Update URL using History API - only add question mark if there are parameters
-          const paramsString = params.toString();
-          const newUrl = paramsString
-            ? window.location.pathname + "?" + paramsString
-            : window.location.pathname;
-
-          // Only push state if URL is different to avoid duplicate entries on simple pagination clicks
-          if (window.location.href !== newUrl) {
-            history.pushState({ path: newUrl, page: page }, "", newUrl);
-          }
+          // Update URL using History API - This is now done by the CALLER of submitFiltersWithAjax
+          // const paramsString = params.toString();
+          // const newUrl = paramsString ...
+          // history.pushState({ path: newUrl, page: page }, "", newUrl);
 
           // Update active filter chips display (if applicable)
           if (typeof updateActiveFiltersDisplay === "function") {
@@ -795,48 +784,46 @@ document.addEventListener("DOMContentLoaded", function () {
     ".car-listings-pagination"
   );
   if (paginationContainer) {
-    // Use event delegation
     paginationContainer.addEventListener("click", function (e) {
-      const pageLink = e.target.closest("a.page-numbers"); // Find the closest anchor
+      const pageLink = e.target.closest("a.page-numbers");
       if (pageLink && !pageLink.classList.contains("current")) {
         e.preventDefault();
 
-        // Get the current page from the URL with proper validation
-        const currentUrl = new URL(window.location.href);
-        let currentPage = parseInt(currentUrl.searchParams.get("paged"), 10);
-        // Ensure currentPage is a valid number and at least 1
-        if (isNaN(currentPage) || currentPage < 1) {
-          currentPage = 1;
-        }
-
-        // Determine the target page
-        let targetPage = currentPage;
-
-        // Check if it's a direct page number link
+        let targetPage = 1;
         const href = pageLink.getAttribute("href");
-        const hrefUrl = new URL(href, window.location.origin);
-        const pagedParam = hrefUrl.searchParams.get("paged");
 
-        if (pagedParam) {
-          // Direct page number link
-          targetPage = parseInt(pagedParam, 10);
-          // Validate the target page
-          if (isNaN(targetPage) || targetPage < 1) {
-            targetPage = 1;
+        // Try to get target page from the link's href first
+        try {
+          const hrefUrl = new URL(href, window.location.origin);
+          const pagedParam = hrefUrl.searchParams.get("paged");
+          if (pagedParam) {
+            targetPage = parseInt(pagedParam, 10);
+            if (isNaN(targetPage) || targetPage < 1) targetPage = 1;
           }
-        } else {
-          // Check if it's a next/prev link
-          if (href.includes("next")) {
+        } catch (error) {
+          // Fallback for simple prev/next if URL parsing fails (e.g. if href is just '#')
+          const currentUrlParams = new URLSearchParams(window.location.search);
+          let currentPage = parseInt(currentUrlParams.get("paged"), 10) || 1;
+          if (pageLink.classList.contains("next")) {
             targetPage = currentPage + 1;
-          } else if (href.includes("prev")) {
+          } else if (pageLink.classList.contains("prev")) {
             targetPage = Math.max(1, currentPage - 1);
           }
         }
 
-        // Submit the form with the correct page number
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.set("paged", targetPage);
+        const newQueryString = currentParams.toString();
+        const newUrl =
+          window.location.pathname +
+          (newQueryString ? "?" + newQueryString : "");
+
+        history.pushState({ path: newUrl, page: targetPage }, "", newUrl);
+
+        // No need to call syncForm here as only pagination changed.
+        // updateActiveFiltersDisplay will be called by submitFiltersWithAjax on success.
         submitFiltersWithAjax(targetPage);
 
-        // Optional: Scroll to top of listings
         const listingsContainer = document.querySelector(
           ".car-listings-container"
         );
@@ -849,11 +836,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Handle Browser Back/Forward ---
   window.addEventListener("popstate", function (event) {
-    // We could re-submit the form based on the URL state,
-    // but simply reloading might be easier and more reliable
-    // unless complex state management is implemented.
-    // For now, let's reload to reflect the URL state.
-    window.location.reload();
+    // Sync form from the new URL, update chips, and fetch data.
+    syncFormAndPopulateCountsFromUrl(window.location.search);
+    updateActiveFiltersDisplay(); // Ensure chips are updated
+    const params = new URLSearchParams(window.location.search);
+    const page = parseInt(params.get("paged")) || 1;
+    submitFiltersWithAjax(page);
   });
 
   // --- Helper functions to re-initialize JS components ---
@@ -1060,149 +1048,99 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (makeSelect) {
     makeSelect.addEventListener("change", () => {
-      populateModels();
-      updateAllFilterDisplays();
+      // populateModels(); // This is called within syncFormAndPopulateCountsFromUrl if make changes
+      // updateAllFilterDisplays(); // This is also called at the end of syncForm
+
+      const currentParams = new URLSearchParams(filterForm); // Get all form data
+      currentParams.delete("model"); // Changing make resets model and variant
+      currentParams.delete("variant");
+      currentParams.delete("paged"); // Reset to page 1
+
+      const newQueryString = currentParams.toString();
+      const newUrl =
+        window.location.pathname + (newQueryString ? "?" + newQueryString : "");
+      history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+      // Sync form (which calls populateModels/Variants and updateAllFilterDisplays)
+      syncFormAndPopulateCountsFromUrl(window.location.search);
+      updateActiveFiltersDisplay(); // Update chips
+      submitFiltersWithAjax(1);
     });
   }
 
   if (modelSelect) {
     modelSelect.addEventListener("change", () => {
-      populateVariants();
-      updateAllFilterDisplays();
+      // populateVariants(); // Called by syncForm
+      // updateAllFilterDisplays(); // Called by syncForm
+
+      const currentParams = new URLSearchParams(filterForm);
+      currentParams.delete("variant"); // Changing model resets variant
+      currentParams.delete("paged");
+
+      const newQueryString = currentParams.toString();
+      const newUrl =
+        window.location.pathname + (newQueryString ? "?" + newQueryString : "");
+      history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+      syncFormAndPopulateCountsFromUrl(window.location.search);
+      updateActiveFiltersDisplay();
+      submitFiltersWithAjax(1);
     });
   }
 
   if (variantSelect) {
     variantSelect.addEventListener("change", () => {
-      updateAllFilterDisplays();
+      // updateAllFilterDisplays(); // Called by syncForm
+
+      const currentParams = new URLSearchParams(filterForm);
+      currentParams.delete("paged");
+
+      const newQueryString = currentParams.toString();
+      const newUrl =
+        window.location.pathname + (newQueryString ? "?" + newQueryString : "");
+      history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+      syncFormAndPopulateCountsFromUrl(window.location.search);
+      updateActiveFiltersDisplay();
+      submitFiltersWithAjax(1);
     });
   }
 
+  // Generic handler for other filter changes (checkboxes, other selects)
   filterForm
     .querySelectorAll(
       'select:not(#make):not(#model):not(#variant), input[type="checkbox"]'
     )
     .forEach((input) => {
-      input.addEventListener("change", updateAllFilterDisplays);
+      input.addEventListener("change", () => {
+        const currentParams = new URLSearchParams(new FormData(filterForm));
+        currentParams.delete("paged"); // Reset to page 1 on any filter change
+
+        const newQueryString = currentParams.toString();
+        const newUrl =
+          window.location.pathname +
+          (newQueryString ? "?" + newQueryString : "");
+        history.pushState({ path: newUrl, page: 1 }, "", newUrl);
+
+        // syncForm is not strictly needed here if the form is the source,
+        // but updateAllFilterDisplays is important for counts.
+        // updateAllFilterDisplays is called by syncForm, so we can call that.
+        syncFormAndPopulateCountsFromUrl(window.location.search); // This also calls updateAllFilterDisplays
+        updateActiveFiltersDisplay(); // Update chips
+        submitFiltersWithAjax(1);
+      });
     });
-
-  document.querySelectorAll(".checkbox-dropdown").forEach((dropdown) => {
-    const button = dropdown.querySelector(".checkbox-dropdown-button");
-    const group = dropdown.querySelector(".checkbox-group");
-
-    if (button && group) {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-
-        // Close all other active dropdowns first
-        document
-          .querySelectorAll(".checkbox-dropdown.active")
-          .forEach((otherDropdown) => {
-            if (otherDropdown !== dropdown) {
-              // Don't close the one being clicked
-              otherDropdown.classList.remove("active");
-              otherDropdown.querySelector(".checkbox-group").style.display =
-                "none";
-            }
-          });
-
-        // Now toggle the current one
-        const isActive = dropdown.classList.toggle("active");
-        group.style.display = isActive ? "block" : "none";
-      });
-    }
-  });
-
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", function (e) {
-    document
-      .querySelectorAll(".checkbox-dropdown.active")
-      .forEach((dropdown) => {
-        const button = dropdown.querySelector(".checkbox-dropdown-button");
-        const group = dropdown.querySelector(".checkbox-group");
-        if (
-          button &&
-          group &&
-          !button.contains(e.target) &&
-          !group.contains(e.target)
-        ) {
-          dropdown.classList.remove("active");
-          group.style.display = "none";
-        }
-      });
-  });
 
   // --- Initial Page Load ---
-  const initialParams = new URLSearchParams(window.location.search);
-  const initialMake = initialParams.get("make");
-  const initialModel = initialParams.get("model");
-  const initialVariant = initialParams.get("variant");
+  // The old init logic (lines 1095-1139) is now part of syncFormAndPopulateCountsFromUrl
 
-  if (makeSelect && initialMake) {
-    if (
-      Array.from(makeSelect.options).some((opt) => opt.value === initialMake)
-    ) {
-      makeSelect.value = initialMake;
-      populateModels();
-      if (modelSelect && initialModel) {
-        if (
-          Array.from(modelSelect.options).some(
-            (opt) => opt.value === initialModel
-          )
-        ) {
-          modelSelect.value = initialModel;
-          populateVariants();
-          if (variantSelect && initialVariant) {
-            if (
-              Array.from(variantSelect.options).some(
-                (opt) => opt.value === initialVariant
-              )
-            ) {
-              variantSelect.value = initialVariant;
-            }
-          }
-        }
-      }
-    }
-  }
+  syncFormAndPopulateCountsFromUrl(window.location.search); // Sync form from URL & update counts in popup
+  updateActiveFiltersDisplay(); // Display active filter chips based on URL
 
-  document
-    .querySelectorAll('.checkbox-group input[type="checkbox"]')
-    .forEach((cb) => {
-      const key = cb.name;
-      const value = cb.value;
-      if (initialParams.getAll(key).includes(value)) {
-        cb.checked = true;
-      }
-    });
-
-  ["price", "year", "mileage", "engine_capacity", "location"].forEach(
-    (field) => {
-      const fieldKey = field.includes("_") ? field : field; // location doesn't have _min/_max
-      const minParam = field + "_min";
-      const maxParam = field + "_max";
-
-      if (initialParams.has(fieldKey)) {
-        const element = filterForm.querySelector(`select[name="${fieldKey}"]`);
-        if (element) element.value = initialParams.get(fieldKey);
-      } else {
-        if (initialParams.has(minParam)) {
-          const element = filterForm.querySelector(
-            `select[name="${minParam}"]`
-          );
-          if (element) element.value = initialParams.get(minParam);
-        }
-        if (initialParams.has(maxParam)) {
-          const element = filterForm.querySelector(
-            `select[name="${maxParam}"]`
-          );
-          if (element) element.value = initialParams.get(maxParam);
-        }
-      }
-    }
-  );
-
-  updateAllFilterDisplays();
+  // Extract paged from URL for initial load
+  const initialUrlParams = new URLSearchParams(window.location.search);
+  const initialPage = parseInt(initialUrlParams.get("paged")) || 1;
+  submitFiltersWithAjax(initialPage); // Load initial car listings
 
   // Initialize carousels and favorite buttons on initial page load
   reinitializeCarousels();
