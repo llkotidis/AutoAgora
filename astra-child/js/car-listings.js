@@ -491,54 +491,121 @@ document.addEventListener("DOMContentLoaded", function () {
     activeFiltersContainer
       .querySelectorAll(".remove-filter")
       .forEach((button) => {
-        const newButton = button.cloneNode(true); // Clone to remove old listeners
+        // Clone the button to remove any previously attached event listeners
+        const newButton = button.cloneNode(true);
         button.parentNode.replaceChild(newButton, button);
 
         newButton.addEventListener("click", function (e) {
-          e.preventDefault(); // Prevent any default behavior
+          e.preventDefault(); // Prevent default link behavior
+          e.stopPropagation(); // Prevent event from bubbling up
 
-          const key = this.dataset.key;
-          const valueToRemove = this.dataset.value; // data-value is set for multi-value items
-          const baseKey = key.replace(/\\\[\\\]$/, ""); // Get base key e.g. 'fuel_type' from 'fuel_type[]'
+          if (!filterForm) {
+            console.error(
+              "Car Listings: Filter form (car-filter-form-listings_page) not found. Cannot clear filter."
+            );
+            return;
+          }
 
-          // Find the corresponding form element(s) and update them
-          if (key.endsWith("[]")) {
-            // Checkbox group
+          const filterKey = this.dataset.key;
+          const valueToRemove = this.dataset.value; // Used for multi-value filters like checkboxes
+
+          if (!filterKey) {
+            console.warn(
+              "Car Listings: Filter key not found on remove button. Cannot clear filter."
+            );
+            return;
+          }
+
+          let formElementChanged = false;
+
+          // Handle checkbox groups (e.g., fuel_type[], body_type[])
+          if (filterKey.endsWith("[]")) {
             const checkboxes = filterForm.querySelectorAll(
-              `input[name="${key}"]`
+              `input[type="checkbox"][name="${filterKey}"]`
             );
             checkboxes.forEach((cb) => {
               if (cb.value === valueToRemove) {
-                cb.checked = false;
-                // Trigger change event on the checkbox itself for consistency
-                cb.dispatchEvent(new Event("change", { bubbles: true }));
+                if (cb.checked) {
+                  cb.checked = false;
+                  // Dispatch change event for consistency and to trigger other listeners
+                  cb.dispatchEvent(new Event("change", { bubbles: true }));
+                  formElementChanged = true;
+                }
               }
             });
-          } else if (key.endsWith("_min") || key.endsWith("_max")) {
-            // Range select (min/max)
-            const select = filterForm.querySelector(`select[name="${key}"]`);
-            if (select) {
-              select.value = ""; // Reset to 'Any'
-              // Trigger change event on the select itself
-              select.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          // Handle range selects (e.g., price_min, year_max)
+          else if (filterKey.endsWith("_min") || filterKey.endsWith("_max")) {
+            const selectElement = filterForm.querySelector(
+              `select[name="${filterKey}"]`
+            );
+            if (selectElement) {
+              if (selectElement.value !== "") {
+                selectElement.value = ""; // Reset to default/placeholder (e.g., "Any")
+                selectElement.dispatchEvent(
+                  new Event("change", { bubbles: true })
+                );
+                formElementChanged = true;
+              }
+            } else {
+              console.warn(
+                `Car Listings: Select element for range filter key "${filterKey}" not found.`
+              );
             }
-          } else {
-            // Single select (make, model, location etc.)
-            const select = filterForm.querySelector(`select[name="${key}"]`);
-            if (select) {
-              select.value = ""; // Reset to 'All'
-              // Trigger change event on the select itself
-              select.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          // Handle single select dropdowns (e.g., make, model, location)
+          else {
+            const selectElement = filterForm.querySelector(
+              `select[name="${filterKey}"]`
+            );
+            if (selectElement) {
+              if (selectElement.value !== "") {
+                selectElement.value = ""; // Reset to default/placeholder (e.g., "All")
+                selectElement.dispatchEvent(
+                  new Event("change", { bubbles: true })
+                );
+                formElementChanged = true;
+              }
+            } else {
+              console.warn(
+                `Car Listings: Select element for filter key "${filterKey}" not found.`
+              );
             }
           }
 
-          // Update filter counts and dependent dropdowns based on the change
-          updateAllFilterDisplays(); // Re-enabled this call
+          if (formElementChanged) {
+            // Update all filter display counts and dependent dropdowns immediately
+            // This function should read the current state of the form
+            if (typeof updateAllFilterDisplays === "function") {
+              updateAllFilterDisplays();
+            } else {
+              console.warn(
+                "Car Listings: updateAllFilterDisplays function not found after clearing filter."
+              );
+            }
 
-          // Re-submit the form via AJAX
-          submitFiltersWithAjax(1);
+            // Re-submit the form via AJAX. This function is responsible for:
+            // 1. Reading the updated form data.
+            // 2. Performing the AJAX request.
+            // 3. Updating the URL via history.pushState.
+            // 4. Re-rendering listings and active filter chips on success.
+            if (typeof submitFiltersWithAjax === "function") {
+              submitFiltersWithAjax(1); // Submit for page 1 as filters have changed
+            } else {
+              console.error(
+                "Car Listings: submitFiltersWithAjax function not found. Cannot refresh listings."
+              );
+            }
+          } else {
+            // This branch could be reached if the chip was clicked but the corresponding
+            // form element was already in a cleared state, or if the element wasn't found.
+            // No action needed if no change was made to the form.
+            console.info(
+              `Car Listings: No form element changed for filter key "${filterKey}" (value: "${valueToRemove}"). Filter removal might have been redundant or element not found.`
+            );
+          }
         }); // End of newButton click listener
-      }); // End of forEach loop
+      }); // End of forEach loop for .remove-filter buttons
   }
 
   function createFilterChip(label, value, key, dataValue = null) {
