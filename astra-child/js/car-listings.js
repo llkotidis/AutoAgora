@@ -71,21 +71,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (makeSelect) {
       makeSelect.value = urlMake || "";
-      // populateModels needs to be called after make is set,
-      // and populateVariants after model is set.
-      // These functions also handle disabling/enabling.
       if (typeof populateModels === "function") populateModels();
     }
     if (modelSelect) {
-      // populateModels might have already set the model if it was in carData
-      // but ensure URL value takes precedence if it's a valid option after populating.
       if (
         urlModel &&
         Array.from(modelSelect.options).some((opt) => opt.value === urlModel)
       ) {
         modelSelect.value = urlModel;
       } else if (!urlMake) {
-        // If no make, ensure model is cleared
         modelSelect.value = "";
       }
       if (typeof populateVariants === "function") populateVariants();
@@ -99,18 +93,53 @@ document.addEventListener("DOMContentLoaded", function () {
       ) {
         variantSelect.value = urlVariant;
       } else if (!urlModel) {
-        // If no model, ensure variant is cleared
         variantSelect.value = "";
       }
     }
 
-    // Sync Checkboxes
+    // --- Sync Multi-Select Filters (like Transmission, Fuel Type, etc.) ---
     filterForm
-      .querySelectorAll('.checkbox-group input[type="checkbox"]')
-      .forEach((cb) => {
-        const key = cb.name; // e.g., fuel_type[]
-        const value = cb.value;
-        cb.checked = params.getAll(key).includes(value);
+      .querySelectorAll("div.multi-select-filter")
+      .forEach((msFilter) => {
+        const filterKey = msFilter.getAttribute("data-filter-key");
+        const hiddenInput = msFilter.querySelector("input.multi-select-value");
+        const displayElement = msFilter.querySelector(".multi-select-display");
+        let displaySpan = null;
+        let defaultDisplayText = "Select Options";
+
+        if (displayElement) {
+          displaySpan = displayElement.querySelector("span:first-child");
+          defaultDisplayText =
+            displayElement.getAttribute("data-default-text") ||
+            defaultDisplayText;
+        }
+
+        if (filterKey && hiddenInput) {
+          const urlQueryValue = params.get(filterKey); // e.g., "Automatic,Manual" or "Petrol"
+          const activeValues = urlQueryValue ? urlQueryValue.split(",") : [];
+
+          hiddenInput.value = urlQueryValue || ""; // Update hidden input based on URL
+
+          const selectedLabels = [];
+          msFilter.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+            cb.checked = activeValues.includes(cb.value);
+            if (cb.checked) {
+              const label = cb.getAttribute("data-label") || cb.value;
+              selectedLabels.push(label);
+            }
+          });
+
+          // Update display text for the multi-select dropdown
+          if (displaySpan) {
+            if (selectedLabels.length === 0) {
+              displaySpan.textContent = defaultDisplayText;
+            } else if (selectedLabels.length <= 2) {
+              displaySpan.textContent = selectedLabels.join(", ");
+            } else {
+              displaySpan.textContent = selectedLabels.length + " selected";
+            }
+          }
+        }
       });
 
     // Sync other Selects (Location, Range Filters)
