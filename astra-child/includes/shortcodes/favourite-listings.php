@@ -17,6 +17,13 @@ function display_favourite_listings($atts) {
         'order' => 'DESC'
     ), $atts);
 
+    // Enqueue the necessary scripts and localize data
+    wp_enqueue_script('car-listings', get_stylesheet_directory_uri() . '/js/car-listings.js', array('jquery'), filemtime(get_stylesheet_directory() . '/js/car-listings.js'), true);
+    wp_localize_script('car-listings', 'carListingsData', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('toggle_favorite_car')
+    ));
+
     // Start output buffering
     ob_start();
 
@@ -491,90 +498,105 @@ function display_favourite_listings($atts) {
             });
         });
 
-        // Favorite button functionality
-        document.querySelectorAll('.favorite-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const carId = this.getAttribute('data-car-id');
-                const isActive = this.classList.contains('active');
-                
-                // Toggle active state
-                this.classList.toggle('active');
-                
-                // Update icon
-                const icon = this.querySelector('i');
-                if (isActive) {
-                    icon.classList.remove('fas');
-                    icon.classList.add('far');
-                } else {
-                    icon.classList.remove('far');
-                    icon.classList.add('fas');
-                }
-                
-                // Send AJAX request to update favorites
-                const formData = new FormData();
-                formData.append('action', 'toggle_favorite_car');
-                formData.append('car_id', carId);
-                formData.append('is_favorite', !isActive);
-                formData.append('nonce', '<?php echo wp_create_nonce('toggle_favorite_car'); ?>');
-                
-                fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // If we're on the favorites page and removing a favorite, remove the card
-                        if (isActive && window.location.href.includes('favorite-listings')) {
-                            const card = this.closest('.car-listing-card');
-                            card.style.opacity = '0';
-                            setTimeout(() => {
-                                card.remove();
-                                
-                                // Check if there are any cards left
-                                const remainingCards = document.querySelectorAll('.car-listing-card');
-                                if (remainingCards.length === 0) {
-                                    // Reload the page to show the "no favorites" message
-                                    window.location.reload();
-                                }
-                            }, 300);
-                        }
-                    } else {
-                        // Revert the UI change if the server request failed
-                        this.classList.toggle('active');
-                        const icon = this.querySelector('i');
-                        if (isActive) {
-                            icon.classList.add('fas');
-                            icon.classList.remove('far');
-                        } else {
-                            icon.classList.add('far');
-                            icon.classList.remove('fas');
-                        }
-                        
-                        alert('Failed to update favorites. Please try again.');
+        // --- Favorite button functionality ---
+        const favoriteBtns = document.querySelectorAll('.favorite-btn');
+        if (favoriteBtns.length > 0) {
+            favoriteBtns.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Check if user is logged in (nonce should be available)
+                    if (typeof carListingsData === 'undefined' || typeof carListingsData.ajaxurl === 'undefined' || typeof carListingsData.nonce === 'undefined') {
+                        alert('Please log in to add favorites.');
+                        return;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Revert the UI change if the request failed
+
+                    const carId = this.getAttribute('data-car-id');
+                    const isActive = this.classList.contains('active');
+                    const heartIcon = this.querySelector('i');
+                    const card = this.closest('.car-listing-card');
+
+                    // Optimistic UI update
                     this.classList.toggle('active');
-                    const icon = this.querySelector('i');
                     if (isActive) {
-                        icon.classList.add('fas');
-                        icon.classList.remove('far');
+                        heartIcon.classList.remove('fas');
+                        heartIcon.classList.add('far');
                     } else {
-                        icon.classList.add('far');
-                        icon.classList.remove('fas');
+                        heartIcon.classList.remove('far');
+                        heartIcon.classList.add('fas');
                     }
-                    
-                    alert('Failed to update favorites. Please try again.');
+
+                    // Prepare AJAX data
+                    const formData = new FormData();
+                    formData.append('action', 'toggle_favorite_car');
+                    formData.append('car_id', carId);
+                    formData.append('is_favorite', !isActive ? '1' : '0');
+                    formData.append('nonce', carListingsData.nonce);
+
+                    // Send AJAX request
+                    fetch(carListingsData.ajaxurl, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            // Revert UI on failure
+                            this.classList.toggle('active');
+                            if (isActive) {
+                                heartIcon.classList.remove('far');
+                                heartIcon.classList.add('fas');
+                            } else {
+                                heartIcon.classList.remove('fas');
+                                heartIcon.classList.add('far');
+                            }
+                            console.error('Favorite toggle failed:', data);
+                            alert('Failed to update favorites. Please try again.');
+                        } else {
+                            // If we're on the favorites page and removing a favorite, remove the card
+                            if (isActive) {
+                                // Add fade-out animation
+                                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                                card.style.opacity = '0';
+                                card.style.transform = 'translateY(-20px)';
+                                
+                                // Remove the card after animation
+                                setTimeout(() => {
+                                    card.remove();
+                                    
+                                    // Check if there are any cards left
+                                    const remainingCards = document.querySelectorAll('.car-listing-card');
+                                    if (remainingCards.length === 0) {
+                                        // Reload the page to show the "no favorites" message
+                                        window.location.reload();
+                                    }
+                                }, 300);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        // Revert UI on network/fetch error
+                        this.classList.toggle('active');
+                        if (isActive) {
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas');
+                        } else {
+                            heartIcon.classList.remove('fas');
+                            heartIcon.classList.add('far');
+                        }
+                        console.error('Error:', error);
+                        alert('Failed to update favorites. An error occurred.');
+                    });
                 });
             });
-        });
+        }
     });
     </script>
     <?php
