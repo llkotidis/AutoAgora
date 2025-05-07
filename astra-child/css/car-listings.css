@@ -435,6 +435,7 @@
 
 .car-listing-image-carousel {
   position: relative;
+  height: 100%;
 }
 
 .car-listing-image-container {
