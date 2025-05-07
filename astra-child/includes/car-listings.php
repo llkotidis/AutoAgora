@@ -112,7 +112,7 @@ function display_car_listings($atts) {
                                 if ($image_url) {
                                     $clean_year = str_replace(',', '', $year); // Remove comma from year
                                     echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
-                                    echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">'; // Use clean year in alt
+                                    echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
                                     if ($index === count($all_images) - 1 && count($all_images) > 1) {
                                         echo '<a href="' . get_permalink() . '" class="see-all-images" style="display: none;">See All Images</a>';
                                     }
@@ -120,8 +120,8 @@ function display_car_listings($atts) {
                                 }
                             }
                             
-                            echo '<button class="carousel-nav prev" style="display: none;"><i class="fas fa-chevron-left"></i></button>';
-                            echo '<button class="carousel-nav next" style="display: none;"><i class="fas fa-chevron-right"></i></button>';
+                            echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
+                            echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
                             
                             $user_id = get_current_user_id();
                             $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);

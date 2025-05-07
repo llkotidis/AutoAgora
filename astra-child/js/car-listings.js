@@ -873,74 +873,61 @@ document.addEventListener("DOMContentLoaded", function () {
     submitFiltersWithAjax(page);
   });
 
-  // --- Helper functions to re-initialize JS components ---
-  function reinitializeCarousels() {
-    const carousels = document.querySelectorAll(".car-listing-image-carousel");
-
-    carousels.forEach((carousel, index) => {
-      const images = carousel.querySelectorAll(".car-listing-image");
-      const prevBtn = carousel.querySelector(".carousel-nav.prev");
-      const nextBtn = carousel.querySelector(".carousel-nav.next");
-      const seeAllImagesBtn = carousel.querySelector(".see-all-images");
+  // --- Initialize Carousels ---
+  function initializeCarousels() {
+    document.querySelectorAll('.car-listing-image-carousel').forEach(carousel => {
+      const images = carousel.querySelectorAll('.car-listing-image');
+      const prevBtn = carousel.querySelector('.carousel-nav.prev');
+      const nextBtn = carousel.querySelector('.carousel-nav.next');
+      const seeAllImagesBtn = carousel.querySelector('.see-all-images');
       let currentIndex = 0;
 
-      // If there's only one image, hide all navigation elements
-      if (images.length <= 1) {
-        if (prevBtn) prevBtn.style.display = "none";
-        if (nextBtn) nextBtn.style.display = "none";
-        if (seeAllImagesBtn) seeAllImagesBtn.style.display = "none";
-        return;
-      }
-
-      // Function to update image visibility and navigation buttons
-      const updateCarousel = () => {
-        // Update image visibility
-        images.forEach((img, i) => {
-          img.classList.toggle("active", i === currentIndex);
+      // Function to update image visibility
+      const updateImages = () => {
+        images.forEach((img, index) => {
+          img.classList.toggle('active', index === currentIndex);
         });
 
-        // Update navigation buttons - explicitly set display based on current index
-        if (prevBtn) {
-          prevBtn.style.display = currentIndex === 0 ? "none" : "flex";
-        }
+        // Update navigation buttons
+        prevBtn.style.display = currentIndex === 0 ? 'none' : 'flex';
+        nextBtn.style.display = currentIndex === images.length - 1 ? 'none' : 'flex';
 
-        if (nextBtn) {
-          nextBtn.style.display =
-            currentIndex === images.length - 1 ? "none" : "flex";
-        }
-
+        // Update "See All Images" button visibility
         if (seeAllImagesBtn) {
-          seeAllImagesBtn.style.display =
-            currentIndex === images.length - 1 ? "block" : "none";
+          seeAllImagesBtn.style.display = currentIndex === images.length - 1 ? 'block' : 'none';
         }
       };
 
-      // Set initial state
-      updateCarousel();
+      // Initialize
+      updateImages();
 
-      // Add event listeners to navigation buttons
-      if (prevBtn) {
-        prevBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (currentIndex > 0) {
-            currentIndex--;
-            updateCarousel();
-          }
-        });
-      }
+      // Event listeners for navigation
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateImages();
+        }
+      });
 
-      if (nextBtn) {
-        nextBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (currentIndex < images.length - 1) {
-            currentIndex++;
-            updateCarousel();
-          }
-        });
-      }
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentIndex < images.length - 1) {
+          currentIndex++;
+          updateImages();
+        }
+      });
     });
+  }
+
+  // Initialize carousels on page load
+  initializeCarousels();
+
+  // Update the reinitializeCarousels function to use the same initialization code
+  function reinitializeCarousels() {
+    initializeCarousels();
   }
 
   function reinitializeFavoriteButtons() {
