@@ -85,7 +85,7 @@ function display_car_listings($atts) {
             if ($car_query->have_posts()) :
                 while ($car_query->have_posts()) : $car_query->the_post();
                     // Generate the detail page URL once
-                    $car_detail_url = esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed'))));
+                    $car_detail_url = esc_url(get_permalink(get_the_ID()));
 
                     $make = get_post_meta(get_the_ID(), 'make', true);
                     $model = get_post_meta(get_the_ID(), 'model', true);
