@@ -120,7 +120,7 @@ function display_car_listings($atts) {
                                     echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
                                     echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
                                     if ($index === count($all_images) - 1 && count($all_images) > 1) {
-                                        echo '<a href="' . esc_url(home_url('/car-listing-detailed/?car_id=' . get_the_ID())) . '" class="see-all-images" style="display: none;">See All Images</a>';
+                                        echo '<a href="' . esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))) . '" class="see-all-images" style="display: none;">See All Images</a>';
                                     }
                                     echo '</div>';
                                 }
