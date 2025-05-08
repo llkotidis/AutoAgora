@@ -40,7 +40,7 @@ require_once get_stylesheet_directory() . '/includes/ajax.php';
 
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
-require_once get_stylesheet_directory() . '/includes/shortcodes/favorites-button.php';
+require_once get_stylesheet_directory() . '/includes/shortcodes/favourites-button.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/car-search-form.php';
 
 // Include admin user favorites column functionality
@@ -60,3 +60,9 @@ require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column
  * Define Constants
  */
 define( 'ASTRA_CHILD_THEME_VERSION', '1.0.0' );
+
+// Add Favourites Button to Header
+function add_favourites_button_to_header() {
+    echo do_shortcode('[favourites_button]');
+}
+add_action('astra_header_right', 'add_favourites_button_to_header', 5);

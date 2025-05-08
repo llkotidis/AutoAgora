@@ -1,11 +1,11 @@
-/* Favorites Button Styles */
-.favorites-button {
+/* Favourites Button Styles */
+.favourites-button {
   display: inline-block;
   margin-right: 1.5rem;
   vertical-align: middle;
 }
 
-.favorites-button a {
+.favourites-button a {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,16 +14,16 @@
   transition: color 0.2s ease;
 }
 
-.favorites-button a:hover {
+.favourites-button a:hover {
   color: var(--dark-blue);
 }
 
-.favorites-button i {
+.favourites-button i {
   font-size: 1.2rem;
   margin-bottom: 0.2rem;
 }
 
-.favorites-button span {
+.favourites-button span {
   font-size: 0.8rem;
   font-weight: 500;
 } 
