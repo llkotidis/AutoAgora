@@ -84,6 +84,9 @@ function display_car_listings($atts) {
             <?php
             if ($car_query->have_posts()) :
                 while ($car_query->have_posts()) : $car_query->the_post();
+                    // Generate the detail page URL once
+                    $car_detail_url = esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed'))));
+
                     $make = get_post_meta(get_the_ID(), 'make', true);
                     $model = get_post_meta(get_the_ID(), 'model', true);
                     $variant = get_post_meta(get_the_ID(), 'variant', true);
@@ -120,7 +123,7 @@ function display_car_listings($atts) {
                                     echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
                                     echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
                                     if ($index === count($all_images) - 1 && count($all_images) > 1) {
-                                        echo '<a href="' . esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))) . '" class="see-all-images" style="display: none;">See All Images</a>';
+                                        echo '<a href="' . $car_detail_url . '" class="see-all-images" style="display: none;">See All Images</a>';
                                     }
                                     echo '</div>';
                                 }
@@ -142,7 +145,7 @@ function display_car_listings($atts) {
                         }
                         ?>
                         
-                        <a href="<?php echo esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))); ?>" class="car-listing-link">
+                        <a href="<?php echo $car_detail_url; ?>" class="car-listing-link">
                             <div class="car-listing-details">
                                 <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                                 <div class="car-specs">
