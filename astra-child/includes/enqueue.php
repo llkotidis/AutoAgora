@@ -26,6 +26,9 @@ function astra_child_enqueue_styles() {
     // For simplicity, we'll load it everywhere for now. Consider conditional loading if performance is critical.
     wp_enqueue_style( 'astra-child-account-display-css', get_stylesheet_directory_uri() . '/css/account-display.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
+    // Enqueue favorites button styles
+    wp_enqueue_style( 'astra-child-favorites-button-css', get_stylesheet_directory_uri() . '/css/favorites-button.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+
     // Enqueue car search form styles
     // Consider conditional loading (e.g., is_page('search-cars') || is_front_page()) if applicable.
     wp_enqueue_style( 'astra-child-car-search-css', get_stylesheet_directory_uri() . '/css/car-search-form.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );

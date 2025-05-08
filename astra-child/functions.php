@@ -40,11 +40,22 @@ require_once get_stylesheet_directory() . '/includes/ajax.php';
 
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
+require_once get_stylesheet_directory() . '/includes/shortcodes/favorites-button.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/car-search-form.php';
 
 // Include admin user favorites column functionality
 require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column.php';
 
+/**
+ * Add favorites and account buttons to the header
+ */
+function add_favorites_and_account_buttons() {
+    echo '<div class="header-buttons">';
+    echo do_shortcode('[favorites_button]');
+    echo do_shortcode('[account_display]');
+    echo '</div>';
+}
+add_action('astra_header_right', 'add_favorites_and_account_buttons');
 
 /**
  * Astra Child Theme functions and definitions
