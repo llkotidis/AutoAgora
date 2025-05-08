@@ -4,6 +4,36 @@
   display: inline-block;
 }
 
+/* Saved Button Styles */
+.saved-button {
+  display: inline-block;
+  margin-right: 1.5rem;
+  vertical-align: middle;
+}
+
+.saved-button a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.saved-button a:hover {
+  color: var(--dark-blue);
+}
+
+.saved-button i {
+  font-size: 1.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.saved-button span {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 .account-display-logged-out a {
   text-decoration: none;
   color: inherit; /* Inherit color from header */

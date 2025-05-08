@@ -18,6 +18,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 function account_display_shortcode() {
     ob_start();
 
+    // Add Saved button for both logged in and logged out users
+    $favorites_page = get_page_by_path('favourite-listings');
+    if ($favorites_page) {
+        ?>
+        <div class="saved-button">
+            <a href="<?php echo esc_url(get_permalink($favorites_page->ID)); ?>">
+                <i class="fas fa-heart"></i>
+                <span>Saved</span>
+            </a>
+        </div>
+        <?php
+    }
+
     if ( is_user_logged_in() ) {
         $user = wp_get_current_user();
         $first_name = $user->first_name;
