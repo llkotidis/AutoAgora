@@ -41,6 +41,7 @@ require_once get_stylesheet_directory() . '/includes/ajax.php';
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/car-search-form.php';
+require_once get_stylesheet_directory() . '/includes/shortcodes/favorites-button.php';
 
 // Include admin user favorites column functionality
 require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column.php';
@@ -59,3 +60,31 @@ require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column
  * Define Constants
  */
 define( 'ASTRA_CHILD_THEME_VERSION', '1.0.0' );
+
+/**
+ * Add favorites and account buttons to header
+ */
+function add_favorites_and_account_to_header() {
+    // Only add on pages where we want these buttons
+    if (!is_admin() && !is_customize_preview()) {
+        echo '<div class="header-account-favorites">';
+        echo do_shortcode('[favorites_button]');
+        echo do_shortcode('[account_display]');
+        echo '</div>';
+    }
+}
+add_action('astra_header_primary_container_bottom', 'add_favorites_and_account_to_header', 20);
+
+/**
+ * Add custom styles for header buttons container
+ */
+function add_header_buttons_styles() {
+    wp_add_inline_style('astra-theme-css', '
+        .header-account-favorites {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+    ');
+}
+add_action('wp_enqueue_scripts', 'add_header_buttons_styles', 20);
