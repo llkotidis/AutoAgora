@@ -31,6 +31,12 @@ function display_car_listings($atts) {
         filemtime(get_stylesheet_directory() . '/css/car-listings.css') // Versioning based on file modification time
     );
 
+    // Localize script for AJAX functionality
+    wp_localize_script('jquery', 'carListingsData', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('toggle_favorite_car')
+    ));
+
     // Start output buffering
     ob_start();
 
@@ -184,7 +190,6 @@ function display_car_listings($atts) {
     </div>
 
     <?php
-
     // Return the buffered content
     return ob_get_clean();
 }

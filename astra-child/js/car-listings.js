@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
+  console.log('Car Listings JS file loaded successfully from:', window.location.href);
+
   // --- Access Localized Data ---
   // Ensure carListingsData is available (passed via wp_localize_script)
   if (typeof carListingsData === "undefined") {
@@ -23,6 +25,41 @@ document.addEventListener("DOMContentLoaded", function () {
   const kmCounts = carListingsData.km_counts || {};
   const engineCounts = carListingsData.engine_counts || {};
   const carData = carListingsData.variants_by_make_model || {};
+
+  // --- Helper Functions ---
+  function filterCars(cars, filters) {
+    return cars.filter(car => {
+      // Check each filter
+      for (const [key, value] of Object.entries(filters)) {
+        if (!value) continue; // Skip empty filters
+
+        // Handle array values (for checkboxes)
+        if (Array.isArray(value)) {
+          if (value.length > 0 && !value.includes(car[key])) {
+            return false;
+          }
+        }
+        // Handle range filters (min/max)
+        else if (key.endsWith('_min') || key.endsWith('_max')) {
+          const baseKey = key.replace(/_min$|_max$/, '');
+          const carValue = parseFloat(car[baseKey]);
+          const filterValue = parseFloat(value);
+
+          if (key.endsWith('_min') && carValue < filterValue) {
+            return false;
+          }
+          if (key.endsWith('_max') && carValue > filterValue) {
+            return false;
+          }
+        }
+        // Handle regular filters
+        else if (car[key] !== value) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
 
   // --- DOM Elements ---
   const filtersButton = document.querySelector(".filters-button");
@@ -942,11 +979,17 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         e.stopPropagation();
 
+        // Check if user is logged in
+        if (typeof carListingsData === 'undefined' || typeof carListingsData.ajaxurl === 'undefined' || typeof carListingsData.nonce === 'undefined') {
+          alert('Please log in to add favorites.');
+          return;
+        }
+
         const carId = this.getAttribute("data-car-id");
         const isActive = this.classList.contains("active");
         const heartIcon = this.querySelector("i");
 
-        // Toggle UI immediately for responsiveness
+        // Optimistic UI update
         this.classList.toggle("active");
         if (isActive) {
           heartIcon.classList.remove("fas");
@@ -960,14 +1003,19 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append("action", "toggle_favorite_car");
         formData.append("car_id", carId);
         formData.append("is_favorite", !isActive ? "1" : "0");
-        formData.append("nonce", carListingsData.nonce); // Original favorite nonce
+        formData.append("nonce", carListingsData.nonce);
 
-        fetch(ajaxurl, {
+        fetch(carListingsData.ajaxurl, {
           method: "POST",
           body: formData,
           credentials: "same-origin",
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok.');
+            }
+            return response.json();
+          })
           .then((data) => {
             if (!data.success) {
               // Revert UI on failure
@@ -979,6 +1027,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 heartIcon.classList.remove("fas");
                 heartIcon.classList.add("far");
               }
+              console.error("Favorite toggle failed:", data);
               alert("Failed to update favorites. Please try again.");
             }
           })
@@ -996,7 +1045,6 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Failed to update favorites. Please try again.");
           });
       });
-      // --- End Re-attach listener ---
     });
   }
 
