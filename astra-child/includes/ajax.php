@@ -195,7 +195,7 @@ function ajax_filter_car_listings_handler() {
                             echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
                             echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">'; // Use clean year in alt
                             if ($index === count($all_images) - 1 && count($all_images) > 1) {
-                                echo '<a href="' . get_permalink() . '" class="see-all-images" style="display: none;">See All Images</a>';
+                                echo '<a href="' . esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))) . '" class="see-all-images" style="display: none;">See All Images</a>';
                             }
                             echo '</div>';
                         }
