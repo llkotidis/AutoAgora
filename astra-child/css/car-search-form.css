@@ -2,6 +2,10 @@
 /* Adapted for car-filter-form.php */
 /* ---------------------------------------- */
 
+.car-filter-form-container {
+  width: 100%; /* Ensure container allows full width usage */
+}
+
 .filter-layout-container {
   display: flex;
   gap: 1.5rem; /* Gap between main form and more options panel */
@@ -14,11 +18,11 @@
   background: var(--white);
   padding: 2rem;
   /* width: 100%; Remove, let flexbox dictate or set a basis */
-  flex: 1 1 60%; /* Main form takes up more space, adjust as needed */
-  max-width: 100%;
+  flex: 0 0 320px; /* Initial width, don't grow, don't shrink */
+  /* max-width: 100%; Removed as flex-basis defines width effectively */
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
+  gap: 1.25rem; /* Changed from 1.35rem */
   /* margin-left/right auto removed as it's part of a flex layout now */
 }
 
@@ -34,7 +38,8 @@
   background: var(--white);
   border-radius: var(--border-radius-large);
   padding: 2rem;
-  flex: 0 0 320px; /* Fixed width for the panel, or use flex-grow/basis for percentage. Adjust width as needed. */
+  flex: 1 1 auto; /* Grow to fill remaining space, can shrink, auto basis */
+  max-width: 320px; /* But do not exceed 320px */
   /* transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out; */
   transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
     opacity 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
@@ -64,6 +69,9 @@
   transform: translateX(0);
   visibility: visible;
   transition: none; /* Disable transitions for immediate display */
+  /* Ensure flex properties are maintained for permanently open state */
+  flex: 1 1 auto;
+  max-width: 320px;
 }
 
 #more-options h2 {
@@ -103,7 +111,7 @@
   order: 10;
 }
 .more-options-link {
-  text-decoration: none;
+  text-decoration: none; /* No underline initially */
   color: #007bff; /* Blue text */
   display: inline-block;
   padding: 0; /* No padding */
@@ -163,6 +171,7 @@
   -moz-appearance: none;
   appearance: none;
   box-sizing: border-box;
+  margin: 0 !important; /* Added zero margin */
 }
 
 /* Add specific background arrow for SELECT only */
@@ -252,11 +261,13 @@
   cursor: pointer;
   margin-top: 0.5rem; /* 0.5rem top margin */
   text-align: center;
-  /* transition: color 0.2s ease; */ /* Optional: hover effect */
+  text-decoration: none; /* Ensure no underline initially */
 }
 .filter-reset-button:hover {
-  /* color: #343a40; */ /* Optional: darker gray on hover */
-  text-decoration: underline; /* Standard link hover */
+  text-decoration: underline; /* Underline on hover */
+  color: #6c757d; /* Explicitly keep original color */
+  background: none; /* Explicitly keep no background */
+  border: none; /* Explicitly keep no border */
 }
 
 /* Styling for the multi-select popup itself (applies to both form and panel) */
