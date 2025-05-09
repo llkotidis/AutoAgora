@@ -378,6 +378,13 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
+            <div class="filter-form-group more-options-link-container">
+                <a href="#" id="toggle-more-options" class="more-options-link">
+                    <span>More Options</span>
+                    <span class="chevron">&#9662;</span> <!-- Downward pointing triangle, or use an SVG/font icon -->
+                </a>
+            </div>
+
             <div id="more-options">
 
              <!-- Engine Capacity Range -->

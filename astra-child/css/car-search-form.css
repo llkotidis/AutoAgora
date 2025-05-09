@@ -1,94 +1,142 @@
 /* Car Search Form Styles */
-/* Adapted for car-filter-form.php with !important for testing */
+/* Adapted for car-filter-form.php */
 /* ---------------------------------------- */
 
 .car-filter-form {
   /* Was: #car-search-form */
-  border-radius: var(--border-radius-large) !important;
-  background: var(--white) !important;
-  padding: 2rem !important;
-  width: 100% !important; /* Adapted: typically filter forms span width, adjust if fixed like 450px is still needed */
-  max-width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 1.35rem !important;
-  margin-left: auto !important; /* Optional: if you want to center it like original fixed width might have */
-  margin-right: auto !important; /* Optional: if you want to center it */
+  border-radius: var(--border-radius-large);
+  background: var(--white);
+  padding: 2rem;
+  width: 100%; /* Adapted: typically filter forms span width, adjust if fixed like 450px is still needed */
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  margin-left: auto; /* Optional: if you want to center it like original fixed width might have */
+  margin-right: auto; /* Optional: if you want to center it */
 }
 
 .car-filter-form h2 {
   /* Was: #car-search-form h1 */
-  font-size: 1.75rem !important;
-  line-height: 1.1 !important;
-  margin: 0 0 0.5rem 0 !important;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  margin: 0 0 0.5rem 0;
 }
 
-/* Styles for #more-options and its transitions are removed as it's not in car-filter-form.php */
+/* Transition styles for more options */
+#more-options {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s,
+    max-height 0.2s ease-out; /* Added max-height */
+  opacity: 0;
+  transform: translateY(-10px);
+  visibility: hidden;
+  overflow: hidden; /* Added for smoother transition with max-height */
+  max-height: 0; /* Added for transition */
+  display: flex; /* To inherit gap from parent or apply its own internal gap */
+  flex-direction: column;
+  gap: 1.35rem; /* To match the main form's gap for consistency */
+}
+
+#more-options.show {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  max-height: 1000px; /* Adjust if more space is needed, for transition */
+}
 
 /* .car-search-container styles removed - unclear if .car-filter-form-container needs this */
 
 /* Spacing and layout for filter groups */
 .car-filter-form .filter-form-group {
   /* Was: .car-search-form .form-row */
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important; /* Default for label above input */
-  gap: 0.5rem !important; /* Added for spacing between label and input block */
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Default for label above input */
+  gap: 0.5rem; /* Added for spacing between label and input block */
+}
+
+/* Style the 'More options' link container and link */
+.more-options-link-container {
+  text-align: center; /* Center the link */
+  margin-top: 0.5rem; /* Space above the link */
+  margin-bottom: 1rem; /* Space below the link before #more-options opens */
+}
+.more-options-link a, /* Targeting the <a> tag directly */
+.more-options-link {
+  text-decoration: none;
+  color: #007bff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.more-options-link .chevron {
+  display: inline-block;
+  transition: transform 0.2s ease-in-out;
+  /* transform: rotate(0deg); Default: Point down, HTML entity used is already down */
+  font-size: 1em;
+  line-height: 1;
+  transform-origin: center;
+}
+.more-options-link a.rotate .chevron,
+.more-options-link.rotate .chevron {
+  transform: rotate(-180deg); /* Point up */
 }
 
 /* Rows that should have side-by-side inputs */
 .car-filter-form .filter-range-fields {
   /* Was: .car-search-form .form-row.make-model-row, etc. */
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 1rem !important;
-  width: 100% !important; /* Ensure the container for side-by-side inputs takes full width */
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  width: 100%; /* Ensure the container for side-by-side inputs takes full width */
 }
 
 .car-filter-form .filter-range-fields > * {
   /* Ensure items in range fields share space */
-  flex-grow: 1 !important;
-  width: auto !important; /* Allow flexbox to manage width */
+  flex-grow: 1;
+  width: auto; /* Allow flexbox to manage width */
 }
 
 /* Spacing between label and input block */
 .car-filter-form .filter-form-group label {
   /* Was: .car-search-form .form-group label */
-  display: block !important;
-  width: 100% !important;
-  margin-bottom: 0.25rem !important; /* Adjusted from 0.5rem, as group has gap now */
-  font-weight: 600 !important;
-  font-size: 1.1rem !important;
+  display: block;
+  width: 100%;
+  margin-bottom: 0.25rem; /* Adjusted from 0.5rem, as group has gap now */
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 /* Style for #car-search-error removed - no direct equivalent */
-/* Styles for .more-options-link and .chevron removed */
 
 /* Consolidated Input/Select/Multi-Select Display Styles */
 .car-filter-form select,
 .car-filter-form input[type="text"], /* Add other input types if needed from your form */
 .car-filter-form input[type="number"], /* Assuming you might have number inputs */
 .car-filter-form .multi-select-display /* Style the display part of multi-selects */ {
-  width: 100% !important; /* Ensure they fill the form-group or their flex item container */
-  padding: 8px 8px !important;
-  border: var(--border) !important;
-  border-radius: var(--border-radius-small) !important;
-  background-color: var(--white) !important;
-  color: var(--text-color) !important;
-  font-size: 0.875rem !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-  box-sizing: border-box !important; /* Added for consistent sizing */
+  width: 100%; /* Ensure they fill the form-group or their flex item container */
+  padding: 8px 8px;
+  border: var(--border);
+  border-radius: var(--border-radius-small);
+  background-color: var(--white);
+  color: var(--text-color);
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box; /* Added for consistent sizing */
 }
 
 /* Add specific background arrow for SELECT only */
 .car-filter-form select {
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 8px center !important;
-  background-size: 1em !important;
-  padding-right: 2.5em !important; /* Add padding to prevent text overlap */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 1em;
+  padding-right: 2.5em; /* Add padding to prevent text overlap */
 }
 
 /* Combined Focus Styles */
@@ -96,96 +144,96 @@
 .car-filter-form select:focus,
 .car-filter-form .multi-select-display:focus, /* Basic focus for display */
 .car-filter-form .multi-select-filter.focused .multi-select-display /* If JS adds a 'focused' class */ {
-  outline: none !important;
-  border-color: var(--dark-blue) !important;
-  box-shadow: 0 0 0 2px rgba(11, 114, 193, 0.1) !important;
+  outline: none;
+  border-color: var(--dark-blue);
+  box-shadow: 0 0 0 2px rgba(11, 114, 193, 0.1);
 }
 
 /* Combined Disabled Styles */
 .car-filter-form input:disabled,
 .car-filter-form select:disabled,
 .car-filter-form .multi-select-display.disabled /* Assumes a .disabled class is added via JS */ {
-  background-color: #f5f5f5 !important;
-  cursor: not-allowed !important;
-  opacity: 0.7 !important;
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 /* Styling for disabled options within multi-select popup */
 .car-filter-form .multi-select-popup li.disabled-option label {
-  color: #aaa !important;
-  cursor: not-allowed !important;
+  color: #aaa;
+  cursor: not-allowed;
 }
 .car-filter-form .multi-select-popup li.disabled-option input[type="checkbox"] {
-  cursor: not-allowed !important;
+  cursor: not-allowed;
 }
 
 /* Button Styles - Applied to the new submit button */
 .car-filter-form .filter-submit-button,
 .car-filter-form .filter-reset-button /* Styling reset button similarly for now */ {
-  width: auto !important; /* Changed from 100% to auto for better fit in actions row */
-  padding: 12px 20px !important; /* Adjusted padding */
-  border: none !important;
-  border-radius: 4px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  color: #fff !important;
-  background: linear-gradient(135deg, #007bff, #0056b3) !important;
-  cursor: pointer !important;
-  transition: background 0.3s ease !important;
-  /* margin: 1rem 0 0 0 !important; Removed specific margin-top, handled by actions container */
+  width: auto; /* Changed from 100% to auto for better fit in actions row */
+  padding: 12px 20px; /* Adjusted padding */
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  cursor: pointer;
+  transition: background 0.3s ease;
+  /* margin: 1rem 0 0 0; Removed specific margin-top, handled by actions container */
 }
 
 .car-filter-form .filter-submit-button:hover,
 .car-filter-form .filter-reset-button:hover {
-  background: linear-gradient(135deg, #0056b3, #004085) !important;
+  background: linear-gradient(135deg, #0056b3, #004085);
 }
 
 /* Container for action buttons (Search, Reset) */
 .car-filter-form .filter-form-actions {
-  display: flex !important;
-  gap: 1rem !important;
-  margin-top: 1rem !important;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
   justify-content: flex-end; /* Aligns buttons to the right, common practice */
 }
 
 /* Styling for the multi-select popup itself */
 .car-filter-form .multi-select-popup {
-  border: 1px solid #ccc !important;
-  border-top: none !important; /* Usually attached to the display element */
-  border-radius: 0 0 var(--border-radius-small) var(--border-radius-small) !important;
-  background-color: var(--white) !important;
-  position: absolute !important; /* Assuming it's absolutely positioned by JS */
-  z-index: 100 !important; /* Ensure it's above other elements */
-  max-height: 200px !important; /* Example max height */
-  overflow-y: auto !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #ccc;
+  border-top: none; /* Usually attached to the display element */
+  border-radius: 0 0 var(--border-radius-small) var(--border-radius-small);
+  background-color: var(--white);
+  position: absolute; /* Assuming it's absolutely positioned by JS */
+  z-index: 100; /* Ensure it's above other elements */
+  max-height: 200px; /* Example max height */
+  overflow-y: auto;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 .car-filter-form .multi-select-popup ul {
-  list-style: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 .car-filter-form .multi-select-popup li label {
-  display: block !important;
-  padding: 8px 12px !important;
-  cursor: pointer !important;
-  font-weight: normal !important; /* Override general label boldness if needed */
-  font-size: 0.875rem !important;
+  display: block;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: normal; /* Override general label boldness if needed */
+  font-size: 0.875rem;
 }
 .car-filter-form .multi-select-popup li label:hover {
-  background-color: #f0f0f0 !important;
+  background-color: #f0f0f0;
 }
 .car-filter-form .multi-select-popup li input[type="checkbox"] {
-  margin-right: 8px !important;
-  width: auto !important; /* Override general input width */
+  margin-right: 8px;
+  width: auto; /* Override general input width */
 }
 
 /* Range separator style */
 .car-filter-form .filter-range-fields .range-separator {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-grow: 0 !important; /* Don't let separator grow */
-  padding: 0 0.5rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 0; /* Don't let separator grow */
+  padding: 0 0.5rem;
 }
 
 /* Make sure .car-filter-form-container allows the form to center if it has a max-width */
@@ -197,13 +245,13 @@
 /* Responsive adjustments if needed */
 @media (max-width: 600px) {
   .car-filter-form .filter-range-fields {
-    flex-direction: column !important; /* Stack min/max fields on small screens */
-    gap: 0.5rem !important; /* Adjust gap for stacked layout */
+    flex-direction: column; /* Stack min/max fields on small screens */
+    gap: 0.5rem; /* Adjust gap for stacked layout */
   }
   .car-filter-form .filter-form-actions {
-    flex-direction: column !important;
+    flex-direction: column;
   }
   .car-filter-form .filter-form-actions button {
-    width: 100% !important; /* Make buttons full width in column layout */
+    width: 100%; /* Make buttons full width in column layout */
   }
 }

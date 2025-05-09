@@ -894,5 +894,23 @@
       "DOM ready. Running initial handleFilterChange to get base counts."
     );
     handleFilterChange();
+
+    const toggleButton = document.getElementById("toggle-more-options");
+    const moreOptionsDiv = document.getElementById("more-options");
+
+    if (toggleButton && moreOptionsDiv) {
+      // Set initial state based on if 'show' class is already present (e.g. from server-side or previous interaction)
+      if (moreOptionsDiv.classList.contains("show")) {
+        toggleButton.classList.add("rotate");
+      } else {
+        // Ensure it's hidden correctly if no 'show' class (CSS handles initial hidden state)
+      }
+
+      toggleButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        moreOptionsDiv.classList.toggle("show");
+        this.classList.toggle("rotate");
+      });
+    }
   }); // End DOMContentLoaded listener
 })(jQuery); // End jQuery no-conflict wrapper and pass jQuery
