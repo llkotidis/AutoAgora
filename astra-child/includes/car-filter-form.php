@@ -248,145 +248,153 @@ function display_car_filter_form( $context = 'default' ) {
     ob_start();
     ?>
     <div class="car-filter-form-container context-<?php echo esc_attr($context); ?>">
-        <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="/car_listings/"> 
-            
-            <h2>Find Your Car</h2> 
+        <div class="filter-layout-container"> <!-- New overall layout wrapper -->
+            <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="/car_listings/"> 
+                
+                <h2>Find Your Car</h2> 
 
-            <?php // Helper function for generating select options 
-            function render_select_options($choices, $counts, $selected_value = '', $show_count = true) {
-                foreach ($choices as $value => $label) {
-                    $count = isset($counts[$value]) ? $counts[$value] : 0;
-                    // Initial render - disable based on initial counts
-                    $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
-                    $display_text = esc_html($label);
-                    // Conditionally add count
-                    if ($show_count) {
-                        $display_text .= ' (' . $count . ')';
+                <?php // Helper function for generating select options 
+                function render_select_options($choices, $counts, $selected_value = '', $show_count = true) {
+                    foreach ($choices as $value => $label) {
+                        $count = isset($counts[$value]) ? $counts[$value] : 0;
+                        // Initial render - disable based on initial counts
+                        $disabled_attr = ($count == 0 && $selected_value !== $value) ? ' disabled="disabled"' : '';
+                        $display_text = esc_html($label);
+                        // Conditionally add count
+                        if ($show_count) {
+                            $display_text .= ' (' . $count . ')';
+                        }
+                        $selected_attr = selected($selected_value, $value, false);
+                        echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                     }
-                    $selected_attr = selected($selected_value, $value, false);
-                    echo "<option value=\"" . esc_attr($value) . "\"{$disabled_attr}{$selected_attr}>{$display_text}</option>";
                 }
-            }
-            function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = [], $reverse_order = false) {
-                // Reverse the range if requested
-                if ($reverse_order) {
-                    $range = array_reverse($range, false); // false preserves keys if they were associative, not needed here but good practice
-                }
-
-                $is_engine = ($suffix === 'L'); // Check if it's the engine field
-
-                foreach ($range as $value) {
-                    // Ensure value is treated as integer for lookup and attribute
-                    // $numeric_value = intval($value); // Old logic - incorrect for engine
-                    
-                    // Determine value type based on suffix
-                    if ($is_engine) {
-                         $numeric_value = floatval($value);
-                         $value_attr = number_format($numeric_value, 1); // Format value="4.0"
-                         $count_key = $value_attr; // Use the formatted string "4.0" as key
-                         $display_value_num = $value_attr; // Display 4.0, 4.5 etc.
-                    } else {
-                         $numeric_value = intval($value); 
-                         $value_attr = $numeric_value; // Format value="10000"
-                         $count_key = $numeric_value; // Use integer as key
-                         $display_value_num = number_format($numeric_value); // Display 10,000
+                function render_range_options($range, $selected_value = '', $suffix = '', $initial_counts = [], $reverse_order = false) {
+                    // Reverse the range if requested
+                    if ($reverse_order) {
+                        $range = array_reverse($range, false); // false preserves keys if they were associative, not needed here but good practice
                     }
-                    
-                    $selected_attr = selected($selected_value, $value_attr, false); // Compare against formatted value_attr
-                    // $value_attr = $numeric_value; // Use integer for value attribute
 
-                    // Format display number with commas
-                    // $display_value_num = number_format($numeric_value); 
-           
-                    // Look up initial count using the appropriate key
-                    // Use intval for key matching if counts keys might be strings from DB
-                    // $count_key = intval($value_attr);
-                    $count = isset($initial_counts[$count_key]) ? $initial_counts[$count_key] : 0; 
- 
-                    // Add suffix WITHOUT a preceding space if suffix exists
-                    $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
-                    $display_text .= ' (' . $count . ')'; // Append count
+                    $is_engine = ($suffix === 'L'); // Check if it's the engine field
 
-                    // Disable if count is 0 (initially)
-                    $disabled_attr = ($count == 0 && $selected_value !== $value_attr) ? ' disabled="disabled"' : '';
+                    foreach ($range as $value) {
+                        // Ensure value is treated as integer for lookup and attribute
+                        // $numeric_value = intval($value); // Old logic - incorrect for engine
+                        
+                        // Determine value type based on suffix
+                        if ($is_engine) {
+                             $numeric_value = floatval($value);
+                             $value_attr = number_format($numeric_value, 1); // Format value="4.0"
+                             $count_key = $value_attr; // Use the formatted string "4.0" as key
+                             $display_value_num = $value_attr; // Display 4.0, 4.5 etc.
+                        } else {
+                             $numeric_value = intval($value); 
+                             $value_attr = $numeric_value; // Format value="10000"
+                             $count_key = $numeric_value; // Use integer as key
+                             $display_value_num = number_format($numeric_value); // Display 10,000
+                        }
+                        
+                        $selected_attr = selected($selected_value, $value_attr, false); // Compare against formatted value_attr
+                        // $value_attr = $numeric_value; // Use integer for value attribute
 
-                    echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
+                        // Format display number with commas
+                        // $display_value_num = number_format($numeric_value); 
+               
+                        // Look up initial count using the appropriate key
+                        // Use intval for key matching if counts keys might be strings from DB
+                        // $count_key = intval($value_attr);
+                        $count = isset($initial_counts[$count_key]) ? $initial_counts[$count_key] : 0; 
+         
+                        // Add suffix WITHOUT a preceding space if suffix exists
+                        $display_text = $display_value_num . ($suffix ? trim($suffix) : ''); 
+                        $display_text .= ' (' . $count . ')'; // Append count
+
+                        // Disable if count is 0 (initially)
+                        $disabled_attr = ($count == 0 && $selected_value !== $value_attr) ? ' disabled="disabled"' : '';
+
+                        echo "<option value=\"" . esc_attr($value_attr) . "\"{$selected_attr}{$disabled_attr}>" . esc_html($display_text) . "</option>";
+                    }
                 }
-            }
-            ?>
+                ?>
 
-            <!-- Location Selector -->
-            <div class="filter-form-group filter-group-location">
-                <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
-                <select id="filter-location-<?php echo esc_attr($context); ?>" name="location" data-filter-key="location">
-                    <option value="">All Locations</option>
-                    <?php render_select_options($all_possible_locations, $published_location_counts, '', false); ?>
-                </select>
-            </div>
-
-            <!-- Make Selector -->
-            <div class="filter-form-group filter-group-make">
-                <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
-                <select id="filter-make-<?php echo esc_attr($context); ?>" name="make" data-filter-key="make">
-                    <option value="">All Makes</option>
-                     <?php 
-                    if (!empty($all_makes_from_files)):
-                        // Create a choices array for render_select_options
-                        $make_choices_assoc = array_combine($all_makes_from_files, $all_makes_from_files);
-                        render_select_options($make_choices_assoc, $make_counts);
-                    endif; 
-                    ?>
-                </select>
-            </div>
-
-            <!-- Model Selector -->
-            <div class="filter-form-group filter-group-model">
-                <label for="filter-model-<?php echo esc_attr($context); ?>">Model</label>
-                <select id="filter-model-<?php echo esc_attr($context); ?>" name="model" data-filter-key="model" disabled>
-                    <option value="">Select Make First</option>
-                    <?php
-                        // Initially empty or potentially pre-populated if make is pre-selected
-                        // JS will handle dynamic population based on Make selection and AJAX counts
-                    ?>
-                </select>
-            </div>
-
-            <!-- Variant Selector -->
-            <div class="filter-form-group filter-group-variant">
-                <label for="filter-variant-<?php echo esc_attr($context); ?>">Variant</label>
-                <select id="filter-variant-<?php echo esc_attr($context); ?>" name="variant" data-filter-key="variant" disabled>
-                    <option value="">Select Model First</option>
-                     <?php
-                        // Initially empty, JS will handle dynamic population based on Model selection and AJAX counts
-                    ?>
-               </select>
-            </div>
-
-            <!-- Year Range -->
-            <div class="filter-form-group filter-group-year">
-                <label>Year</label>
-                <div class="filter-range-fields">
-                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
-                        <option value="">Min Year</option>
-                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
+                <!-- Location Selector -->
+                <div class="filter-form-group filter-group-location">
+                    <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
+                    <select id="filter-location-<?php echo esc_attr($context); ?>" name="location" data-filter-key="location">
+                        <option value="">All Locations</option>
+                        <?php render_select_options($all_possible_locations, $published_location_counts, '', false); ?>
                     </select>
-                    <span class="range-separator">-</span>
-                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
-                        <option value="">Max Year</option>
-                         <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
+                </div>
+
+                <!-- Make and Model Selectors Side-by-Side -->
+                <div class="filter-form-group filter-group-make-model">
+                    <div class="filter-side-by-side-fields"> <!-- Using a new class for clarity, can be styled like filter-range-fields -->
+                        <div class="sub-group make-sub-group">
+                            <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
+                            <select id="filter-make-<?php echo esc_attr($context); ?>" name="make" data-filter-key="make">
+                                <option value="">All Makes</option>
+                                <?php 
+                                if (!empty($all_makes_from_files)):
+                                    $make_choices_assoc = array_combine($all_makes_from_files, $all_makes_from_files);
+                                    render_select_options($make_choices_assoc, $make_counts);
+                                endif; 
+                                ?>
+                            </select>
+                        </div>
+                        <div class="sub-group model-sub-group">
+                            <label for="filter-model-<?php echo esc_attr($context); ?>">Model</label>
+                            <select id="filter-model-<?php echo esc_attr($context); ?>" name="model" data-filter-key="model" disabled>
+                                <option value="">Select Make First</option>
+                                <?php
+                                    // JS will handle dynamic population
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variant Selector -->
+                <div class="filter-form-group filter-group-variant">
+                    <label for="filter-variant-<?php echo esc_attr($context); ?>">Variant</label>
+                    <select id="filter-variant-<?php echo esc_attr($context); ?>" name="variant" data-filter-key="variant" disabled>
+                        <option value="">Select Model First</option>
+                         <?php
+                            // Initially empty, JS will handle dynamic population based on Model selection and AJAX counts
+                        ?>
                    </select>
                 </div>
-            </div>
 
-            <div class="filter-form-group more-options-link-container">
-                <a href="#" id="toggle-more-options" class="more-options-link">
-                    <span>More Options</span>
-                    <span class="chevron">&#9662;</span> <!-- Downward pointing triangle, or use an SVG/font icon -->
-                </a>
-            </div>
+                <!-- Year Range -->
+                <div class="filter-form-group filter-group-year">
+                    <label>Year</label>
+                    <div class="filter-range-fields">
+                        <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
+                            <option value="">Min Year</option>
+                            <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
+                        </select>
+                        <span class="range-separator">-</span>
+                        <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
+                            <option value="">Max Year</option>
+                             <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
+                       </select>
+                    </div>
+                </div>
 
-            <div id="more-options">
+                <!-- Actions and More Options Link moved here, inside the form, but styled later -->
+                <div class="filter-form-actions">
+                     <button type="submit" class="filter-submit-button">Search</button>
+                     <button type="button" class="filter-reset-button">Reset</button> 
+                </div>
 
+                <div class="filter-form-group more-options-link-container">
+                    <a href="#" id="toggle-more-options" class="more-options-link">
+                        <span>More Options</span>
+                    </a>
+                </div>
+
+            </form> <!-- End of car-filter-form -->
+
+            <div id="more-options"> <!-- Moved to be a sibling of the form, for right-side popup -->
+                <h2>More Options</h2> <!-- Title for the popup panel -->
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>
@@ -587,15 +595,9 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
-            </div> <!-- #more-options -->
-
-            <div class="filter-form-actions">
-                 <button type="submit" class="filter-submit-button">Search</button>
-                 <button type="button" class="filter-reset-button">Reset</button> <!-- Optional: Add a reset button -->
-            </div>
-
-        </form>
-    </div>
+            </div> <!-- End of #more-options -->
+        </div> <!-- End of filter-layout-container -->
+    </div> <!-- End of car-filter-form-container -->
 
     <?php
     // --- Enqueue and Localize Script --- 

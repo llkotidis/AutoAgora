@@ -2,18 +2,24 @@
 /* Adapted for car-filter-form.php */
 /* ---------------------------------------- */
 
+.filter-layout-container {
+  display: flex;
+  gap: 1.5rem; /* Gap between main form and more options panel */
+  position: relative; /* For potential absolute positioning of the panel if not using flex grow/shrink */
+}
+
 .car-filter-form {
   /* Was: #car-search-form */
   border-radius: var(--border-radius-large);
   background: var(--white);
   padding: 2rem;
-  width: 100%; /* Adapted: typically filter forms span width, adjust if fixed like 450px is still needed */
+  /* width: 100%; Remove, let flexbox dictate or set a basis */
+  flex: 1 1 60%; /* Main form takes up more space, adjust as needed */
   max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
-  margin-left: auto; /* Optional: if you want to center it like original fixed width might have */
-  margin-right: auto; /* Optional: if you want to center it */
+  /* margin-left/right auto removed as it's part of a flex layout now */
 }
 
 .car-filter-form h2 {
@@ -23,101 +29,121 @@
   margin: 0 0 0.5rem 0;
 }
 
-/* Transition styles for more options */
+/* More Options Panel Styling (Right Side) */
 #more-options {
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s,
-    max-height 0.2s ease-out; /* Added max-height */
+  background: var(--white);
+  border-radius: var(--border-radius-large);
+  padding: 2rem;
+  flex: 0 0 320px; /* Fixed width for the panel, or use flex-grow/basis for percentage. Adjust width as needed. */
+  /* transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out; */
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
+    visibility 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateX(100%); /* Start off-screen to the right */
   visibility: hidden;
-  overflow: hidden; /* Added for smoother transition with max-height */
-  max-height: 0; /* Added for transition */
-  display: flex; /* To inherit gap from parent or apply its own internal gap */
+  overflow-y: auto; /* If content exceeds height */
+  max-height: calc(
+    100vh - 4rem
+  ); /* Example max height, adjust based on header/footer */
+  display: flex;
   flex-direction: column;
-  gap: 1.35rem; /* To match the main form's gap for consistency */
+  gap: 1.35rem;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); /* Shadow on the left side */
 }
 
 #more-options.show {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0); /* Slide in */
   visibility: visible;
-  max-height: 1000px; /* Adjust if more space is needed, for transition */
 }
 
-/* .car-search-container styles removed - unclear if .car-filter-form-container needs this */
+#more-options h2 {
+  /* Style for the title inside the panel */
+  font-size: 1.5rem; /* Slightly smaller than main form title */
+  margin: 0 0 0.5rem 0;
+}
 
-/* Spacing and layout for filter groups */
-.car-filter-form .filter-form-group {
-  /* Was: .car-search-form .form-row */
+/* Spacing and layout for filter groups (applies to both main form and panel) */
+.filter-form-group {
   width: 100%;
   display: flex;
-  flex-direction: column; /* Default for label above input */
-  gap: 0.5rem; /* Added for spacing between label and input block */
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Styles for Make & Model side-by-side */
+.filter-side-by-side-fields {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  width: 100%;
+}
+
+.filter-side-by-side-fields .sub-group {
+  flex-grow: 1;
+  width: auto; /* Or flex-basis: 50% if exactly two and equal */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Gap between label and select within sub-group */
 }
 
 /* Style the 'More options' link container and link */
 .more-options-link-container {
-  text-align: center; /* Center the link */
-  margin-top: 0.5rem; /* Space above the link */
-  margin-bottom: 1rem; /* Space below the link before #more-options opens */
+  text-align: center;
+  margin-top: 1rem;
+  order: 10; /* Ensure it's after filter-form-actions if they are in the same flex container */
 }
-.more-options-link a, /* Targeting the <a> tag directly */
 .more-options-link {
   text-decoration: none;
   color: #007bff;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: inline-block; /* Was inline-flex, make it block or inline-block for centering */
+  padding: 0.5rem 1rem;
+  border: 1px solid #007bff;
+  border-radius: var(--border-radius-small);
   cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.more-options-link:hover {
+  background-color: #007bff;
+  color: var(--white);
 }
 
-.more-options-link .chevron {
-  display: inline-block;
-  transition: transform 0.2s ease-in-out;
-  /* transform: rotate(0deg); Default: Point down, HTML entity used is already down */
-  font-size: 1em;
-  line-height: 1;
-  transform-origin: center;
-}
-.more-options-link a.rotate .chevron,
-.more-options-link.rotate .chevron {
-  transform: rotate(-180deg); /* Point up */
-}
-
-/* Rows that should have side-by-side inputs */
-.car-filter-form .filter-range-fields {
-  /* Was: .car-search-form .form-row.make-model-row, etc. */
+/* Rows that should have side-by-side inputs (Year, Engine, Mileage ranges) */
+.car-filter-form .filter-range-fields, /* For year in main form */
+#more-options .filter-range-fields /* For engine/mileage in panel */ {
   display: flex;
   flex-direction: row;
   gap: 1rem;
-  width: 100%; /* Ensure the container for side-by-side inputs takes full width */
+  width: 100%;
 }
 
-.car-filter-form .filter-range-fields > * {
-  /* Ensure items in range fields share space */
+.car-filter-form .filter-range-fields > *,
+#more-options .filter-range-fields > * {
   flex-grow: 1;
-  width: auto; /* Allow flexbox to manage width */
+  width: auto;
 }
 
 /* Spacing between label and input block */
-.car-filter-form .filter-form-group label {
-  /* Was: .car-search-form .form-group label */
+.filter-form-group label {
   display: block;
   width: 100%;
-  margin-bottom: 0.25rem; /* Adjusted from 0.5rem, as group has gap now */
+  margin-bottom: 0.25rem;
   font-weight: 600;
   font-size: 1.1rem;
 }
 
-/* Style for #car-search-error removed - no direct equivalent */
-
 /* Consolidated Input/Select/Multi-Select Display Styles */
 .car-filter-form select,
-.car-filter-form input[type="text"], /* Add other input types if needed from your form */
-.car-filter-form input[type="number"], /* Assuming you might have number inputs */
-.car-filter-form .multi-select-display /* Style the display part of multi-selects */ {
-  width: 100%; /* Ensure they fill the form-group or their flex item container */
+.car-filter-form input[type="text"],
+.car-filter-form input[type="number"],
+.car-filter-form .multi-select-display,
+#more-options select,
+#more-options input[type="text"],
+#more-options input[type="number"],
+#more-options .multi-select-display {
+  width: 100%;
   padding: 8px 8px;
   border: var(--border);
   border-radius: var(--border-radius-small);
@@ -127,23 +153,28 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  box-sizing: border-box; /* Added for consistent sizing */
+  box-sizing: border-box;
 }
 
 /* Add specific background arrow for SELECT only */
-.car-filter-form select {
+.car-filter-form select,
+#more-options select {
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 1em;
-  padding-right: 2.5em; /* Add padding to prevent text overlap */
+  padding-right: 2.5em;
 }
 
 /* Combined Focus Styles */
 .car-filter-form input:focus,
 .car-filter-form select:focus,
-.car-filter-form .multi-select-display:focus, /* Basic focus for display */
-.car-filter-form .multi-select-filter.focused .multi-select-display /* If JS adds a 'focused' class */ {
+.car-filter-form .multi-select-display:focus,
+.car-filter-form .multi-select-filter.focused .multi-select-display,
+#more-options input:focus,
+#more-options select:focus,
+#more-options .multi-select-display:focus,
+#more-options .multi-select-filter.focused .multi-select-display {
   outline: none;
   border-color: var(--dark-blue);
   box-shadow: 0 0 0 2px rgba(11, 114, 193, 0.1);
@@ -152,25 +183,37 @@
 /* Combined Disabled Styles */
 .car-filter-form input:disabled,
 .car-filter-form select:disabled,
-.car-filter-form .multi-select-display.disabled /* Assumes a .disabled class is added via JS */ {
+.car-filter-form .multi-select-display.disabled,
+#more-options input:disabled,
+#more-options select:disabled,
+#more-options .multi-select-display.disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
   opacity: 0.7;
 }
+
 /* Styling for disabled options within multi-select popup */
-.car-filter-form .multi-select-popup li.disabled-option label {
+.multi-select-popup li.disabled-option label {
+  /* Applied to all multi-selects */
   color: #aaa;
   cursor: not-allowed;
 }
-.car-filter-form .multi-select-popup li.disabled-option input[type="checkbox"] {
+.multi-select-popup li.disabled-option input[type="checkbox"] {
+  /* Applied to all multi-selects */
   cursor: not-allowed;
 }
 
-/* Button Styles - Applied to the new submit button */
-.car-filter-form .filter-submit-button,
-.car-filter-form .filter-reset-button /* Styling reset button similarly for now */ {
-  width: auto; /* Changed from 100% to auto for better fit in actions row */
-  padding: 12px 20px; /* Adjusted padding */
+/* Button Styles */
+.filter-form-actions {
+  display: flex;
+  flex-direction: column; /* Stack search and reset if reset is present */
+  gap: 0.75rem; /* Gap between buttons if stacked */
+  margin-top: 1rem;
+}
+
+.filter-submit-button {
+  width: 100%; /* Full width */
+  padding: 12px 20px;
   border: none;
   border-radius: 4px;
   font-size: 16px;
@@ -179,79 +222,96 @@
   background: linear-gradient(135deg, #007bff, #0056b3);
   cursor: pointer;
   transition: background 0.3s ease;
-  /* margin: 1rem 0 0 0; Removed specific margin-top, handled by actions container */
 }
 
-.car-filter-form .filter-submit-button:hover,
-.car-filter-form .filter-reset-button:hover {
+.filter-submit-button:hover {
   background: linear-gradient(135deg, #0056b3, #004085);
 }
 
-/* Container for action buttons (Search, Reset) */
-.car-filter-form .filter-form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  justify-content: flex-end; /* Aligns buttons to the right, common practice */
+/* Optional: Style for Reset button if it exists and needs to be distinct or also full width */
+.filter-reset-button {
+  width: 100%; /* Example: also full width */
+  padding: 10px 20px;
+  border: 1px solid #6c757d;
+  border-radius: 4px;
+  background-color: var(--white);
+  color: #6c757d;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.filter-reset-button:hover {
+  background-color: #6c757d;
+  color: var(--white);
 }
 
-/* Styling for the multi-select popup itself */
-.car-filter-form .multi-select-popup {
+/* Styling for the multi-select popup itself (applies to both form and panel) */
+.multi-select-popup {
   border: 1px solid #ccc;
-  border-top: none; /* Usually attached to the display element */
+  border-top: none;
   border-radius: 0 0 var(--border-radius-small) var(--border-radius-small);
   background-color: var(--white);
-  position: absolute; /* Assuming it's absolutely positioned by JS */
-  z-index: 100; /* Ensure it's above other elements */
-  max-height: 200px; /* Example max height */
+  position: absolute;
+  z-index: 100;
+  max-height: 200px;
   overflow-y: auto;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Make popup same width as its trigger */
 }
-.car-filter-form .multi-select-popup ul {
+.multi-select-popup ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-.car-filter-form .multi-select-popup li label {
+.multi-select-popup li label {
   display: block;
   padding: 8px 12px;
   cursor: pointer;
-  font-weight: normal; /* Override general label boldness if needed */
+  font-weight: normal;
   font-size: 0.875rem;
 }
-.car-filter-form .multi-select-popup li label:hover {
+.multi-select-popup li label:hover {
   background-color: #f0f0f0;
 }
-.car-filter-form .multi-select-popup li input[type="checkbox"] {
+.multi-select-popup li input[type="checkbox"] {
   margin-right: 8px;
-  width: auto; /* Override general input width */
+  width: auto;
 }
 
 /* Range separator style */
-.car-filter-form .filter-range-fields .range-separator {
+.filter-range-fields .range-separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-grow: 0; /* Don't let separator grow */
+  flex-grow: 0;
   padding: 0 0.5rem;
 }
 
-/* Make sure .car-filter-form-container allows the form to center if it has a max-width */
-.car-filter-form-container.context-default {
-  /* Example: targeting a specific context if needed */
-  /* Add any container specific styles here if form is not full width */
-}
-
-/* Responsive adjustments if needed */
-@media (max-width: 600px) {
-  .car-filter-form .filter-range-fields {
-    flex-direction: column; /* Stack min/max fields on small screens */
-    gap: 0.5rem; /* Adjust gap for stacked layout */
-  }
-  .car-filter-form .filter-form-actions {
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  /* Adjust breakpoint for when panel stacks */
+  .filter-layout-container {
     flex-direction: column;
   }
-  .car-filter-form .filter-form-actions button {
-    width: 100%; /* Make buttons full width in column layout */
+  #more-options {
+    flex-basis: auto; /* Allow it to take full width when stacked */
+    max-height: 50vh; /* Adjust for stacked view */
+    transform: translateY(
+      20px
+    ); /* Start a bit lower for slide-up effect if preferred */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Shadow on top when stacked below */
   }
+  #more-options.show {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .car-filter-form .filter-range-fields,
+  #more-options .filter-range-fields,
+  .filter-side-by-side-fields {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  /* .filter-form-actions already column from main styles */
+  /* .filter-submit-button and .filter-reset-button already 100% width */
 }

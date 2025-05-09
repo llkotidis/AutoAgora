@@ -897,19 +897,27 @@
 
     const toggleButton = document.getElementById("toggle-more-options");
     const moreOptionsDiv = document.getElementById("more-options");
+    const toggleButtonTextSpan = toggleButton
+      ? toggleButton.querySelector("span")
+      : null;
 
-    if (toggleButton && moreOptionsDiv) {
-      // Set initial state based on if 'show' class is already present (e.g. from server-side or previous interaction)
+    if (toggleButton && moreOptionsDiv && toggleButtonTextSpan) {
+      // Set initial state based on if 'show' class is already present
       if (moreOptionsDiv.classList.contains("show")) {
-        toggleButton.classList.add("rotate");
+        toggleButtonTextSpan.textContent = "Hide Options";
       } else {
-        // Ensure it's hidden correctly if no 'show' class (CSS handles initial hidden state)
+        toggleButtonTextSpan.textContent = "More Options";
       }
 
       toggleButton.addEventListener("click", function (event) {
         event.preventDefault();
         moreOptionsDiv.classList.toggle("show");
-        this.classList.toggle("rotate");
+
+        if (moreOptionsDiv.classList.contains("show")) {
+          toggleButtonTextSpan.textContent = "Hide Options";
+        } else {
+          toggleButtonTextSpan.textContent = "More Options";
+        }
       });
     }
   }); // End DOMContentLoaded listener
