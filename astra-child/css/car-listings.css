@@ -620,3 +620,10 @@
 .car-listings-container.is-loading .car-listings-pagination {
     visibility: hidden;
 } */
+
+.car-publication-date {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+    font-style: italic;
+}
