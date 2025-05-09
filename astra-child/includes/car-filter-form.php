@@ -429,171 +429,171 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
-             <!-- Fuel Type Selector -->
-            <div class="filter-form-group filter-group-fuel">
-                <?php $field_label = "Fuel Type"; // Define label text ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                <div class="multi-select-filter" data-filter-key="fuel_type">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
+            <!-- Fuel Type & Transmission Side-by-Side -->
+            <div class="filter-form-group filter-group-fuel-transmission">
+                <div class="filter-side-by-side-fields">
+                    <div class="sub-group fuel-type-sub-group">
+                        <?php $field_label = "Fuel Type"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="fuel_type">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($fuel_type_choices as $value => $label) {
+                                        $count = isset($fuel_type_counts[$value]) ? $fuel_type_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="fuel_type" class="multi-select-value">
+                        </div>
                     </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                            <?php
-                            foreach ($fuel_type_choices as $value => $label) {
-                                $count = isset($fuel_type_counts[$value]) ? $fuel_type_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>'; // Add class to li
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>'; // Add disabled attr
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
+                    <div class="sub-group transmission-sub-group">
+                        <?php $field_label = "Transmission"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="transmission">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($transmission_choices as $value => $label) {
+                                        $count = isset($transmission_counts[$value]) ? $transmission_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="transmission" class="multi-select-value">
+                        </div>
                     </div>
-                    <input type="hidden" name="fuel_type" class="multi-select-value">
                 </div>
             </div>
 
-            <!-- Transmission Selector -->
-            <div class="filter-form-group filter-group-transmission">
-                <?php $field_label = "Transmission"; ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                 <div class="multi-select-filter" data-filter-key="transmission">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
+            <!-- Body Type & Drive Type Side-by-Side -->
+            <div class="filter-form-group filter-group-body-drive">
+                <div class="filter-side-by-side-fields">
+                    <div class="sub-group body-type-sub-group">
+                        <?php $field_label = "Body Type"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="body_type">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($body_type_choices as $value => $label) {
+                                        $count = isset($body_type_counts[$value]) ? $body_type_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="body_type" class="multi-select-value">
+                        </div>
                     </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                            <?php
-                            foreach ($transmission_choices as $value => $label) {
-                                $count = isset($transmission_counts[$value]) ? $transmission_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
+                    <div class="sub-group drive-type-sub-group">
+                        <?php $field_label = "Drive Type"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="drive_type">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($drive_type_choices as $value => $label) {
+                                        $count = isset($drive_type_counts[$value]) ? $drive_type_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="drive_type" class="multi-select-value">
+                        </div>
                     </div>
-                    <input type="hidden" name="transmission" class="multi-select-value">
-                 </div>
-            </div>
-
-            <!-- Body Type Selector -->
-             <div class="filter-form-group filter-group-bodytype">
-                 <?php $field_label = "Body Type"; ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                 <div class="multi-select-filter" data-filter-key="body_type">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
-                    </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                            <?php
-                            foreach ($body_type_choices as $value => $label) {
-                                $count = isset($body_type_counts[$value]) ? $body_type_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
-                    </div>
-                     <input type="hidden" name="body_type" class="multi-select-value">
                 </div>
             </div>
 
-            <!-- Drive Type Selector -->
-             <div class="filter-form-group filter-group-drivetype">
-                 <?php $field_label = "Drive Type"; ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                 <div class="multi-select-filter" data-filter-key="drive_type">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
+            <!-- Exterior & Interior Color Side-by-Side -->
+            <div class="filter-form-group filter-group-colors">
+                <div class="filter-side-by-side-fields">
+                    <div class="sub-group exterior-color-sub-group">
+                        <?php $field_label = "Exterior Color"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="exterior_color">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($ext_color_choices as $value => $label) {
+                                        $count = isset($ext_color_counts[$value]) ? $ext_color_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="exterior_color" class="multi-select-value">
+                        </div>
                     </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                             <?php
-                            foreach ($drive_type_choices as $value => $label) {
-                                $count = isset($drive_type_counts[$value]) ? $drive_type_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
+                    <div class="sub-group interior-color-sub-group">
+                        <?php $field_label = "Interior Color"; ?>
+                        <label><?php echo esc_html($field_label); ?></label>
+                        <div class="multi-select-filter" data-filter-key="interior_color">
+                            <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
+                                <span>Select <?php echo esc_html($field_label); ?></span>
+                            </div>
+                            <div class="multi-select-popup">
+                                <ul>
+                                    <?php
+                                    foreach ($int_color_choices as $value => $label) {
+                                        $count = isset($int_color_counts[$value]) ? $int_color_counts[$value] : 0;
+                                        $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
+                                        $li_class = ($count === 0) ? ' class="disabled-option"' : '';
+                                        echo '<li'. $li_class .'><label>';
+                                        echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
+                                        echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
+                                        echo '</label></li>';
+                                    }
+                                    ?>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="interior_color" class="multi-select-value">
+                        </div>
                     </div>
-                     <input type="hidden" name="drive_type" class="multi-select-value">
-                 </div>
-            </div>
-
-            <!-- Exterior Color Selector -->
-            <div class="filter-form-group filter-group-extcolor">
-                <?php $field_label = "Exterior Color"; ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                 <div class="multi-select-filter" data-filter-key="exterior_color">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
-                    </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                            <?php
-                            foreach ($ext_color_choices as $value => $label) {
-                                $count = isset($ext_color_counts[$value]) ? $ext_color_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
-                    </div>
-                    <input type="hidden" name="exterior_color" class="multi-select-value">
-                 </div>
-            </div>
-
-            <!-- Interior Color Selector -->
-             <div class="filter-form-group filter-group-intcolor">
-                <?php $field_label = "Interior Color"; ?>
-                <label><?php echo esc_html($field_label); ?></label>
-                 <div class="multi-select-filter" data-filter-key="interior_color">
-                    <div class="multi-select-display" data-default-text="Select <?php echo esc_attr($field_label); ?>">
-                        <span>Select <?php echo esc_html($field_label); ?></span>
-                        
-                    </div>
-                    <div class="multi-select-popup">
-                        <ul>
-                             <?php
-                            foreach ($int_color_choices as $value => $label) {
-                                $count = isset($int_color_counts[$value]) ? $int_color_counts[$value] : 0;
-                                $disabled_attr = ($count === 0) ? ' disabled="disabled"' : '';
-                                $li_class = ($count === 0) ? ' class="disabled-option"' : '';
-                                echo '<li'. $li_class .'><label>';
-                                echo '<input type="checkbox" value="' . esc_attr($value) . '" data-label="'.esc_attr($label).'"' . $disabled_attr . '>';
-                                echo esc_html($label) . ' (<span class="option-count">' . $count . '</span>)';
-                                echo '</label></li>';
-                            }
-                            ?>
-                        </ul>
-                    </div>
-                    <input type="hidden" name="interior_color" class="multi-select-value">
                 </div>
             </div>
 
