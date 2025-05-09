@@ -23,6 +23,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem; /* Changed from 1.35rem */
+  height: fit-content; /* Added */
   /* margin-left/right auto removed as it's part of a flex layout now */
 }
 
@@ -31,6 +32,8 @@
   font-size: 1.75rem;
   line-height: 1.1;
   margin: 0 0 0.5rem 0;
+  margin-top: 1rem;
+  order: 10;
 }
 
 /* More Options Panel Styling (Right Side) */
@@ -339,4 +342,8 @@
   }
   /* .filter-form-actions already column from main styles */
   /* .filter-submit-button and .filter-reset-button already 100% width */
+}
+
+#toggle-more-options {
+  text-decoration: none; /* Added to ensure no underline on the specific ID */
 }
