@@ -378,6 +378,8 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
+            <div id="more-options">
+
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>
@@ -578,6 +580,7 @@ function display_car_filter_form( $context = 'default' ) {
                 </div>
             </div>
 
+            </div> <!-- #more-options -->
 
             <div class="filter-form-actions">
                  <button type="submit" class="filter-submit-button">Search</button>
