@@ -40,12 +40,11 @@
   padding: 2rem;
   flex: 1 1 auto; /* Grow to fill remaining space, can shrink, auto basis */
   max-width: 450px; /* Changed from 320px */
-  /* transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out; */
-  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
-    opacity 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
-    visibility 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+    visibility 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
   opacity: 0;
-  transform: translateX(100%); /* Start off-screen to the right */
+  transform: translateX(10px); /* Distance changed to 10px */
   visibility: hidden;
   overflow-y: auto; /* If content exceeds height */
   max-height: calc(
