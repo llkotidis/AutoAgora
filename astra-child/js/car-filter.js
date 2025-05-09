@@ -23,6 +23,8 @@
     console.log("[CarFilter] Initializing filters for context:", context);
 
     const form = document.getElementById("car-filter-form-" + context);
+    const moreOptionsDiv = document.getElementById("more-options"); // Get #more-options div
+
     // Ensure form exists before proceeding
     if (!form) {
       console.error(
@@ -32,16 +34,52 @@
       return;
     }
     console.log("[CarFilter] Form element found:", form);
+    if (moreOptionsDiv) {
+      console.log(
+        "[CarFilter] More Options Div element found:",
+        moreOptionsDiv
+      );
+    } else {
+      console.warn("[CarFilter] More Options Div element NOT found."); // Should exist unless listings_page logic error
+    }
 
     const container = form.closest(".car-filter-form-container");
-    const filterSelects = form.querySelectorAll("select[data-filter-key]");
-    const multiSelectFilters = form.querySelectorAll(".multi-select-filter"); // Get multi-selects
+
+    // Updated Selectors
+    const mainFormSelects = form.querySelectorAll("select[data-filter-key]");
+    const panelSelects = moreOptionsDiv
+      ? moreOptionsDiv.querySelectorAll("select[data-filter-key]")
+      : [];
+    const filterSelects = [...mainFormSelects, ...panelSelects];
+    console.log(
+      "[CarFilter] Found filterSelects elements:",
+      filterSelects.length,
+      filterSelects
+    );
+
+    const multiSelectFilters = moreOptionsDiv
+      ? moreOptionsDiv.querySelectorAll(".multi-select-filter")
+      : [];
     console.log(
       "[CarFilter] Found multiSelectFilters elements:",
       multiSelectFilters.length,
       multiSelectFilters
     );
-    const allFilterElements = form.querySelectorAll("[data-filter-key]"); // All elements with filter keys
+
+    const mainFormFilterElements = form.querySelectorAll("[data-filter-key]");
+    const panelFilterElements = moreOptionsDiv
+      ? moreOptionsDiv.querySelectorAll("[data-filter-key]")
+      : [];
+    const allFilterElements = [
+      ...mainFormFilterElements,
+      ...panelFilterElements,
+    ];
+    console.log(
+      "[CarFilter] Found allFilterElements:",
+      allFilterElements.length,
+      allFilterElements
+    );
+
     const resetButton = form.querySelector(".filter-reset-button");
 
     // Store initial state for multi-selects to detect changes
@@ -372,12 +410,18 @@
               }
             });
 
-            const engineMinSelect = form.querySelector(
-              'select[data-filter-key="engine_min"]'
-            );
-            const engineMaxSelect = form.querySelector(
-              'select[data-filter-key="engine_max"]'
-            );
+            // Corrected Engine Selectors
+            const engineMinSelect = moreOptionsDiv
+              ? moreOptionsDiv.querySelector(
+                  'select[data-filter-key="engine_min"]'
+                )
+              : null;
+            const engineMaxSelect = moreOptionsDiv
+              ? moreOptionsDiv.querySelector(
+                  'select[data-filter-key="engine_max"]'
+                )
+              : null;
+
             const engineMinCumulativeCounts =
               updatedCounts.engine_min_cumulative_counts || {};
             const engineMaxCumulativeCounts =
@@ -477,12 +521,18 @@
             // --- End Engine Range Updates ---
 
             // --- Update Mileage Range Selects ---
-            const mileageMinSelect = form.querySelector(
-              'select[data-filter-key="mileage_min"]'
-            );
-            const mileageMaxSelect = form.querySelector(
-              'select[data-filter-key="mileage_max"]'
-            );
+            // Corrected Mileage Selectors
+            const mileageMinSelect = moreOptionsDiv
+              ? moreOptionsDiv.querySelector(
+                  'select[data-filter-key="mileage_min"]'
+                )
+              : null;
+            const mileageMaxSelect = moreOptionsDiv
+              ? moreOptionsDiv.querySelector(
+                  'select[data-filter-key="mileage_max"]'
+                )
+              : null;
+
             const mileageMinCumulativeCounts =
               updatedCounts.mileage_min_cumulative_counts || {};
             const mileageMaxCumulativeCounts =
@@ -896,7 +946,6 @@
     handleFilterChange();
 
     const toggleButton = document.getElementById("toggle-more-options");
-    const moreOptionsDiv = document.getElementById("more-options");
     const toggleButtonTextSpan = toggleButton
       ? toggleButton.querySelector("span")
       : null;
