@@ -396,7 +396,9 @@ function display_car_filter_form( $context = 'default' ) {
             </form> <!-- End of car-filter-form -->
 
             <div id="more-options" class="<?php if ($context === 'listings_page') echo 'show permanently-open'; ?>"> 
+                <?php if ($context !== 'listings_page'): ?>
                 <h2>More Options</h2> 
+                <?php endif; ?>
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>

@@ -54,7 +54,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); /* Shadow on the left side */
 }
 
 #more-options.show {
@@ -324,7 +323,6 @@
     transform: translateY(
       20px
     ); /* Start a bit lower for slide-up effect if preferred */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Shadow on top when stacked below */
   }
   #more-options.show {
     transform: translateY(0);
