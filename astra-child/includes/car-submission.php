@@ -349,7 +349,13 @@ function store_car_publication_date($new_status, $old_status, $post) {
     // Check if the post is being published
     if ($new_status === 'publish' && $old_status !== 'publish') {
         // Store the current time as the publication date
-        update_post_meta($post->ID, 'publication_date', current_time('mysql'));
+        $publication_date = current_time('mysql');
+        update_post_meta($post->ID, 'publication_date', $publication_date);
+        
+        // Debug log
+        if (WP_DEBUG === true) {
+            error_log('Car publication date stored: ' . $publication_date . ' for post ID: ' . $post->ID);
+        }
     }
 }
 add_action('transition_post_status', 'store_car_publication_date', 10, 3);
