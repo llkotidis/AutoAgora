@@ -1,7 +1,6 @@
 /* Favourites Button Styles */
 .favourites-button {
   display: inline-block;
-  margin-right: 1.5rem;
   vertical-align: middle;
 }
 
@@ -20,10 +19,9 @@
 
 .favourites-button i {
   font-size: 1.2rem;
-  margin-bottom: 0.2rem;
 }
 
 .favourites-button span {
   font-size: 0.8rem;
   font-weight: 500;
-} 
+}
