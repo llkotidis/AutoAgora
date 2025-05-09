@@ -251,7 +251,11 @@ function display_car_filter_form( $context = 'default' ) {
         <div class="filter-layout-container"> <!-- New overall layout wrapper -->
             <form id="car-filter-form-<?php echo esc_attr($context); ?>" class="car-filter-form" method="get" action="/car_listings/"> 
                 
-                <h2>Find Your Car</h2> 
+                <?php if ($context === 'listings_page'): ?>
+                    <h2>Filters</h2>
+                <?php else: ?>
+                    <h2>Find Your Car</h2> 
+                <?php endif; ?>
 
                 <?php // Helper function for generating select options 
                 function render_select_options($choices, $counts, $selected_value = '', $show_count = true) {
