@@ -382,7 +382,7 @@ function display_car_filter_form( $context = 'default' ) {
                 <!-- Actions and More Options Link moved here, inside the form, but styled later -->
                 <div class="filter-form-actions">
                      <button type="submit" class="filter-submit-button">Search</button>
-                     <button type="button" class="filter-reset-button">Reset</button> 
+                     <button type="button" class="filter-reset-button">Reset Filters</button> 
                 </div>
 
                 <?php if ($context !== 'listings_page'): ?>

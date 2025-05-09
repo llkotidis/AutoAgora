@@ -100,22 +100,23 @@
 .more-options-link-container {
   text-align: center;
   margin-top: 1rem;
-  order: 10; /* Ensure it's after filter-form-actions if they are in the same flex container */
+  order: 10;
 }
 .more-options-link {
   text-decoration: none;
-  color: #007bff;
-  display: inline-block; /* Was inline-flex, make it block or inline-block for centering */
-  padding: 0.5rem 1rem;
-  border: 1px solid #007bff;
-  border-radius: var(--border-radius-small);
+  color: #007bff; /* Blue text */
+  display: inline-block;
+  padding: 0; /* No padding */
+  border: none; /* No border */
+  background: none; /* No background */
+  box-shadow: none; /* No box shadow */
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  font-weight: normal; /* Normal font weight */
+  /* transition: color 0.2s ease; */ /* Keep or remove hover transition based on preference */
 }
 .more-options-link:hover {
-  background-color: #007bff;
-  color: var(--white);
+  /* color: #0056b3; */ /* Optional: darker blue on hover */
+  text-decoration: underline; /* Standard link hover */
 }
 
 /* Rows that should have side-by-side inputs (Year, Engine, Mileage ranges) */
@@ -214,9 +215,10 @@
 /* Button Styles */
 .filter-form-actions {
   display: flex;
-  flex-direction: column; /* Stack search and reset if reset is present */
-  gap: 0.75rem; /* Gap between buttons if stacked */
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 1rem;
+  align-items: center; /* Center align the text-like buttons */
 }
 
 .filter-submit-button {
@@ -236,20 +238,25 @@
   background: linear-gradient(135deg, #0056b3, #004085);
 }
 
-/* Optional: Style for Reset button if it exists and needs to be distinct or also full width */
+/* Reset Button Style */
 .filter-reset-button {
-  width: 100%; /* Example: also full width */
-  padding: 10px 20px;
-  border: 1px solid #6c757d;
-  border-radius: 4px;
-  background-color: var(--white);
-  color: #6c757d;
+  width: auto; /* Allow text to define width */
+  padding: 0; /* No padding */
+  border: none; /* No border */
+  border-radius: 0; /* No border-radius */
+  background: none; /* No background */
+  box-shadow: none; /* No box shadow */
+  color: #6c757d; /* Gray text */
+  font-size: 14px; /* 14px font size */
+  font-weight: normal; /* Normal font weight */
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-top: 0.5rem; /* 0.5rem top margin */
+  text-align: center;
+  /* transition: color 0.2s ease; */ /* Optional: hover effect */
 }
 .filter-reset-button:hover {
-  background-color: #6c757d;
-  color: var(--white);
+  /* color: #343a40; */ /* Optional: darker gray on hover */
+  text-decoration: underline; /* Standard link hover */
 }
 
 /* Styling for the multi-select popup itself (applies to both form and panel) */
