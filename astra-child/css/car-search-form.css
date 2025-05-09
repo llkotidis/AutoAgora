@@ -58,6 +58,14 @@
   visibility: visible;
 }
 
+/* Styles for when the panel is permanently open (e.g., on listings page) */
+#more-options.permanently-open {
+  opacity: 1;
+  transform: translateX(0);
+  visibility: visible;
+  transition: none; /* Disable transitions for immediate display */
+}
+
 #more-options h2 {
   /* Style for the title inside the panel */
   font-size: 1.5rem; /* Slightly smaller than main form title */

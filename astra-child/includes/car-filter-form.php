@@ -385,16 +385,18 @@ function display_car_filter_form( $context = 'default' ) {
                      <button type="button" class="filter-reset-button">Reset</button> 
                 </div>
 
+                <?php if ($context !== 'listings_page'): ?>
                 <div class="filter-form-group more-options-link-container">
                     <a href="#" id="toggle-more-options" class="more-options-link">
                         <span>More Options</span>
                     </a>
                 </div>
+                <?php endif; ?>
 
             </form> <!-- End of car-filter-form -->
 
-            <div id="more-options"> <!-- Moved to be a sibling of the form, for right-side popup -->
-                <h2>More Options</h2> <!-- Title for the popup panel -->
+            <div id="more-options" class="<?php if ($context === 'listings_page') echo 'show permanently-open'; ?>"> 
+                <h2>More Options</h2> 
              <!-- Engine Capacity Range -->
             <div class="filter-form-group filter-group-engine">
                 <label>Engine (L)</label>
