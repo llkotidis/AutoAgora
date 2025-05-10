@@ -45,6 +45,30 @@ if (have_posts()) :
             ?>
 
             <div class="car-listing-detailed-container">
+                <!-- Add Gallery Popup HTML -->
+                <div class="gallery-popup" style="display: none;">
+                    <div class="gallery-popup-content">
+                        <button class="close-gallery-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="gallery-main-image">
+                            <img src="" alt="Gallery Image">
+                        </div>
+                        <div class="gallery-thumbnails">
+                            <?php foreach ($all_images as $index => $image_id) : 
+                                $thumb_url = wp_get_attachment_image_url($image_id, 'thumbnail');
+                                $full_url = wp_get_attachment_image_url($image_id, 'large');
+                                if ($thumb_url) :
+                            ?>
+                                <div class="gallery-thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" data-full-url="<?php echo esc_url($full_url); ?>">
+                                    <img src="<?php echo esc_url($thumb_url); ?>" alt="Gallery Thumbnail <?php echo $index + 1; ?>">
+                                </div>
+                            <?php 
+                                endif;
+                            endforeach; ?>
+                        </div>
+                    </div>
+                </div>
                 <div class="car-listing-header">
                     <a href="javascript:history.back()" class="back-to-results-btn">
                         ← Back to Results
@@ -536,6 +560,84 @@ if (have_posts()) :
             .read-more-btn:hover {
                 text-decoration: underline;
             }
+
+            /* Gallery Popup Styles */
+            .gallery-popup {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .gallery-popup-content {
+                width: 90%;
+                height: 90%;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .close-gallery-btn {
+                position: absolute;
+                top: -40px;
+                right: 0;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 10px;
+                z-index: 1001;
+            }
+
+            .gallery-main-image {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .gallery-main-image img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+
+            .gallery-thumbnails {
+                height: 100px;
+                display: flex;
+                gap: 10px;
+                overflow-x: auto;
+                padding: 10px 0;
+                justify-content: center;
+            }
+
+            .gallery-thumbnail {
+                width: 120px;
+                height: 80px;
+                cursor: pointer;
+                border: 2px solid transparent;
+                border-radius: 4px;
+                overflow: hidden;
+                flex-shrink: 0;
+            }
+
+            .gallery-thumbnail.active {
+                border-color: #007bff;
+            }
+
+            .gallery-thumbnail img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
             </style>
 
             <script>
@@ -656,6 +758,47 @@ if (have_posts()) :
                         });
                     });
                 }
+
+                // Add Gallery Popup Functionality
+                const viewGalleryBtn = document.querySelector('.view-gallery-btn');
+                const galleryPopup = document.querySelector('.gallery-popup');
+                const closeGalleryBtn = document.querySelector('.close-gallery-btn');
+                const galleryMainImage = document.querySelector('.gallery-main-image img');
+                const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
+
+                if (viewGalleryBtn && galleryPopup) {
+                    viewGalleryBtn.addEventListener('click', function() {
+                        galleryPopup.style.display = 'flex';
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling when popup is open
+                    });
+                }
+
+                if (closeGalleryBtn) {
+                    closeGalleryBtn.addEventListener('click', function() {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = ''; // Restore scrolling
+                    });
+                }
+
+                // Close popup when clicking outside the content
+                galleryPopup.addEventListener('click', function(e) {
+                    if (e.target === galleryPopup) {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+
+                // Handle gallery thumbnail clicks
+                galleryThumbnails.forEach(thumb => {
+                    thumb.addEventListener('click', function() {
+                        galleryThumbnails.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        const newImageUrl = this.dataset.fullUrl;
+                        if (newImageUrl && galleryMainImage) {
+                            galleryMainImage.src = newImageUrl;
+                        }
+                    });
+                });
             });
             </script>
             <?php
