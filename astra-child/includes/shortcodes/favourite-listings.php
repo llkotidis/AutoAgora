@@ -488,6 +488,17 @@ function display_favourite_listings($atts) {
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Function to update the results counter
+        function updateResultsCounter(count) {
+            const counter = document.querySelector('.results-counter');
+            if (counter) {
+                const countSpan = counter.querySelector('.count');
+                if (countSpan) {
+                    countSpan.textContent = count;
+                }
+            }
+        }
+
         // Carousel functionality
         document.querySelectorAll('.car-listing-image-carousel').forEach(carousel => {
             const images = carousel.querySelectorAll('.car-listing-image');
@@ -610,7 +621,7 @@ function display_favourite_listings($atts) {
                                         // Reload the page to show the "no favorites" message
                                         window.location.reload();
                                     } else {
-                                        // Update the results counter
+                                        // Update the results counter immediately
                                         updateResultsCounter(remainingCards.length);
                                     }
                                 }, 300);
