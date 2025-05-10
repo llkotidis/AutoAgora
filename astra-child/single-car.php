@@ -315,9 +315,6 @@ if (have_posts()) :
 
             .car-listing-gallery {
                 width: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
             }
 
             .main-image {
@@ -326,7 +323,7 @@ if (have_posts()) :
                 max-width: 100%;
                 max-height: 600px;
                 overflow: hidden;
-                display: inline-block;
+                display: block;
             }
 
             .image-count-overlay {
@@ -356,7 +353,7 @@ if (have_posts()) :
                 width: 100%;
                 height: auto;
                 max-height: 600px;
-                object-fit: contain;
+                object-fit: cover;
                 border-radius: 8px;
                 display: block;
             }
