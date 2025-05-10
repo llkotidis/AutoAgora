@@ -174,7 +174,7 @@ function ajax_filter_car_listings_handler() {
                     <?php 
                     // Get all car images
                     $featured_image = get_post_thumbnail_id(get_the_ID());
-                    $additional_images = function_exists('get_field') ? get_field('car_images', get_the_ID()) : null; // Check if ACF is active
+                    $additional_images = function_exists('get_field') ? get_field('car_images', get_the_ID()) : null;
                     $all_images = array();
                     
                     if ($featured_image) {
@@ -192,9 +192,9 @@ function ajax_filter_car_listings_handler() {
                         foreach ($all_images as $index => $image_id) {
                             $image_url = wp_get_attachment_image_url($image_id, 'medium');
                             if ($image_url) {
-                                $clean_year = str_replace(',', '', $year); // Remove comma from year
+                                $clean_year = str_replace(',', '', $year);
                                 echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
-                                echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">'; // Use clean year in alt
+                                echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
                                 if ($index === count($all_images) - 1 && count($all_images) > 1) {
                                     echo '<a href="' . esc_url(get_permalink(get_the_ID())) . '" class="see-all-images" style="display: none;">See All Images</a>';
                                 }
@@ -202,19 +202,11 @@ function ajax_filter_car_listings_handler() {
                             }
                         }
                         
-                        $user_id = get_current_user_id();
-                        $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
-                        $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
-                        $is_favorite = in_array(get_the_ID(), $favorite_cars);
-                        $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
-                        $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
-                        echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . get_the_ID() . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
+                        echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
+                        echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
                         
-                        echo '<button class="carousel-nav prev" style="display: none;"><i class="fas fa-chevron-left"></i></button>';
-                        echo '<button class="carousel-nav next" style="display: none;"><i class="fas fa-chevron-right"></i></button>';
-                        
-                        echo '</div>'; // close .car-listing-image-carousel
-                        echo '</div>'; // close .car-listing-image-container
+                        echo '</div>';
+                        echo '</div>';
                     }
                     ?>
                     
@@ -254,6 +246,15 @@ function ajax_filter_car_listings_handler() {
                         <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
                     </div>
                 </a>
+                <?php
+                $user_id = get_current_user_id();
+                $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
+                $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
+                $is_favorite = in_array(get_the_ID(), $favorite_cars);
+                $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
+                $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
+                echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . get_the_ID() . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
+                ?>
             </div>
             <?php
             // --- END Card Rendering Logic ---

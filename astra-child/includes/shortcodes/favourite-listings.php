@@ -123,46 +123,46 @@ function display_favourite_listings($atts) {
                     $location = get_post_meta(get_the_ID(), 'location', true);
                     ?>
                     <div class="car-listing-card">
-                        <?php 
-                        // Get all car images
-                        $featured_image = get_post_thumbnail_id(get_the_ID());
-                        $additional_images = get_field('car_images', get_the_ID());
-                        $all_images = array();
-                        
-                        if ($featured_image) {
-                            $all_images[] = $featured_image;
-                        }
-                        
-                        if (is_array($additional_images)) {
-                            $all_images = array_merge($all_images, $additional_images);
-                        }
-                        
-                        if (!empty($all_images)) {
-                            echo '<div class="car-listing-image-container">';
-                            echo '<div class="car-listing-image-carousel" data-post-id="' . get_the_ID() . '">';
+                        <a href="<?php echo esc_url(get_permalink(get_the_ID())); ?>" class="car-listing-link">
+                            <?php 
+                            // Get all car images
+                            $featured_image = get_post_thumbnail_id(get_the_ID());
+                            $additional_images = function_exists('get_field') ? get_field('car_images', get_the_ID()) : null;
+                            $all_images = array();
                             
-                            foreach ($all_images as $index => $image_id) {
-                                $image_url = wp_get_attachment_image_url($image_id, 'medium');
-                                if ($image_url) {
-                                    echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
-                                    echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($year . ' ' . $make . ' ' . $model) . '">';
-                                    if ($index === count($all_images) - 1 && count($all_images) > 1) {
-                                        echo '<a href="' . get_permalink() . '" class="see-all-images" style="display: none;">See All Images</a>';
-                                    }
-                                    echo '</div>';
-                                }
+                            if ($featured_image) {
+                                $all_images[] = $featured_image;
                             }
                             
-                            echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
-                            echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
-                            echo '<button class="favorite-btn active" data-car-id="' . get_the_ID() . '"><i class="fas fa-heart"></i></button>';
+                            if (is_array($additional_images)) {
+                                $all_images = array_merge($all_images, $additional_images);
+                            }
                             
-                            echo '</div>';
-                            echo '</div>';
-                        }
-                        ?>
-                        
-                        <a href="<?php echo esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))); ?>" class="car-listing-link">
+                            if (!empty($all_images)) {
+                                echo '<div class="car-listing-image-container">';
+                                echo '<div class="car-listing-image-carousel" data-post-id="' . get_the_ID() . '">';
+                                
+                                foreach ($all_images as $index => $image_id) {
+                                    $image_url = wp_get_attachment_image_url($image_id, 'medium');
+                                    if ($image_url) {
+                                        $clean_year = str_replace(',', '', $year);
+                                        echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
+                                        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
+                                        if ($index === count($all_images) - 1 && count($all_images) > 1) {
+                                            echo '<a href="' . esc_url(get_permalink(get_the_ID())) . '" class="see-all-images" style="display: none;">See All Images</a>';
+                                        }
+                                        echo '</div>';
+                                    }
+                                }
+                                
+                                echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
+                                echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
+                                
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                            ?>
+                            
                             <div class="car-listing-details">
                                 <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                                 <div class="car-specs">
@@ -173,17 +173,13 @@ function display_favourite_listings($atts) {
                                         echo !empty($body_type) ? ' ' . esc_html($body_type) : '';
                                     ?>
                                     <?php echo !empty($transmission) ? ' ' . esc_html($transmission) : ''; ?>
-                                    <?php 
-                                        $drive_type = get_post_meta(get_the_ID(), 'drive_type', true);
-                                        echo !empty($drive_type) ? ' ' . esc_html($drive_type) : '';
-                                    ?>
                                 </div>
                                 <div class="car-info-boxes">
                                     <div class="info-box">
                                         <span class="info-value"><?php echo number_format($mileage); ?> km</span>
                                     </div>
                                     <div class="info-box">
-                                        <span class="info-value"><?php echo esc_html($year); ?></span>
+                                        <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
                                     </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
@@ -196,9 +192,18 @@ function display_favourite_listings($atts) {
                                 $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                 echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                                 ?>
-                                <div class="car-location"><?php echo esc_html($location); ?></div>
+                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
                             </div>
                         </a>
+                        <?php
+                        $user_id = get_current_user_id();
+                        $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
+                        $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
+                        $is_favorite = in_array(get_the_ID(), $favorite_cars);
+                        $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
+                        $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
+                        echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . get_the_ID() . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
+                        ?>
                     </div>
                 <?php
                 endwhile;
