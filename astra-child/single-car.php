@@ -877,7 +877,7 @@ if (have_posts()) :
 
                 if (viewGalleryBtn && galleryPopup) {
                     viewGalleryBtn.addEventListener('click', function() {
-                        openGalleryWithImage(0); // Open with first image
+                        openGalleryWithImage(lastActiveThumbnailIndex); // Use last active index instead of 0
                     });
                 }
 
