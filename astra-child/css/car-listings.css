@@ -76,10 +76,6 @@
 
 .car-listing-details {
   padding: 15px;
-  position: relative;
-  z-index: 2;
-  background: white;
-  margin-top: 200px; /* Height of the image container */
 }
 
 .car-listing-details h3 {
@@ -372,11 +368,7 @@
   text-decoration: none !important;
   color: inherit;
   display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   z-index: 1;
 }
 
@@ -503,8 +495,6 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 2;
-  padding: 0;
-  line-height: 1;
 }
 
 .carousel-nav i {
@@ -555,7 +545,7 @@
   border: none;
   padding: 8px;
   cursor: pointer;
-  z-index: 10;
+  z-index: 3;
   transition: transform 0.2s ease;
 }
 
