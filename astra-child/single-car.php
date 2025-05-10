@@ -608,12 +608,17 @@ if (have_posts()) :
                 align-items: center;
                 margin-bottom: 20px;
                 max-height: calc(100% - 140px); /* Ensure space for thumbnails */
+                width: 100%;
             }
 
             .gallery-main-image img {
                 max-width: 100%;
                 max-height: 100%;
                 object-fit: contain;
+                width: auto;
+                height: auto;
+                min-width: 50%;
+                min-height: 50%;
             }
 
             .gallery-thumbnails {
@@ -776,41 +781,30 @@ if (have_posts()) :
                 const closeGalleryBtn = document.querySelector('.close-gallery-btn');
                 const galleryMainImage = document.querySelector('.gallery-main-image img');
                 const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
+                let lastActiveThumbnailIndex = 0; // Track the last active thumbnail
 
                 if (viewGalleryBtn && galleryPopup) {
                     viewGalleryBtn.addEventListener('click', function() {
                         galleryPopup.style.display = 'flex';
                         document.body.style.overflow = 'hidden'; // Prevent scrolling when popup is open
                         
-                        // Ensure the first thumbnail is active and visible
-                        const firstThumb = document.querySelector('.gallery-thumbnail');
-                        if (firstThumb) {
-                            firstThumb.classList.add('active');
-                            firstThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        // Remove active class from all thumbnails
+                        galleryThumbnails.forEach(thumb => thumb.classList.remove('active'));
+                        
+                        // Set the last active thumbnail as active
+                        if (galleryThumbnails[lastActiveThumbnailIndex]) {
+                            galleryThumbnails[lastActiveThumbnailIndex].classList.add('active');
+                            galleryThumbnails[lastActiveThumbnailIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                         }
                     });
                 }
 
-                if (closeGalleryBtn) {
-                    closeGalleryBtn.addEventListener('click', function() {
-                        galleryPopup.style.display = 'none';
-                        document.body.style.overflow = ''; // Restore scrolling
-                    });
-                }
-
-                // Close popup when clicking outside the content
-                galleryPopup.addEventListener('click', function(e) {
-                    if (e.target === galleryPopup) {
-                        galleryPopup.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }
-                });
-
                 // Handle gallery thumbnail clicks
-                galleryThumbnails.forEach(thumb => {
+                galleryThumbnails.forEach((thumb, index) => {
                     thumb.addEventListener('click', function() {
                         galleryThumbnails.forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
+                        lastActiveThumbnailIndex = index; // Update the last active index
                         const newImageUrl = this.dataset.fullUrl;
                         if (newImageUrl && galleryMainImage) {
                             galleryMainImage.src = newImageUrl;
