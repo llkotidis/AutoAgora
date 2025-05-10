@@ -919,7 +919,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const seeAllImagesBtn = carousel.querySelector('.see-all-images');
       let currentIndex = 0;
 
-      // Function to update image visibility
+      // Add image counter element
+      const counter = document.createElement('div');
+      counter.className = 'image-counter';
+      counter.textContent = `1/${images.length}`;
+      carousel.appendChild(counter);
+
       const updateImages = () => {
         images.forEach((img, index) => {
           img.classList.toggle('active', index === currentIndex);
@@ -933,9 +938,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (seeAllImagesBtn) {
           seeAllImagesBtn.style.display = currentIndex === images.length - 1 ? 'block' : 'none';
         }
+
+        // Update counter
+        counter.textContent = `${currentIndex + 1}/${images.length}`;
       };
 
-      // Initialize
+      // Initialize first image
       updateImages();
 
       // Event listeners for navigation
