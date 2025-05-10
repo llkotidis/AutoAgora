@@ -110,23 +110,23 @@ if (have_posts()) :
                                         View Gallery
                                     </button>
                                     <?php
-                                    $main_image_url = wp_get_attachment_image_url($all_images[0], array(371, 276));
+                                    $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
                                     if ($main_image_url) :
                                     ?>
                                         <img src="<?php echo esc_url($main_image_url); ?>" 
                                              alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" 
                                              class="clickable-image"
-                                             data-image-index="0"
-                                             width="371"
-                                             height="276">
+                                             data-image-index="0">
                                     <?php endif; ?>
                                 </div>
                                 
                                 <?php if (count($all_images) > 1) : ?>
                                     <div class="thumbnail-gallery">
                                         <?php 
-                                        // Skip the first image (main image) in thumbnails
-                                        for ($i = 1; $i < count($all_images); $i++) : 
+                                        // Show up to 3 thumbnails (excluding the main image)
+                                        $max_thumbnails = 3;
+                                        $num_thumbnails = min(count($all_images) - 1, $max_thumbnails);
+                                        for ($i = 1; $i <= $num_thumbnails; $i++) : 
                                             $thumb_url = wp_get_attachment_image_url($all_images[$i], 'medium');
                                             if ($thumb_url) :
                                         ?>
@@ -322,8 +322,8 @@ if (have_posts()) :
             .main-image {
                 margin-bottom: 15px;
                 position: relative;
-                width: 371px;
-                height: 276px;
+                max-width: 100%;
+                max-height: 600px;
                 overflow: hidden;
                 display: block;
             }
@@ -352,8 +352,9 @@ if (have_posts()) :
             }
 
             .main-image img {
-                width: 371px;
-                height: 276px;
+                width: 100%;
+                height: auto;
+                max-height: 600px;
                 object-fit: cover;
                 border-radius: 8px;
                 display: block;
