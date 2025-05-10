@@ -174,7 +174,7 @@ function display_favourite_listings($atts) {
                         }
                         ?>
                         
-                        <a href="<?php echo esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))); ?>" class="car-listing-link">
+                        <a href="<?php echo esc_url(get_permalink()); ?>" class="car-listing-link">
                             <div class="car-listing-details">
                                 <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                                 <div class="car-specs">
