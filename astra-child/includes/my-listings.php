@@ -62,7 +62,7 @@ function display_my_listings($atts) {
                             <?php if (!empty($all_images)) : 
                                 $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
                             ?>
-                                <a href="<?php echo esc_url(add_query_arg('car_id', $post_id, home_url('/single-car.php'))); ?>" class="listing-image-link">
+                                <a href="<?php echo esc_url(get_permalink($post_id)); ?>" class="listing-image-link">
                                     <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php the_title(); ?>" class="listing-image">
                                     <div class="image-count">
                                         <i class="fas fa-camera"></i>
@@ -72,7 +72,7 @@ function display_my_listings($atts) {
                             <?php endif; ?>
                         </div>
                         <div class="listing-details">
-                            <a href="<?php echo esc_url(add_query_arg('car_id', $post_id, home_url('/single-car.php'))); ?>" class="listing-title">
+                            <a href="<?php echo esc_url(get_permalink($post_id)); ?>" class="listing-title">
                                 <?php the_title(); ?> (€<?php echo number_format($price); ?>)
                             </a>
                             <div class="listing-meta">
