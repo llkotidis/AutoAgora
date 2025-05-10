@@ -48,8 +48,8 @@ if (have_posts()) :
                 <!-- Add Gallery Popup HTML -->
                 <div class="gallery-popup" style="display: none;">
                     <div class="gallery-popup-content">
-                        <button class="close-gallery-btn">
-                            <i class="fas fa-times"></i>
+                        <button class="back-to-advert-btn">
+                            <i class="fas fa-arrow-left"></i> Back to advert
                         </button>
                         <div class="gallery-main-image">
                             <?php 
@@ -588,17 +588,30 @@ if (have_posts()) :
                 padding-bottom: 120px; /* Add padding to ensure thumbnails are visible */
             }
 
-            .close-gallery-btn {
+            .back-to-advert-btn {
                 position: absolute;
                 top: -40px;
-                right: 0;
-                background: none;
+                left: 0;
+                background: #007bff;
                 border: none;
                 color: white;
-                font-size: 24px;
+                font-size: 16px;
                 cursor: pointer;
-                padding: 10px;
+                padding: 8px 16px;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
                 z-index: 1001;
+                transition: background-color 0.2s ease;
+            }
+
+            .back-to-advert-btn:hover {
+                background: #0056b3;
+            }
+
+            .back-to-advert-btn i {
+                font-size: 14px;
             }
 
             .gallery-main-image {
@@ -607,7 +620,7 @@ if (have_posts()) :
                 justify-content: center;
                 align-items: center;
                 margin-bottom: 20px;
-                max-height: calc(100% - 140px); /* Ensure space for thumbnails */
+                max-height: 100% /* Ensure space for thumbnails */
                 width: 100%;
                 padding: 20px;
             }
@@ -779,7 +792,7 @@ if (have_posts()) :
                 // Add Gallery Popup Functionality
                 const viewGalleryBtn = document.querySelector('.view-gallery-btn');
                 const galleryPopup = document.querySelector('.gallery-popup');
-                const closeGalleryBtn = document.querySelector('.close-gallery-btn');
+                const backToAdvertBtn = document.querySelector('.back-to-advert-btn');
                 const galleryMainImage = document.querySelector('.gallery-main-image img');
                 const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
                 let lastActiveThumbnailIndex = 0; // Track the last active thumbnail
@@ -800,8 +813,8 @@ if (have_posts()) :
                     });
                 }
 
-                if (closeGalleryBtn) {
-                    closeGalleryBtn.addEventListener('click', function() {
+                if (backToAdvertBtn) {
+                    backToAdvertBtn.addEventListener('click', function() {
                         galleryPopup.style.display = 'none';
                         document.body.style.overflow = ''; // Restore scrolling
                     });
