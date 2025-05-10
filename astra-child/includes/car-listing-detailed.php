@@ -123,6 +123,10 @@
                     <div class="car-listing-details-right">
                         <h1 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h1>
 
+                        <?php if (get_post_meta($car_id, 'car_status', true) === 'sold') : ?>
+                            <div class="sold-badge">SOLD</div>
+                        <?php endif; ?>
+
                         <div class="car-specs">
                             <?php echo esc_html($engine_capacity); ?>L
                             <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
@@ -551,6 +555,17 @@
 
             .read-more-btn:hover {
                 text-decoration: underline;
+            }
+
+            .sold-badge {
+                display: inline-block;
+                background-color: #dc3545;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0;
             }
         </style>
 

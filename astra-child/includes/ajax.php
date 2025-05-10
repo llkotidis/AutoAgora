@@ -964,3 +964,42 @@ function ajax_update_filter_counts_handler() {
 // Hook the new handler
 add_action('wp_ajax_update_filter_counts', 'ajax_update_filter_counts_handler');
 add_action('wp_ajax_nopriv_update_filter_counts', 'ajax_update_filter_counts_handler'); 
+
+/**
+ * AJAX handler for marking a car as sold
+ */
+add_action('wp_ajax_mark_car_as_sold', 'handle_mark_car_as_sold');
+
+function handle_mark_car_as_sold() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'mark_car_as_sold')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Get car ID
+    $car_id = isset($_POST['car_id']) ? intval($_POST['car_id']) : 0;
+    if (!$car_id) {
+        wp_send_json_error('Invalid car ID');
+        return;
+    }
+
+    // Check if user owns the car
+    $car = get_post($car_id);
+    if (!$car || $car->post_author != get_current_user_id()) {
+        wp_send_json_error('Unauthorized');
+        return;
+    }
+
+    // Get the new status
+    $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'sold';
+    if (!in_array($status, array('sold', 'available'))) {
+        wp_send_json_error('Invalid status');
+        return;
+    }
+
+    // Update car status
+    update_post_meta($car_id, 'car_status', $status);
+    
+    wp_send_json_success();
+} 

@@ -20,6 +20,13 @@ function display_my_listings($atts) {
     
     // Start output buffering
     ob_start();
+
+    // Localize script for AJAX functionality
+    wp_localize_script('jquery', 'myListingsData', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('mark_car_as_sold')
+    ));
+    
     ?>
     
     <div class="my-listings-container">
@@ -81,6 +88,11 @@ function display_my_listings($atts) {
                             </div>
                             <div class="listing-actions">
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
+                                <?php if (get_post_meta($post_id, 'car_status', true) === 'sold') : ?>
+                                    <button class="button mark-available-button" data-car-id="<?php echo $post_id; ?>">Mark as Available</button>
+                                <?php else : ?>
+                                    <button class="button mark-sold-button" data-car-id="<?php echo $post_id; ?>">Mark as Sold</button>
+                                <?php endif; ?>
                                 <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
                             </div>
                         </div>
@@ -209,6 +221,32 @@ function display_my_listings($atts) {
         .delete-button:hover {
             background-color: #c82333;
         }
+
+        .mark-sold-button {
+            background-color: #28a745;
+        }
+
+        .mark-sold-button:hover {
+            background-color: #218838;
+        }
+
+        .mark-available-button {
+            background-color: #17a2b8;
+        }
+
+        .mark-available-button:hover {
+            background-color: #138496;
+        }
+
+        .sold-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
         
         @media (max-width: 768px) {
             .listing-item {
@@ -221,6 +259,69 @@ function display_my_listings($atts) {
             }
         }
     </style>
+
+    <script>
+    jQuery(document).ready(function($) {
+        // Function to update car status
+        function updateCarStatus(carId, newStatus, button) {
+            $.ajax({
+                url: myListingsData.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'mark_car_as_sold',
+                    car_id: carId,
+                    status: newStatus,
+                    nonce: myListingsData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const listingItem = button.closest('.listing-item');
+                        const statusSpan = listingItem.find('.listing-status');
+                        
+                        if (newStatus === 'sold') {
+                            button.remove();
+                            listingItem.find('.listing-actions').prepend(
+                                '<button class="button mark-available-button" data-car-id="' + carId + '">Mark as Available</button>'
+                            );
+                            statusSpan.html('Status: <span class="sold-badge">SOLD</span>');
+                        } else {
+                            button.remove();
+                            listingItem.find('.listing-actions').prepend(
+                                '<button class="button mark-sold-button" data-car-id="' + carId + '">Mark as Sold</button>'
+                            );
+                            statusSpan.html('Status: Available');
+                        }
+                    } else {
+                        alert('Error updating car status. Please try again.');
+                    }
+                },
+                error: function() {
+                    alert('Error updating car status. Please try again.');
+                }
+            });
+        }
+
+        // Handle Mark as Sold button click
+        $(document).on('click', '.mark-sold-button', function() {
+            const button = $(this);
+            const carId = button.data('car-id');
+            
+            if (confirm('Are you sure you want to mark this car as sold?')) {
+                updateCarStatus(carId, 'sold', button);
+            }
+        });
+
+        // Handle Mark as Available button click
+        $(document).on('click', '.mark-available-button', function() {
+            const button = $(this);
+            const carId = button.data('car-id');
+            
+            if (confirm('Are you sure you want to mark this car as available?')) {
+                updateCarStatus(carId, 'available', button);
+            }
+        });
+    });
+    </script>
     
     <?php
     // Return the buffered content
