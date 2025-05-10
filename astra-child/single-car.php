@@ -373,10 +373,16 @@ if (have_posts()) :
             .clickable-image {
                 cursor: pointer;
                 transition: opacity 0.2s ease;
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .clickable-image:hover {
                 opacity: 0.9;
+            }
+
+            .clickable-image:focus {
+                outline: none;
             }
 
             .thumbnail.active {
@@ -687,6 +693,12 @@ if (have_posts()) :
             </style>
 
             <script>
+            // Add WordPress AJAX data
+            const carListingsData = {
+                ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
+                nonce: '<?php echo wp_create_nonce('toggle_favorite_car'); ?>'
+            };
+
             document.addEventListener('DOMContentLoaded', function() {
                 const thumbnails = document.querySelectorAll('.thumbnail');
                 const mainImage = document.querySelector('.main-image img');
