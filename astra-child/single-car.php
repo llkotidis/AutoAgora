@@ -141,6 +141,15 @@ if (have_posts()) :
                             </div>
 
                             <div class="car-price">€<?php echo number_format($price); ?></div>
+                            <?php 
+                            $publication_date = get_post_meta($car_id, 'publication_date', true);
+                            if (!$publication_date) {
+                                $publication_date = get_the_date('Y-m-d H:i:s');
+                                update_post_meta($car_id, 'publication_date', $publication_date);
+                            }
+                            $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                            echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                            ?>
                             <div class="car-location"><?php echo esc_html($location); ?></div>
                         </div>
                     </div>

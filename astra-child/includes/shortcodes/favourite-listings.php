@@ -184,6 +184,15 @@ function display_favourite_listings($atts) {
                                     </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
+                                <?php 
+                                $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
+                                if (!$publication_date) {
+                                    $publication_date = get_the_date('Y-m-d H:i:s');
+                                    update_post_meta(get_the_ID(), 'publication_date', $publication_date);
+                                }
+                                $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                                echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                                ?>
                                 <div class="car-location"><?php echo esc_html($location); ?></div>
                             </div>
                         </a>
@@ -297,6 +306,13 @@ function display_favourite_listings($atts) {
             font-weight: bold;
             color: #007bff;
             margin-bottom: 8px;
+            text-decoration: none !important;
+        }
+
+        .car-publication-date {
+            color: #000;
+            margin-bottom: 0;
+            font-size: 1.1em !important;
             text-decoration: none !important;
         }
 
