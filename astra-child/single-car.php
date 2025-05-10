@@ -110,13 +110,15 @@ if (have_posts()) :
                                         View Gallery
                                     </button>
                                     <?php
-                                    $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
+                                    $main_image_url = wp_get_attachment_image_url($all_images[0], array(371, 276));
                                     if ($main_image_url) :
                                     ?>
                                         <img src="<?php echo esc_url($main_image_url); ?>" 
                                              alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" 
                                              class="clickable-image"
-                                             data-image-index="0">
+                                             data-image-index="0"
+                                             width="371"
+                                             height="276">
                                     <?php endif; ?>
                                 </div>
                                 
@@ -320,8 +322,8 @@ if (have_posts()) :
             .main-image {
                 margin-bottom: 15px;
                 position: relative;
-                max-width: 100%;
-                max-height: 600px;
+                width: 371px;
+                height: 276px;
                 overflow: hidden;
                 display: block;
             }
@@ -350,9 +352,8 @@ if (have_posts()) :
             }
 
             .main-image img {
-                width: 100%;
-                height: auto;
-                max-height: 600px;
+                width: 371px;
+                height: 276px;
                 object-fit: cover;
                 border-radius: 8px;
                 display: block;
