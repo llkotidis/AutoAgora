@@ -310,7 +310,7 @@ function display_favourite_listings($atts) {
         }
 
         .car-publication-date {
-            color: #000;
+            color: #666;
             margin-bottom: 0;
             font-size: 0.95em !important;
             text-decoration: none !important;
