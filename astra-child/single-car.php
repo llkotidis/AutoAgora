@@ -122,7 +122,7 @@ if (have_posts()) :
                                         <?php 
                                         // Skip the first image (main image) in thumbnails
                                         for ($i = 1; $i < count($all_images); $i++) : 
-                                            $thumb_url = wp_get_attachment_image_url($all_images[$i], 'thumbnail');
+                                            $thumb_url = wp_get_attachment_image_url($all_images[$i], 'medium');
                                             if ($thumb_url) :
                                         ?>
                                             <div class="thumbnail" style="pointer-events: none;">
