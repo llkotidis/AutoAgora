@@ -870,8 +870,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
     
-    // Update the counter text
-    resultsCounter.innerHTML = `Showing <span class="count">${totalResults}</span> results`;
+    // Get the actual number of results from the grid
+    const carCards = document.querySelectorAll('.car-listing-card');
+    const actualCount = carCards.length;
+    
+    // Update the counter text with the actual count
+    resultsCounter.innerHTML = `Showing <span class="count">${actualCount}</span> results`;
   }
 
   // --- Handle Pagination Clicks ---
