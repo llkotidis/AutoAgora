@@ -55,6 +55,7 @@
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.2s;
+  position: relative;
 }
 
 .car-listing-card:hover {
@@ -75,6 +76,10 @@
 
 .car-listing-details {
   padding: 15px;
+  position: relative;
+  z-index: 2;
+  background: white;
+  margin-top: 200px; /* Height of the image container */
 }
 
 .car-listing-details h3 {
@@ -367,6 +372,12 @@
   text-decoration: none !important;
   color: inherit;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
 }
 
 .car-listing-link:hover {
