@@ -88,7 +88,7 @@ function display_my_listings($atts) {
                             </div>
                             <div class="listing-actions">
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
-                                <?php if (get_post_meta($post_id, 'car_status', true) === 'sold') : ?>
+                                <?php if (get_field('is_sold', $post_id)) : ?>
                                     <button class="button mark-available-button" data-car-id="<?php echo $post_id; ?>">Mark as Available</button>
                                 <?php else : ?>
                                     <button class="button mark-sold-button" data-car-id="<?php echo $post_id; ?>">Mark as Sold</button>

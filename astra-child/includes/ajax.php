@@ -998,8 +998,8 @@ function handle_mark_car_as_sold() {
         return;
     }
 
-    // Update car status
-    update_post_meta($car_id, 'car_status', $status);
+    // Update car status using ACF field
+    update_field('is_sold', $status === 'sold', $car_id);
     
     wp_send_json_success();
 } 
