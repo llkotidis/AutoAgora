@@ -609,6 +609,9 @@ function display_favourite_listings($atts) {
                                     if (remainingCards.length === 0) {
                                         // Reload the page to show the "no favorites" message
                                         window.location.reload();
+                                    } else {
+                                        // Update the results counter
+                                        updateResultsCounter(remainingCards.length);
                                     }
                                 }, 300);
                             }
