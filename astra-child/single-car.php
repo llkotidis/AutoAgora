@@ -113,23 +113,24 @@ if (have_posts()) :
                                     $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
                                     if ($main_image_url) :
                                     ?>
-                                        <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" data-full-url="<?php echo esc_url($main_image_url); ?>">
+                                        <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" style="pointer-events: none;">
                                     <?php endif; ?>
                                 </div>
                                 
                                 <?php if (count($all_images) > 1) : ?>
                                     <div class="thumbnail-gallery">
-                                        <?php foreach ($all_images as $index => $image_id) : 
-                                            $thumb_url = wp_get_attachment_image_url($image_id, 'thumbnail');
-                                            $full_url = wp_get_attachment_image_url($image_id, 'large');
+                                        <?php 
+                                        // Skip the first image (main image) in thumbnails
+                                        for ($i = 1; $i < count($all_images); $i++) : 
+                                            $thumb_url = wp_get_attachment_image_url($all_images[$i], 'thumbnail');
                                             if ($thumb_url) :
                                         ?>
-                                            <div class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" data-full-url="<?php echo esc_url($full_url); ?>">
-                                                <img src="<?php echo esc_url($thumb_url); ?>" alt="Thumbnail <?php echo $index + 1; ?>">
+                                            <div class="thumbnail" style="pointer-events: none;">
+                                                <img src="<?php echo esc_url($thumb_url); ?>" alt="Thumbnail <?php echo $i + 1; ?>">
                                             </div>
                                         <?php 
                                             endif;
-                                        endforeach; ?>
+                                        endfor; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -350,13 +351,12 @@ if (have_posts()) :
                 overflow-x: auto;
                 padding-bottom: 10px;
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-start;
             }
 
             .thumbnail {
                 width: 180px;
                 height: 135px;
-                cursor: pointer;
                 border: 2px solid transparent;
                 border-radius: 4px;
                 overflow: hidden;
