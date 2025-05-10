@@ -472,20 +472,22 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  background: rgba(255, 255, 255, 0.8);
   border: none;
-  padding: 10px 15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   cursor: pointer;
-  z-index: 2;
-  transition: background 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
 }
 
-.carousel-nav:hover {
-  background: rgba(0, 0, 0, 0.7);
+.car-listing-image-container:hover .carousel-nav {
+  opacity: 1;
 }
 
 .carousel-nav.prev {
