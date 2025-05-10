@@ -84,7 +84,10 @@ function display_my_listings($atts) {
                             </a>
                             <div class="listing-meta">
                                 <span class="listing-date">Published: <?php echo get_the_date(); ?></span>
-                                <span class="listing-status">Status: <?php echo get_post_status(); ?></span>
+                                <span class="listing-status<?php echo get_field('is_sold', $post_id) ? ' status-sold' : ''; ?>">Status: <?php 
+                                    $is_sold = get_field('is_sold', $post_id);
+                                    echo $is_sold ? 'SOLD' : get_post_status(); 
+                                ?></span>
                             </div>
                             <div class="listing-actions">
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
@@ -193,6 +196,16 @@ function display_my_listings($atts) {
             gap: 5px;
             color: #666;
             font-size: 0.9em;
+        }
+        
+        .listing-status {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .listing-status.status-sold {
+            color: #dc3545;
+            font-weight: bold;
         }
         
         .listing-actions {
