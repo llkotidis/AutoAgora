@@ -474,8 +474,8 @@
   transform: translateY(-50%);
   background: black;
   border: none;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -484,6 +484,13 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 2;
+  padding: 0;
+  line-height: 1;
+}
+
+.carousel-nav i {
+  font-size: 14px;
+  color: white;
 }
 
 .car-listing-image-container:hover .carousel-nav {
