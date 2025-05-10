@@ -424,6 +424,14 @@
   margin-bottom: 0;
   font-size: 1.1em !important;
   text-decoration: none !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.car-location i {
+  color: #666;
+  font-size: 0.9em;
 }
 
 /* Remove old carousel styles */
