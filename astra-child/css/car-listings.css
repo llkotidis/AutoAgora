@@ -55,7 +55,6 @@
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.2s;
-  position: relative;
 }
 
 .car-listing-card:hover {
@@ -368,8 +367,6 @@
   text-decoration: none !important;
   color: inherit;
   display: block;
-  position: relative;
-  z-index: 1;
 }
 
 .car-listing-link:hover {
