@@ -188,6 +188,27 @@ if (have_posts()) :
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
                             <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                            <?php 
+                            $author_id = get_post_field('post_author', $car_id);
+                            $author_name = get_the_author_meta('display_name', $author_id);
+                            $author_first_name = get_the_author_meta('first_name', $author_id);
+                            $author_last_name = get_the_author_meta('last_name', $author_id);
+                            $author_email = get_the_author_meta('user_email', $author_id);
+                            $full_name = trim($author_first_name . ' ' . $author_last_name);
+                            ?>
+                            <div class="car-seller">
+                                <i class="fas fa-phone"></i>
+                                <div class="seller-info">
+                                    <span class="seller-name"><?php echo esc_html($author_name); ?></span>
+                                    <?php if (!empty($full_name)) : ?>
+                                        <span class="seller-full-name"><?php echo esc_html($full_name); ?></span>
+                                    <?php endif; ?>
+                                    <span class="seller-email">
+                                        <i class="fas fa-envelope"></i>
+                                        <?php echo esc_html($author_email); ?>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -483,6 +504,52 @@ if (have_posts()) :
             .car-location {
                 color: #666;
                 font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+
+            .car-seller {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                background: #f8f9fa;
+                padding: 12px 15px;
+                border-radius: 6px;
+                margin-top: 15px;
+            }
+
+            .car-seller i {
+                color: #007bff;
+                font-size: 1.2em;
+                margin-top: 3px;
+            }
+
+            .seller-info {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .seller-name {
+                color: #333;
+                font-weight: 500;
+            }
+
+            .seller-full-name {
+                color: #666;
+                font-size: 0.9em;
+            }
+
+            .seller-email {
+                color: #666;
+                font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .seller-email i {
+                color: #007bff;
+                font-size: 0.9em;
             }
 
             .car-listing-details {
