@@ -609,6 +609,7 @@ if (have_posts()) :
                 margin-bottom: 20px;
                 max-height: calc(100% - 140px); /* Ensure space for thumbnails */
                 width: 100%;
+                padding: 20px;
             }
 
             .gallery-main-image img {
@@ -617,8 +618,8 @@ if (have_posts()) :
                 object-fit: contain;
                 width: auto;
                 height: auto;
-                min-width: 50%;
-                min-height: 50%;
+                min-width: 80%;
+                min-height: 80%;
             }
 
             .gallery-thumbnails {
@@ -798,6 +799,21 @@ if (have_posts()) :
                         }
                     });
                 }
+
+                if (closeGalleryBtn) {
+                    closeGalleryBtn.addEventListener('click', function() {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = ''; // Restore scrolling
+                    });
+                }
+
+                // Close popup when clicking outside the content
+                galleryPopup.addEventListener('click', function(e) {
+                    if (e.target === galleryPopup) {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
 
                 // Handle gallery thumbnail clicks
                 galleryThumbnails.forEach((thumb, index) => {
