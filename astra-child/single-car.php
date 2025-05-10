@@ -687,10 +687,6 @@ if (have_posts()) :
             </style>
 
             <script>
-            // Script copied directly from car-listing-detailed.php
-            // IMPORTANT: This script relies on `carListingsData` for favorite button AJAX.
-            // This data (ajaxurl, nonce) needs to be made available to this template.
-            // See comments in the main response for how to handle this.
             document.addEventListener('DOMContentLoaded', function() {
                 const thumbnails = document.querySelectorAll('.thumbnail');
                 const mainImage = document.querySelector('.main-image img');
@@ -849,6 +845,22 @@ if (have_posts()) :
                         openGalleryWithImage(0); // Open with first image
                     });
                 }
+
+                // Restore back to advert button functionality
+                if (backToAdvertBtn) {
+                    backToAdvertBtn.addEventListener('click', function() {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = ''; // Restore scrolling
+                    });
+                }
+
+                // Restore click outside to close functionality
+                galleryPopup.addEventListener('click', function(e) {
+                    if (e.target === galleryPopup) {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
 
                 // Handle gallery thumbnail clicks
                 galleryThumbnails.forEach((thumb, index) => {
