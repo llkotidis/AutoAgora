@@ -148,6 +148,10 @@ if (have_posts()) :
                         <div class="car-listing-details-right">
                             <h1 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h1>
 
+                            <?php if (get_field('is_sold', $car_id)) : ?>
+                                <div class="sold-badge">SOLD</div>
+                            <?php endif; ?>
+
                             <div class="car-specs">
                                 <?php echo esc_html($engine_capacity); ?>L
                                 <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
@@ -785,6 +789,16 @@ if (have_posts()) :
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+            }
+
+            .sold-badge {
+                display: inline-block;
+                background-color: #dc3545;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 4px;
+                font-weight: bold;
+                margin-bottom: 15px;
             }
             </style>
 

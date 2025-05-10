@@ -47,32 +47,18 @@ function display_car_listings($atts) {
     // as the filter form content is being removed.
 
     // Build the query arguments using the helper function
-    $args = build_car_listings_query_args($atts, $paged);
-    
-    // Add meta query to exclude sold cars
-    $sold_meta_query = array(
-        'relation' => 'OR',
-        array(
-            'key' => 'car_status',
-            'compare' => 'NOT EXISTS'
-        ),
-        array(
-            'key' => 'car_status',
-            'value' => 'sold',
-            'compare' => '!='
+    $args = array(
+        'post_type' => 'car',
+        'posts_per_page' => 12,
+        'paged' => $paged,
+        'meta_query' => array(
+            array(
+                'key' => 'is_sold',
+                'value' => '1',
+                'compare' => '!='
+            )
         )
     );
-
-    // Merge with existing meta query if it exists
-    if (isset($args['meta_query'])) {
-        $args['meta_query'] = array(
-            'relation' => 'AND',
-            $args['meta_query'],
-            $sold_meta_query
-        );
-    } else {
-        $args['meta_query'] = $sold_meta_query;
-    }
 
     // Get car listings
     $car_query = new WP_Query($args);

@@ -1002,4 +1002,43 @@ function handle_mark_car_as_sold() {
     update_field('is_sold', $status === 'sold' ? 1 : 0, $car_id);
     
     wp_send_json_success();
+}
+
+// Handle car status toggle
+add_action('wp_ajax_toggle_car_status', 'handle_toggle_car_status');
+
+function handle_toggle_car_status() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'toggle_car_status_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    // Get and validate car ID
+    $car_id = isset($_POST['car_id']) ? intval($_POST['car_id']) : 0;
+    if (!$car_id) {
+        wp_send_json_error('Invalid car ID');
+        return;
+    }
+
+    // Check if user owns the car
+    $car = get_post($car_id);
+    if (!$car || $car->post_author != get_current_user_id()) {
+        wp_send_json_error('Unauthorized');
+        return;
+    }
+
+    // Get the new status
+    $mark_as_sold = isset($_POST['mark_as_sold']) ? filter_var($_POST['mark_as_sold'], FILTER_VALIDATE_BOOLEAN) : false;
+
+    // Update the ACF field
+    update_field('is_sold', $mark_as_sold, $car_id);
+
+    wp_send_json_success();
 } 
