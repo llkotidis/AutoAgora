@@ -816,6 +816,9 @@ document.addEventListener("DOMContentLoaded", function () {
             updateActiveFiltersDisplay();
           }
 
+          // Update results counter
+          updateResultsCounter(data.data.total_results || 0);
+
           // Close the filter popup on successful AJAX update
           if (filtersPopup) {
             // filtersPopup should be available from the top scope
@@ -843,6 +846,32 @@ document.addEventListener("DOMContentLoaded", function () {
           paginationContainer.innerHTML =
             "<span class='error-text'>Error loading results.</span>";
       });
+  }
+
+  // Function to update the results counter
+  function updateResultsCounter(totalResults) {
+    let resultsCounter = document.querySelector('.results-counter');
+    
+    // Create the counter if it doesn't exist
+    if (!resultsCounter) {
+      resultsCounter = document.createElement('div');
+      resultsCounter.className = 'results-counter';
+      
+      // Insert it after the active filters bar
+      const activeFiltersBar = document.querySelector('.active-filters-bar');
+      if (activeFiltersBar) {
+        activeFiltersBar.parentNode.insertBefore(resultsCounter, activeFiltersBar.nextSibling);
+      } else {
+        // Fallback: insert before the listings grid
+        const listingsGrid = document.querySelector('.car-listings-grid');
+        if (listingsGrid) {
+          listingsGrid.parentNode.insertBefore(resultsCounter, listingsGrid);
+        }
+      }
+    }
+    
+    // Update the counter text
+    resultsCounter.innerHTML = `Showing <span class="count">${totalResults}</span> results`;
   }
 
   // --- Handle Pagination Clicks ---
