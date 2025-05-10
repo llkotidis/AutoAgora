@@ -590,8 +590,8 @@ if (have_posts()) :
 
             .back-to-advert-btn {
                 position: absolute;
-                top: -40px;
-                left: 0;
+                top: 20px;
+                left: 20px;
                 background: #007bff;
                 border: none;
                 color: white;
