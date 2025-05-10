@@ -315,14 +315,18 @@ if (have_posts()) :
 
             .car-listing-gallery {
                 width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .main-image {
                 margin-bottom: 15px;
                 position: relative;
                 max-width: 100%;
-                max-height: 400px; /* Reduced from 600px */
+                max-height: 600px;
                 overflow: hidden;
+                display: inline-block;
             }
 
             .image-count-overlay {
@@ -351,9 +355,10 @@ if (have_posts()) :
             .main-image img {
                 width: 100%;
                 height: auto;
-                max-height: 400px; /* Reduced from 600px */
+                max-height: 600px;
                 object-fit: contain;
                 border-radius: 8px;
+                display: block;
             }
 
             .thumbnail-gallery {
