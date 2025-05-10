@@ -32,6 +32,18 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'post_status' => 'publish',
         'meta_query' => array(
             'relation' => 'AND', // Ensure all meta queries must be met
+            array(
+                'relation' => 'OR',
+                array(
+                    'key' => 'is_sold',
+                    'compare' => 'NOT EXISTS'
+                ),
+                array(
+                    'key' => 'is_sold',
+                    'value' => '1',
+                    'compare' => '!='
+                )
+            )
         )
     );
 
