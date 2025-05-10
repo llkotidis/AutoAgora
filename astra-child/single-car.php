@@ -113,7 +113,10 @@ if (have_posts()) :
                                     $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
                                     if ($main_image_url) :
                                     ?>
-                                        <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" style="pointer-events: none;">
+                                        <img src="<?php echo esc_url($main_image_url); ?>" 
+                                             alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" 
+                                             class="clickable-image"
+                                             data-image-index="0">
                                     <?php endif; ?>
                                 </div>
                                 
@@ -125,8 +128,11 @@ if (have_posts()) :
                                             $thumb_url = wp_get_attachment_image_url($all_images[$i], 'medium');
                                             if ($thumb_url) :
                                         ?>
-                                            <div class="thumbnail" style="pointer-events: none;">
-                                                <img src="<?php echo esc_url($thumb_url); ?>" alt="Thumbnail <?php echo $i + 1; ?>">
+                                            <div class="thumbnail">
+                                                <img src="<?php echo esc_url($thumb_url); ?>" 
+                                                     alt="Thumbnail <?php echo $i + 1; ?>"
+                                                     class="clickable-image"
+                                                     data-image-index="<?php echo $i; ?>">
                                             </div>
                                         <?php 
                                             endif;
@@ -361,6 +367,16 @@ if (have_posts()) :
                 border-radius: 4px;
                 overflow: hidden;
                 flex-shrink: 0;
+                cursor: pointer;
+            }
+
+            .clickable-image {
+                cursor: pointer;
+                transition: opacity 0.2s ease;
+            }
+
+            .clickable-image:hover {
+                opacity: 0.9;
             }
 
             .thumbnail.active {
@@ -797,43 +813,49 @@ if (have_posts()) :
                 const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
                 let lastActiveThumbnailIndex = 0; // Track the last active thumbnail
 
+                // Function to open gallery with specific image
+                function openGalleryWithImage(imageIndex) {
+                    galleryPopup.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Remove active class from all thumbnails
+                    galleryThumbnails.forEach(thumb => thumb.classList.remove('active'));
+                    
+                    // Set the clicked thumbnail as active
+                    if (galleryThumbnails[imageIndex]) {
+                        galleryThumbnails[imageIndex].classList.add('active');
+                        galleryThumbnails[imageIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        
+                        // Update main image
+                        const newImageUrl = galleryThumbnails[imageIndex].dataset.fullUrl;
+                        if (newImageUrl && galleryMainImage) {
+                            galleryMainImage.src = newImageUrl;
+                        }
+                    }
+                    
+                    lastActiveThumbnailIndex = imageIndex;
+                }
+
+                // Add click handlers to all clickable images
+                document.querySelectorAll('.clickable-image').forEach(img => {
+                    img.addEventListener('click', function() {
+                        const imageIndex = parseInt(this.dataset.imageIndex);
+                        openGalleryWithImage(imageIndex);
+                    });
+                });
+
                 if (viewGalleryBtn && galleryPopup) {
                     viewGalleryBtn.addEventListener('click', function() {
-                        galleryPopup.style.display = 'flex';
-                        document.body.style.overflow = 'hidden'; // Prevent scrolling when popup is open
-                        
-                        // Remove active class from all thumbnails
-                        galleryThumbnails.forEach(thumb => thumb.classList.remove('active'));
-                        
-                        // Set the last active thumbnail as active
-                        if (galleryThumbnails[lastActiveThumbnailIndex]) {
-                            galleryThumbnails[lastActiveThumbnailIndex].classList.add('active');
-                            galleryThumbnails[lastActiveThumbnailIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                        }
+                        openGalleryWithImage(0); // Open with first image
                     });
                 }
-
-                if (backToAdvertBtn) {
-                    backToAdvertBtn.addEventListener('click', function() {
-                        galleryPopup.style.display = 'none';
-                        document.body.style.overflow = ''; // Restore scrolling
-                    });
-                }
-
-                // Close popup when clicking outside the content
-                galleryPopup.addEventListener('click', function(e) {
-                    if (e.target === galleryPopup) {
-                        galleryPopup.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }
-                });
 
                 // Handle gallery thumbnail clicks
                 galleryThumbnails.forEach((thumb, index) => {
                     thumb.addEventListener('click', function() {
                         galleryThumbnails.forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
-                        lastActiveThumbnailIndex = index; // Update the last active index
+                        lastActiveThumbnailIndex = index;
                         const newImageUrl = this.dataset.fullUrl;
                         if (newImageUrl && galleryMainImage) {
                             galleryMainImage.src = newImageUrl;
