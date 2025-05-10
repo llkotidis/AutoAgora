@@ -377,7 +377,6 @@ function display_favourite_listings($atts) {
             transform: translateY(-50%);
             background: rgba(0, 0, 0, 0.5);
             color: white;
-            border: none;
             padding: 10px 15px;
             cursor: pointer;
             z-index: 2;
@@ -469,6 +468,21 @@ function display_favourite_listings($atts) {
 
         .favorite-btn.active i {
             opacity: 1;
+        }
+
+        /* Results Counter Styles */
+        .results-counter {
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+            padding-left: 10px;
+        }
+
+        .results-counter .count {
+            font-weight: bold;
+            color: #007bff;
         }
     </style>
 
