@@ -312,7 +312,7 @@ function display_favourite_listings($atts) {
         .car-publication-date {
             color: #000;
             margin-bottom: 0;
-            font-size: 1.1em !important;
+            font-size: 0.95em !important;
             text-decoration: none !important;
         }
 
