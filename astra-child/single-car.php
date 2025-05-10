@@ -52,7 +52,11 @@ if (have_posts()) :
                             <i class="fas fa-times"></i>
                         </button>
                         <div class="gallery-main-image">
-                            <img src="" alt="Gallery Image">
+                            <?php 
+                            // Set the first image as the initial main image
+                            $first_image_url = wp_get_attachment_image_url($all_images[0], 'large');
+                            ?>
+                            <img src="<?php echo esc_url($first_image_url); ?>" alt="Gallery Image">
                         </div>
                         <div class="gallery-thumbnails">
                             <?php foreach ($all_images as $index => $image_id) : 
@@ -581,6 +585,7 @@ if (have_posts()) :
                 position: relative;
                 display: flex;
                 flex-direction: column;
+                padding-bottom: 120px; /* Add padding to ensure thumbnails are visible */
             }
 
             .close-gallery-btn {
@@ -602,6 +607,7 @@ if (have_posts()) :
                 justify-content: center;
                 align-items: center;
                 margin-bottom: 20px;
+                max-height: calc(100% - 140px); /* Ensure space for thumbnails */
             }
 
             .gallery-main-image img {
@@ -611,12 +617,17 @@ if (have_posts()) :
             }
 
             .gallery-thumbnails {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
                 height: 100px;
                 display: flex;
                 gap: 10px;
                 overflow-x: auto;
                 padding: 10px 0;
                 justify-content: center;
+                background: rgba(0, 0, 0, 0.5); /* Add slight background to ensure visibility */
             }
 
             .gallery-thumbnail {
@@ -770,6 +781,13 @@ if (have_posts()) :
                     viewGalleryBtn.addEventListener('click', function() {
                         galleryPopup.style.display = 'flex';
                         document.body.style.overflow = 'hidden'; // Prevent scrolling when popup is open
+                        
+                        // Ensure the first thumbnail is active and visible
+                        const firstThumb = document.querySelector('.gallery-thumbnail');
+                        if (firstThumb) {
+                            firstThumb.classList.add('active');
+                            firstThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
                     });
                 }
 
