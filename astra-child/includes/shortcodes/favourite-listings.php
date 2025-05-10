@@ -103,6 +103,9 @@ function display_favourite_listings($atts) {
     ?>
     <div class="favorite-listings-container">
         <h1 class="favorite-listings-title">My Favorite Cars</h1>
+        <?php if ($car_query->found_posts > 0): ?>
+        <div class="results-counter">Showing <span class="count"><?php echo esc_html($car_query->found_posts); ?></span> results</div>
+        <?php endif; ?>
         
         <!-- Listings Grid -->
         <div class="car-listings-grid">
