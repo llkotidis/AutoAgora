@@ -1037,8 +1037,12 @@ function handle_toggle_car_status() {
     // Get the new status
     $mark_as_sold = isset($_POST['mark_as_sold']) ? filter_var($_POST['mark_as_sold'], FILTER_VALIDATE_BOOLEAN) : false;
 
-    // Update the ACF field
-    update_field('is_sold', $mark_as_sold, $car_id);
-
-    wp_send_json_success();
+    // Update the ACF field - ensure we're using the correct value format
+    $result = update_field('is_sold', $mark_as_sold ? '1' : '0', $car_id);
+    
+    if ($result) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('Failed to update car status');
+    }
 } 

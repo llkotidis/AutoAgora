@@ -52,6 +52,11 @@ function display_car_listings($atts) {
         'posts_per_page' => 12,
         'paged' => $paged,
         'meta_query' => array(
+            'relation' => 'OR',
+            array(
+                'key' => 'is_sold',
+                'compare' => 'NOT EXISTS'
+            ),
             array(
                 'key' => 'is_sold',
                 'value' => '1',
