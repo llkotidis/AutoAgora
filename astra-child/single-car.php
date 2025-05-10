@@ -320,6 +320,9 @@ if (have_posts()) :
             .main-image {
                 margin-bottom: 15px;
                 position: relative;
+                max-width: 100%;
+                max-height: 600px; /* Limit maximum height */
+                overflow: hidden;
             }
 
             .image-count-overlay {
@@ -348,6 +351,8 @@ if (have_posts()) :
             .main-image img {
                 width: 100%;
                 height: auto;
+                max-height: 600px; /* Match container max-height */
+                object-fit: contain;
                 border-radius: 8px;
             }
 
