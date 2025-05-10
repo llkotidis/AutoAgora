@@ -321,7 +321,7 @@ if (have_posts()) :
                 margin-bottom: 15px;
                 position: relative;
                 max-width: 100%;
-                max-height: 600px; /* Limit maximum height */
+                max-height: 400px; /* Reduced from 600px */
                 overflow: hidden;
             }
 
@@ -351,7 +351,7 @@ if (have_posts()) :
             .main-image img {
                 width: 100%;
                 height: auto;
-                max-height: 600px; /* Match container max-height */
+                max-height: 400px; /* Reduced from 600px */
                 object-fit: contain;
                 border-radius: 8px;
             }
