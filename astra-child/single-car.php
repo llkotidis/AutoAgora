@@ -620,7 +620,7 @@ if (have_posts()) :
                 justify-content: center;
                 align-items: center;
                 margin-bottom: 20px;
-                max-height: 100% /* Ensure space for thumbnails */
+                max-height: calc(100%); /* Ensure space for thumbnails */
                 width: 100%;
                 padding: 20px;
             }
