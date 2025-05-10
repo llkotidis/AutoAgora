@@ -360,21 +360,15 @@ if (have_posts()) :
                 justify-content: flex-start;
             }
 
-            .thumbnail {
-                width: 180px;
-                height: 135px;
-                border: 2px solid transparent;
-                border-radius: 4px;
-                overflow: hidden;
-                flex-shrink: 0;
-                cursor: pointer;
-            }
-
             .clickable-image {
                 cursor: pointer;
                 transition: opacity 0.2s ease;
                 outline: none;
                 -webkit-tap-highlight-color: transparent;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
             }
 
             .clickable-image:hover {
@@ -383,6 +377,32 @@ if (have_posts()) :
 
             .clickable-image:focus {
                 outline: none;
+            }
+
+            .clickable-image:active {
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .thumbnail {
+                width: 180px;
+                height: 135px;
+                border: 2px solid transparent;
+                border-radius: 4px;
+                overflow: hidden;
+                flex-shrink: 0;
+                cursor: pointer;
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .thumbnail:focus {
+                outline: none;
+            }
+
+            .thumbnail:active {
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .thumbnail.active {
