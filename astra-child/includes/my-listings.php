@@ -18,6 +18,13 @@ function display_my_listings($atts) {
     // Get current user
     $current_user = wp_get_current_user();
     
+    // Enqueue jQuery and localize script
+    wp_enqueue_script('jquery');
+    wp_localize_script('jquery', 'myListingsData', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('toggle_car_status_nonce')
+    ));
+    
     // Start output buffering
     ob_start();
     ?>
@@ -251,6 +258,8 @@ function display_my_listings($atts) {
 
     <script>
     function toggleCarStatus(carId, markAsSold) {
+        console.log('Toggle function called with:', { carId, markAsSold });
+        
         if (!confirm(markAsSold ? 'Are you sure you want to mark this car as sold?' : 'Are you sure you want to mark this car as available?')) {
             return;
         }
@@ -259,15 +268,21 @@ function display_my_listings($atts) {
             action: 'toggle_car_status',
             car_id: carId,
             mark_as_sold: markAsSold,
-            nonce: '<?php echo wp_create_nonce('toggle_car_status_nonce'); ?>'
+            nonce: myListingsData.nonce
         };
 
-        jQuery.post(ajaxurl, data, function(response) {
+        console.log('Sending AJAX request with data:', data);
+
+        jQuery.post(myListingsData.ajaxurl, data, function(response) {
+            console.log('AJAX response:', response);
             if (response.success) {
                 location.reload();
             } else {
                 alert('Error updating car status. Please try again.');
             }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error('AJAX request failed:', { textStatus, errorThrown });
+            alert('Error updating car status. Please try again.');
         });
     }
     </script>
