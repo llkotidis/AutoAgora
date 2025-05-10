@@ -405,8 +405,8 @@ textarea.error {
 /* account display and saved */
 .header-widget-area[data-section="sidebar-widgets-header-widget-1"] {
   display: flex;
-  flex-direction: row-reverse;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 1.0rem;
 }
 
 #block-8 {
