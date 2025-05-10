@@ -866,7 +866,10 @@ if (have_posts()) :
 
                 // Add click handlers to all clickable images
                 document.querySelectorAll('.clickable-image').forEach(img => {
-                    img.addEventListener('click', function() {
+                    img.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.blur(); // Remove focus after click
                         const imageIndex = parseInt(this.dataset.imageIndex);
                         openGalleryWithImage(imageIndex);
                     });
