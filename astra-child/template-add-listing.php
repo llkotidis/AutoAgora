@@ -340,11 +340,10 @@ get_header(); ?>
 							// Where image previews will appear
 							const imagePreview = document.getElementById('image-preview');
 							
-							// Handle click on upload area - simple direct approach
+							// Handle click on upload area
 							fileUploadArea.addEventListener('click', function(e) {
 								console.log('[Add Listing] Upload area clicked');
-								e.preventDefault();
-								e.stopPropagation();
+								// Don't prevent default or stop propagation
 								fileInput.click();
 							});
 							
