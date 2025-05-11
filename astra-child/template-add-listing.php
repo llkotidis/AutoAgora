@@ -328,27 +328,30 @@ get_header(); ?>
 						</form>
 
 						<script>
-						// Standalone JavaScript for debugging and make/model/variant selection
-						document.addEventListener('DOMContentLoaded', function() {
-							console.log("[Add Listing] DOM content loaded");
+						// Debug check for jQuery
+						console.log('[Add Listing] jQuery version:', typeof jQuery !== 'undefined' ? jQuery.fn.jquery : 'not loaded');
+						
+						jQuery(document).ready(function($) {
+							console.log('[Add Listing] jQuery ready');
 							
-							// SIMPLIFIED FILE UPLOAD HANDLER - Start with vanilla JavaScript only
-							// The file input element
-							const fileInput = document.getElementById('car_images');
-							// The area to click or drop files onto
-							const fileUploadArea = document.getElementById('file-upload-area');
-							// Where image previews will appear
-							const imagePreview = document.getElementById('image-preview');
+							const fileInput = $('#car_images');
+							const fileUploadArea = $('#file-upload-area');
+							const imagePreview = $('#image-preview');
+							
+							console.log('[Add Listing] Elements found:', {
+								fileInput: fileInput.length,
+								fileUploadArea: fileUploadArea.length,
+								imagePreview: imagePreview.length
+							});
 							
 							// Handle click on upload area
-							fileUploadArea.addEventListener('click', function(e) {
+							fileUploadArea.on('click', function(e) {
 								console.log('[Add Listing] Upload area clicked');
-								// Don't prevent default or stop propagation
-								fileInput.click();
+								fileInput.trigger('click');
 							});
 							
 							// Handle when files are selected through the file dialog
-							fileInput.addEventListener('change', function(e) {
+							fileInput.on('change', function(e) {
 								console.log('[Add Listing] Files selected through file dialog:', this.files.length);
 								if (this.files.length > 0) {
 									handleFiles(this.files);
@@ -356,21 +359,21 @@ get_header(); ?>
 							});
 							
 							// Handle drag and drop
-							fileUploadArea.addEventListener('dragover', function(e) {
+							fileUploadArea.on('dragover', function(e) {
 								e.preventDefault();
-								this.classList.add('dragover');
+								$(this).addClass('dragover');
 							});
 							
-							fileUploadArea.addEventListener('dragleave', function(e) {
+							fileUploadArea.on('dragleave', function(e) {
 								e.preventDefault();
-								this.classList.remove('dragover');
+								$(this).removeClass('dragover');
 							});
 							
-							fileUploadArea.addEventListener('drop', function(e) {
+							fileUploadArea.on('drop', function(e) {
 								e.preventDefault();
-								this.classList.remove('dragover');
-								console.log('[Add Listing] Files dropped:', e.dataTransfer.files.length);
-								handleFiles(e.dataTransfer.files);
+								$(this).removeClass('dragover');
+								console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
+								handleFiles(e.originalEvent.dataTransfer.files);
 							});
 							
 							// Process the files - common function for both methods
@@ -381,7 +384,7 @@ get_header(); ?>
 								const maxFileSize = 5 * 1024 * 1024; // 5MB
 								
 								// Check if too many files
-								if (fileInput.files.length + files.length > maxFiles) {
+								if (fileInput[0].files.length + files.length > maxFiles) {
 									alert('Maximum ' + maxFiles + ' files allowed');
 									return;
 								}
@@ -390,8 +393,8 @@ get_header(); ?>
 								const dataTransfer = new DataTransfer();
 								
 								// Add existing files first
-								for (let i = 0; i < fileInput.files.length; i++) {
-									dataTransfer.items.add(fileInput.files[i]);
+								for (let i = 0; i < fileInput[0].files.length; i++) {
+									dataTransfer.items.add(fileInput[0].files[i]);
 								}
 								
 								// Process each new file
@@ -400,9 +403,9 @@ get_header(); ?>
 									
 									// Check if duplicate
 									let isDuplicate = false;
-									for (let j = 0; j < fileInput.files.length; j++) {
-										if (fileInput.files[j].name === file.name && 
-											fileInput.files[j].size === file.size) {
+									for (let j = 0; j < fileInput[0].files.length; j++) {
+										if (fileInput[0].files[j].name === file.name && 
+											fileInput[0].files[j].size === file.size) {
 											isDuplicate = true;
 											break;
 										}
@@ -433,8 +436,8 @@ get_header(); ?>
 								}
 								
 								// Update the file input with all files
-								fileInput.files = dataTransfer.files;
-								console.log('[Add Listing] Updated file input, now has', fileInput.files.length, 'files');
+								fileInput[0].files = dataTransfer.files;
+								console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
 							}
 							
 							// Create preview for a single file
@@ -445,32 +448,30 @@ get_header(); ?>
 								const reader = new FileReader();
 								
 								reader.onload = function(e) {
+									console.log('[Add Listing] File read complete, creating preview');
+									
 									// Create preview container
-									const previewItem = document.createElement('div');
-									previewItem.className = 'image-preview-item';
+									const previewItem = $('<div>').addClass('image-preview-item');
 									
 									// Create image element
-									const img = document.createElement('img');
-									img.src = e.target.result;
-									img.alt = file.name;
-									
-									// Create remove button
-									const removeBtn = document.createElement('div');
-									removeBtn.className = 'remove-image';
-									removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-									
-									// Add click handler to remove button
-									removeBtn.addEventListener('click', function() {
-										removeFile(file.name);
-										previewItem.remove();
+									const img = $('<img>').attr({
+										'src': e.target.result,
+										'alt': file.name
 									});
 									
+									// Create remove button
+									const removeBtn = $('<div>').addClass('remove-image')
+										.html('<i class="fas fa-times"></i>')
+										.on('click', function() {
+											removeFile(file.name);
+											previewItem.remove();
+										});
+									
 									// Add image and button to preview item
-									previewItem.appendChild(img);
-									previewItem.appendChild(removeBtn);
+									previewItem.append(img).append(removeBtn);
 									
 									// Add to preview container
-									imagePreview.appendChild(previewItem);
+									imagePreview.append(previewItem);
 									console.log('[Add Listing] Preview added for:', file.name);
 								};
 								
@@ -489,346 +490,16 @@ get_header(); ?>
 								const dataTransfer = new DataTransfer();
 								
 								// Add all files except the one to remove
-								for (let i = 0; i < fileInput.files.length; i++) {
-									if (fileInput.files[i].name !== fileName) {
-										dataTransfer.items.add(fileInput.files[i]);
+								for (let i = 0; i < fileInput[0].files.length; i++) {
+									if (fileInput[0].files[i].name !== fileName) {
+										dataTransfer.items.add(fileInput[0].files[i]);
 									}
 								}
 								
 								// Update the file input
-								fileInput.files = dataTransfer.files;
-								console.log('[Add Listing] File removed, now has', fileInput.files.length, 'files');
-							}
-							
-							// Use vanilla JS selectors for consistency with search form logic
-							const makeSelect = document.getElementById('make');
-							const modelSelect = document.getElementById('model');
-							const variantSelect = document.getElementById('variant');
-							const carData = {};
-							
-							// Form validation and submission handling
-							const form = document.getElementById('add-car-listing-form');
-							if (form) {
-								form.addEventListener('submit', function(e) {
-									console.log("[Add Listing] Form submission started");
-									
-									// Basic form validation
-									let isValid = true;
-									const requiredFields = form.querySelectorAll('[required]');
-									const missingFields = [];
-									
-									requiredFields.forEach(field => {
-										// Check if it's a file input with no files
-										if (field.type === 'file' && field.files.length === 0) {
-											isValid = false;
-											field.classList.add('error');
-											missingFields.push(field.name);
-											console.log("[Add Listing] Missing files for:", field.name);
-										}
-										// Check if other fields are empty
-										else if (!field.value.trim()) {
-											isValid = false;
-											field.classList.add('error');
-											missingFields.push(field.name);
-											console.log("[Add Listing] Empty required field:", field.name);
-										} else {
-											field.classList.remove('error');
-										}
-									});
-									
-									if (!isValid) {
-										e.preventDefault();
-										alert('Please fill in all required fields: ' + missingFields.join(', '));
-										console.log("[Add Listing] Form validation failed");
-										return false;
-									}
-									
-									console.log("[Add Listing] Form validation passed");
-									return true;
-								});
-							}
-							
-							// Load all JSON data
-							<?php 
-							$json_files = glob(get_stylesheet_directory() . '/simple_jsons/*.json');
-							foreach ($json_files as $file): 
-								$json_data = json_decode(file_get_contents($file), true);
-								if ($json_data) {
-									$make = key($json_data);
-									echo "carData['" . esc_js($make) . "'] = " . json_encode($json_data[$make]) . ";\n";
-								}
-							endforeach; 
-							?>
-
-							// --- JS DEBUG --- 
-							console.log("[Add Listing JS Debug] carData loaded from JSON files:", carData);
-							console.log("[Add Listing JS Debug] Available makes:", Object.keys(carData));
-							// --- END JS DEBUG ---
-
-							// --- JS DEBUG --- 
-							console.log("[Add Listing JS Debug] Found #make element:", makeSelect);
-							console.log("[Add Listing JS Debug] Found #model element:", modelSelect);
-							console.log("[Add Listing JS Debug] Found #variant element:", variantSelect);
-							// --- END JS DEBUG ---
-
-
-							// --- Vanilla JS Event Listeners (like search form) ---
-
-							// Update models when make changes
-							if (makeSelect) { 
-								makeSelect.addEventListener('change', function() {
-									const make = this.value;
-									console.log('[Add Listing] Make changed. Value:', make);
-									console.log('[Add Listing] Make option display text:', this.options[this.selectedIndex].text);
-									
-									// Clear previous options
-									modelSelect.innerHTML = '<option value="">Select Model</option>';
-									variantSelect.innerHTML = '<option value="">Select Variant</option>'; 
-									
-									// CASE SENSITIVITY FIX - Try to find a case-insensitive match
-									let matchedMake = null;
-									if (make) {
-										// First try exact match
-										if (carData[make]) {
-											matchedMake = make;
-										} else {
-											// Try case-insensitive match if exact match fails
-											const makeLowerCase = make.toLowerCase();
-											for (const key in carData) {
-												if (key.toLowerCase() === makeLowerCase) {
-													matchedMake = key;
-													console.log('[Add Listing] Found case-insensitive match. Selected:', make, 'Matched:', matchedMake);
-													break;
-												}
-											}
-										}
-									}
-									
-									if (matchedMake) {
-										console.log('[Add Listing] Models available for', matchedMake, ':', Object.keys(carData[matchedMake]));
-										modelSelect.disabled = false;
-										Object.keys(carData[matchedMake]).forEach(model => {
-											const option = document.createElement('option');
-											option.value = model;
-											option.textContent = model;
-											modelSelect.appendChild(option);
-										});
-									} else {
-										modelSelect.disabled = true;
-										variantSelect.disabled = true;
-										if (make) {
-											console.error("[Add Listing] No data found in carData for make:", make);
-											console.log("[Add Listing] Available makes are:", Object.keys(carData));
-										}
-									}
-								});
-							}
-
-							// Update variants when model changes
-							if (modelSelect) {
-								modelSelect.addEventListener('change', function() {
-									const make = makeSelect.value;
-									const model = this.value;
-									console.log("[Add Listing] Model changed. Selected Make:", make, "Selected Model:", model);
-									
-									// Clear previous options
-									variantSelect.innerHTML = '<option value="">Select Variant</option>';
-									
-									// CASE SENSITIVITY FIX - Try to find a case-insensitive match for make
-									let matchedMake = null;
-									if (make) {
-										// First try exact match
-										if (carData[make]) {
-											matchedMake = make;
-										} else {
-											// Try case-insensitive match if exact match fails
-											const makeLowerCase = make.toLowerCase();
-											for (const key in carData) {
-												if (key.toLowerCase() === makeLowerCase) {
-													matchedMake = key;
-													break;
-												}
-											}
-										}
-									}
-									
-									if (matchedMake && model && carData[matchedMake][model]) {
-										console.log('[Add Listing] Variants available for', model, ':', carData[matchedMake][model]);
-										variantSelect.disabled = false;
-										carData[matchedMake][model].forEach(variant => {
-											const option = document.createElement('option');
-											option.value = variant;
-											option.textContent = variant;
-											variantSelect.appendChild(option);
-										});
-									} else {
-										variantSelect.disabled = true;
-										if (make && model) {
-											console.error("[Add Listing] No variant data found. Make:", make, "Model:", model);
-											if (matchedMake) {
-												console.log("[Add Listing] Models available for", matchedMake, ":", Object.keys(carData[matchedMake]));
-											}
-										}
-									}
-								});
+								fileInput[0].files = dataTransfer.files;
 							}
 						});
-
-						// Check if jQuery is properly loaded before running jQuery-dependent code
-						function initJQueryFeatures() {
-							if (typeof jQuery === 'undefined') {
-								console.error('[Add Listing] jQuery is not loaded! File upload handling will not work.');
-								// Try again after a short delay
-								setTimeout(initJQueryFeatures, 500);
-								return;
-							}
-							
-							console.log('[Add Listing] jQuery is loaded, initializing file upload handling');
-							
-							jQuery(document).ready(function($) {
-								// --- jQuery File upload handling --- 
-								const fileInput = $('#car_images');
-								const fileUploadArea = $('#file-upload-area');
-								const imagePreview = $('#image-preview');
-								const maxFiles = 10;
-								const maxFileSize = 5 * 1024 * 1024; // 5MB
-
-								// DO NOT ADD ANY CLICK HANDLERS HERE - they are now in vanilla JS above
-								
-								// Handle drag and drop
-								fileUploadArea.on('dragover', function(e) {
-									e.preventDefault();
-									$(this).addClass('dragover');
-								}).on('dragleave', function(e) {
-									e.preventDefault();
-									$(this).removeClass('dragover');
-								}).on('drop', function(e) {
-									e.preventDefault();
-									$(this).removeClass('dragover');
-									
-									const files = e.originalEvent.dataTransfer.files;
-									handleFiles(files);
-								});
-
-								// jQuery handler for file input change
-								fileInput.on('change', function() {
-									console.log('[Add Listing] jQuery detected file input change');
-									handleFiles(this.files);
-								});
-
-								// The handleFiles function (which uses jQuery internally for preview)
-								function handleFiles(files) {
-									console.log('[Add Listing] handleFiles called with', files.length, 'files');
-									
-									if (files.length + imagePreview.children().length > maxFiles) {
-										alert('Maximum ' + maxFiles + ' files allowed');
-										return;
-									}
-
-									// Create a new DataTransfer object for the updated files
-									const dataTransfer = new DataTransfer();
-									
-									// First, add existing files to the dataTransfer (but don't process again)
-									const existingFiles = fileInput[0].files;
-									for (let i = 0; i < existingFiles.length; i++) {
-										dataTransfer.items.add(existingFiles[i]);
-									}
-									
-									// Process new files
-									Array.from(files).forEach(file => {
-										// Skip if file is already in the input (prevent duplicates)
-										let isDuplicate = false;
-										for (let i = 0; i < existingFiles.length; i++) {
-											if (existingFiles[i].name === file.name && 
-												existingFiles[i].size === file.size && 
-												existingFiles[i].type === file.type) {
-												isDuplicate = true;
-												break;
-											}
-										}
-										
-										if (isDuplicate) {
-											console.log('[Add Listing] Skipping duplicate file:', file.name);
-											return; // Skip this file if it's a duplicate
-										}
-										
-										if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-											alert('Only JPG, PNG, GIF, and WebP files are allowed');
-											return;
-										}
-
-										if (file.size > maxFileSize) {
-											alert('File size must be less than 5MB');
-											return;
-										}
-
-										// Add this file to the dataTransfer object
-										dataTransfer.items.add(file);
-										console.log('[Add Listing] Added file to transfer:', file.name);
-
-										// Create and add preview immediately
-										createImagePreview(file);
-									});
-
-									// Update the file input with only the files in dataTransfer
-									fileInput[0].files = dataTransfer.files;
-									console.log('[Add Listing] Updated file input with', dataTransfer.files.length, 'files');
-								}
-								
-								// Separate function for creating image previews
-								function createImagePreview(file) {
-									console.log('[Add Listing] Creating preview for:', file.name);
-									const reader = new FileReader();
-									
-									reader.onload = function(e) {
-										console.log('[Add Listing] File read complete, creating preview element');
-										// Create preview item with jQuery
-										const previewItem = $('<div>', { 
-											class: 'image-preview-item'
-										}).append(
-											$('<img>', { 
-												src: e.target.result,
-												alt: file.name
-											}),
-											$('<div>', { 
-												class: 'remove-image',
-												html: '<i class="fas fa-times"></i>'
-											})
-										);
-
-										// Append to the preview container
-										imagePreview.append(previewItem);
-										console.log('[Add Listing] Preview appended to container');
-									};
-									
-									reader.onerror = function() {
-										console.error('[Add Listing] Error reading file:', file.name);
-									};
-									
-									reader.readAsDataURL(file);
-								}
-
-								// Handle image removal
-								imagePreview.on('click', '.remove-image', function() {
-									const index = $(this).closest('.image-preview-item').index();
-									const dataTransfer = new DataTransfer();
-									const existingFiles = fileInput[0].files;
-									
-									for (let i = 0; i < existingFiles.length; i++) {
-										if (i !== index) {
-											dataTransfer.items.add(existingFiles[i]);
-										}
-									}
-									
-									fileInput[0].files = dataTransfer.files;
-									$(this).closest('.image-preview-item').remove();
-								});
-								// --- End jQuery File upload handling ---
-							});
-						}
-						
-						// Initialize jQuery features with a safety check
-						initJQueryFeatures();
 						</script>
 						<?php
                         }
