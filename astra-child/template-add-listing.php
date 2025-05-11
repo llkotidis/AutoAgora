@@ -354,7 +354,8 @@ get_header(); ?>
 							fileInput.on('change', function(e) {
 								console.log('[Add Listing] Files selected through file dialog:', this.files.length);
 								if (this.files.length > 0) {
-									handleFiles(this.files);
+									// For file dialog selection, we want to replace the current files
+									handleFiles(this.files, true);
 								}
 							});
 							
@@ -373,18 +374,19 @@ get_header(); ?>
 								e.preventDefault();
 								$(this).removeClass('dragover');
 								console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
-								handleFiles(e.originalEvent.dataTransfer.files);
+								// For drag and drop, we want to append to existing files
+								handleFiles(e.originalEvent.dataTransfer.files, false);
 							});
 							
 							// Process the files - common function for both methods
-							function handleFiles(files) {
-								console.log('[Add Listing] Processing', files.length, 'files');
+							function handleFiles(files, isFileDialog) {
+								console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
 								
 								const maxFiles = 10;
 								const maxFileSize = 5 * 1024 * 1024; // 5MB
 								
 								// Get current files from input
-								const currentFiles = Array.from(fileInput[0].files);
+								const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
 								console.log('[Add Listing] Current files:', currentFiles.length);
 								
 								// Check if too many files
@@ -396,21 +398,25 @@ get_header(); ?>
 								// Create a DataTransfer object to manage files
 								const dataTransfer = new DataTransfer();
 								
-								// Add existing files first
-								currentFiles.forEach(file => {
-									dataTransfer.items.add(file);
-								});
+								// Add existing files first (only for drag and drop)
+								if (!isFileDialog) {
+									currentFiles.forEach(file => {
+										dataTransfer.items.add(file);
+									});
+								}
 								
 								// Process each new file
 								Array.from(files).forEach(file => {
-									// Check if duplicate
-									const isDuplicate = currentFiles.some(
-										existingFile => existingFile.name === file.name && existingFile.size === file.size
-									);
-									
-									if (isDuplicate) {
-										console.log('[Add Listing] Skipping duplicate file:', file.name);
-										return; // Skip this file
+									// Check if duplicate (only for drag and drop)
+									if (!isFileDialog) {
+										const isDuplicate = currentFiles.some(
+											existingFile => existingFile.name === file.name && existingFile.size === file.size
+										);
+										
+										if (isDuplicate) {
+											console.log('[Add Listing] Skipping duplicate file:', file.name);
+											return; // Skip this file
+										}
 									}
 									
 									// Validate file type
