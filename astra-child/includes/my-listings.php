@@ -84,9 +84,19 @@ function display_my_listings($atts) {
                             </a>
                             <div class="listing-meta">
                                 <span class="listing-date">Published: <?php echo get_the_date(); ?></span>
-                                <span class="listing-status<?php echo get_field('is_sold', $post_id) ? ' status-sold' : ''; ?>">Status: <?php 
+                                <span class="listing-status<?php 
+                                    if (get_field('is_sold', $post_id)) {
+                                        echo ' status-sold';
+                                    } elseif (get_post_status() === 'pending') {
+                                        echo ' status-pending';
+                                    }
+                                ?>">Status: <?php 
                                     $is_sold = get_field('is_sold', $post_id);
-                                    echo $is_sold ? 'SOLD' : get_post_status(); 
+                                    if ($is_sold) {
+                                        echo 'SOLD';
+                                    } else {
+                                        echo ucfirst(get_post_status());
+                                    }
                                 ?></span>
                             </div>
                             <div class="listing-actions">
@@ -205,6 +215,11 @@ function display_my_listings($atts) {
 
         .listing-status.status-sold {
             color: #dc3545;
+            font-weight: bold;
+        }
+
+        .listing-status.status-pending {
+            color: #ffc107;
             font-weight: bold;
         }
         
