@@ -90,13 +90,15 @@ function display_my_listings($atts) {
                                         echo ' status-sold';
                                     } elseif (get_post_status() === 'pending') {
                                         echo ' status-pending';
+                                    } elseif (get_post_status() === 'publish') {
+                                        echo ' status-published';
                                     }
                                 ?>">Status: <?php 
                                     $is_sold = get_field('is_sold', $post_id);
                                     if ($is_sold) {
                                         echo 'SOLD';
                                     } else {
-                                        echo ucfirst(get_post_status());
+                                        echo get_post_status() === 'publish' ? 'Published' : ucfirst(get_post_status());
                                     }
                                 ?></span>
                             </div>
@@ -221,6 +223,11 @@ function display_my_listings($atts) {
 
         .listing-status.status-pending {
             color: #ffc107;
+            font-weight: bold;
+        }
+
+        .listing-status.status-published {
+            color: #28a745;
             font-weight: bold;
         }
         
