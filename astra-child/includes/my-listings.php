@@ -347,12 +347,13 @@ function display_my_listings($atts) {
         .status-filter-form {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
         }
 
         .status-filter-form label {
             font-weight: bold;
             color: #333;
+            margin-right: 2px;
         }
 
         .status-filter-form select {
