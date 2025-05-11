@@ -48,6 +48,9 @@ function display_my_listings($atts) {
                     <option value="sold" <?php selected($current_filter, 'sold'); ?>>Sold</option>
                 </select>
             </form>
+            <div class="search-container">
+                <input type="text" id="listing-search" placeholder="Search listings..." class="search-input">
+            </div>
         </div>
 
         <?php
@@ -342,32 +345,41 @@ function display_my_listings($atts) {
 
         .listings-filter {
             margin-bottom: 20px;
-        }
-
-        .status-filter-form {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 5px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .status-filter-form label {
-            font-weight: bold;
-            color: #333;
-            margin-right: 2px;
+        .search-container {
+            flex: 1;
+            max-width: 300px;
         }
 
-        .status-filter-form select {
+        .search-input {
+            width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            background-color: white;
             font-size: 14px;
-            min-width: 150px;
+            transition: border-color 0.3s ease;
         }
 
-        .status-filter-form select:focus {
+        .search-input:focus {
             outline: none;
             border-color: #0073aa;
+        }
+
+        @media (max-width: 768px) {
+            .listings-filter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                max-width: 100%;
+            }
         }
     </style>
 
@@ -400,6 +412,30 @@ function display_my_listings($atts) {
             alert('Error updating car status. Please try again.');
         });
     }
+
+    // Add search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('listing-search');
+        const listingItems = document.querySelectorAll('.listing-item');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            listingItems.forEach(item => {
+                const title = item.querySelector('.listing-title').textContent.toLowerCase();
+                const price = item.querySelector('.listing-title').textContent.toLowerCase();
+                const date = item.querySelector('.listing-date').textContent.toLowerCase();
+                const status = item.querySelector('.listing-status').textContent.toLowerCase();
+                
+                const isVisible = title.includes(searchTerm) || 
+                                price.includes(searchTerm) || 
+                                date.includes(searchTerm) || 
+                                status.includes(searchTerm);
+                
+                item.style.display = isVisible ? '' : 'none';
+            });
+        });
+    });
     </script>
     
     <?php
