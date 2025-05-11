@@ -225,3 +225,34 @@
   cursor: pointer;
   color: #dc3545;
 }
+
+.add-listing-images-section {
+  width: 100%;
+  border-top: var(--border);
+  padding-top: 3rem;
+  margin-top: 2rem;
+}
+
+.add-listing-images-section h2 {
+  margin-bottom: 1.5rem;
+}
+
+.image-upload-container {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.file-upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  background: #f8f9fa;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
