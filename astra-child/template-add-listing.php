@@ -309,15 +309,15 @@ get_header(); ?>
 
 							<div class="add-listing-images-section">
 								<h2><?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
-								<div class="form-row image-upload-container">
-									<div class="file-upload-area" id="file-upload-area">
+								<div class="image-upload-container">
+									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
 										<div class="upload-message">
 											<i class="fas fa-cloud-upload-alt"></i>
-											<p><?php esc_html_e( 'Drag & drop images here or click to upload', 'astra-child' ); ?></p>
-											<p class="small"><?php esc_html_e( 'Supported formats: JPG, PNG, GIF, WebP', 'astra-child' ); ?></p>
+											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
+											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
 										</div>
-										<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" required>
 									</div>
+									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" required>
 									<div id="image-preview" class="image-preview"></div>
 								</div>
 							</div>
