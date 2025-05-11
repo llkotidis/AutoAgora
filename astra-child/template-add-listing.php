@@ -129,66 +129,64 @@ get_header(); ?>
 
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
-									<div class="form-row form-row-thirds">
-										<div class="form-third">
-											<label for="make"><?php esc_html_e( 'Make', 'astra-child' ); ?> *</label>
-											<select id="make" name="make" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Make', 'astra-child' ); ?></option>
-												<?php
-												foreach ( $add_listing_makes as $make_name => $models ) {
-													echo '<option value="' . esc_attr( $make_name ) . '">' . esc_html( $make_name ) . '</option>';
-												}
-												?>
-											</select>
+									<div class="form-section basic-details-section">
+										<h2><?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
+										<div class="form-row form-row-thirds">
+											<div class="form-third">
+												<label for="make"><?php esc_html_e( 'Make', 'astra-child' ); ?> *</label>
+												<select id="make" name="make" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Make', 'astra-child' ); ?></option>
+													<?php
+													foreach ( $add_listing_makes as $make_name => $models ) {
+														echo '<option value="' . esc_attr( $make_name ) . '">' . esc_html( $make_name ) . '</option>';
+													}
+													?>
+												</select>
+											</div>
+											<div class="form-third">
+												<label for="model"><?php esc_html_e( 'Model', 'astra-child' ); ?> *</label>
+												<select id="model" name="model" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Model', 'astra-child' ); ?></option>
+												</select>
+											</div>
+											<div class="form-third">
+												<label for="variant"><?php esc_html_e( 'Variant', 'astra-child' ); ?> *</label>
+												<select id="variant" name="variant" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
+												</select>
+											</div>
 										</div>
-										<div class="form-third">
-											<label for="model"><?php esc_html_e( 'Model', 'astra-child' ); ?> *</label>
-											<select id="model" name="model" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Model', 'astra-child' ); ?></option>
-												<!-- Models will be populated via JavaScript -->
-											</select>
+
+										<div class="form-row form-row-thirds">
+											<div class="form-third">
+												<label for="year"><?php esc_html_e( 'Year', 'astra-child' ); ?> *</label>
+												<select id="year" name="year" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Year', 'astra-child' ); ?></option>
+													<?php
+													for ($year = 2025; $year >= 1948; $year--) {
+														echo '<option value="' . esc_attr($year) . '">' . esc_html($year) . '</option>';
+													}
+													?>
+												</select>
+											</div>
+											<div class="form-third">
+												<label for="mileage"><?php esc_html_e( 'Mileage (km)', 'astra-child' ); ?> *</label>
+												<input type="number" id="mileage" name="mileage" min="0" class="form-control" required>
+											</div>
+											<div class="form-third">
+												<label for="price"><?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
+												<input type="number" id="price" name="price" min="0" class="form-control" required>
+											</div>
 										</div>
-										<div class="form-third">
-											<label for="variant"><?php esc_html_e( 'Variant', 'astra-child' ); ?> *</label>
-											<select id="variant" name="variant" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
-												<!-- Variants will be populated via JavaScript -->
-											</select>
+
+										<div class="form-row">
+											<label for="location"><?php esc_html_e( 'Location', 'astra-child' ); ?> *</label>
+											<input type="text" id="location" name="location" class="form-control" required>
 										</div>
 									</div>
 
-									<div class="form-row form-row-thirds">
-										<div class="form-third">
-											<label for="year"><?php esc_html_e( 'Year', 'astra-child' ); ?> *</label>
-											<select id="year" name="year" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Year', 'astra-child' ); ?></option>
-												<?php
-												for ($year = 2025; $year >= 1948; $year--) {
-													echo '<option value="' . esc_attr($year) . '">' . esc_html($year) . '</option>';
-												}
-												?>
-											</select>
-										</div>
-										<div class="form-third">
-											<label for="mileage"><?php esc_html_e( 'Mileage (km)', 'astra-child' ); ?> *</label>
-											<input type="number" id="mileage" name="mileage" min="0" class="form-control" required>
-										</div>
-										<div class="form-third">
-											<label for="price"><?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
-											<input type="number" id="price" name="price" min="0" class="form-control" required>
-										</div>
-									</div>
-
-									<div class="form-row">
-										<label for="location"><?php esc_html_e( 'Location', 'astra-child' ); ?> *</label>
-										<input type="text" id="location" name="location" class="form-control" required>
-									</div>
-								</div>
-							</div>
-
-							<div class="add-listing-additional-info">
-								<div class="add-listing-additional-row">
-									<div class="add-listing-specs-column">
+									<div class="form-section engine-performance-section">
+										<h2><?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="engine_capacity"><?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?> *</label>
@@ -222,6 +220,21 @@ get_header(); ?>
 												</select>
 											</div>
 										</div>
+
+										<div class="form-row">
+											<label for="drive_type"><?php esc_html_e( 'Drive Type', 'astra-child' ); ?> *</label>
+											<select id="drive_type" name="drive_type" class="form-control" required>
+												<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
+												<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
+												<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
+												<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
+												<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
+											</select>
+										</div>
+									</div>
+
+									<div class="form-section body-design-section">
+										<h2><?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="body_type"><?php esc_html_e( 'Body Type', 'astra-child' ); ?> *</label>
@@ -241,22 +254,6 @@ get_header(); ?>
 													<option value="Luxury Car"><?php esc_html_e( 'Luxury Car', 'astra-child' ); ?></option>
 												</select>
 											</div>
-											<div class="form-third">
-												<label for="drive_type"><?php esc_html_e( 'Drive Type', 'astra-child' ); ?> *</label>
-												<select id="drive_type" name="drive_type" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
-													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
-													<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
-													<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
-													<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
-												</select>
-											</div>
-											<div class="form-third">
-												<!-- Empty third column for layout consistency -->
-											</div>
-										</div>
-
-										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="exterior_color"><?php esc_html_e( 'Exterior Color', 'astra-child' ); ?> *</label>
 												<select id="exterior_color" name="exterior_color" class="form-control" required>

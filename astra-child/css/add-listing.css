@@ -43,46 +43,40 @@
 }
 
 .add-listing-main-info-column {
-  flex: 2;
-  min-width: 300px;
-}
-
-.add-listing-additional-info {
-  width: 100%;
-  border-top: var(--border);
-  padding-top: 3rem;
-}
-
-.add-listing-additional-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.add-listing-specs-column {
   flex: 1;
   min-width: 300px;
 }
 
-.add-listing-description-section {
-  width: 100%;
-  border-top: var(--border);
-  padding-top: 3rem;
-  margin-top: 2rem;
+/* Form section styling */
+.form-section {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: var(--white);
+  border-radius: var(--border-radius-large);
+  border: var(--border);
 }
 
-.add-listing-description-section h2 {
+.form-section h2 {
   margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  color: var(--text-color);
+  font-size: 1.5rem;
 }
 
-.add-listing-description-section textarea {
-  width: 100%;
-  min-height: 200px;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
+/* Basic Details section */
+.basic-details-section {
+  margin-bottom: 2rem;
+}
+
+/* Engine & Performance section */
+.engine-performance-section {
+  margin-bottom: 2rem;
+}
+
+/* Body & Design section */
+.body-design-section {
+  margin-bottom: 2rem;
 }
 
 /* Form row layouts */
@@ -265,4 +259,11 @@
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
+}
+
+/* Remove old styles that are no longer needed */
+.add-listing-additional-info,
+.add-listing-additional-row,
+.add-listing-specs-column {
+  display: none;
 }
