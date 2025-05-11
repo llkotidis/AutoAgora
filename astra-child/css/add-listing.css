@@ -65,14 +65,24 @@
   min-width: 300px;
 }
 
-.add-listing-description-column {
-  flex: 1;
-  min-width: 300px;
+.add-listing-description-section {
+  width: 100%;
+  border-top: var(--border);
+  padding-top: 3rem;
+  margin-top: 2rem;
 }
 
-.add-listing-description-column textarea {
-  height: 100%;
-  min-height: 100px;
+.add-listing-description-section h2 {
+  margin-bottom: 1.5rem;
+}
+
+.add-listing-description-section textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
 }
 
 /* Form row layouts */

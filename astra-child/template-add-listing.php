@@ -300,13 +300,13 @@ get_header(); ?>
 											</div>
 										</div>
 									</div>
-									
-									<div class="add-listing-description-column">
-										<div class="form-row">
-											<label for="description"><?php esc_html_e( 'Description', 'astra-child' ); ?> *</label>
-											<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
-										</div>
-									</div>
+								</div>
+							</div>
+
+							<div class="add-listing-description-section">
+								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<div class="form-row">
+									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
 								</div>
 							</div>
 
