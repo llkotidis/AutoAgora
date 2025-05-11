@@ -33,6 +33,24 @@ function display_my_listings($atts) {
         <h2>My Car Listings</h2>
         
         <?php
+        // Get current filter from URL parameter
+        $current_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : 'all';
+        
+        // Add filter dropdown
+        ?>
+        <div class="listings-filter">
+            <form method="get" class="status-filter-form">
+                <label for="status-filter">Filter by status:</label>
+                <select name="status" id="status-filter" onchange="this.form.submit()">
+                    <option value="all" <?php selected($current_filter, 'all'); ?>>All Listings</option>
+                    <option value="pending" <?php selected($current_filter, 'pending'); ?>>Pending</option>
+                    <option value="publish" <?php selected($current_filter, 'publish'); ?>>Published</option>
+                    <option value="sold" <?php selected($current_filter, 'sold'); ?>>Sold</option>
+                </select>
+            </form>
+        </div>
+
+        <?php
         // Query for user's car listings
         $args = array(
             'post_type' => 'car',
@@ -42,6 +60,35 @@ function display_my_listings($atts) {
             'order' => 'DESC',
             'post_status' => array('publish', 'pending')
         );
+
+        // Apply status filter
+        if ($current_filter !== 'all') {
+            if ($current_filter === 'sold') {
+                $args['meta_query'] = array(
+                    array(
+                        'key' => 'is_sold',
+                        'value' => '1',
+                        'compare' => '='
+                    )
+                );
+            } else {
+                $args['post_status'] = $current_filter;
+                if ($current_filter === 'publish') {
+                    $args['meta_query'] = array(
+                        'relation' => 'OR',
+                        array(
+                            'key' => 'is_sold',
+                            'value' => '0',
+                            'compare' => '='
+                        ),
+                        array(
+                            'key' => 'is_sold',
+                            'compare' => 'NOT EXISTS'
+                        )
+                    );
+                }
+            }
+        }
         
         $user_listings = new WP_Query($args);
         
@@ -291,6 +338,35 @@ function display_my_listings($atts) {
                 width: 100%;
                 height: 200px;
             }
+        }
+
+        .listings-filter {
+            margin-bottom: 20px;
+        }
+
+        .status-filter-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-filter-form label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-filter-form select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .status-filter-form select:focus {
+            outline: none;
+            border-color: #0073aa;
         }
     </style>
 
