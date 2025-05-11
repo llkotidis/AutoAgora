@@ -39,7 +39,8 @@ function display_my_listings($atts) {
             'author' => $current_user->ID,
             'posts_per_page' => -1,
             'orderby' => 'date',
-            'order' => 'DESC'
+            'order' => 'DESC',
+            'post_status' => array('publish', 'pending')
         );
         
         $user_listings = new WP_Query($args);
