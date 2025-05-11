@@ -51,9 +51,21 @@ function display_my_listings($atts) {
             <div class="search-container">
                 <input type="text" id="listing-search" placeholder="Search listings..." class="search-input">
             </div>
+            <div class="sort-container">
+                <label for="sort-select">Sort by:</label>
+                <select id="sort-select" class="sort-select">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="price-low">Price: Low to High</option>
+                </select>
+            </div>
         </div>
 
         <?php
+        // Get current sort from URL parameter
+        $current_sort = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : 'newest';
+        
         // Query for user's car listings
         $args = array(
             'post_type' => 'car',
@@ -63,6 +75,26 @@ function display_my_listings($atts) {
             'order' => 'DESC',
             'post_status' => array('publish', 'pending')
         );
+
+        // Apply sorting
+        switch ($current_sort) {
+            case 'oldest':
+                $args['order'] = 'ASC';
+                break;
+            case 'price-high':
+                $args['meta_key'] = 'price';
+                $args['orderby'] = 'meta_value_num';
+                $args['order'] = 'DESC';
+                break;
+            case 'price-low':
+                $args['meta_key'] = 'price';
+                $args['orderby'] = 'meta_value_num';
+                $args['order'] = 'ASC';
+                break;
+            default: // newest
+                $args['orderby'] = 'date';
+                $args['order'] = 'DESC';
+        }
 
         // Apply status filter
         if ($current_filter !== 'all') {
@@ -371,13 +403,40 @@ function display_my_listings($atts) {
             border-color: #0073aa;
         }
 
+        .sort-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sort-container label {
+            font-weight: bold;
+            color: #333;
+            margin-right: 2px;
+        }
+
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .sort-select:focus {
+            outline: none;
+            border-color: #0073aa;
+        }
+
         @media (max-width: 768px) {
             .listings-filter {
                 flex-direction: column;
                 align-items: stretch;
             }
             
-            .search-container {
+            .search-container,
+            .sort-container {
                 max-width: 100%;
             }
         }
@@ -413,11 +472,21 @@ function display_my_listings($atts) {
         });
     }
 
-    // Add search functionality
+    // Add search and sort functionality
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('listing-search');
+        const sortSelect = document.getElementById('sort-select');
+        const listingsGrid = document.querySelector('.listings-grid');
         const listingItems = document.querySelectorAll('.listing-item');
 
+        // Set initial sort value from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortParam = urlParams.get('sort');
+        if (sortParam) {
+            sortSelect.value = sortParam;
+        }
+
+        // Search functionality
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase().trim();
             
@@ -434,6 +503,42 @@ function display_my_listings($atts) {
                 
                 item.style.display = isVisible ? '' : 'none';
             });
+        });
+
+        // Sort functionality
+        sortSelect.addEventListener('change', function() {
+            const sortValue = this.value;
+            const items = Array.from(listingItems);
+            
+            items.sort((a, b) => {
+                switch(sortValue) {
+                    case 'newest':
+                        return new Date(b.querySelector('.listing-date').textContent.split(': ')[1]) - 
+                               new Date(a.querySelector('.listing-date').textContent.split(': ')[1]);
+                    case 'oldest':
+                        return new Date(a.querySelector('.listing-date').textContent.split(': ')[1]) - 
+                               new Date(b.querySelector('.listing-date').textContent.split(': ')[1]);
+                    case 'price-high':
+                    case 'price-low':
+                        const priceA = parseInt(a.querySelector('.listing-title').textContent.match(/€([\d,]+)/)[1].replace(/,/g, ''));
+                        const priceB = parseInt(b.querySelector('.listing-title').textContent.match(/€([\d,]+)/)[1].replace(/,/g, ''));
+                        return sortValue === 'price-high' ? priceB - priceA : priceA - priceB;
+                    default:
+                        return 0;
+                }
+            });
+
+            // Reorder items in the DOM
+            items.forEach(item => {
+                if (item.style.display !== 'none') {
+                    listingsGrid.appendChild(item);
+                }
+            });
+
+            // Update URL with sort parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortValue);
+            window.history.pushState({}, '', url);
         });
     });
     </script>
