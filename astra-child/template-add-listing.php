@@ -343,13 +343,17 @@ get_header(); ?>
 							// Handle click on upload area - simple direct approach
 							fileUploadArea.addEventListener('click', function(e) {
 								console.log('[Add Listing] Upload area clicked');
+								e.preventDefault();
+								e.stopPropagation();
 								fileInput.click();
 							});
 							
 							// Handle when files are selected through the file dialog
 							fileInput.addEventListener('change', function(e) {
 								console.log('[Add Listing] Files selected through file dialog:', this.files.length);
-								handleFiles(this.files);
+								if (this.files.length > 0) {
+									handleFiles(this.files);
+								}
 							});
 							
 							// Handle drag and drop
