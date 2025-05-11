@@ -106,14 +106,16 @@ function display_my_listings($atts) {
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
                                 <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
                                 <?php 
-                                $is_sold = get_field('is_sold', $post_id);
-                                $button_text = $is_sold ? 'Mark as Available' : 'Mark as Sold';
-                                $button_class = $is_sold ? 'button available-button' : 'button sold-button';
-                                ?>
-                                <button class="<?php echo esc_attr($button_class); ?>" 
-                                        onclick="toggleCarStatus(<?php echo $post_id; ?>, <?php echo $is_sold ? 'false' : 'true'; ?>)">
-                                    <?php echo esc_html($button_text); ?>
-                                </button>
+                                if (get_post_status() === 'publish') {
+                                    $is_sold = get_field('is_sold', $post_id);
+                                    $button_text = $is_sold ? 'Mark as Available' : 'Mark as Sold';
+                                    $button_class = $is_sold ? 'button available-button' : 'button sold-button';
+                                    ?>
+                                    <button class="<?php echo esc_attr($button_class); ?>" 
+                                            onclick="toggleCarStatus(<?php echo $post_id; ?>, <?php echo $is_sold ? 'false' : 'true'; ?>)">
+                                        <?php echo esc_html($button_text); ?>
+                                    </button>
+                                <?php } ?>
                             </div>
                         </div>
                     </div>
