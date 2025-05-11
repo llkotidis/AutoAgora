@@ -383,8 +383,12 @@ get_header(); ?>
 								const maxFiles = 10;
 								const maxFileSize = 5 * 1024 * 1024; // 5MB
 								
+								// Get current files from input
+								const currentFiles = Array.from(fileInput[0].files);
+								console.log('[Add Listing] Current files:', currentFiles.length);
+								
 								// Check if too many files
-								if (fileInput[0].files.length + files.length > maxFiles) {
+								if (currentFiles.length + files.length > maxFiles) {
 									alert('Maximum ' + maxFiles + ' files allowed');
 									return;
 								}
@@ -393,39 +397,32 @@ get_header(); ?>
 								const dataTransfer = new DataTransfer();
 								
 								// Add existing files first
-								for (let i = 0; i < fileInput[0].files.length; i++) {
-									dataTransfer.items.add(fileInput[0].files[i]);
-								}
+								currentFiles.forEach(file => {
+									dataTransfer.items.add(file);
+								});
 								
 								// Process each new file
-								for (let i = 0; i < files.length; i++) {
-									const file = files[i];
-									
+								Array.from(files).forEach(file => {
 									// Check if duplicate
-									let isDuplicate = false;
-									for (let j = 0; j < fileInput[0].files.length; j++) {
-										if (fileInput[0].files[j].name === file.name && 
-											fileInput[0].files[j].size === file.size) {
-											isDuplicate = true;
-											break;
-										}
-									}
+									const isDuplicate = currentFiles.some(
+										existingFile => existingFile.name === file.name && existingFile.size === file.size
+									);
 									
 									if (isDuplicate) {
 										console.log('[Add Listing] Skipping duplicate file:', file.name);
-										continue;
+										return; // Skip this file
 									}
 									
 									// Validate file type
 									if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
 										alert('Only JPG, PNG, GIF, and WebP files are allowed');
-										continue;
+										return; // Skip this file
 									}
 									
 									// Validate file size
 									if (file.size > maxFileSize) {
 										alert('File size must be less than 5MB');
-										continue;
+										return; // Skip this file
 									}
 									
 									// Add valid file to our collection
@@ -433,7 +430,7 @@ get_header(); ?>
 									
 									// Create preview for this file
 									createPreviewForFile(file);
-								}
+								});
 								
 								// Update the file input with all files
 								fileInput[0].files = dataTransfer.files;
@@ -488,16 +485,18 @@ get_header(); ?>
 								console.log('[Add Listing] Removing file:', fileName);
 								
 								const dataTransfer = new DataTransfer();
+								const currentFiles = Array.from(fileInput[0].files);
 								
 								// Add all files except the one to remove
-								for (let i = 0; i < fileInput[0].files.length; i++) {
-									if (fileInput[0].files[i].name !== fileName) {
-										dataTransfer.items.add(fileInput[0].files[i]);
+								currentFiles.forEach(file => {
+									if (file.name !== fileName) {
+										dataTransfer.items.add(file);
 									}
-								}
+								});
 								
 								// Update the file input
 								fileInput[0].files = dataTransfer.files;
+								console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
 							}
 						});
 						</script>
