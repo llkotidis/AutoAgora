@@ -106,7 +106,7 @@
 /* Style the 'More options' link container and link */
 .more-options-link-container {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 0;
   order: 10;
 }
 .more-options-link {
@@ -258,7 +258,7 @@
   font-size: 14px; /* 14px font size */
   font-weight: normal; /* Normal font weight */
   cursor: pointer;
-  margin-top: 0.5rem; /* 0.5rem top margin */
+  margin-top: 0; /* Remove top margin for inline layout */
   text-align: center;
   text-decoration: none; /* Ensure no underline initially */
 }
@@ -362,4 +362,13 @@
   flex-direction: row;
   gap: 1rem;
   width: 100%;
+}
+
+.filter-actions-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
 }

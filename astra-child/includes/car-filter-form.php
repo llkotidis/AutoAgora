@@ -383,16 +383,15 @@ function display_car_filter_form( $context = 'default' ) {
                 <!-- Actions and More Options Link moved here, inside the form, but styled later -->
                 <div class="filter-form-actions">
                      <button type="submit" class="filter-submit-button">Search</button>
-                     <button type="button" class="filter-reset-button">Reset Filters</button> 
+                     <div class="filter-actions-row">
+                         <button type="button" class="filter-reset-button">Reset Filters</button>
+                         <?php if ($context !== 'listings_page'): ?>
+                         <a href="#" id="toggle-more-options" class="more-options-link">
+                             <span>More Options</span>
+                         </a>
+                         <?php endif; ?>
+                     </div>
                 </div>
-
-                <?php if ($context !== 'listings_page'): ?>
-                <div class="filter-form-group more-options-link-container">
-                    <a href="#" id="toggle-more-options" class="more-options-link">
-                        <span>More Options</span>
-                    </a>
-                </div>
-                <?php endif; ?>
 
             </form> <!-- End of car-filter-form -->
 
