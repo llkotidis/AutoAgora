@@ -816,6 +816,9 @@ document.addEventListener("DOMContentLoaded", function () {
             updateActiveFiltersDisplay();
           }
 
+          // Update results counter
+          updateResultsCounter(data.data.total_results || 0);
+
           // Close the filter popup on successful AJAX update
           if (filtersPopup) {
             // filtersPopup should be available from the top scope
@@ -843,6 +846,36 @@ document.addEventListener("DOMContentLoaded", function () {
           paginationContainer.innerHTML =
             "<span class='error-text'>Error loading results.</span>";
       });
+  }
+
+  // Function to update the results counter
+  function updateResultsCounter(totalResults) {
+    let resultsCounter = document.querySelector('.results-counter');
+    
+    // Create the counter if it doesn't exist
+    if (!resultsCounter) {
+      resultsCounter = document.createElement('div');
+      resultsCounter.className = 'results-counter';
+      
+      // Insert it after the active filters bar
+      const activeFiltersBar = document.querySelector('.active-filters-bar');
+      if (activeFiltersBar) {
+        activeFiltersBar.parentNode.insertBefore(resultsCounter, activeFiltersBar.nextSibling);
+      } else {
+        // Fallback: insert before the listings grid
+        const listingsGrid = document.querySelector('.car-listings-grid');
+        if (listingsGrid) {
+          listingsGrid.parentNode.insertBefore(resultsCounter, listingsGrid);
+        }
+      }
+    }
+    
+    // Get the actual number of results from the grid
+    const carCards = document.querySelectorAll('.car-listing-card');
+    const actualCount = carCards.length;
+    
+    // Update the counter text with the actual count
+    resultsCounter.innerHTML = `Showing <span class="count">${actualCount}</span> results`;
   }
 
   // --- Handle Pagination Clicks ---
@@ -919,7 +952,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const seeAllImagesBtn = carousel.querySelector('.see-all-images');
       let currentIndex = 0;
 
-      // Function to update image visibility
+      // Add image counter element
+      const counter = document.createElement('div');
+      counter.className = 'image-counter';
+      counter.textContent = `1/${images.length}`;
+      carousel.appendChild(counter);
+
       const updateImages = () => {
         images.forEach((img, index) => {
           img.classList.toggle('active', index === currentIndex);
@@ -933,9 +971,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (seeAllImagesBtn) {
           seeAllImagesBtn.style.display = currentIndex === images.length - 1 ? 'block' : 'none';
         }
+
+        // Update counter
+        counter.textContent = `${currentIndex + 1}/${images.length}`;
       };
 
-      // Initialize
+      // Initialize first image
       updateImages();
 
       // Event listeners for navigation

@@ -45,6 +45,34 @@ if (have_posts()) :
             ?>
 
             <div class="car-listing-detailed-container">
+                <!-- Add Gallery Popup HTML -->
+                <div class="gallery-popup" style="display: none;">
+                    <div class="gallery-popup-content">
+                        <button class="back-to-advert-btn">
+                            <i class="fas fa-arrow-left"></i> Back to advert
+                        </button>
+                        <div class="gallery-main-image">
+                            <?php 
+                            // Set the first image as the initial main image
+                            $first_image_url = wp_get_attachment_image_url($all_images[0], 'large');
+                            ?>
+                            <img src="<?php echo esc_url($first_image_url); ?>" alt="Gallery Image">
+                        </div>
+                        <div class="gallery-thumbnails">
+                            <?php foreach ($all_images as $index => $image_id) : 
+                                $thumb_url = wp_get_attachment_image_url($image_id, 'thumbnail');
+                                $full_url = wp_get_attachment_image_url($image_id, 'large');
+                                if ($thumb_url) :
+                            ?>
+                                <div class="gallery-thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" data-full-url="<?php echo esc_url($full_url); ?>">
+                                    <img src="<?php echo esc_url($thumb_url); ?>" alt="Gallery Thumbnail <?php echo $index + 1; ?>">
+                                </div>
+                            <?php 
+                                endif;
+                            endforeach; ?>
+                        </div>
+                    </div>
+                </div>
                 <div class="car-listing-header">
                     <a href="javascript:history.back()" class="back-to-results-btn">
                         ← Back to Results
@@ -85,23 +113,32 @@ if (have_posts()) :
                                     $main_image_url = wp_get_attachment_image_url($all_images[0], 'large');
                                     if ($main_image_url) :
                                     ?>
-                                        <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" data-full-url="<?php echo esc_url($main_image_url); ?>">
+                                        <img src="<?php echo esc_url($main_image_url); ?>" 
+                                             alt="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>" 
+                                             class="clickable-image"
+                                             data-image-index="0">
                                     <?php endif; ?>
                                 </div>
                                 
                                 <?php if (count($all_images) > 1) : ?>
                                     <div class="thumbnail-gallery">
-                                        <?php foreach ($all_images as $index => $image_id) : 
-                                            $thumb_url = wp_get_attachment_image_url($image_id, 'thumbnail');
-                                            $full_url = wp_get_attachment_image_url($image_id, 'large');
+                                        <?php 
+                                        // Show up to 3 thumbnails (excluding the main image)
+                                        $max_thumbnails = 3;
+                                        $num_thumbnails = min(count($all_images) - 1, $max_thumbnails);
+                                        for ($i = 1; $i <= $num_thumbnails; $i++) : 
+                                            $thumb_url = wp_get_attachment_image_url($all_images[$i], 'medium');
                                             if ($thumb_url) :
                                         ?>
-                                            <div class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" data-full-url="<?php echo esc_url($full_url); ?>">
-                                                <img src="<?php echo esc_url($thumb_url); ?>" alt="Thumbnail <?php echo $index + 1; ?>">
+                                            <div class="thumbnail">
+                                                <img src="<?php echo esc_url($thumb_url); ?>" 
+                                                     alt="Thumbnail <?php echo $i + 1; ?>"
+                                                     class="clickable-image"
+                                                     data-image-index="<?php echo $i; ?>">
                                             </div>
                                         <?php 
                                             endif;
-                                        endforeach; ?>
+                                        endfor; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -110,6 +147,10 @@ if (have_posts()) :
                         <!-- Car Details Right Side -->
                         <div class="car-listing-details-right">
                             <h1 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h1>
+
+                            <?php if (get_field('is_sold', $car_id)) : ?>
+                                <div class="sold-badge">SOLD</div>
+                            <?php endif; ?>
 
                             <div class="car-specs">
                                 <?php echo esc_html($engine_capacity); ?>L
@@ -141,7 +182,37 @@ if (have_posts()) :
                             </div>
 
                             <div class="car-price">€<?php echo number_format($price); ?></div>
-                            <div class="car-location"><?php echo esc_html($location); ?></div>
+                            <?php 
+                            $publication_date = get_post_meta($car_id, 'publication_date', true);
+                            if (!$publication_date) {
+                                $publication_date = get_the_date('Y-m-d H:i:s');
+                                update_post_meta($car_id, 'publication_date', $publication_date);
+                            }
+                            $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                            echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                            ?>
+                            <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                            <?php 
+                            $author_id = get_post_field('post_author', $car_id);
+                            $author_name = get_the_author_meta('display_name', $author_id);
+                            $author_first_name = get_the_author_meta('first_name', $author_id);
+                            $author_last_name = get_the_author_meta('last_name', $author_id);
+                            $author_email = get_the_author_meta('user_email', $author_id);
+                            $full_name = trim($author_first_name . ' ' . $author_last_name);
+                            ?>
+                            <div class="car-seller">
+                                <i class="fas fa-phone"></i>
+                                <div class="seller-info">
+                                    <span class="seller-name"><?php echo esc_html($author_name); ?></span>
+                                    <?php if (!empty($full_name)) : ?>
+                                        <span class="seller-full-name"><?php echo esc_html($full_name); ?></span>
+                                    <?php endif; ?>
+                                    <span class="seller-email">
+                                        <i class="fas fa-envelope"></i>
+                                        <?php echo esc_html($author_email); ?>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -276,6 +347,10 @@ if (have_posts()) :
             .main-image {
                 margin-bottom: 15px;
                 position: relative;
+                max-width: 100%;
+                max-height: 600px;
+                overflow: hidden;
+                display: block;
             }
 
             .image-count-overlay {
@@ -304,7 +379,10 @@ if (have_posts()) :
             .main-image img {
                 width: 100%;
                 height: auto;
+                max-height: 600px;
+                object-fit: cover;
                 border-radius: 8px;
+                display: block;
             }
 
             .thumbnail-gallery {
@@ -313,17 +391,52 @@ if (have_posts()) :
                 overflow-x: auto;
                 padding-bottom: 10px;
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-start;
+            }
+
+            .clickable-image {
+                cursor: pointer;
+                transition: opacity 0.2s ease;
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            .clickable-image:hover {
+                opacity: 0.9;
+            }
+
+            .clickable-image:focus {
+                outline: none;
+            }
+
+            .clickable-image:active {
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .thumbnail {
                 width: 180px;
                 height: 135px;
-                cursor: pointer;
                 border: 2px solid transparent;
                 border-radius: 4px;
                 overflow: hidden;
                 flex-shrink: 0;
+                cursor: pointer;
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .thumbnail:focus {
+                outline: none;
+            }
+
+            .thumbnail:active {
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .thumbnail.active {
@@ -395,6 +508,52 @@ if (have_posts()) :
             .car-location {
                 color: #666;
                 font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+
+            .car-seller {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                background: #f8f9fa;
+                padding: 12px 15px;
+                border-radius: 6px;
+                margin-top: 15px;
+            }
+
+            .car-seller i {
+                color: #007bff;
+                font-size: 1.2em;
+                margin-top: 3px;
+            }
+
+            .seller-info {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .seller-name {
+                color: #333;
+                font-weight: 500;
+            }
+
+            .seller-full-name {
+                color: #666;
+                font-size: 0.9em;
+            }
+
+            .seller-email {
+                color: #666;
+                font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .seller-email i {
+                color: #007bff;
+                font-size: 0.9em;
             }
 
             .car-listing-details {
@@ -527,13 +686,129 @@ if (have_posts()) :
             .read-more-btn:hover {
                 text-decoration: underline;
             }
+
+            /* Gallery Popup Styles */
+            .gallery-popup {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .gallery-popup-content {
+                width: 90%;
+                height: 90%;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                padding-bottom: 120px; /* Add padding to ensure thumbnails are visible */
+            }
+
+            .back-to-advert-btn {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                background: #007bff;
+                border: none;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 8px 16px;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                z-index: 1001;
+                transition: background-color 0.2s ease;
+            }
+
+            .back-to-advert-btn:hover {
+                background: #0056b3;
+            }
+
+            .back-to-advert-btn i {
+                font-size: 14px;
+            }
+
+            .gallery-main-image {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 20px;
+                max-height: calc(100%); /* Ensure space for thumbnails */
+                width: 100%;
+                padding: 20px;
+            }
+
+            .gallery-main-image img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                width: auto;
+                height: auto;
+                min-width: 80%;
+                min-height: 80%;
+            }
+
+            .gallery-thumbnails {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 100px;
+                display: flex;
+                gap: 10px;
+                overflow-x: auto;
+                padding: 10px 0;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.5); /* Add slight background to ensure visibility */
+            }
+
+            .gallery-thumbnail {
+                width: 120px;
+                height: 80px;
+                cursor: pointer;
+                border: 2px solid transparent;
+                border-radius: 4px;
+                overflow: hidden;
+                flex-shrink: 0;
+            }
+
+            .gallery-thumbnail.active {
+                border-color: #007bff;
+            }
+
+            .gallery-thumbnail img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .sold-badge {
+                display: inline-block;
+                background-color: #dc3545;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 4px;
+                font-weight: bold;
+                margin-bottom: 15px;
+            }
             </style>
 
             <script>
-            // Script copied directly from car-listing-detailed.php
-            // IMPORTANT: This script relies on `carListingsData` for favorite button AJAX.
-            // This data (ajaxurl, nonce) needs to be made available to this template.
-            // See comments in the main response for how to handle this.
+            // Add WordPress AJAX data
+            const carListingsData = {
+                ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
+                nonce: '<?php echo wp_create_nonce('toggle_favorite_car'); ?>'
+            };
+
             document.addEventListener('DOMContentLoaded', function() {
                 const thumbnails = document.querySelectorAll('.thumbnail');
                 const mainImage = document.querySelector('.main-image img');
@@ -647,6 +922,83 @@ if (have_posts()) :
                         });
                     });
                 }
+
+                // Add Gallery Popup Functionality
+                const viewGalleryBtn = document.querySelector('.view-gallery-btn');
+                const galleryPopup = document.querySelector('.gallery-popup');
+                const backToAdvertBtn = document.querySelector('.back-to-advert-btn');
+                const galleryMainImage = document.querySelector('.gallery-main-image img');
+                const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
+                let lastActiveThumbnailIndex = 0; // Track the last active thumbnail
+
+                // Function to open gallery with specific image
+                function openGalleryWithImage(imageIndex) {
+                    galleryPopup.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Remove active class from all thumbnails
+                    galleryThumbnails.forEach(thumb => thumb.classList.remove('active'));
+                    
+                    // Set the clicked thumbnail as active
+                    if (galleryThumbnails[imageIndex]) {
+                        galleryThumbnails[imageIndex].classList.add('active');
+                        galleryThumbnails[imageIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        
+                        // Update main image
+                        const newImageUrl = galleryThumbnails[imageIndex].dataset.fullUrl;
+                        if (newImageUrl && galleryMainImage) {
+                            galleryMainImage.src = newImageUrl;
+                        }
+                    }
+                    
+                    lastActiveThumbnailIndex = imageIndex;
+                }
+
+                // Add click handlers to all clickable images
+                document.querySelectorAll('.clickable-image').forEach(img => {
+                    img.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.blur(); // Remove focus after click
+                        const imageIndex = parseInt(this.dataset.imageIndex);
+                        openGalleryWithImage(imageIndex);
+                    });
+                });
+
+                if (viewGalleryBtn && galleryPopup) {
+                    viewGalleryBtn.addEventListener('click', function() {
+                        openGalleryWithImage(lastActiveThumbnailIndex); // Use last active index instead of 0
+                    });
+                }
+
+                // Restore back to advert button functionality
+                if (backToAdvertBtn) {
+                    backToAdvertBtn.addEventListener('click', function() {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = ''; // Restore scrolling
+                    });
+                }
+
+                // Restore click outside to close functionality
+                galleryPopup.addEventListener('click', function(e) {
+                    if (e.target === galleryPopup) {
+                        galleryPopup.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+
+                // Handle gallery thumbnail clicks
+                galleryThumbnails.forEach((thumb, index) => {
+                    thumb.addEventListener('click', function() {
+                        galleryThumbnails.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        lastActiveThumbnailIndex = index;
+                        const newImageUrl = this.dataset.fullUrl;
+                        if (newImageUrl && galleryMainImage) {
+                            galleryMainImage.src = newImageUrl;
+                        }
+                    });
+                });
             });
             </script>
             <?php

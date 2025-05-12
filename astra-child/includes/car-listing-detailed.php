@@ -123,6 +123,10 @@
                     <div class="car-listing-details-right">
                         <h1 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h1>
 
+                        <?php if (get_post_meta($car_id, 'car_status', true) === 'sold') : ?>
+                            <div class="sold-badge">SOLD</div>
+                        <?php endif; ?>
+
                         <div class="car-specs">
                             <?php echo esc_html($engine_capacity); ?>L
                             <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
@@ -153,7 +157,16 @@
                         </div>
 
                         <div class="car-price">€<?php echo number_format($price); ?></div>
-                        <div class="car-location"><?php echo esc_html($location); ?></div>
+                        <?php 
+                        $publication_date = get_post_meta($car_id, 'publication_date', true);
+                        if (!$publication_date) {
+                            $publication_date = get_the_date('Y-m-d H:i:s');
+                            update_post_meta($car_id, 'publication_date', $publication_date);
+                        }
+                        $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                        echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                        ?>
+                        <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
                     </div>
                 </div>
 
@@ -407,6 +420,12 @@
                 font-size: 1.1em;
             }
 
+            .car-publication-date {
+                color: #666;
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+
             .car-listing-details {
                 background: #f8f9fa;
                 padding: 20px;
@@ -536,6 +555,17 @@
 
             .read-more-btn:hover {
                 text-decoration: underline;
+            }
+
+            .sold-badge {
+                display: inline-block;
+                background-color: #dc3545;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0;
             }
         </style>
 

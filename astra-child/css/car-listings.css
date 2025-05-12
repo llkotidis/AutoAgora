@@ -424,6 +424,14 @@
   margin-bottom: 0;
   font-size: 1.1em !important;
   text-decoration: none !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.car-location i {
+  color: #666;
+  font-size: 0.9em;
 }
 
 /* Remove old carousel styles */
@@ -472,20 +480,29 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  background: black;
   border: none;
-  padding: 10px 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  z-index: 2;
-  transition: background 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+  padding: 0;
+  line-height: 1;
 }
 
-.carousel-nav:hover {
-  background: rgba(0, 0, 0, 0.7);
+.carousel-nav i {
+  font-size: 14px;
+  color: white;
+}
+
+.car-listing-image-container:hover .carousel-nav {
+  opacity: 1;
 }
 
 .carousel-nav.prev {
@@ -620,3 +637,40 @@
 .car-listings-container.is-loading .car-listings-pagination {
     visibility: hidden;
 } */
+
+.car-publication-date {
+    font-size: 0.9em;
+    color: #666;
+    margin: 8px 0;
+    font-style: italic;
+    display: block;
+}
+
+/* Image Counter Styles */
+.image-counter {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: white;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2;
+}
+
+/* Results Counter Styles */
+.results-counter {
+  text-align: left;
+  margin-bottom: 20px;
+  font-size: 1.1em;
+  color: #333;
+  font-weight: 500;
+  padding-left: 10px;
+}
+
+.results-counter .count {
+  font-weight: bold;
+  color: #007bff;
+}

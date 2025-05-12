@@ -94,6 +94,18 @@ function display_favourite_listings($atts) {
         'post_status' => 'publish',
         'post__in' => $favorite_car_ids, // Only get favorite cars
         'no_found_rows' => false, // We need pagination
+        'meta_query' => array(
+            'relation' => 'OR',
+            array(
+                'key' => 'is_sold',
+                'compare' => 'NOT EXISTS'
+            ),
+            array(
+                'key' => 'is_sold',
+                'value' => '1',
+                'compare' => '!='
+            )
+        )
     );
 
     // Get car listings
@@ -103,6 +115,9 @@ function display_favourite_listings($atts) {
     ?>
     <div class="favorite-listings-container">
         <h1 class="favorite-listings-title">My Favorite Cars</h1>
+        <?php if ($car_query->found_posts > 0): ?>
+        <div class="results-counter">Showing <span class="count"><?php echo esc_html($car_query->found_posts); ?></span> results</div>
+        <?php endif; ?>
         
         <!-- Listings Grid -->
         <div class="car-listings-grid">
@@ -159,7 +174,7 @@ function display_favourite_listings($atts) {
                         }
                         ?>
                         
-                        <a href="<?php echo esc_url(add_query_arg('car_id', get_the_ID(), get_permalink(get_page_by_path('car-listing-detailed')))); ?>" class="car-listing-link">
+                        <a href="<?php echo esc_url(get_permalink()); ?>" class="car-listing-link">
                             <div class="car-listing-details">
                                 <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                                 <div class="car-specs">
@@ -184,7 +199,16 @@ function display_favourite_listings($atts) {
                                     </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
-                                <div class="car-location"><?php echo esc_html($location); ?></div>
+                                <?php 
+                                $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
+                                if (!$publication_date) {
+                                    $publication_date = get_the_date('Y-m-d H:i:s');
+                                    update_post_meta(get_the_ID(), 'publication_date', $publication_date);
+                                }
+                                $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                                echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                                ?>
+                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
                             </div>
                         </a>
                     </div>
@@ -300,6 +324,13 @@ function display_favourite_listings($atts) {
             text-decoration: none !important;
         }
 
+        .car-publication-date {
+            color: #666;
+            margin-bottom: 0;
+            font-size: 0.95em !important;
+            text-decoration: none !important;
+        }
+
         .car-location {
             color: #000;
             margin-bottom: 0;
@@ -358,7 +389,6 @@ function display_favourite_listings($atts) {
             transform: translateY(-50%);
             background: rgba(0, 0, 0, 0.5);
             color: white;
-            border: none;
             padding: 10px 15px;
             cursor: pointer;
             z-index: 2;
@@ -451,10 +481,36 @@ function display_favourite_listings($atts) {
         .favorite-btn.active i {
             opacity: 1;
         }
+
+        /* Results Counter Styles */
+        .results-counter {
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+            padding-left: 10px;
+        }
+
+        .results-counter .count {
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Function to update the results counter
+        function updateResultsCounter(count) {
+            const counter = document.querySelector('.results-counter');
+            if (counter) {
+                const countSpan = counter.querySelector('.count');
+                if (countSpan) {
+                    countSpan.textContent = count;
+                }
+            }
+        }
+
         // Carousel functionality
         document.querySelectorAll('.car-listing-image-carousel').forEach(carousel => {
             const images = carousel.querySelectorAll('.car-listing-image');
@@ -576,6 +632,9 @@ function display_favourite_listings($atts) {
                                     if (remainingCards.length === 0) {
                                         // Reload the page to show the "no favorites" message
                                         window.location.reload();
+                                    } else {
+                                        // Update the results counter immediately
+                                        updateResultsCounter(remainingCards.length);
                                     }
                                 }, 300);
                             }

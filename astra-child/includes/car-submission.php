@@ -332,3 +332,30 @@ function add_car_gallery_to_content($content) {
     return $content;
 }
 add_filter('the_content', 'add_car_gallery_to_content', 20);
+
+/**
+ * Store the publication date when a car listing is published
+ * 
+ * @param string $new_status The new post status
+ * @param string $old_status The old post status
+ * @param WP_Post $post The post object
+ */
+function store_car_publication_date($new_status, $old_status, $post) {
+    // Only proceed if this is a car post type
+    if ($post->post_type !== 'car') {
+        return;
+    }
+
+    // Check if the post is being published
+    if ($new_status === 'publish' && $old_status !== 'publish') {
+        // Store the current time as the publication date
+        $publication_date = current_time('mysql');
+        update_post_meta($post->ID, 'publication_date', $publication_date);
+        
+        // Debug log
+        if (WP_DEBUG === true) {
+            error_log('Car publication date stored: ' . $publication_date . ' for post ID: ' . $post->ID);
+        }
+    }
+}
+add_action('transition_post_status', 'store_car_publication_date', 10, 3);
