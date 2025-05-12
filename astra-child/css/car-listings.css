@@ -639,38 +639,37 @@
 } */
 
 .car-publication-date {
-    font-size: 0.9em;
-    color: #666;
-    margin: 8px 0;
-    font-style: italic;
-    display: block;
+  font-size: 0.9em;
+  color: var(--light-text-color);
+  margin: 8px 0;
+  font-style: italic;
+  display: block;
 }
 
 /* Image Counter Styles */
 .image-counter {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background-color: white;
-    color: black;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 2;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: white;
+  color: var(--text-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2;
 }
 
 /* Results Counter Styles */
 .results-counter {
   text-align: left;
   margin-bottom: 20px;
-  font-size: 1.1em;
-  color: #333;
+  font-size: 14px;
+  color: var(--text-color);
   font-weight: 500;
-  padding-left: 10px;
 }
 
 .results-counter .count {
   font-weight: bold;
-  color: #007bff;
+  color: var(----dark-blue);
 }

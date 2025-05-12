@@ -5,7 +5,7 @@
   --white: #ffffff;
   --borders: #ccc;
   --text-color: #242424;
-  -light-text-color: #595959;
+  --light-text-color: #595959;
   --success-green: #21c05b;
   --error-red: #ff0000;
   --border: 1px solid var(--borders);
@@ -406,7 +406,7 @@ textarea.error {
 .header-widget-area[data-section="sidebar-widgets-header-widget-1"] {
   display: flex;
   flex-direction: row;
-  gap: 1.0rem;
+  gap: 1rem;
 }
 
 #block-8 {
