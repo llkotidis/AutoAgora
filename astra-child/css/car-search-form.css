@@ -336,10 +336,30 @@
     flex-direction: column;
     gap: 0.5rem;
   }
+  .filter-range-fields > select,
+  .filter-side-by-side-fields > .sub-group {
+    width: 100%;
+    flex-basis: 100%;
+  }
   /* .filter-form-actions already column from main styles */
   /* .filter-submit-button and .filter-reset-button already 100% width */
 }
 
 #toggle-more-options {
   text-decoration: none; /* Added to ensure no underline on the specific ID */
+}
+
+.filter-range-fields > select,
+.filter-side-by-side-fields > .sub-group {
+  flex: 1 1 50%;
+  width: 50%;
+  min-width: 0;
+}
+
+/* Remove gap for range-separator since it's removed */
+.filter-range-fields {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  width: 100%;
 }

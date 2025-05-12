@@ -373,7 +373,6 @@ function display_car_filter_form( $context = 'default' ) {
                             <option value="">Min Year</option>
                             <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
                         </select>
-                        <span class="range-separator">-</span>
                         <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
                             <option value="">Max Year</option>
                              <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
@@ -409,8 +408,7 @@ function display_car_filter_form( $context = 'default' ) {
                         <option value="">Min Size</option>
                          <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
-                     <span class="range-separator">-</span>
-                    <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
+                     <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
@@ -425,8 +423,7 @@ function display_car_filter_form( $context = 'default' ) {
                         <option value="">Min KM</option>
                          <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
-                     <span class="range-separator">-</span>
-                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
+                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
