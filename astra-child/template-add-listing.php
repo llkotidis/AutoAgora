@@ -245,18 +245,21 @@ get_header(); ?>
 												<label for="body_type"><?php esc_html_e( 'Body Type', 'astra-child' ); ?> *</label>
 												<select id="body_type" name="body_type" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Body Type', 'astra-child' ); ?></option>
-													<option value="Sedan"><?php esc_html_e( 'Sedan', 'astra-child' ); ?></option>
 													<option value="Hatchback"><?php esc_html_e( 'Hatchback', 'astra-child' ); ?></option>
-													<option value="SUV"><?php esc_html_e( 'SUV', 'astra-child' ); ?></option>
-													<option value="Crossover"><?php esc_html_e( 'Crossover', 'astra-child' ); ?></option>
+													<option value="Saloon"><?php esc_html_e( 'Saloon', 'astra-child' ); ?></option>
 													<option value="Coupe"><?php esc_html_e( 'Coupe', 'astra-child' ); ?></option>
 													<option value="Convertible"><?php esc_html_e( 'Convertible', 'astra-child' ); ?></option>
-													<option value="Wagon"><?php esc_html_e( 'Wagon', 'astra-child' ); ?></option>
-													<option value="Van"><?php esc_html_e( 'Van', 'astra-child' ); ?></option>
+													<option value="Estate"><?php esc_html_e( 'Estate', 'astra-child' ); ?></option>
+													<option value="SUV"><?php esc_html_e( 'SUV', 'astra-child' ); ?></option>
+													<option value="MPV"><?php esc_html_e( 'MPV', 'astra-child' ); ?></option>
 													<option value="Pickup"><?php esc_html_e( 'Pickup', 'astra-child' ); ?></option>
-													<option value="Minivan"><?php esc_html_e( 'Minivan', 'astra-child' ); ?></option>
-													<option value="Sports Car"><?php esc_html_e( 'Sports Car', 'astra-child' ); ?></option>
-													<option value="Luxury Car"><?php esc_html_e( 'Luxury Car', 'astra-child' ); ?></option>
+													<option value="Camper"><?php esc_html_e( 'Camper', 'astra-child' ); ?></option>
+													<option value="Minibus"><?php esc_html_e( 'Minibus', 'astra-child' ); ?></option>
+													<option value="Limousine"><?php esc_html_e( 'Limousine', 'astra-child' ); ?></option>
+													<option value="Car Derived Van"><?php esc_html_e( 'Car Derived Van', 'astra-child' ); ?></option>
+													<option value="Combi Van"><?php esc_html_e( 'Combi Van', 'astra-child' ); ?></option>
+													<option value="Panel Van"><?php esc_html_e( 'Panel Van', 'astra-child' ); ?></option>
+													<option value="Window Van"><?php esc_html_e( 'Window Van', 'astra-child' ); ?></option>
 												</select>
 											</div>
 											<div class="form-third">
