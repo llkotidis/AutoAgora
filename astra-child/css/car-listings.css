@@ -671,5 +671,5 @@
 
 .results-counter .count {
   font-weight: bold;
-  color: var(----dark-blue);
+  color: var(--dark-blue);
 }
