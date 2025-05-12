@@ -180,7 +180,7 @@ get_header(); ?>
 												</div>
 											</div>
 											<div class="form-third">
-												<label for="price"><i class="fas fa-pound-sign"></i> <?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
+												<label for="price"><i class="fas fa-euro-sign"></i> <?php esc_html_e( 'Price', 'astra-child' ); ?> *</label>
 												<input type="text" id="price" name="price" class="form-control" required>
 											</div>
 										</div>
