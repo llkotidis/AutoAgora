@@ -171,11 +171,11 @@ get_header(); ?>
 											</div>
 											<div class="form-third">
 												<label for="mileage"><?php esc_html_e( 'Mileage (km)', 'astra-child' ); ?> *</label>
-												<input type="number" id="mileage" name="mileage" min="0" class="form-control" required>
+												<input type="text" id="mileage" name="mileage" class="form-control" required>
 											</div>
 											<div class="form-third">
 												<label for="price"><?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
-												<input type="number" id="price" name="price" min="0" class="form-control" required>
+												<input type="text" id="price" name="price" class="form-control" required>
 											</div>
 										</div>
 
@@ -445,7 +445,7 @@ get_header(); ?>
 							
 							// Remove commas and convert to number
 							function unformatNumber(formattedNumber) {
-								return parseInt(formattedNumber.replace(/,/g, '')) || 0;
+								return parseInt(formattedNumber.replace(/[^0-9]/g, '')) || 0;
 							}
 							
 							// Handle input event for real-time formatting
@@ -465,6 +465,9 @@ get_header(); ?>
 									
 									// Store the raw value in a data attribute
 									$(this).data('raw-value', unformatNumber(formattedValue));
+								} else {
+									this.value = '';
+									$(this).data('raw-value', 0);
 								}
 							});
 
@@ -485,6 +488,9 @@ get_header(); ?>
 									
 									// Store the raw value in a data attribute
 									$(this).data('raw-value', unformatNumber(value));
+								} else {
+									this.value = '';
+									$(this).data('raw-value', 0);
 								}
 							});
 							
