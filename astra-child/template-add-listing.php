@@ -434,6 +434,84 @@ get_header(); ?>
 							const fileUploadArea = $('#file-upload-area');
 							const imagePreview = $('#image-preview');
 							
+							// Add mileage formatting
+							const mileageInput = $('#mileage');
+							const priceInput = $('#price');
+							
+							// Format number with commas
+							function formatNumber(number) {
+								return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+							}
+							
+							// Remove commas and convert to number
+							function unformatNumber(formattedNumber) {
+								return parseInt(formattedNumber.replace(/,/g, '')) || 0;
+							}
+							
+							// Handle input event for real-time formatting
+							mileageInput.on('input', function(e) {
+								// Get the raw value without commas
+								let value = this.value.replace(/,/g, '');
+								
+								// Only allow numbers
+								value = value.replace(/[^\d]/g, '');
+								
+								// Format with commas
+								if (value) {
+									const formattedValue = formatNumber(value);
+									
+									// Update the display value
+									this.value = formattedValue;
+									
+									// Store the raw value in a data attribute
+									$(this).data('raw-value', unformatNumber(formattedValue));
+								}
+							});
+
+							// Handle price input event for real-time formatting
+							priceInput.on('input', function(e) {
+								// Get the raw value without commas and euro sign
+								let value = this.value.replace(/[€,]/g, '');
+								
+								// Only allow numbers
+								value = value.replace(/[^\d]/g, '');
+								
+								// Format with commas and euro sign
+								if (value) {
+									const formattedValue = '€' + formatNumber(value);
+									
+									// Update the display value
+									this.value = formattedValue;
+									
+									// Store the raw value in a data attribute
+									$(this).data('raw-value', unformatNumber(value));
+								}
+							});
+							
+							// Handle form submission to use raw values
+							$('#add-car-listing-form').on('submit', function(e) {
+								// Get the raw values from data attributes
+								const rawMileage = mileageInput.data('raw-value') || unformatNumber(mileageInput.val());
+								const rawPrice = priceInput.data('raw-value') || unformatNumber(priceInput.val().replace('€', ''));
+								
+								// Create hidden inputs with the raw values
+								$('<input>').attr({
+									type: 'hidden',
+									name: 'mileage',
+									value: rawMileage
+								}).appendTo(this);
+
+								$('<input>').attr({
+									type: 'hidden',
+									name: 'price',
+									value: rawPrice
+								}).appendTo(this);
+								
+								// Remove the original inputs from submission
+								mileageInput.prop('disabled', true);
+								priceInput.prop('disabled', true);
+							});
+							
 							console.log('[Add Listing] Elements found:', {
 								fileInput: fileInput.length,
 								fileUploadArea: fileUploadArea.length,
