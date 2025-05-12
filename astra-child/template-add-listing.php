@@ -130,202 +130,248 @@ get_header(); ?>
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
 									<div class="form-section basic-details-section">
-										<h2><?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
+										<h2><i class="fas fa-car"></i> <?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="make"><?php esc_html_e( 'Make', 'astra-child' ); ?> *</label>
-												<select id="make" name="make" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Make', 'astra-child' ); ?></option>
-													<?php
-													foreach ( $add_listing_makes as $make_name => $models ) {
-														echo '<option value="' . esc_attr( $make_name ) . '">' . esc_html( $make_name ) . '</option>';
-													}
-													?>
-												</select>
+												<label for="make" class="required-field"><?php esc_html_e( 'Make', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-car-side"></i>
+													<select id="make" name="make" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Make', 'astra-child' ); ?></option>
+														<?php
+														foreach ( $add_listing_makes as $make_name => $models ) {
+															echo '<option value="' . esc_attr( $make_name ) . '">' . esc_html( $make_name ) . '</option>';
+														}
+														?>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="model"><?php esc_html_e( 'Model', 'astra-child' ); ?> *</label>
-												<select id="model" name="model" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Model', 'astra-child' ); ?></option>
-												</select>
+												<label for="model" class="required-field"><?php esc_html_e( 'Model', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-car-alt"></i>
+													<select id="model" name="model" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Model', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="variant"><?php esc_html_e( 'Variant', 'astra-child' ); ?> *</label>
-												<select id="variant" name="variant" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
-												</select>
+												<label for="variant" class="required-field"><?php esc_html_e( 'Variant', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-car-battery"></i>
+													<select id="variant" name="variant" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 										</div>
 
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="year"><?php esc_html_e( 'Year', 'astra-child' ); ?> *</label>
-												<select id="year" name="year" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Year', 'astra-child' ); ?></option>
-													<?php
-													for ($year = 2025; $year >= 1948; $year--) {
-														echo '<option value="' . esc_attr($year) . '">' . esc_html($year) . '</option>';
-													}
-													?>
-												</select>
+												<label for="year" class="required-field"><?php esc_html_e( 'Year', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-calendar-alt"></i>
+													<select id="year" name="year" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Year', 'astra-child' ); ?></option>
+														<?php
+														for ($year = 2025; $year >= 1948; $year--) {
+															echo '<option value="' . esc_attr($year) . '">' . esc_html($year) . '</option>';
+														}
+														?>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="mileage"><?php esc_html_e( 'Mileage', 'astra-child' ); ?> *</label>
-												<div class="input-with-suffix">
+												<label for="mileage" class="required-field"><?php esc_html_e( 'Mileage', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-tachometer-alt"></i>
 													<input type="text" id="mileage" name="mileage" class="form-control" required>
 													<span class="input-suffix">km</span>
 												</div>
 											</div>
 											<div class="form-third">
-												<label for="price"><?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
-												<input type="text" id="price" name="price" class="form-control" required>
+												<label for="price" class="required-field"><?php esc_html_e( 'Price', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-euro-sign"></i>
+													<input type="text" id="price" name="price" class="form-control" required>
+												</div>
 											</div>
 										</div>
 
 										<div class="form-row">
-											<label for="location"><?php esc_html_e( 'Location', 'astra-child' ); ?> *</label>
-											<input type="text" id="location" name="location" class="form-control" required>
+											<label for="location" class="required-field"><?php esc_html_e( 'Location', 'astra-child' ); ?></label>
+											<div class="input-with-icon">
+												<i class="fas fa-map-marker-alt"></i>
+												<input type="text" id="location" name="location" class="form-control" required>
+											</div>
 										</div>
 									</div>
 
 									<div class="form-section engine-performance-section">
-										<h2><?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
+										<h2><i class="fas fa-engine"></i> <?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="engine_capacity"><?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?> *</label>
-												<select id="engine_capacity" name="engine_capacity" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Engine Capacity', 'astra-child' ); ?></option>
-													<?php
-													for ($capacity = 0.4; $capacity <= 12.0; $capacity += 0.1) {
-														$formatted_capacity = number_format($capacity, 1);
-														echo '<option value="' . esc_attr($formatted_capacity) . '">' . esc_html($formatted_capacity) . '</option>';
-													}
-													?>
-												</select>
+												<label for="engine_capacity" class="required-field"><?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-cogs"></i>
+													<select id="engine_capacity" name="engine_capacity" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Engine Capacity', 'astra-child' ); ?></option>
+														<?php
+														for ($capacity = 0.4; $capacity <= 12.0; $capacity += 0.1) {
+															$formatted_capacity = number_format($capacity, 1);
+															echo '<option value="' . esc_attr($formatted_capacity) . '">' . esc_html($formatted_capacity) . '</option>';
+														}
+														?>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="fuel_type"><?php esc_html_e( 'Fuel Type', 'astra-child' ); ?> *</label>
-												<select id="fuel_type" name="fuel_type" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Fuel Type', 'astra-child' ); ?></option>
-													<option value="Petrol"><?php esc_html_e( 'Petrol', 'astra-child' ); ?></option>
-													<option value="Diesel"><?php esc_html_e( 'Diesel', 'astra-child' ); ?></option>
-													<option value="Electric"><?php esc_html_e( 'Electric', 'astra-child' ); ?></option>
-													<option value="Petrol hybrid"><?php esc_html_e( 'Petrol hybrid', 'astra-child' ); ?></option>
-													<option value="Diesel hybrid"><?php esc_html_e( 'Diesel hybrid', 'astra-child' ); ?></option>
-													<option value="Plug-in petrol"><?php esc_html_e( 'Plug-in petrol', 'astra-child' ); ?></option>
-													<option value="Plug-in diesel"><?php esc_html_e( 'Plug-in diesel', 'astra-child' ); ?></option>
-													<option value="Bi Fuel"><?php esc_html_e( 'Bi Fuel', 'astra-child' ); ?></option>
-													<option value="Hydrogen"><?php esc_html_e( 'Hydrogen', 'astra-child' ); ?></option>
-													<option value="Natural Gas"><?php esc_html_e( 'Natural Gas', 'astra-child' ); ?></option>
-												</select>
+												<label for="fuel_type" class="required-field"><?php esc_html_e( 'Fuel Type', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-gas-pump"></i>
+													<select id="fuel_type" name="fuel_type" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Fuel Type', 'astra-child' ); ?></option>
+														<option value="Petrol"><?php esc_html_e( 'Petrol', 'astra-child' ); ?></option>
+														<option value="Diesel"><?php esc_html_e( 'Diesel', 'astra-child' ); ?></option>
+														<option value="Electric"><?php esc_html_e( 'Electric', 'astra-child' ); ?></option>
+														<option value="Petrol hybrid"><?php esc_html_e( 'Petrol hybrid', 'astra-child' ); ?></option>
+														<option value="Diesel hybrid"><?php esc_html_e( 'Diesel hybrid', 'astra-child' ); ?></option>
+														<option value="Plug-in petrol"><?php esc_html_e( 'Plug-in petrol', 'astra-child' ); ?></option>
+														<option value="Plug-in diesel"><?php esc_html_e( 'Plug-in diesel', 'astra-child' ); ?></option>
+														<option value="Bi Fuel"><?php esc_html_e( 'Bi Fuel', 'astra-child' ); ?></option>
+														<option value="Hydrogen"><?php esc_html_e( 'Hydrogen', 'astra-child' ); ?></option>
+														<option value="Natural Gas"><?php esc_html_e( 'Natural Gas', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="transmission"><?php esc_html_e( 'Transmission', 'astra-child' ); ?> *</label>
-												<select id="transmission" name="transmission" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Transmission', 'astra-child' ); ?></option>
-													<option value="Automatic"><?php esc_html_e( 'Automatic', 'astra-child' ); ?></option>
-													<option value="Manual"><?php esc_html_e( 'Manual', 'astra-child' ); ?></option>
-												</select>
+												<label for="transmission" class="required-field"><?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-cog"></i>
+													<select id="transmission" name="transmission" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Transmission', 'astra-child' ); ?></option>
+														<option value="Automatic"><?php esc_html_e( 'Automatic', 'astra-child' ); ?></option>
+														<option value="Manual"><?php esc_html_e( 'Manual', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 										</div>
 
 										<div class="form-row">
-											<label for="drive_type"><?php esc_html_e( 'Drive Type', 'astra-child' ); ?> *</label>
-											<select id="drive_type" name="drive_type" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
-												<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
-											</select>
+											<label for="drive_type" class="required-field"><?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
+											<div class="input-with-icon">
+												<i class="fas fa-car-side"></i>
+												<select id="drive_type" name="drive_type" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
+													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
+												</select>
+											</div>
 										</div>
 									</div>
 
 									<div class="form-section body-design-section">
-										<h2><?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
+										<h2><i class="fas fa-car-side"></i> <?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="body_type"><?php esc_html_e( 'Body Type', 'astra-child' ); ?> *</label>
-												<select id="body_type" name="body_type" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Body Type', 'astra-child' ); ?></option>
-													<option value="Hatchback"><?php esc_html_e( 'Hatchback', 'astra-child' ); ?></option>
-													<option value="Saloon"><?php esc_html_e( 'Saloon', 'astra-child' ); ?></option>
-													<option value="Coupe"><?php esc_html_e( 'Coupe', 'astra-child' ); ?></option>
-													<option value="Convertible"><?php esc_html_e( 'Convertible', 'astra-child' ); ?></option>
-													<option value="Estate"><?php esc_html_e( 'Estate', 'astra-child' ); ?></option>
-													<option value="SUV"><?php esc_html_e( 'SUV', 'astra-child' ); ?></option>
-													<option value="MPV"><?php esc_html_e( 'MPV', 'astra-child' ); ?></option>
-													<option value="Pickup"><?php esc_html_e( 'Pickup', 'astra-child' ); ?></option>
-													<option value="Camper"><?php esc_html_e( 'Camper', 'astra-child' ); ?></option>
-													<option value="Minibus"><?php esc_html_e( 'Minibus', 'astra-child' ); ?></option>
-													<option value="Limousine"><?php esc_html_e( 'Limousine', 'astra-child' ); ?></option>
-													<option value="Car Derived Van"><?php esc_html_e( 'Car Derived Van', 'astra-child' ); ?></option>
-													<option value="Combi Van"><?php esc_html_e( 'Combi Van', 'astra-child' ); ?></option>
-													<option value="Panel Van"><?php esc_html_e( 'Panel Van', 'astra-child' ); ?></option>
-													<option value="Window Van"><?php esc_html_e( 'Window Van', 'astra-child' ); ?></option>
-												</select>
+												<label for="body_type" class="required-field"><?php esc_html_e( 'Body Type', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-car"></i>
+													<select id="body_type" name="body_type" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Body Type', 'astra-child' ); ?></option>
+														<option value="Hatchback"><?php esc_html_e( 'Hatchback', 'astra-child' ); ?></option>
+														<option value="Saloon"><?php esc_html_e( 'Saloon', 'astra-child' ); ?></option>
+														<option value="Coupe"><?php esc_html_e( 'Coupe', 'astra-child' ); ?></option>
+														<option value="Convertible"><?php esc_html_e( 'Convertible', 'astra-child' ); ?></option>
+														<option value="Estate"><?php esc_html_e( 'Estate', 'astra-child' ); ?></option>
+														<option value="SUV"><?php esc_html_e( 'SUV', 'astra-child' ); ?></option>
+														<option value="MPV"><?php esc_html_e( 'MPV', 'astra-child' ); ?></option>
+														<option value="Pickup"><?php esc_html_e( 'Pickup', 'astra-child' ); ?></option>
+														<option value="Camper"><?php esc_html_e( 'Camper', 'astra-child' ); ?></option>
+														<option value="Minibus"><?php esc_html_e( 'Minibus', 'astra-child' ); ?></option>
+														<option value="Limousine"><?php esc_html_e( 'Limousine', 'astra-child' ); ?></option>
+														<option value="Car Derived Van"><?php esc_html_e( 'Car Derived Van', 'astra-child' ); ?></option>
+														<option value="Combi Van"><?php esc_html_e( 'Combi Van', 'astra-child' ); ?></option>
+														<option value="Panel Van"><?php esc_html_e( 'Panel Van', 'astra-child' ); ?></option>
+														<option value="Window Van"><?php esc_html_e( 'Window Van', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="number_of_doors"><?php esc_html_e( 'Number of Doors', 'astra-child' ); ?> *</label>
-												<select id="number_of_doors" name="number_of_doors" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
-													<?php
-													$door_options = array(0, 2, 3, 4, 5, 6, 7);
-													foreach ($door_options as $doors) {
-														echo '<option value="' . esc_attr($doors) . '">' . esc_html($doors) . '</option>';
-													}
-													?>
-												</select>
+												<label for="number_of_doors" class="required-field"><?php esc_html_e( 'Number of Doors', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-door-open"></i>
+													<select id="number_of_doors" name="number_of_doors" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
+														<?php
+														$door_options = array(0, 2, 3, 4, 5, 6, 7);
+														foreach ($door_options as $doors) {
+															echo '<option value="' . esc_attr($doors) . '">' . esc_html($doors) . '</option>';
+														}
+														?>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="number_of_seats"><?php esc_html_e( 'Number of Seats', 'astra-child' ); ?> *</label>
-												<select id="number_of_seats" name="number_of_seats" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
-													<?php
-													$seat_options = array(1, 2, 3, 4, 5, 6, 7, 8);
-													foreach ($seat_options as $seats) {
-														echo '<option value="' . esc_attr($seats) . '">' . esc_html($seats) . '</option>';
-													}
-													?>
-												</select>
+												<label for="number_of_seats" class="required-field"><?php esc_html_e( 'Number of Seats', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-chair"></i>
+													<select id="number_of_seats" name="number_of_seats" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
+														<?php
+														$seat_options = array(1, 2, 3, 4, 5, 6, 7, 8);
+														foreach ($seat_options as $seats) {
+															echo '<option value="' . esc_attr($seats) . '">' . esc_html($seats) . '</option>';
+														}
+														?>
+													</select>
+												</div>
 											</div>
 										</div>
 
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="exterior_color"><?php esc_html_e( 'Exterior Color', 'astra-child' ); ?> *</label>
-												<select id="exterior_color" name="exterior_color" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Exterior Color', 'astra-child' ); ?></option>
-													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
-													<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
-													<option value="Silver"><?php esc_html_e( 'Silver', 'astra-child' ); ?></option>
-													<option value="Gray"><?php esc_html_e( 'Gray', 'astra-child' ); ?></option>
-													<option value="Red"><?php esc_html_e( 'Red', 'astra-child' ); ?></option>
-													<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
-													<option value="Green"><?php esc_html_e( 'Green', 'astra-child' ); ?></option>
-													<option value="Yellow"><?php esc_html_e( 'Yellow', 'astra-child' ); ?></option>
-													<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
-													<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
-													<option value="Orange"><?php esc_html_e( 'Orange', 'astra-child' ); ?></option>
-													<option value="Purple"><?php esc_html_e( 'Purple', 'astra-child' ); ?></option>
-													<option value="Gold"><?php esc_html_e( 'Gold', 'astra-child' ); ?></option>
-													<option value="Bronze"><?php esc_html_e( 'Bronze', 'astra-child' ); ?></option>
-												</select>
+												<label for="exterior_color" class="required-field"><?php esc_html_e( 'Exterior Color', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-paint-brush"></i>
+													<select id="exterior_color" name="exterior_color" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Exterior Color', 'astra-child' ); ?></option>
+														<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
+														<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
+														<option value="Silver"><?php esc_html_e( 'Silver', 'astra-child' ); ?></option>
+														<option value="Gray"><?php esc_html_e( 'Gray', 'astra-child' ); ?></option>
+														<option value="Red"><?php esc_html_e( 'Red', 'astra-child' ); ?></option>
+														<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
+														<option value="Green"><?php esc_html_e( 'Green', 'astra-child' ); ?></option>
+														<option value="Yellow"><?php esc_html_e( 'Yellow', 'astra-child' ); ?></option>
+														<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
+														<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
+														<option value="Orange"><?php esc_html_e( 'Orange', 'astra-child' ); ?></option>
+														<option value="Purple"><?php esc_html_e( 'Purple', 'astra-child' ); ?></option>
+														<option value="Gold"><?php esc_html_e( 'Gold', 'astra-child' ); ?></option>
+														<option value="Bronze"><?php esc_html_e( 'Bronze', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 											<div class="form-third">
-												<label for="interior_color"><?php esc_html_e( 'Interior Color', 'astra-child' ); ?> *</label>
-												<select id="interior_color" name="interior_color" class="form-control" required>
-													<option value=""><?php esc_html_e( 'Select Interior Color', 'astra-child' ); ?></option>
-													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
-													<option value="Gray"><?php esc_html_e( 'Gray', 'astra-child' ); ?></option>
-													<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
-													<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
-													<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
-													<option value="Red"><?php esc_html_e( 'Red', 'astra-child' ); ?></option>
-													<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
-													<option value="Tan"><?php esc_html_e( 'Tan', 'astra-child' ); ?></option>
-													<option value="Cream"><?php esc_html_e( 'Cream', 'astra-child' ); ?></option>
-												</select>
+												<label for="interior_color" class="required-field"><?php esc_html_e( 'Interior Color', 'astra-child' ); ?></label>
+												<div class="input-with-icon">
+													<i class="fas fa-car-interior"></i>
+													<select id="interior_color" name="interior_color" class="form-control" required>
+														<option value=""><?php esc_html_e( 'Select Interior Color', 'astra-child' ); ?></option>
+														<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
+														<option value="Gray"><?php esc_html_e( 'Gray', 'astra-child' ); ?></option>
+														<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
+														<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
+														<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
+														<option value="Red"><?php esc_html_e( 'Red', 'astra-child' ); ?></option>
+														<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
+														<option value="Tan"><?php esc_html_e( 'Tan', 'astra-child' ); ?></option>
+														<option value="Cream"><?php esc_html_e( 'Cream', 'astra-child' ); ?></option>
+													</select>
+												</div>
 											</div>
 										</div>
 
@@ -389,8 +435,11 @@ get_header(); ?>
 								</div>
 							</div>
 
-							<div class="form-row">
-								<button type="submit" class="submit-button gradient-button"><?php esc_html_e( 'Submit Listing', 'astra-child' ); ?></button>
+							<div class="form-section submit-section">
+								<button type="submit" class="gradient-button">
+									<i class="fas fa-paper-plane"></i>
+									<?php esc_html_e( 'Submit Listing', 'astra-child' ); ?>
+								</button>
 							</div>
 						</form>
 
