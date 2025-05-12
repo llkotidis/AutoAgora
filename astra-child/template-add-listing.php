@@ -170,8 +170,11 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="mileage"><?php esc_html_e( 'Mileage (km)', 'astra-child' ); ?> *</label>
-												<input type="text" id="mileage" name="mileage" class="form-control" required>
+												<label for="mileage"><?php esc_html_e( 'Mileage', 'astra-child' ); ?> *</label>
+												<div class="input-with-suffix">
+													<input type="text" id="mileage" name="mileage" class="form-control" required>
+													<span class="input-suffix">km</span>
+												</div>
 											</div>
 											<div class="form-third">
 												<label for="price"><?php esc_html_e( 'Price (€)', 'astra-child' ); ?> *</label>
@@ -716,5 +719,27 @@ get_header(); ?>
 	<?php get_sidebar(); ?>
 
 <?php } ?>
+
+<style>
+.input-with-suffix {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.input-with-suffix input {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.input-suffix {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+</style>
 
 <?php get_footer(); ?>
