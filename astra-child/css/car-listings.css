@@ -189,7 +189,7 @@
 }
 
 .active-filter .remove-filter:hover {
-  color: var(--dark-blue);
+  cursor: pointer;
 }
 
 .filters-button {
