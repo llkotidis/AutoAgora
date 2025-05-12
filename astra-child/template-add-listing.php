@@ -130,7 +130,7 @@ get_header(); ?>
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
 									<div class="form-section basic-details-section">
-										<h2><i class="fas fa-car"></i> <?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
+										<h2><?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="make" class="required-field"><?php esc_html_e( 'Make', 'astra-child' ); ?></label>
@@ -208,7 +208,7 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section engine-performance-section">
-										<h2><i class="fas fa-engine"></i> <?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
+										<h2><?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="engine_capacity" class="required-field"><?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
@@ -273,7 +273,7 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section body-design-section">
-										<h2><i class="fas fa-car-side"></i> <?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
+										<h2><?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="body_type" class="required-field"><?php esc_html_e( 'Body Type', 'astra-child' ); ?></label>
