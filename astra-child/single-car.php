@@ -265,6 +265,40 @@ if (have_posts()) :
                                     <span class="detail-label">Interior Color:</span>
                                     <span class="detail-value"><?php echo esc_html($interior_color); ?></span>
                                 </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Number of Doors:</span>
+                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'number_of_doors', true)); ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Number of Seats:</span>
+                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'number_of_seats', true)); ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Specs and Features Section -->
+                    <div class="car-listing-details">
+                        <div class="details-section">
+                            <button class="specs-features-toggle">
+                                View Specs and Features <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <div class="specs-features-content" style="display: none;">
+                                <div class="extras-grid">
+                                    <?php
+                                    $extras = get_post_meta($car_id, 'extras', true);
+                                    if (!empty($extras) && is_array($extras)) {
+                                        foreach ($extras as $extra) {
+                                            echo '<div class="extra-item">';
+                                            echo '<i class="fas fa-check"></i>';
+                                            echo '<span>' . esc_html($extra) . '</span>';
+                                            echo '</div>';
+                                        }
+                                    } else {
+                                        echo '<p>No additional features specified.</p>';
+                                    }
+                                    ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -800,6 +834,66 @@ if (have_posts()) :
                 font-weight: bold;
                 margin-bottom: 15px;
             }
+
+            /* Add these styles before the media query */
+            .specs-features-toggle {
+                background: none;
+                border: none;
+                color: #007bff;
+                font-size: 1.1em;
+                font-weight: 500;
+                padding: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+
+            .specs-features-toggle:hover {
+                text-decoration: underline;
+            }
+
+            .specs-features-toggle i {
+                transition: transform 0.3s ease;
+            }
+
+            .specs-features-toggle.active i {
+                transform: rotate(90deg);
+            }
+
+            .extras-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            .extra-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                background: #fff;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .extra-item i {
+                color: #28a745;
+                font-size: 14px;
+            }
+
+            .extra-item span {
+                color: #333;
+                font-size: 0.95em;
+            }
+
+            @media (max-width: 768px) {
+                .car-listing-top {
+                    grid-template-columns: 1fr;
+                }
+            }
             </style>
 
             <script>
@@ -999,6 +1093,17 @@ if (have_posts()) :
                         }
                     });
                 });
+
+                const toggleBtn = document.querySelector('.specs-features-toggle');
+                const content = document.querySelector('.specs-features-content');
+                
+                if (toggleBtn && content) {
+                    toggleBtn.addEventListener('click', function() {
+                        const isHidden = content.style.display === 'none';
+                        content.style.display = isHidden ? 'block' : 'none';
+                        toggleBtn.classList.toggle('active');
+                    });
+                }
             });
             </script>
             <?php
