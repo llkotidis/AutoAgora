@@ -331,9 +331,11 @@ get_header(); ?>
 												</select>
 											</div>
 										</div>
+									</div>
 
+									<div class="form-section extras-section">
+										<h2><?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
 										<div class="form-row">
-											<label><?php esc_html_e( 'Extras', 'astra-child' ); ?></label>
 											<div class="extras-grid">
 												<?php
 												$extras_options = array(
