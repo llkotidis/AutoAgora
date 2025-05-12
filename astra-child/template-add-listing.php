@@ -390,6 +390,46 @@ get_header(); ?>
 						jQuery(document).ready(function($) {
 							console.log('[Add Listing] jQuery ready');
 							
+							// Store the makes data
+							const makesData = <?php echo json_encode($add_listing_makes); ?>;
+							
+							// Handle make selection change
+							$('#make').on('change', function() {
+								const selectedMake = $(this).val();
+								const modelSelect = $('#model');
+								const variantSelect = $('#variant');
+								
+								// Clear existing options
+								modelSelect.empty().append('<option value=""><?php esc_html_e('Select Model', 'astra-child'); ?></option>');
+								variantSelect.empty().append('<option value=""><?php esc_html_e('Select Variant', 'astra-child'); ?></option>');
+								
+								if (selectedMake && makesData[selectedMake]) {
+									// Add model options
+									Object.keys(makesData[selectedMake]).forEach(model => {
+										modelSelect.append(`<option value="${model}">${model}</option>`);
+									});
+								}
+							});
+							
+							// Handle model selection change
+							$('#model').on('change', function() {
+								const selectedMake = $('#make').val();
+								const selectedModel = $(this).val();
+								const variantSelect = $('#variant');
+								
+								// Clear existing options
+								variantSelect.empty().append('<option value=""><?php esc_html_e('Select Variant', 'astra-child'); ?></option>');
+								
+								if (selectedMake && selectedModel && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
+									// Add variant options
+									makesData[selectedMake][selectedModel].forEach(variant => {
+										if (variant) { // Only add non-empty variants
+											variantSelect.append(`<option value="${variant}">${variant}</option>`);
+										}
+									});
+								}
+							});
+							
 							const fileInput = $('#car_images');
 							const fileUploadArea = $('#file-upload-area');
 							const imagePreview = $('#image-preview');
