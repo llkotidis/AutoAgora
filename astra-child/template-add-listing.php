@@ -450,21 +450,21 @@ get_header(); ?>
 							
 							// Handle input event for real-time formatting
 							mileageInput.on('input', function(e) {
-								// Get the raw value without commas
-								let value = this.value.replace(/,/g, '');
+								// Get the raw value without commas and km
+								let value = this.value.replace(/[km,]/g, '');
 								
 								// Only allow numbers
 								value = value.replace(/[^\d]/g, '');
 								
-								// Format with commas
+								// Format with commas and km
 								if (value) {
-									const formattedValue = formatNumber(value);
+									const formattedValue = formatNumber(value) + ' km';
 									
 									// Update the display value
 									this.value = formattedValue;
 									
 									// Store the raw value in a data attribute
-									$(this).data('raw-value', unformatNumber(formattedValue));
+									$(this).data('raw-value', value);
 								} else {
 									this.value = '';
 									$(this).data('raw-value', 0);
