@@ -207,8 +207,13 @@ get_header(); ?>
 													<option value="Petrol"><?php esc_html_e( 'Petrol', 'astra-child' ); ?></option>
 													<option value="Diesel"><?php esc_html_e( 'Diesel', 'astra-child' ); ?></option>
 													<option value="Electric"><?php esc_html_e( 'Electric', 'astra-child' ); ?></option>
-													<option value="Hybrid"><?php esc_html_e( 'Hybrid', 'astra-child' ); ?></option>
-													<option value="Plug-in Hybrid"><?php esc_html_e( 'Plug-in Hybrid', 'astra-child' ); ?></option>
+													<option value="Petrol hybrid"><?php esc_html_e( 'Petrol hybrid', 'astra-child' ); ?></option>
+													<option value="Diesel hybrid"><?php esc_html_e( 'Diesel hybrid', 'astra-child' ); ?></option>
+													<option value="Plug-in petrol"><?php esc_html_e( 'Plug-in petrol', 'astra-child' ); ?></option>
+													<option value="Plug-in diesel"><?php esc_html_e( 'Plug-in diesel', 'astra-child' ); ?></option>
+													<option value="Bi Fuel"><?php esc_html_e( 'Bi Fuel', 'astra-child' ); ?></option>
+													<option value="Hydrogen"><?php esc_html_e( 'Hydrogen', 'astra-child' ); ?></option>
+													<option value="Natural Gas"><?php esc_html_e( 'Natural Gas', 'astra-child' ); ?></option>
 												</select>
 											</div>
 											<div class="form-third">
