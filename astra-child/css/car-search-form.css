@@ -121,6 +121,11 @@
   font-weight: normal; /* Normal font weight */
   /* transition: color 0.2s ease; */ /* Keep or remove hover transition based on preference */
 }
+
+.more-options-link span {
+  font-size: 14px;
+}
+
 .more-options-link:hover {
   /* color: #0056b3; */ /* Optional: darker blue on hover */
   text-decoration: underline; /* Standard link hover */
