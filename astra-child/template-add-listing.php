@@ -259,7 +259,8 @@ get_header(); ?>
 												<select id="number_of_doors" name="number_of_doors" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
 													<?php
-													for ($doors = 2; $doors <= 5; $doors++) {
+													$door_options = array(0, 2, 3, 4, 5, 6, 7);
+													foreach ($door_options as $doors) {
 														echo '<option value="' . esc_attr($doors) . '">' . esc_html($doors) . '</option>';
 													}
 													?>
@@ -270,7 +271,7 @@ get_header(); ?>
 												<select id="number_of_seats" name="number_of_seats" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
 													<?php
-													$seat_options = array(2, 4, 5, 7);
+													$seat_options = array(1, 2, 3, 4, 5, 6, 7, 8);
 													foreach ($seat_options as $seats) {
 														echo '<option value="' . esc_attr($seats) . '">' . esc_html($seats) . '</option>';
 													}
