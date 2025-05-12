@@ -267,3 +267,28 @@
 .add-listing-specs-column {
   display: none;
 }
+
+/* Extras Grid Styling */
+.extras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.extra-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.extra-option input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.extra-option label {
+  margin: 0;
+  font-weight: normal;
+  font-size: 0.9rem;
+}

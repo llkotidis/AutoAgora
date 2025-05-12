@@ -255,6 +255,32 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
+												<label for="number_of_doors"><?php esc_html_e( 'Number of Doors', 'astra-child' ); ?> *</label>
+												<select id="number_of_doors" name="number_of_doors" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
+													<?php
+													for ($doors = 2; $doors <= 5; $doors++) {
+														echo '<option value="' . esc_attr($doors) . '">' . esc_html($doors) . '</option>';
+													}
+													?>
+												</select>
+											</div>
+											<div class="form-third">
+												<label for="number_of_seats"><?php esc_html_e( 'Number of Seats', 'astra-child' ); ?> *</label>
+												<select id="number_of_seats" name="number_of_seats" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
+													<?php
+													$seat_options = array(2, 4, 5, 7);
+													foreach ($seat_options as $seats) {
+														echo '<option value="' . esc_attr($seats) . '">' . esc_html($seats) . '</option>';
+													}
+													?>
+												</select>
+											</div>
+										</div>
+
+										<div class="form-row form-row-thirds">
+											<div class="form-third">
 												<label for="exterior_color"><?php esc_html_e( 'Exterior Color', 'astra-child' ); ?> *</label>
 												<select id="exterior_color" name="exterior_color" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Exterior Color', 'astra-child' ); ?></option>
@@ -266,11 +292,10 @@ get_header(); ?>
 													<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
 													<option value="Green"><?php esc_html_e( 'Green', 'astra-child' ); ?></option>
 													<option value="Yellow"><?php esc_html_e( 'Yellow', 'astra-child' ); ?></option>
-													<option value="Orange"><?php esc_html_e( 'Orange', 'astra-child' ); ?></option>
 													<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
 													<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
+													<option value="Orange"><?php esc_html_e( 'Orange', 'astra-child' ); ?></option>
 													<option value="Purple"><?php esc_html_e( 'Purple', 'astra-child' ); ?></option>
-													<option value="Pink"><?php esc_html_e( 'Pink', 'astra-child' ); ?></option>
 													<option value="Gold"><?php esc_html_e( 'Gold', 'astra-child' ); ?></option>
 													<option value="Bronze"><?php esc_html_e( 'Bronze', 'astra-child' ); ?></option>
 												</select>
@@ -280,20 +305,50 @@ get_header(); ?>
 												<select id="interior_color" name="interior_color" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Interior Color', 'astra-child' ); ?></option>
 													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
-													<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
 													<option value="Gray"><?php esc_html_e( 'Gray', 'astra-child' ); ?></option>
 													<option value="Beige"><?php esc_html_e( 'Beige', 'astra-child' ); ?></option>
 													<option value="Brown"><?php esc_html_e( 'Brown', 'astra-child' ); ?></option>
+													<option value="White"><?php esc_html_e( 'White', 'astra-child' ); ?></option>
 													<option value="Red"><?php esc_html_e( 'Red', 'astra-child' ); ?></option>
 													<option value="Blue"><?php esc_html_e( 'Blue', 'astra-child' ); ?></option>
-													<option value="Green"><?php esc_html_e( 'Green', 'astra-child' ); ?></option>
-													<option value="Yellow"><?php esc_html_e( 'Yellow', 'astra-child' ); ?></option>
-													<option value="Orange"><?php esc_html_e( 'Orange', 'astra-child' ); ?></option>
-													<option value="Purple"><?php esc_html_e( 'Purple', 'astra-child' ); ?></option>
-													<option value="Pink"><?php esc_html_e( 'Pink', 'astra-child' ); ?></option>
-													<option value="Gold"><?php esc_html_e( 'Gold', 'astra-child' ); ?></option>
-													<option value="Bronze"><?php esc_html_e( 'Bronze', 'astra-child' ); ?></option>
+													<option value="Tan"><?php esc_html_e( 'Tan', 'astra-child' ); ?></option>
+													<option value="Cream"><?php esc_html_e( 'Cream', 'astra-child' ); ?></option>
 												</select>
+											</div>
+										</div>
+
+										<div class="form-row">
+											<label><?php esc_html_e( 'Extras', 'astra-child' ); ?></label>
+											<div class="extras-grid">
+												<?php
+												$extras_options = array(
+													'alloy_wheels' => 'Alloy Wheels',
+													'cruise_control' => 'Cruise Control',
+													'disabled_accessible' => 'Disabled Accessible',
+													'keyless_start' => 'Keyless Start',
+													'rear_view_camera' => 'Rear View Camera',
+													'start_stop' => 'Start/Stop',
+													'sunroof' => 'Sunroof',
+													'heated_seats' => 'Heated Seats',
+													'android_auto' => 'Android Auto',
+													'apple_carplay' => 'Apple CarPlay',
+													'folding_mirrors' => 'Folding Mirrors',
+													'leather_seats' => 'Leather Seats',
+													'panoramic_roof' => 'Panoramic Roof',
+													'parking_sensors' => 'Parking Sensors',
+													'camera_360' => '360° Camera',
+													'adaptive_cruise_control' => 'Adaptive Cruise Control',
+													'blind_spot_mirror' => 'Blind Spot Mirror',
+													'lane_assist' => 'Lane Assist',
+													'power_tailgate' => 'Power Tailgate'
+												);
+												foreach ($extras_options as $value => $label) {
+													echo '<div class="extra-option">';
+													echo '<input type="checkbox" id="extra_' . esc_attr($value) . '" name="extras[]" value="' . esc_attr($value) . '">';
+													echo '<label for="extra_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
+													echo '</div>';
+												}
+												?>
 											</div>
 										</div>
 									</div>

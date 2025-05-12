@@ -34,7 +34,9 @@ function handle_add_car_listing() {
         'drive_type' => 'Drive Type',
         'exterior_color' => 'Exterior Color',
         'interior_color' => 'Interior Color',
-        'description' => 'Description'
+        'description' => 'Description',
+        'number_of_doors' => 'Number of Doors',
+        'number_of_seats' => 'Number of Seats'
     );
     
     // Verify nonce
@@ -86,6 +88,11 @@ function handle_add_car_listing() {
     $exterior_color = sanitize_text_field($_POST['exterior_color']);
     $interior_color = sanitize_text_field($_POST['interior_color']);
     $description = wp_kses_post($_POST['description']);
+    $number_of_doors = intval($_POST['number_of_doors']);
+    $number_of_seats = intval($_POST['number_of_seats']);
+    
+    // Process extras (checkboxes)
+    $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
     
     // Prepare post data
     $post_title = $year . ' ' . $make . ' ' . $model . ' ' . $variant;
@@ -125,6 +132,9 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'exterior_color', $exterior_color);
     update_post_meta($post_id, 'interior_color', $interior_color);
     update_post_meta($post_id, 'description', $description);
+    update_post_meta($post_id, 'number_of_doors', $number_of_doors);
+    update_post_meta($post_id, 'number_of_seats', $number_of_seats);
+    update_post_meta($post_id, 'extras', $extras);
     
     // Process image uploads
     $image_ids = handle_car_image_uploads($post_id);
