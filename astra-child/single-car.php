@@ -289,9 +289,15 @@ if (have_posts()) :
                                     $extras = get_post_meta($car_id, 'extras', true);
                                     if (!empty($extras) && is_array($extras)) {
                                         foreach ($extras as $extra) {
+                                            // Get the label from the ACF field
+                                            $field = get_field_object('extras', $car_id);
+                                            $label = '';
+                                            if ($field && isset($field['choices'][$extra])) {
+                                                $label = $field['choices'][$extra];
+                                            }
                                             echo '<div class="extra-item">';
                                             echo '<i class="fas fa-check"></i>';
-                                            echo '<span>' . esc_html($extra) . '</span>';
+                                            echo '<span>' . esc_html($label ? $label : $extra) . '</span>';
                                             echo '</div>';
                                         }
                                     } else {
