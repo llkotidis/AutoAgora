@@ -246,6 +246,23 @@ if (have_posts()) :
                                     <span class="detail-value"><?php echo esc_html($location); ?></span>
                                 </div>
                                 <div class="detail-item">
+                                    <span class="detail-label">Availability:</span>
+                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'availability', true)); ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">MOT Status:</span>
+                                    <span class="detail-value"><?php 
+                                        $mot_status = get_post_meta($car_id, 'motuntil', true);
+                                        if ($mot_status === 'Expired') {
+                                            echo 'Expired';
+                                        } elseif (!empty($mot_status)) {
+                                            echo date_i18n('F Y', strtotime($mot_status . '-01'));
+                                        } else {
+                                            echo 'Not specified';
+                                        }
+                                    ?></span>
+                                </div>
+                                <div class="detail-item">
                                     <span class="detail-label">Engine Capacity:</span>
                                     <span class="detail-value"><?php echo esc_html($engine_capacity); ?>L</span>
                                 </div>
