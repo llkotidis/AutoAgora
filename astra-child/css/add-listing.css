@@ -285,6 +285,7 @@
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: pointer;
+    user-select: none;
 }
 
 .extra-option:hover {
@@ -294,12 +295,15 @@
 .extra-option input[type="checkbox"] {
     width: auto;
     margin: 0;
+    pointer-events: none;
 }
 
 .extra-option label {
     margin-left: 5px;
     color: #333;
     font-size: 0.95em;
+    pointer-events: none;
+    flex: 1;
 }
 
 /* Input with suffix styling */
@@ -439,6 +443,7 @@
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: pointer;
+    user-select: none;
 }
 
 .vehicle-history-option:hover {
@@ -448,10 +453,13 @@
 .vehicle-history-option input[type="checkbox"] {
     width: auto;
     margin: 0;
+    pointer-events: none;
 }
 
 .vehicle-history-option label {
     margin-left: 5px;
     color: #333;
     font-size: 0.95em;
+    pointer-events: none;
+    flex: 1;
 }
