@@ -387,6 +387,7 @@
   margin-bottom: 12px;
   line-height: 1.4;
   text-decoration: none !important;
+  height: 40px;
 }
 
 .car-info-boxes {
@@ -416,7 +417,7 @@
   font-size: 1.3em !important;
   font-weight: bold;
   color: #007bff;
-  margin-bottom: 8px;
+  margin: 2.5rem 0 0.5rem 0;
   text-decoration: none !important;
 }
 
