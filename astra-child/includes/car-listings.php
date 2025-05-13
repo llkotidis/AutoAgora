@@ -165,33 +165,50 @@ function display_car_listings($atts) {
                             <div class="car-listing-details">
                                 <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                                 <div class="car-specs">
-                                    <?php echo esc_html($engine_capacity); ?>L
-                                    <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
                                     <?php 
-                                        $body_type = get_post_meta(get_the_ID(), 'body_type', true);
-                                        echo !empty($body_type) ? ' ' . esc_html($body_type) : '';
+                                    $specs_array = array();
+                                    if (!empty($engine_capacity)) {
+                                        $specs_array[] = esc_html($engine_capacity) . 'L';
+                                    }
+
+                                    // $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true); // Removed
+                                    // if (!empty($fuel_type)) { // Removed
+                                    //     $specs_array[] = esc_html($fuel_type); // Removed
+                                    // } // Removed
+                                    
+                                    $body_type = get_post_meta(get_the_ID(), 'body_type', true);
+                                    if (!empty($body_type)) {
+                                        $specs_array[] = esc_html($body_type);
+                                    }
+
+                                    if (!empty($transmission)) {
+                                        $specs_array[] = esc_html($transmission);
+                                    }
+                                    
+                                    echo implode(' | ', $specs_array);
                                     ?>
-                                    <?php echo !empty($transmission) ? ' ' . esc_html($transmission) : ''; ?>
                                 </div>
                                 <div class="car-info-boxes">
+                                <div class="info-box">
+                                        <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
+                                    </div>
                                     <div class="info-box">
                                         <span class="info-value"><?php echo number_format($mileage); ?> km</span>
                                     </div>
-                                    <div class="info-box">
-                                        <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
-                                    </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
-                                <?php 
-                                $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
-                                if (!$publication_date) {
-                                    $publication_date = get_the_date('Y-m-d H:i:s');
-                                    update_post_meta(get_the_ID(), 'publication_date', $publication_date);
-                                }
-                                $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
-                                echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
-                                ?>
-                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                                <div class="car-listing-additional-info">
+                                    <?php 
+                                    $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
+                                    if (!$publication_date) {
+                                        $publication_date = get_the_date('Y-m-d H:i:s');
+                                        update_post_meta(get_the_ID(), 'publication_date', $publication_date);
+                                    }
+                                    $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                                    echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                                    ?>
+                                    <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                                </div>
                             </div>
                         </a>
                     </div>
