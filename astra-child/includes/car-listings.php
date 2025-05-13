@@ -171,10 +171,10 @@ function display_car_listings($atts) {
                                         $specs_array[] = esc_html($engine_capacity) . 'L';
                                     }
 
-                                    $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true);
-                                    if (!empty($fuel_type)) {
-                                        $specs_array[] = esc_html($fuel_type);
-                                    }
+                                    // $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true); // Removed
+                                    // if (!empty($fuel_type)) { // Removed
+                                    //     $specs_array[] = esc_html($fuel_type); // Removed
+                                    // } // Removed
                                     
                                     $body_type = get_post_meta(get_the_ID(), 'body_type', true);
                                     if (!empty($body_type)) {
