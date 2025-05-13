@@ -189,11 +189,11 @@ function display_car_listings($atts) {
                                     ?>
                                 </div>
                                 <div class="car-info-boxes">
-                                    <div class="info-box">
-                                        <span class="info-value"><?php echo number_format($mileage); ?> km</span>
+                                <div class="info-box">
+                                        <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
                                     </div>
                                     <div class="info-box">
-                                        <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
+                                        <span class="info-value"><?php echo number_format($mileage); ?> km</span>
                                     </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
