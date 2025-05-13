@@ -345,6 +345,36 @@ get_header(); ?>
 										</div>
 									</div>
 
+									<div class="form-section mot-section">
+										<h2><?php esc_html_e( 'MOT Status (Optional)', 'astra-child' ); ?></h2>
+										<div class="form-row">
+											<label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
+											<select id="motuntil" name="motuntil" class="form-control">
+												<option value=""><?php esc_html_e( 'Select MOT Status', 'astra-child' ); ?></option>
+												<option value="Not Applicable"><?php esc_html_e( 'Not Applicable', 'astra-child' ); ?></option>
+												<option value="Expired"><?php esc_html_e( 'Expired', 'astra-child' ); ?></option>
+												<?php
+												// Get current date
+												$current_date = new DateTime();
+												// Set to first day of current month
+												$current_date->modify('first day of this month');
+												// Create end date (2 years from now)
+												$end_date = new DateTime();
+												$end_date->modify('+2 years');
+												$end_date->modify('last day of this month');
+
+												// Generate options
+												while ($current_date <= $end_date) {
+													$value = $current_date->format('Y-m');
+													$display = $current_date->format('F Y');
+													echo '<option value="' . esc_attr($value) . '">' . esc_html($display) . '</option>';
+													$current_date->modify('+1 month');
+												}
+												?>
+											</select>
+										</div>
+									</div>
+
 									<div class="form-section extras-section">
 										<h2><?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
 										<div class="form-row">
