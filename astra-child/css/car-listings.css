@@ -564,17 +564,9 @@
 }
 
 .favorite-btn i {
-  font-size: 22px;
+  font-size: 18px;
   color: #ff0000;
   transition: all 0.2s ease;
-}
-
-.favorite-btn:hover {
-  background: var(--white);
-}
-
-.favorite-btn:hover i {
-  background: var(--white);
 }
 
 /* Empty heart state */
