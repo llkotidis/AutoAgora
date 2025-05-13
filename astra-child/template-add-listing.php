@@ -415,7 +415,7 @@ get_header(); ?>
 
 							<div class="add-listing-description-section">
 								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
-								<p class="description-guidelines"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
+								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
 								<p class="description-guidelines-avoid"><?php esc_html_e( '❗ Avoid:', 'astra-child' ); ?></p>
 								<ul class="description-guidelines-list">
 									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>

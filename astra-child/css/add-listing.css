@@ -361,28 +361,28 @@
     margin: 0 0 15px 0;
 }
 
-.description-guidelines,
+.description-guidelines-green {
+    color: #2e7d32;
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+}
+
 .description-guidelines-avoid,
 .description-guidelines-list {
     color: #333;
     margin: 0 0 10px 0;
     font-size: 0.9em;
-    background-color: #fff9c4;
-    padding: 10px 15px;
-    border-radius: 4px;
 }
 
 .description-guidelines-list {
     list-style-type: none;
     padding-left: 20px;
     margin-bottom: 15px;
-    background-color: transparent;
 }
 
 .description-guidelines-list li {
     position: relative;
     padding-left: 15px;
-    background-color: transparent;
 }
 
 .description-guidelines-list li:before {
