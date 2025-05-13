@@ -550,7 +550,7 @@
   right: 10px;
   background: none;
   border: none;
-  /* padding: 8px; */
+  padding: 0 !important;
   width: 36px;
   height: 36px;
   border-radius: 50%;
