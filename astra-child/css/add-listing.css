@@ -393,3 +393,20 @@
     left: 0;
     color: #333;
 }
+
+.checkbox-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.checkbox-field input[type="checkbox"] {
+    order: 2;
+    margin-left: 10px;
+}
+
+.checkbox-field label {
+    order: 1;
+    margin-right: auto;
+}

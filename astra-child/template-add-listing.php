@@ -381,7 +381,7 @@ get_header(); ?>
 										<div class="form-row">
 											<div class="checkbox-field">
 												<input type="checkbox" id="isantique" name="isantique" value="1">
-												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Is Antique Vehicle', 'astra-child' ); ?></label>
+												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Written as antique', 'astra-child' ); ?></label>
 											</div>
 										</div>
 									</div>
