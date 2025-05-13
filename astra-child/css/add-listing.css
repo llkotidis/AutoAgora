@@ -288,7 +288,62 @@
 }
 
 .extra-option label {
-  margin: 0;
+  margin-left: 5px;
+}
+
+/* Input with suffix styling */
+.input-with-suffix {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.input-with-suffix input {
+  padding-right: 40px;
+  width: 100%;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+}
+
+/* Section required text styling */
+.section-required {
+  font-size: 0.8em;
+  color: #666;
   font-weight: normal;
-  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+/* Form labels with icons styling */
+.form-section label i {
+  margin-right: 10px;
+  color: #333;
+  width: 18px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.form-section label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-section label i:hover {
+  color: #007bff;
+}
+
+/* Listing note styling */
+.listing-note {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin: -10px 0 20px 0;
 }

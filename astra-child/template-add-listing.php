@@ -49,6 +49,7 @@ get_header(); ?>
                                 <p><?php esc_html_e( 'There was a problem with your submission. Please check all fields and try again.', 'astra-child' ); ?></p>
                             </div>
                             <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
+                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
                             <?php
                         } elseif ( isset( $_GET['listing_errors'] ) ) {
                             ?>
@@ -57,10 +58,12 @@ get_header(); ?>
                                 <p><?php echo esc_html( $_GET['listing_errors'] ); ?></p>
                             </div>
                             <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
+                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
                             <?php
                         } else {
 						?>
                         <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
+                        <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
                         
                         <?php
                         // Display error messages if any
@@ -724,56 +727,5 @@ get_header(); ?>
 	<?php get_sidebar(); ?>
 
 <?php } ?>
-
-<style>
-.input-with-suffix {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-}
-
-.input-with-suffix input {
-    padding-right: 40px;
-    width: 100%;
-}
-
-.input-suffix {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
-    pointer-events: none;
-}
-
-.section-required {
-    font-size: 0.8em;
-    color: #666;
-    font-weight: normal;
-    margin-left: 10px;
-}
-
-/* Updated styles for form labels with icons */
-.form-section label i {
-    margin-right: 10px;
-    color: #333;
-    width: 18px;
-    text-align: center;
-    font-size: 16px;
-}
-
-.form-section label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #333;
-}
-
-/* Add hover effect to icons */
-.form-section label i:hover {
-    color: #007bff;
-}
-</style>
 
 <?php get_footer(); ?>
