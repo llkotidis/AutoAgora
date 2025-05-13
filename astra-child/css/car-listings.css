@@ -563,6 +563,11 @@
   background: var(--white);
 }
 
+.favorite-btn:hover {
+  background: var(--white);
+  transform: scale(1.05);
+}
+
 .favorite-btn i {
   width: 100%;
   height: auto;
