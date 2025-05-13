@@ -251,10 +251,10 @@ function ajax_filter_car_listings_handler() {
                         </div>
                         <div class="car-info-boxes">
                             <div class="info-box">
-                                <span class="info-value"><?php echo number_format(floatval(str_replace(',', '', $mileage))); ?> km</span>
+                                <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
                             </div>
                             <div class="info-box">
-                                <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
+                                <span class="info-value"><?php echo number_format(floatval(str_replace(',', '', $mileage))); ?> km</span>
                             </div>
                         </div>
                         <div class="car-price">€<?php echo number_format(floatval(str_replace(',', '', $price))); ?></div>
