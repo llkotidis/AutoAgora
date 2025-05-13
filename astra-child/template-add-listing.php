@@ -415,6 +415,13 @@ get_header(); ?>
 
 							<div class="add-listing-description-section">
 								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<p class="description-guidelines"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
+								<p class="description-guidelines-avoid"><?php esc_html_e( '❗ Avoid:', 'astra-child' ); ?></p>
+								<ul class="description-guidelines-list">
+									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Repetitive or irrelevant details', 'astra-child' ); ?></li>
+								</ul>
 								<div class="form-row">
 									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
 								</div>

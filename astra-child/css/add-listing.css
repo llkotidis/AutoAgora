@@ -360,3 +360,29 @@
     font-style: italic;
     margin: 0 0 15px 0;
 }
+
+.description-guidelines,
+.description-guidelines-avoid,
+.description-guidelines-list {
+    color: #ffd700;
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+}
+
+.description-guidelines-list {
+    list-style-type: none;
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.description-guidelines-list li {
+    position: relative;
+    padding-left: 15px;
+}
+
+.description-guidelines-list li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #ffd700;
+}
