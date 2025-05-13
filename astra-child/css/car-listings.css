@@ -565,6 +565,7 @@
 
 .favorite-btn i {
   font-size: 18px;
+  width: 100%;
   color: #ff0000;
   transition: all 0.2s ease;
 }
