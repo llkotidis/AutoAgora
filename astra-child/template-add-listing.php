@@ -372,6 +372,18 @@ get_header(); ?>
 												?>
 											</select>
 										</div>
+
+										<div class="form-row">
+											<label for="numowners"><i class="fas fa-users"></i> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
+											<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required>
+										</div>
+
+										<div class="form-row">
+											<div class="checkbox-field">
+												<input type="checkbox" id="isantique" name="isantique" value="1">
+												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Is Antique Vehicle', 'astra-child' ); ?></label>
+											</div>
+										</div>
 									</div>
 
 									<div class="form-section extras-section">
