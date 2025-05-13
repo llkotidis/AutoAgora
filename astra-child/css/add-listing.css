@@ -295,15 +295,17 @@
 .extra-option input[type="checkbox"] {
     width: auto;
     margin: 0;
-    pointer-events: none;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .extra-option label {
     margin-left: 5px;
     color: #333;
     font-size: 0.95em;
-    pointer-events: none;
+    cursor: pointer;
     flex: 1;
+    pointer-events: auto;
 }
 
 /* Input with suffix styling */
@@ -453,13 +455,15 @@
 .vehicle-history-option input[type="checkbox"] {
     width: auto;
     margin: 0;
-    pointer-events: none;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .vehicle-history-option label {
     margin-left: 5px;
     color: #333;
     font-size: 0.95em;
-    pointer-events: none;
+    cursor: pointer;
     flex: 1;
+    pointer-events: auto;
 }
