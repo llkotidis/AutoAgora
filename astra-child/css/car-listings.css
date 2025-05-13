@@ -378,6 +378,7 @@
   font-size: 1.5em !important;
   font-weight: bold;
   color: var(--text-color);
+  margin-bottom: 6px !important;
 }
 
 .car-specs {
@@ -391,15 +392,15 @@
 .car-info-boxes {
   display: flex;
   gap: 10px;
-  margin: 1rem 0;
+  margin: 1.25rem 0;
 }
 
 .info-box {
   flex: 1;
   background: var(--light-bg);
-  border: var(--border);
+  border: none;
   border-radius: var(--border-radius-small);
-  padding: 6px 10px;
+  padding: 6px 18px;
   text-align: center;
 }
 
