@@ -553,21 +553,22 @@
   padding: 8px;
   cursor: pointer;
   z-index: 10;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  background: var(--white);
 }
 
 .favorite-btn i {
-  font-size: 24px;
+  font-size: 22px;
   color: #ff0000;
   transition: all 0.2s ease;
 }
 
 .favorite-btn:hover {
-  transform: scale(1.1);
+  background: var(--white);
 }
 
 .favorite-btn:hover i {
-  transform: scale(1.1);
+  background: var(--white);
 }
 
 /* Empty heart state */
