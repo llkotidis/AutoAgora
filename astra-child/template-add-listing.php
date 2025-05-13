@@ -606,11 +606,28 @@ get_header(); ?>
 								}
 							});
 							
+							// Format HP input with thousand separators
+							$('#hp').on('input', function() {
+								// Remove any non-digit characters
+								let value = $(this).val().replace(/[^\d]/g, '');
+								
+								// Add thousand separators
+								if (value.length > 0) {
+									value = parseInt(value).toLocaleString();
+								}
+								
+								// Update the input value
+								$(this).val(value);
+								// Store the raw value
+								$(this).data('raw-value', value.replace(/[^\d]/g, ''));
+							});
+
 							// Handle form submission to use raw values
 							$('#add-car-listing-form').on('submit', function(e) {
 								// Get the raw values from data attributes
 								const rawMileage = mileageInput.data('raw-value') || unformatNumber(mileageInput.val());
 								const rawPrice = priceInput.data('raw-value') || unformatNumber(priceInput.val().replace('€', ''));
+								const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
 								
 								// Create hidden inputs with the raw values
 								$('<input>').attr({
@@ -624,10 +641,17 @@ get_header(); ?>
 									name: 'price',
 									value: rawPrice
 								}).appendTo(this);
+
+								$('<input>').attr({
+									type: 'hidden',
+									name: 'hp',
+									value: rawHp
+								}).appendTo(this);
 								
 								// Remove the original inputs from submission
 								mileageInput.prop('disabled', true);
 								priceInput.prop('disabled', true);
+								$('#hp').prop('disabled', true);
 							});
 							
 							console.log('[Add Listing] Elements found:', {
@@ -796,20 +820,6 @@ get_header(); ?>
 								fileInput[0].files = dataTransfer.files;
 								console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
 							}
-
-							// Format HP input with thousand separators
-							$('#hp').on('input', function() {
-								// Remove any non-digit characters
-								let value = $(this).val().replace(/[^\d]/g, '');
-								
-								// Add thousand separators
-								if (value.length > 0) {
-									value = parseInt(value).toLocaleString();
-								}
-								
-								// Update the input value
-								$(this).val(value);
-							});
 						});
 						</script>
 						<?php
