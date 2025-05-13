@@ -384,6 +384,30 @@ get_header(); ?>
 												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Written as antique', 'astra-child' ); ?></label>
 											</div>
 										</div>
+
+										<div class="form-row">
+											<label for="vehiclehistory"><i class="fas fa-history"></i> <?php esc_html_e( 'Vehicle History', 'astra-child' ); ?></label>
+											<select id="vehiclehistory" name="vehiclehistory[]" class="form-control" multiple>
+												<option value="no_accidents"><?php esc_html_e( 'No Accidents', 'astra-child' ); ?></option>
+												<option value="minor_accidents"><?php esc_html_e( 'Minor Accidents', 'astra-child' ); ?></option>
+												<option value="major_accidents"><?php esc_html_e( 'Major Accidents', 'astra-child' ); ?></option>
+												<option value="regular_maintenance"><?php esc_html_e( 'Regular Maintenance', 'astra-child' ); ?></option>
+												<option value="engine_overhaul"><?php esc_html_e( 'Engine Overhaul', 'astra-child' ); ?></option>
+												<option value="transmission_replacement"><?php esc_html_e( 'Transmission Replacement', 'astra-child' ); ?></option>
+												<option value="repainted"><?php esc_html_e( 'Repainted', 'astra-child' ); ?></option>
+												<option value="bodywork_repair"><?php esc_html_e( 'Bodywork Repair', 'astra-child' ); ?></option>
+												<option value="rust_treatment"><?php esc_html_e( 'Rust Treatment', 'astra-child' ); ?></option>
+												<option value="no_modifications"><?php esc_html_e( 'No Modifications', 'astra-child' ); ?></option>
+												<option value="performance_upgrades"><?php esc_html_e( 'Performance Upgrades', 'astra-child' ); ?></option>
+												<option value="cosmetic_modifications"><?php esc_html_e( 'Cosmetic Modifications', 'astra-child' ); ?></option>
+												<option value="flood_damage"><?php esc_html_e( 'Flood Damage', 'astra-child' ); ?></option>
+												<option value="fire_damage"><?php esc_html_e( 'Fire Damage', 'astra-child' ); ?></option>
+												<option value="hail_damage"><?php esc_html_e( 'Hail Damage', 'astra-child' ); ?></option>
+												<option value="clear_title"><?php esc_html_e( 'Clear Title', 'astra-child' ); ?></option>
+												<option value="no_known_issues"><?php esc_html_e( 'No Known Issues', 'astra-child' ); ?></option>
+												<option value="odometer_replacement"><?php esc_html_e( 'Odometer Replacement', 'astra-child' ); ?></option>
+											</select>
+										</div>
 									</div>
 
 									<div class="form-section extras-section">
