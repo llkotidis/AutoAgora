@@ -348,9 +348,9 @@ if (have_posts()) :
                                     $show_read_more = true;
                                 }
                                 ?>
-                                <p class="description-text"><?php echo esc_html($truncated_description); ?></p>
+                                <p class="description-text"><?php echo wp_kses_post($truncated_description); ?></p>
                                 <?php if ($show_read_more): ?>
-                                    <p class="full-description" style="display: none;"><?php echo esc_html($description); ?></p>
+                                    <p class="full-description" style="display: none;"><?php echo wp_kses_post($description); ?></p>
                                     <button class="read-more-btn">Read more</button>
                                 <?php endif; ?>
                             </div>
