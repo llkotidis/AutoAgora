@@ -421,10 +421,8 @@
 }
 
 .car-location {
-  color: #000;
+  color: var(--text-color);
   margin-bottom: 0;
-  font-size: 1.1em !important;
-  text-decoration: none !important;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -512,6 +510,13 @@
 
 .carousel-nav.next {
   right: 10px;
+}
+
+.car-listing-additional-info {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .see-all-images {
@@ -640,11 +645,9 @@
 } */
 
 .car-publication-date {
-  font-size: 0.9em;
+  font-size: 0.85em;
   color: var(--light-text-color);
-  margin: 8px 0;
   font-style: italic;
-  display: block;
 }
 
 /* Image Counter Styles */
