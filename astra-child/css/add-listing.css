@@ -284,6 +284,11 @@
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.extra-option:hover {
+    background: #f8f9fa;
 }
 
 .extra-option input[type="checkbox"] {
@@ -433,6 +438,11 @@
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.vehicle-history-option:hover {
+    background: #f8f9fa;
 }
 
 .vehicle-history-option input[type="checkbox"] {
