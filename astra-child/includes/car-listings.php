@@ -197,16 +197,18 @@ function display_car_listings($atts) {
                                     </div>
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
-                                <?php 
-                                $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
-                                if (!$publication_date) {
-                                    $publication_date = get_the_date('Y-m-d H:i:s');
-                                    update_post_meta(get_the_ID(), 'publication_date', $publication_date);
-                                }
-                                $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
-                                echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
-                                ?>
-                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                                <div class="car-listing-additional-info">
+                                    <?php 
+                                    $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
+                                    if (!$publication_date) {
+                                        $publication_date = get_the_date('Y-m-d H:i:s');
+                                        update_post_meta(get_the_ID(), 'publication_date', $publication_date);
+                                    }
+                                    $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
+                                    echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
+                                    ?>
+                                    <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                                </div>
                             </div>
                         </a>
                     </div>
