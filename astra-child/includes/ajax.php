@@ -221,16 +221,32 @@ function ajax_filter_car_listings_handler() {
                     <div class="car-listing-details">
                         <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
                         <div class="car-specs">
-                            <?php echo esc_html($engine_capacity); ?>L
-                            <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
                             <?php 
-                                $body_type = get_post_meta(get_the_ID(), 'body_type', true);
-                                echo !empty($body_type) ? ' ' . esc_html($body_type) : '';
-                            ?>
-                            <?php echo !empty($transmission) ? ' ' . esc_html($transmission) : ''; ?>
-                            <?php 
-                                $drive_type = get_post_meta(get_the_ID(), 'drive_type', true);
-                                echo !empty($drive_type) ? ' ' . esc_html($drive_type) : '';
+                            $specs_array = array();
+                            if (!empty($engine_capacity)) {
+                                $specs_array[] = esc_html($engine_capacity) . 'L';
+                            }
+
+                            $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true);
+                            if (!empty($fuel_type)) {
+                                $specs_array[] = esc_html($fuel_type);
+                            }
+                            
+                            $body_type = get_post_meta(get_the_ID(), 'body_type', true);
+                            if (!empty($body_type)) {
+                                $specs_array[] = esc_html($body_type);
+                            }
+
+                            if (!empty($transmission)) {
+                                $specs_array[] = esc_html($transmission);
+                            }
+                            
+                            $drive_type = get_post_meta(get_the_ID(), 'drive_type', true);
+                            if (!empty($drive_type)) {
+                               $specs_array[] = esc_html($drive_type);
+                            }
+
+                            echo implode(' | ', $specs_array);
                             ?>
                         </div>
                         <div class="car-info-boxes">
