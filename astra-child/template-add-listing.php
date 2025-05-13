@@ -258,7 +258,7 @@ get_header(); ?>
 											<div class="form-half">
 												<label for="hp"><i class="fas fa-horse"></i> <?php esc_html_e( 'HorsePower (Optional)', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
-													<input type="number" id="hp" name="hp" class="form-control" min="0" step="1">
+													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1">
 													<span class="input-suffix">HP</span>
 												</div>
 											</div>
@@ -796,6 +796,20 @@ get_header(); ?>
 								fileInput[0].files = dataTransfer.files;
 								console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
 							}
+
+							// Format HP input with thousand separators
+							$('#hp').on('input', function() {
+								// Remove any non-digit characters
+								let value = $(this).val().replace(/[^\d]/g, '');
+								
+								// Add thousand separators
+								if (value.length > 0) {
+									value = parseInt(value).toLocaleString();
+								}
+								
+								// Update the input value
+								$(this).val(value);
+							});
 						});
 						</script>
 						<?php
