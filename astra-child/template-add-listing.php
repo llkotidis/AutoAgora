@@ -244,15 +244,24 @@ get_header(); ?>
 											</div>
 										</div>
 
-										<div class="form-row">
-											<label for="drive_type"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
-											<select id="drive_type" name="drive_type" class="form-control" required>
-												<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
-												<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
-												<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
-											</select>
+										<div class="form-row form-row-halves">
+											<div class="form-half">
+												<label for="drive_type"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
+												<select id="drive_type" name="drive_type" class="form-control" required>
+													<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
+													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
+												</select>
+											</div>
+											<div class="form-half">
+												<label for="hp"><i class="fas fa-horse"></i> <?php esc_html_e( 'HorsePower (Optional)', 'astra-child' ); ?></label>
+												<div class="input-with-suffix">
+													<input type="number" id="hp" name="hp" class="form-control" min="0" step="1">
+													<span class="input-suffix">HP</span>
+												</div>
+											</div>
 										</div>
 									</div>
 
