@@ -346,7 +346,7 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section mot-section">
-										<h2><?php esc_html_e( 'MOT Status (Optional)', 'astra-child' ); ?></h2>
+										<h2><?php esc_html_e( 'Registration & Background Info', 'astra-child' ); ?></h2>
 										<div class="form-row">
 											<label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
 											<select id="motuntil" name="motuntil" class="form-control">
