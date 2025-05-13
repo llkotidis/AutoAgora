@@ -375,15 +375,14 @@
 }
 
 .car-title {
-  margin: 0 0 8px 0;
   font-size: 1.5em !important;
   font-weight: bold;
-  color: #000;
+  color: var(--text-color);
 }
 
 .car-specs {
-  font-size: 0.95em !important;
-  color: #000;
+  font-size: 0.85em !important;
+  color: var(--light-text-color);
   margin-bottom: 12px;
   line-height: 1.4;
   text-decoration: none !important;
@@ -392,14 +391,14 @@
 .car-info-boxes {
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
+  margin: 1rem 0;
 }
 
 .info-box {
   flex: 1;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--light-bg);
+  border: var(--border);
+  border-radius: var(--border-radius-small);
   padding: 6px 10px;
   text-align: center;
 }
@@ -407,7 +406,7 @@
 .info-value {
   display: block;
   font-size: 0.95em !important;
-  color: #000;
+  color: var(--text-color);
   font-weight: 500;
   text-decoration: none !important;
 }
