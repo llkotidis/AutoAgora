@@ -51,15 +51,14 @@
 }
 
 .car-listing-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: var(--border);
+  border-radius: var(--border-radius-large);
   overflow: hidden;
-  transition: transform 0.2s;
+  transition: box-shadow 0.3s ease;
 }
 
 .car-listing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .car-listing-image {
@@ -85,7 +84,7 @@
 .car-listing-price {
   font-size: 1.4em;
   font-weight: bold;
-  color: #007bff;
+  color: var(--light-blue);
   margin-bottom: 10px;
 }
 
@@ -375,7 +374,7 @@
 }
 
 .car-title {
-  font-size: 1.5em !important;
+  font-size: 1.3em !important;
   font-weight: bold;
   color: var(--text-color);
   margin-bottom: 6px !important;
