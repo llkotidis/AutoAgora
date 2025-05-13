@@ -192,6 +192,15 @@ get_header(); ?>
 											<label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
 											<input type="text" id="location" name="location" class="form-control" required>
 										</div>
+
+										<div class="form-row">
+											<label for="availability"><i class="fas fa-truck"></i> <?php esc_html_e( 'Availability', 'astra-child' ); ?></label>
+											<select id="availability" name="availability" class="form-control" required>
+												<option value=""><?php esc_html_e( 'Select Availability', 'astra-child' ); ?></option>
+												<option value="In Stock"><?php esc_html_e( 'In Stock', 'astra-child' ); ?></option>
+												<option value="In Transit"><?php esc_html_e( 'In Transit', 'astra-child' ); ?></option>
+											</select>
+										</div>
 									</div>
 
 									<div class="form-section engine-performance-section">
