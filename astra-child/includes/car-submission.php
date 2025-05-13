@@ -91,6 +91,9 @@ function handle_add_car_listing() {
     $number_of_doors = intval($_POST['number_of_doors']);
     $number_of_seats = intval($_POST['number_of_seats']);
     
+    // Process MOT status (optional)
+    $motuntil = isset($_POST['motuntil']) ? sanitize_text_field($_POST['motuntil']) : '';
+    
     // Process extras (checkboxes)
     $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
     
@@ -134,6 +137,7 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'description', $description);
     update_post_meta($post_id, 'number_of_doors', $number_of_doors);
     update_post_meta($post_id, 'number_of_seats', $number_of_seats);
+    update_post_meta($post_id, 'motuntil', $motuntil);
     update_post_meta($post_id, 'extras', $extras);
     
     // Process image uploads
