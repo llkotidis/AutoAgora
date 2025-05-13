@@ -351,7 +351,6 @@ get_header(); ?>
 											<label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
 											<select id="motuntil" name="motuntil" class="form-control">
 												<option value=""><?php esc_html_e( 'Select MOT Status', 'astra-child' ); ?></option>
-												<option value="Not Applicable"><?php esc_html_e( 'Not Applicable', 'astra-child' ); ?></option>
 												<option value="Expired"><?php esc_html_e( 'Expired', 'astra-child' ); ?></option>
 												<?php
 												// Get current date
