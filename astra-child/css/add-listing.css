@@ -270,25 +270,31 @@
 
 /* Extras Grid Styling */
 .extras-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
 }
 
 .extra-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .extra-option input[type="checkbox"] {
-  width: auto;
-  margin: 0;
+    width: auto;
+    margin: 0;
 }
 
 .extra-option label {
-  margin-left: 5px;
+    margin-left: 5px;
+    color: #333;
+    font-size: 0.95em;
 }
 
 /* Input with suffix styling */
