@@ -369,8 +369,9 @@
 
 .description-guidelines-avoid {
     color: #333;
-    margin: 0 0 5px 0;
-    font-size: 0.9em;
+    margin: 0 0 2px 0;
+    font-size: 1em;
+    font-weight: 500;
 }
 
 .description-guidelines-list {
@@ -383,6 +384,7 @@
     position: relative;
     padding-left: 15px;
     margin-bottom: 3px;
+    font-size: 0.9em;
 }
 
 .description-guidelines-list li:before {
