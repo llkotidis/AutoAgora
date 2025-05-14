@@ -80,10 +80,14 @@ function handle_add_car_listing() {
     $mileage = intval($_POST['mileage']);
     $price = intval($_POST['price']);
     $location = sanitize_text_field($_POST['location']);
-    $city = sanitize_text_field($_POST['city']);
-    $district = sanitize_text_field($_POST['district']);
-    $latitude = floatval($_POST['latitude']);
-    $longitude = floatval($_POST['longitude']);
+    
+    // Process location fields
+    $city = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
+    $district = isset($_POST['district']) ? sanitize_text_field($_POST['district']) : '';
+    $latitude = isset($_POST['latitude']) ? floatval($_POST['latitude']) : 0;
+    $longitude = isset($_POST['longitude']) ? floatval($_POST['longitude']) : 0;
+    $address = isset($_POST['address']) ? sanitize_text_field($_POST['address']) : '';
+    
     $engine_capacity = sanitize_text_field($_POST['engine_capacity']);
     $fuel_type = sanitize_text_field($_POST['fuel_type']);
     $transmission = sanitize_text_field($_POST['transmission']);
@@ -105,7 +109,14 @@ function handle_add_car_listing() {
     $hp = isset($_POST['hp']) ? intval($_POST['hp']) : '';
     $numowners = isset($_POST['numowners']) ? intval($_POST['numowners']) : '';
     $isantique = isset($_POST['isantique']) ? 1 : 0;
-    $vehiclehistory = isset($_POST['vehiclehistory']) ? array_map('sanitize_text_field', $_POST['vehiclehistory']) : array();
+    
+    // Process vehicle history as an array of selected options
+    $vehiclehistory = array();
+    if (isset($_POST['vehiclehistory']) && is_array($_POST['vehiclehistory'])) {
+        foreach ($_POST['vehiclehistory'] as $history_item) {
+            $vehiclehistory[] = sanitize_text_field($history_item);
+        }
+    }
     
     // Prepare post data
     $post_title = $year . ' ' . $make . ' ' . $model . ' ' . $variant;
@@ -141,6 +152,7 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'district', $district);
     update_post_meta($post_id, 'latitude', $latitude);
     update_post_meta($post_id, 'longitude', $longitude);
+    update_post_meta($post_id, 'address', $address);
     update_post_meta($post_id, 'engine_capacity', $engine_capacity);
     update_post_meta($post_id, 'fuel_type', $fuel_type);
     update_post_meta($post_id, 'transmission', $transmission);

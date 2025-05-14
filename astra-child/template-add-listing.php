@@ -253,7 +253,7 @@ get_header(); ?>
 													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
 													<option value="Rear-Wheel Drive"><?php esc_html_e( 'Rear-Wheel Drive', 'astra-child' ); ?></option>
 													<option value="All-Wheel Drive"><?php esc_html_e( 'All-Wheel Drive', 'astra-child' ); ?></option>
-													<option value="Four-Wheel Drive"><?php esc_html_e( 'Four-Wheel Drive', 'astra-child' ); ?></option>
+													<option value="4-Wheel Drive"><?php esc_html_e( '4-Wheel Drive', 'astra-child' ); ?></option>
 												</select>
 											</div>
 											<div class="form-half">
