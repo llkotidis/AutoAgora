@@ -101,6 +101,12 @@ function handle_add_car_listing() {
     // Process extras (checkboxes)
     $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
     
+    // Process ACF fields
+    $hp = isset($_POST['hp']) ? intval($_POST['hp']) : '';
+    $numowners = isset($_POST['numowners']) ? intval($_POST['numowners']) : '';
+    $isantique = isset($_POST['isantique']) ? 1 : 0;
+    $vehiclehistory = isset($_POST['vehiclehistory']) ? array_map('sanitize_text_field', $_POST['vehiclehistory']) : array();
+    
     // Prepare post data
     $post_title = $year . ' ' . $make . ' ' . $model . ' ' . $variant;
     
@@ -147,6 +153,12 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'number_of_seats', $number_of_seats);
     update_post_meta($post_id, 'motuntil', $motuntil);
     update_post_meta($post_id, 'extras', $extras);
+    
+    // Update ACF fields
+    update_field('hp', $hp, $post_id);
+    update_field('numowners', $numowners, $post_id);
+    update_field('isantique', $isantique, $post_id);
+    update_field('vehiclehistory', $vehiclehistory, $post_id);
     
     // Process image uploads
     $image_ids = handle_car_image_uploads($post_id);
