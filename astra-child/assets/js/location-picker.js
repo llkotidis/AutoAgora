@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize variables
-    let map;
-    let marker;
-    let cities;
-    let selectedCity = '';
-    let selectedDistrict = '';
+    let map = null;
+    let marker = null;
+    let cities = null;
+    let selectedCity = null;
+    let selectedDistrict = null;
     let selectedCoordinates = null;
 
     // Load cities data
@@ -12,11 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             cities = data;
-            populateCityDropdown();
         })
-        .catch(error => console.error('Error loading cities:', error));
+        .catch(error => {
+            console.error('Error loading cities data:', error);
+        });
 
-    // Create and show the modal
+    // Show location picker modal
     function showLocationPicker() {
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
@@ -27,171 +27,153 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="location-picker-body">
-                    <div class="location-selectors">
-                        <select id="city-select" class="form-control">
-                            <option value="">Select City</option>
-                        </select>
-                        <select id="district-select" class="form-control" disabled>
-                            <option value="">Select District</option>
-                        </select>
+                    <div class="location-selection-container">
+                        <div class="cities-list"></div>
+                        <div class="districts-list"></div>
                     </div>
-                    <div id="map" class="location-map"></div>
+                    <div class="location-map"></div>
                 </div>
                 <div class="location-picker-footer">
-                    <button id="continue-btn" class="btn btn-primary" disabled>Continue</button>
+                    <button class="btn btn-primary continue-btn" disabled>Continue</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
 
-        // Initialize map after modal is added to DOM
-        initializeMap();
-
-        // Add event listeners
-        document.getElementById('city-select').addEventListener('change', handleCityChange);
-        document.getElementById('district-select').addEventListener('change', handleDistrictChange);
-        document.getElementById('continue-btn').addEventListener('click', handleContinue);
-        modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.remove();
-            if (map) {
-                map.remove();
-                map = null;
-            }
-        });
-    }
-
-    // Initialize Mapbox map
-    function initializeMap() {
-        mapboxgl.accessToken = mapboxConfig.accessToken;
-        map = new mapboxgl.Map({
-            container: 'map',
-            style: mapboxConfig.styleUrl,
-            center: mapboxConfig.defaultCenter,
-            zoom: mapboxConfig.defaultZoom
-        });
-
-        map.addControl(new mapboxgl.NavigationControl());
-
-        // Add click event to map
-        map.on('click', function(e) {
-            if (selectedCity && selectedDistrict) {
-                updateMarker(e.lngLat);
-            }
-        });
-    }
-
-    // Populate city dropdown
-    function populateCityDropdown() {
-        const citySelect = document.getElementById('city-select');
+        // Populate cities list
+        const citiesList = modal.querySelector('.cities-list');
         Object.keys(cities).forEach(city => {
-            const option = document.createElement('option');
-            option.value = city;
-            option.textContent = city;
-            citySelect.appendChild(option);
+            const cityItem = document.createElement('div');
+            cityItem.className = 'city-item';
+            cityItem.textContent = city;
+            cityItem.addEventListener('click', () => handleCitySelect(city, cityItem));
+            citiesList.appendChild(cityItem);
+        });
+
+        // Close modal handler
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        // Continue button handler
+        modal.querySelector('.continue-btn').addEventListener('click', () => {
+            handleContinue(modal);
         });
     }
 
-    // Handle city selection
-    function handleCityChange(e) {
-        const citySelect = e.target;
-        const districtSelect = document.getElementById('district-select');
+    function handleCitySelect(city, cityElement) {
+        selectedCity = city;
+        selectedDistrict = null;
+        selectedCoordinates = null;
+
+        // Update selected city UI
+        document.querySelectorAll('.city-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        cityElement.classList.add('selected');
+
+        // Populate districts list
+        const districtsList = document.querySelector('.districts-list');
+        districtsList.innerHTML = '';
+        cities[city].districts.forEach(district => {
+            const districtItem = document.createElement('div');
+            districtItem.className = 'district-item';
+            districtItem.textContent = district;
+            districtItem.addEventListener('click', () => handleDistrictSelect(city, district, districtItem));
+            districtsList.appendChild(districtItem);
+        });
+
+        // Hide map initially
+        const mapContainer = document.querySelector('.location-map');
+        mapContainer.classList.remove('visible');
+        mapContainer.innerHTML = '';
+
+        // Disable continue button until district is selected
+        document.querySelector('.continue-btn').disabled = true;
+    }
+
+    function handleDistrictSelect(city, district, districtElement) {
+        selectedDistrict = district;
+        selectedCoordinates = cities[city].center;
+
+        // Update selected district UI
+        document.querySelectorAll('.district-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        districtElement.classList.add('selected');
+
+        // Show and initialize map
+        const mapContainer = document.querySelector('.location-map');
+        mapContainer.classList.add('visible');
         
-        // Clear district dropdown
-        districtSelect.innerHTML = '<option value="">Select District</option>';
-        
-        if (citySelect.value) {
-            selectedCity = citySelect.value;
-            const districts = cities[selectedCity].districts;
-            
-            // Populate district dropdown
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district;
-                option.textContent = district;
-                districtSelect.appendChild(option);
+        if (!map) {
+            map = new mapboxgl.Map({
+                container: mapContainer,
+                style: mapboxConfig.style,
+                center: selectedCoordinates,
+                zoom: mapboxConfig.defaultZoom
             });
-            
-            districtSelect.disabled = false;
-            
-            // Center map on selected city
-            const coordinates = cities[selectedCity].center;
+
+            map.addControl(new mapboxgl.NavigationControl());
+
+            map.on('load', () => {
+                if (marker) {
+                    marker.remove();
+                }
+                marker = new mapboxgl.Marker()
+                    .setLngLat(selectedCoordinates)
+                    .addTo(map);
+            });
+        } else {
             map.flyTo({
-                center: coordinates,
-                zoom: 12
+                center: selectedCoordinates,
+                zoom: mapboxConfig.defaultZoom
             });
-        } else {
-            selectedCity = '';
-            districtSelect.disabled = true;
-        }
-        
-        updateContinueButton();
-    }
-
-    // Handle district selection
-    function handleDistrictChange(e) {
-        selectedDistrict = e.target.value;
-        updateContinueButton();
-    }
-
-    // Update marker position
-    function updateMarker(lngLat) {
-        if (marker) {
-            marker.setLngLat(lngLat);
-        } else {
+            if (marker) {
+                marker.remove();
+            }
             marker = new mapboxgl.Marker()
-                .setLngLat(lngLat)
+                .setLngLat(selectedCoordinates)
                 .addTo(map);
         }
-        selectedCoordinates = lngLat;
-        updateContinueButton();
+
+        // Enable continue button
+        document.querySelector('.continue-btn').disabled = false;
     }
 
-    // Update continue button state
-    function updateContinueButton() {
-        const continueBtn = document.getElementById('continue-btn');
-        continueBtn.disabled = !(selectedCity && selectedDistrict && selectedCoordinates);
-    }
-
-    // Handle continue button click
-    function handleContinue() {
-        const locationInput = document.getElementById('location');
-        locationInput.value = `${selectedDistrict}, ${selectedCity}`;
-        
-        // Add hidden inputs for coordinates
-        let latInput = document.getElementById('latitude');
-        let lngInput = document.getElementById('longitude');
-        
-        if (!latInput) {
-            latInput = document.createElement('input');
-            latInput.type = 'hidden';
-            latInput.id = 'latitude';
-            latInput.name = 'latitude';
-            locationInput.parentNode.appendChild(latInput);
-        }
-        
-        if (!lngInput) {
-            lngInput = document.createElement('input');
-            lngInput.type = 'hidden';
-            lngInput.id = 'longitude';
-            lngInput.name = 'longitude';
-            locationInput.parentNode.appendChild(lngInput);
-        }
-        
-        latInput.value = selectedCoordinates.lat;
-        lngInput.value = selectedCoordinates.lng;
-        
-        // Close modal
-        document.querySelector('.location-picker-modal').remove();
-        if (map) {
-            map.remove();
-            map = null;
+    function handleContinue(modal) {
+        if (selectedCity && selectedDistrict && selectedCoordinates) {
+            const locationInput = document.getElementById('location');
+            locationInput.value = `${selectedDistrict}, ${selectedCity}`;
+            
+            // Add hidden inputs for coordinates if they don't exist
+            let latInput = document.getElementById('latitude');
+            let lngInput = document.getElementById('longitude');
+            
+            if (!latInput) {
+                latInput = document.createElement('input');
+                latInput.type = 'hidden';
+                latInput.id = 'latitude';
+                latInput.name = 'latitude';
+                locationInput.parentNode.appendChild(latInput);
+            }
+            
+            if (!lngInput) {
+                lngInput = document.createElement('input');
+                lngInput.type = 'hidden';
+                lngInput.id = 'longitude';
+                lngInput.name = 'longitude';
+                locationInput.parentNode.appendChild(lngInput);
+            }
+            
+            latInput.value = selectedCoordinates[0];
+            lngInput.value = selectedCoordinates[1];
+            
+            document.body.removeChild(modal);
         }
     }
 
     // Add click handler to the choose location button
-    const chooseLocationBtn = document.querySelector('.choose-location-btn');
-    if (chooseLocationBtn) {
-        chooseLocationBtn.addEventListener('click', showLocationPicker);
-    }
+    document.querySelector('.choose-location-btn').addEventListener('click', showLocationPicker);
 }); 
