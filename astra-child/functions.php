@@ -38,9 +38,6 @@ require_once get_stylesheet_directory() . '/includes/login-logout.php';
 // Include AJAX handlers
 require_once get_stylesheet_directory() . '/includes/ajax.php';
 
-// Include Mapbox functionality
-require_once get_stylesheet_directory() . '/includes/mapbox.php';
-
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourites-button.php';

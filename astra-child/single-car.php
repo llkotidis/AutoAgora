@@ -22,11 +22,7 @@ if (have_posts()) :
             $year = get_post_meta($car_id, 'year', true);
             $price = get_post_meta($car_id, 'price', true);
             $mileage = get_post_meta($car_id, 'mileage', true);
-            $car_city = get_post_meta($car_id, 'car_city', true);
-            $car_district = get_post_meta($car_id, 'car_district', true);
-            $car_address = get_post_meta($car_id, 'car_address', true);
-            $car_latitude = get_post_meta($car_id, 'car_latitude', true);
-            $car_longitude = get_post_meta($car_id, 'car_longitude', true);
+            $location = get_post_meta($car_id, 'location', true);
             $engine_capacity = get_post_meta($car_id, 'engine_capacity', true);
             $fuel_type = get_post_meta($car_id, 'fuel_type', true);
             $transmission = get_post_meta($car_id, 'transmission', true);
@@ -195,16 +191,7 @@ if (have_posts()) :
                             $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
-                            <div class="car-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <?php 
-                                $location_parts = array();
-                                if (!empty($car_address)) $location_parts[] = $car_address;
-                                if (!empty($car_district)) $location_parts[] = $car_district;
-                                if (!empty($car_city)) $location_parts[] = $car_city;
-                                echo esc_html(implode(', ', $location_parts));
-                                ?>
-                            </div>
+                            <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
                             <?php 
                             $author_id = get_post_field('post_author', $car_id);
                             $author_name = get_the_author_meta('display_name', $author_id);
@@ -256,15 +243,7 @@ if (have_posts()) :
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Location:</span>
-                                    <span class="detail-value">
-                                        <?php 
-                                        $location_parts = array();
-                                        if (!empty($car_address)) $location_parts[] = $car_address;
-                                        if (!empty($car_district)) $location_parts[] = $car_district;
-                                        if (!empty($car_city)) $location_parts[] = $car_city;
-                                        echo esc_html(implode(', ', $location_parts));
-                                        ?>
-                                    </span>
+                                    <span class="detail-value"><?php echo esc_html($location); ?></span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Availability:</span>
@@ -379,25 +358,6 @@ if (have_posts()) :
                     </div>
                 </div>
             </div>
-
-            <!-- Location Map -->
-            <?php if (!empty($car_latitude) && !empty($car_longitude)) : ?>
-            <div class="car-location-map">
-                <h2>Location</h2>
-                <div id="car-map" style="height: 400px; width: 100%; margin-top: 10px;"></div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const map = initMap('car-map', {
-                            center: [<?php echo esc_js($car_longitude); ?>, <?php echo esc_js($car_latitude); ?>],
-                            zoom: 15
-                        });
-                        addMarker(map, [<?php echo esc_js($car_longitude); ?>, <?php echo esc_js($car_latitude); ?>], {
-                            color: '#FF0000'
-                        });
-                    });
-                </script>
-            </div>
-            <?php endif; ?>
 
             <style>
             /* Styles copied directly from car-listing-detailed.php */
