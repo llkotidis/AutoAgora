@@ -50,6 +50,35 @@ document.addEventListener('DOMContentLoaded', function() {
         return location;
     }
 
+    // Function to update marker position
+    function updateMarkerPosition(lngLat) {
+        if (marker) {
+            marker.remove();
+        }
+        marker = new mapboxgl.Marker({
+            draggable: true
+        })
+            .setLngLat(lngLat)
+            .addTo(map);
+
+        // Handle marker drag end
+        marker.on('dragend', () => {
+            const newLngLat = marker.getLngLat();
+            selectedCoordinates = [newLngLat.lng, newLngLat.lat];
+            console.log('Marker dragged to:', selectedCoordinates);
+            
+            // Reverse geocode the new position
+            reverseGeocode(newLngLat);
+        });
+
+        // Enable continue button
+        const continueBtn = document.querySelector('.choose-location-btn');
+        if (continueBtn) {
+            continueBtn.disabled = false;
+            console.log('Continue button enabled');
+        }
+    }
+
     // Function to show location picker
     function showLocationPicker() {
         // Create modal
@@ -161,30 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedCoordinates = result.center;
                     selectedLocation = parseLocationDetails(result);
                     
-                    // Update marker
-                    if (marker) {
-                        marker.remove();
-                    }
-                    marker = new mapboxgl.Marker({
-                        draggable: true
-                    })
-                        .setLngLat(selectedCoordinates)
-                        .addTo(map);
-
-                    // Enable continue button
-                    const continueBtn = modal.querySelector('.choose-location-btn');
-                    continueBtn.disabled = false;
-                    console.log('Continue button enabled');
-
-                    // Handle marker drag end
-                    marker.on('dragend', () => {
-                        const lngLat = marker.getLngLat();
-                        selectedCoordinates = [lngLat.lng, lngLat.lat];
-                        console.log('Marker dragged to:', selectedCoordinates);
-                        
-                        // Reverse geocode the new position
-                        reverseGeocode(lngLat);
-                    });
+                    // Update marker position
+                    updateMarkerPosition(result.center);
                 });
 
                 // Handle geocoder clear
@@ -221,24 +228,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle map click
             map.on('click', (e) => {
                 console.log('Map clicked at:', e.lngLat);
-                if (marker) {
-                    marker.remove();
-                }
-                marker = new mapboxgl.Marker({
-                    draggable: true
-                })
-                    .setLngLat(e.lngLat)
-                    .addTo(map);
-
                 selectedCoordinates = [e.lngLat.lng, e.lngLat.lat];
+                updateMarkerPosition(e.lngLat);
                 
                 // Reverse geocode the clicked position
                 reverseGeocode(e.lngLat);
-                
-                // Enable continue button
-                const continueBtn = modal.querySelector('.choose-location-btn');
-                continueBtn.disabled = false;
-                console.log('Continue button enabled after map click');
+            });
+
+            // Handle map move end
+            map.on('moveend', () => {
+                if (marker) {
+                    const center = map.getCenter();
+                    selectedCoordinates = [center.lng, center.lat];
+                    updateMarkerPosition(center);
+                    
+                    // Reverse geocode the new center position
+                    reverseGeocode(center);
+                }
             });
 
         } catch (error) {
