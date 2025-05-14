@@ -3,9 +3,52 @@ document.addEventListener('DOMContentLoaded', function() {
     let marker = null;
     let selectedCoordinates = null;
     let geocoder = null;
+    let selectedLocation = {
+        city: '',
+        district: '',
+        address: '',
+        latitude: null,
+        longitude: null
+    };
 
     // Debug: Check if mapboxConfig is available
     console.log('Mapbox Config:', mapboxConfig);
+
+    // Function to parse location details from Mapbox result
+    function parseLocationDetails(result) {
+        const context = result.context || [];
+        const placeName = result.place_name || '';
+        const address = result.text || '';
+        
+        // Initialize location object
+        const location = {
+            city: '',
+            district: '',
+            address: placeName,
+            latitude: result.center[1],
+            longitude: result.center[0]
+        };
+
+        // Parse context to get city and district
+        context.forEach(item => {
+            if (item.id.startsWith('place')) {
+                location.city = item.text;
+            } else if (item.id.startsWith('neighborhood')) {
+                location.district = item.text;
+            }
+        });
+
+        // If no district found in context, try to extract from address
+        if (!location.district && placeName) {
+            const parts = placeName.split(',');
+            if (parts.length > 1) {
+                location.district = parts[0].trim();
+            }
+        }
+
+        console.log('Parsed location details:', location);
+        return location;
+    }
 
     // Function to show location picker
     function showLocationPicker() {
@@ -76,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Geocoder result:', event.result);
                     const result = event.result;
                     selectedCoordinates = result.center;
+                    selectedLocation = parseLocationDetails(result);
                     
                     // Update marker
                     if (marker) {
@@ -111,6 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         marker = null;
                     }
                     selectedCoordinates = null;
+                    selectedLocation = {
+                        city: '',
+                        district: '',
+                        address: '',
+                        latitude: null,
+                        longitude: null
+                    };
                     const continueBtn = modal.querySelector('.choose-location-btn');
                     continueBtn.disabled = true;
                     console.log('Continue button disabled');
@@ -169,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const continueBtn = modal.querySelector('.choose-location-btn');
         continueBtn.addEventListener('click', () => {
             console.log('Continue button clicked');
-            console.log('Selected coordinates:', selectedCoordinates);
+            console.log('Selected location:', selectedLocation);
             handleContinue(modal);
         });
     }
@@ -184,11 +235,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 console.log('Reverse geocode result:', data);
                 if (data.features && data.features.length > 0) {
+                    const result = data.features[0];
+                    selectedLocation = parseLocationDetails(result);
+                    
                     // Update the geocoder input with the new address
                     const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
                     if (geocoderInput) {
-                        geocoderInput.value = data.features[0].place_name;
-                        console.log('Updated geocoder input with:', data.features[0].place_name);
+                        geocoderInput.value = result.place_name;
+                        console.log('Updated geocoder input with:', result.place_name);
                     }
                 }
             })
@@ -205,40 +259,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleContinue(modal) {
         console.log('Handling continue...');
-        if (selectedCoordinates) {
-            console.log('Coordinates selected:', selectedCoordinates);
-            const locationInput = document.getElementById('location');
-            const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
+        if (selectedLocation.latitude && selectedLocation.longitude) {
+            console.log('Location selected:', selectedLocation);
             
-            // Use the current geocoder input value
-            const locationValue = geocoderInput ? geocoderInput.value : '';
-            console.log('Setting location value:', locationValue);
-            locationInput.value = locationValue;
-            
-            // Add hidden inputs for coordinates if they don't exist
-            let latInput = document.getElementById('latitude');
-            let lngInput = document.getElementById('longitude');
-            
-            if (!latInput) {
-                latInput = document.createElement('input');
-                latInput.type = 'hidden';
-                latInput.id = 'latitude';
-                latInput.name = 'latitude';
-                locationInput.parentNode.appendChild(latInput);
-            }
-            
-            if (!lngInput) {
-                lngInput = document.createElement('input');
-                lngInput.type = 'hidden';
-                lngInput.id = 'longitude';
-                lngInput.name = 'longitude';
-                locationInput.parentNode.appendChild(lngInput);
-            }
-            
-            // Store the coordinates
-            latInput.value = selectedCoordinates[1]; // Latitude
-            lngInput.value = selectedCoordinates[0]; // Longitude
-            console.log('Stored coordinates:', { lat: latInput.value, lng: lngInput.value });
+            // Update all location fields
+            const fields = {
+                'city': selectedLocation.city,
+                'district': selectedLocation.district,
+                'address': selectedLocation.address,
+                'latitude': selectedLocation.latitude,
+                'longitude': selectedLocation.longitude
+            };
+
+            // Update each field
+            Object.entries(fields).forEach(([fieldName, value]) => {
+                const field = document.getElementById(fieldName);
+                if (field) {
+                    field.value = value;
+                    console.log(`Updated ${fieldName} with:`, value);
+                } else {
+                    console.warn(`Field ${fieldName} not found`);
+                }
+            });
             
             if (map) {
                 map.remove();
@@ -246,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             modal.remove();
         } else {
-            console.log('No coordinates selected');
+            console.log('No location selected');
         }
     }
 }); 
