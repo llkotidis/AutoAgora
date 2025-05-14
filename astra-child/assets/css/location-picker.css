@@ -85,6 +85,11 @@
     margin-bottom: 10px;
 }
 
+.form-row input[type="text"][readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
 .choose-location-btn {
     display: block;
     width: 100%;

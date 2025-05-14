@@ -190,7 +190,7 @@ get_header(); ?>
 
 										<div class="form-row">
 											<label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
-											<input type="text" id="location" name="location" class="form-control" required>
+											<input type="text" id="location" name="location" class="form-control" required readonly>
 											<button type="button" class="btn btn-secondary choose-location-btn">Choose Location ></button>
 										</div>
 
