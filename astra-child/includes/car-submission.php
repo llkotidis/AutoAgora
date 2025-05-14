@@ -26,7 +26,11 @@ function handle_add_car_listing() {
         'year' => 'Year',
         'mileage' => 'Mileage',
         'price' => 'Price',
-        'location' => 'Location',
+        'location_address' => 'Location Address',
+        'location_lat' => 'Location Latitude',
+        'location_lng' => 'Location Longitude',
+        'location_city' => 'Location City',
+        'location_district' => 'Location District',
         'engine_capacity' => 'Engine Capacity',
         'fuel_type' => 'Fuel Type',
         'transmission' => 'Transmission',
@@ -79,7 +83,11 @@ function handle_add_car_listing() {
     $year = intval($_POST['year']);
     $mileage = intval($_POST['mileage']);
     $price = intval($_POST['price']);
-    $location = sanitize_text_field($_POST['location']);
+    $location_address = sanitize_text_field($_POST['location_address']);
+    $location_lat = floatval($_POST['location_lat']);
+    $location_lng = floatval($_POST['location_lng']);
+    $location_city = sanitize_text_field($_POST['location_city']);
+    $location_district = sanitize_text_field($_POST['location_district']);
     $engine_capacity = sanitize_text_field($_POST['engine_capacity']);
     $fuel_type = sanitize_text_field($_POST['fuel_type']);
     $transmission = sanitize_text_field($_POST['transmission']);
@@ -126,7 +134,11 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'year', $year);
     update_post_meta($post_id, 'mileage', $mileage);
     update_post_meta($post_id, 'price', $price);
-    update_post_meta($post_id, 'location', $location);
+    update_post_meta($post_id, 'location_address', $location_address);
+    update_post_meta($post_id, 'location_lat', $location_lat);
+    update_post_meta($post_id, 'location_lng', $location_lng);
+    update_post_meta($post_id, 'location_city', $location_city);
+    update_post_meta($post_id, 'location_district', $location_district);
     update_post_meta($post_id, 'engine_capacity', $engine_capacity);
     update_post_meta($post_id, 'fuel_type', $fuel_type);
     update_post_meta($post_id, 'transmission', $transmission);

@@ -8,9 +8,8 @@
 
 // Include helper files
 require_once __DIR__ . '/car-listings-data.php';
-require_once __DIR__ . '/car-listings-query.php'; // Added this line
-require_once __DIR__ . '/car-filter-form.php'; // Include the new filter form file
-// require_once __DIR__ . '/car-listings-render.php'; // Potential future file
+require_once __DIR__ . '/car-listings-query.php';
+require_once __DIR__ . '/car-filter-form.php';
 
 // Register the shortcode
 add_shortcode('car_listings', 'display_car_listings');
@@ -27,8 +26,16 @@ function display_car_listings($atts) {
     wp_enqueue_style(
         'car-listings-style',
         get_stylesheet_directory_uri() . '/css/car-listings.css',
-        array(), // Dependencies
-        filemtime(get_stylesheet_directory() . '/css/car-listings.css') // Versioning based on file modification time
+        array(),
+        filemtime(get_stylesheet_directory() . '/css/car-listings.css')
+    );
+
+    // Enqueue Mapbox CSS
+    wp_enqueue_style(
+        'astra-child-mapbox-css',
+        get_stylesheet_directory_uri() . '/css/mapbox.css',
+        array(),
+        ASTRA_CHILD_THEME_VERSION
     );
 
     // Localize script for AJAX functionality
@@ -42,9 +49,6 @@ function display_car_listings($atts) {
 
     // Get the current page number
     $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-
-    // Removed fetching of filter data (makes, models, variants, locations, prices, years, etc.)
-    // as the filter form content is being removed.
 
     // Build the query arguments using the helper function
     $args = array(
@@ -68,17 +72,15 @@ function display_car_listings($atts) {
     // Get car listings
     $car_query = new WP_Query($args);
 
-    // Removed Debugging
-
     // Start the output
     ?>
     <div class="car-listings-container">
-        <!-- Active Filters Bar (structure kept, but no filters to display) -->
+        <!-- Active Filters Bar -->
         <div class="active-filters-bar">
             <div class="active-filters-container">
-                <!-- Active filters area - will be empty -->
+                <!-- Active filters area -->
             </div>
-            <button class="filters-button">Filters</button> <!-- Button kept, though popup is empty -->
+            <button class="filters-button">Filters</button>
         </div>
 
         <!-- Filters Popup -->
@@ -89,11 +91,23 @@ function display_car_listings($atts) {
                     <button class="close-filters">&times;</button>
                 </div>
                 <?php 
-                // Display the new filter form with 'listings_page' context
                 echo display_car_filter_form('listings_page'); 
                 ?>
             </div>
         </div>
+
+        <!-- Map View Toggle -->
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" data-view="grid">
+                <i class="fas fa-th"></i> Grid
+            </button>
+            <button class="view-toggle-btn" data-view="map">
+                <i class="fas fa-map"></i> Map
+            </button>
+        </div>
+
+        <!-- Map Container (initially hidden) -->
+        <div id="map" class="map-container" style="display: none;"></div>
 
         <!-- Listings Grid -->
         <div class="car-listings-grid">
@@ -111,9 +125,18 @@ function display_car_listings($atts) {
                     $engine_capacity = get_post_meta(get_the_ID(), 'engine_capacity', true);
                     $transmission = get_post_meta(get_the_ID(), 'transmission', true);
                     $mileage = get_post_meta(get_the_ID(), 'mileage', true);
-                    $location = get_post_meta(get_the_ID(), 'location', true);
+                    $location_address = get_post_meta(get_the_ID(), 'location_address', true);
+                    $location_city = get_post_meta(get_the_ID(), 'location_city', true);
+                    $location_district = get_post_meta(get_the_ID(), 'location_district', true);
+                    $location_lat = get_post_meta(get_the_ID(), 'location_lat', true);
+                    $location_lng = get_post_meta(get_the_ID(), 'location_lng', true);
                     ?>
-                    <div class="car-listing-card">
+                    <div class="car-listing-card" 
+                         data-lat="<?php echo esc_attr($location_lat); ?>"
+                         data-lng="<?php echo esc_attr($location_lng); ?>"
+                         data-title="<?php echo esc_attr($year . ' ' . $make . ' ' . $model); ?>"
+                         data-price="<?php echo esc_attr($price); ?>"
+                         data-url="<?php echo esc_url($car_detail_url); ?>">
                         <?php 
                         // Get all car images
                         $featured_image = get_post_thumbnail_id(get_the_ID());
@@ -135,7 +158,7 @@ function display_car_listings($atts) {
                             foreach ($all_images as $index => $image_id) {
                                 $image_url = wp_get_attachment_image_url($image_id, 'medium');
                                 if ($image_url) {
-                                    $clean_year = str_replace(',', '', $year); // Remove comma from year
+                                    $clean_year = str_replace(',', '', $year);
                                     echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . $index . '">';
                                     echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
                                     if ($index === count($all_images) - 1 && count($all_images) > 1) {
@@ -170,11 +193,6 @@ function display_car_listings($atts) {
                                     if (!empty($engine_capacity)) {
                                         $specs_array[] = esc_html($engine_capacity) . 'L';
                                     }
-
-                                    // $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true); // Removed
-                                    // if (!empty($fuel_type)) { // Removed
-                                    //     $specs_array[] = esc_html($fuel_type); // Removed
-                                    // } // Removed
                                     
                                     $body_type = get_post_meta(get_the_ID(), 'body_type', true);
                                     if (!empty($body_type)) {
@@ -189,7 +207,7 @@ function display_car_listings($atts) {
                                     ?>
                                 </div>
                                 <div class="car-info-boxes">
-                                <div class="info-box">
+                                    <div class="info-box">
                                         <span class="info-value"><?php echo esc_html(str_replace(',', '', $year)); ?></span>
                                     </div>
                                     <div class="info-box">
@@ -207,7 +225,13 @@ function display_car_listings($atts) {
                                     $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                     echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                                     ?>
-                                    <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></p>
+                                    <p class="car-location">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <?php 
+                                        $location_parts = array_filter([$location_district, $location_city]);
+                                        echo esc_html(implode(', ', $location_parts));
+                                        ?>
+                                    </p>
                                 </div>
                             </div>
                         </a>

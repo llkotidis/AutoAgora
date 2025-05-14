@@ -190,7 +190,15 @@ get_header(); ?>
 
 										<div class="form-row">
 											<label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
-											<input type="text" id="location" name="location" class="form-control" required>
+											<div class="location-inputs">
+												<input type="text" id="location_address" name="location_address" class="form-control" placeholder="<?php esc_attr_e('Enter address or search location', 'astra-child'); ?>" required>
+												<input type="hidden" id="location_lat" name="location_lat" required>
+												<input type="hidden" id="location_lng" name="location_lng" required>
+												<input type="hidden" id="location_city" name="location_city" required>
+												<input type="hidden" id="location_district" name="location_district" required>
+											</div>
+											<div id="map" class="map-container"></div>
+											<p class="location-help-text"><?php esc_html_e('Click on the map to set the exact location of your car', 'astra-child'); ?></p>
 										</div>
 
 										<div class="form-row">

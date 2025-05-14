@@ -44,6 +44,8 @@ function astra_child_enqueue_styles() {
     // Enqueue add listing page styles
     if (is_page_template('template-add-listing.php')) {
         wp_enqueue_style( 'astra-child-add-listing-css', get_stylesheet_directory_uri() . '/css/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+        // Enqueue Mapbox CSS for add listing page
+        wp_enqueue_style( 'astra-child-mapbox-css', get_stylesheet_directory_uri() . '/css/mapbox.css', array(), ASTRA_CHILD_THEME_VERSION, 'all' );
     }
 
     // Enqueue my-listings styles
@@ -86,6 +88,15 @@ function astra_child_enqueue_styles() {
             array('jquery'), 
             filemtime(get_stylesheet_directory() . '/js/car-listings.js'),
             false // Load in header instead of footer
+        );
+
+        // Enqueue car listings map script
+        wp_enqueue_script(
+            'car-listings-map-script',
+            get_stylesheet_directory_uri() . '/js/car-listings-map.js',
+            array('jquery', 'mapbox-gl-js'),
+            filemtime(get_stylesheet_directory() . '/js/car-listings-map.js'),
+            true // Load in footer
         );
 
         // Prepare ALL data needed by car-listings.js
