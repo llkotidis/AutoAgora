@@ -6,16 +6,17 @@
  * @since 1.0.0
  */
 
+// Prevent direct access to this file
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
 /**
  * Enqueue Mapbox assets
  */
 function autoagora_enqueue_mapbox_assets() {
-    // Only enqueue on single car pages
-    if (!is_singular('car')) {
+    // Only load on single car pages and add listing page
+    if (!is_singular('car') && !is_page('add-listing')) {
         return;
     }
 
@@ -55,15 +56,30 @@ function autoagora_enqueue_mapbox_assets() {
         true
     );
 
-    // Pass Mapbox configuration to JavaScript
+    // Enqueue location picker script and styles
+    if (is_page('add-listing')) {
+        wp_enqueue_style(
+            'location-picker-css',
+            get_stylesheet_directory_uri() . '/assets/css/location-picker.css',
+            array(),
+            filemtime(get_stylesheet_directory() . '/assets/css/location-picker.css')
+        );
+
+        wp_enqueue_script(
+            'location-picker-js',
+            get_stylesheet_directory_uri() . '/assets/js/location-picker.js',
+            array('mapbox-gl-js'),
+            filemtime(get_stylesheet_directory() . '/assets/js/location-picker.js'),
+            true
+        );
+    }
+
+    // Pass configuration to JavaScript
     wp_localize_script('autoagora-map', 'mapboxConfig', array(
         'accessToken' => MAPBOX_ACCESS_TOKEN,
         'styleUrl' => 'mapbox://styles/mapbox/streets-v12',
         'defaultZoom' => 12,
-        'defaultCenter' => array(
-            'lat' => 35.8617,
-            'lng' => 104.1954
-        )
+        'defaultCenter' => array(35.1856, 33.3823) // Default to Nicosia
     ));
 }
 add_action('wp_enqueue_scripts', 'autoagora_enqueue_mapbox_assets'); 

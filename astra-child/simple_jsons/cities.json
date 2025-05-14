@@ -1,0 +1,72 @@
+{
+    "Nicosia": {
+        "center": [35.1856, 33.3823],
+        "districts": [
+            "Agios Dometios",
+            "Aglandjia",
+            "Egkomi",
+            "Lakatamia",
+            "Latsia",
+            "Makedonitissa",
+            "Pallouriotissa",
+            "Strovolos",
+            "Tseri"
+        ]
+    },
+    "Limassol": {
+        "center": [34.7071, 33.0226],
+        "districts": [
+            "Agios Athanasios",
+            "Agios Tychonas",
+            "Germasogeia",
+            "Kato Polemidia",
+            "Mesa Geitonia",
+            "Pano Polemidia",
+            "Ypsonas"
+        ]
+    },
+    "Larnaca": {
+        "center": [34.9229, 33.6233],
+        "districts": [
+            "Agios Lazaros",
+            "Aradippou",
+            "Dromolaxia",
+            "Kiti",
+            "Livadia",
+            "Meneou",
+            "Pervolia"
+        ]
+    },
+    "Paphos": {
+        "center": [34.7720, 32.4297],
+        "districts": [
+            "Chlorakas",
+            "Emba",
+            "Geroskipou",
+            "Kissonerga",
+            "Mesogi",
+            "Peyia",
+            "Tala"
+        ]
+    },
+    "Famagusta": {
+        "center": [35.1125, 33.9197],
+        "districts": [
+            "Agia Napa",
+            "Deryneia",
+            "Paralimni",
+            "Protaras",
+            "Sotira"
+        ]
+    },
+    "Kyrenia": {
+        "center": [35.3417, 33.3167],
+        "districts": [
+            "Alsancak",
+            "Bellapais",
+            "Bogaz",
+            "Catalkoy",
+            "Lapta"
+        ]
+    }
+} 
