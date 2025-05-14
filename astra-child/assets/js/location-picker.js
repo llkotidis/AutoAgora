@@ -87,6 +87,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to show location picker
     function showLocationPicker() {
+        // Reset global variables
+        map = null;
+        marker = null;
+        selectedCoordinates = null;
+        geocoder = null;
+        selectedLocation = {
+            city: '',
+            district: '',
+            address: '',
+            latitude: null,
+            longitude: null
+        };
+
         // Create modal
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
@@ -274,20 +287,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close button functionality
         const closeBtn = modal.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => {
-            if (map) {
-                map.remove();
-                map = null;
-            }
+            cleanupMap();
             modal.remove();
         });
 
         // Close on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                if (map) {
-                    map.remove();
-                    map = null;
-                }
+                cleanupMap();
                 modal.remove();
             }
         });
@@ -299,6 +306,29 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Selected location:', selectedLocation);
             handleContinue(modal);
         });
+    }
+
+    // Function to clean up map resources
+    function cleanupMap() {
+        if (marker) {
+            marker.remove();
+            marker = null;
+        }
+        if (map) {
+            map.remove();
+            map = null;
+        }
+        if (geocoder) {
+            geocoder = null;
+        }
+        selectedCoordinates = null;
+        selectedLocation = {
+            city: '',
+            district: '',
+            address: '',
+            latitude: null,
+            longitude: null
+        };
     }
 
     // Function to reverse geocode coordinates
