@@ -100,6 +100,10 @@ document.addEventListener('DOMContentLoaded', function() {
             longitude: null
         };
 
+        // Store the original location field value
+        const locationField = document.getElementById('location');
+        const originalLocationValue = locationField ? locationField.value : '';
+
         // Create modal
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
@@ -214,8 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Update marker position immediately
                     updateMarkerPosition(result.center);
-
-                    // Don't update the location field here - wait for continue button
                 });
 
                 // Handle geocoder clear
@@ -280,6 +282,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close button functionality
         const closeBtn = modal.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => {
+            // Restore original location value
+            if (locationField) {
+                locationField.value = originalLocationValue;
+            }
             cleanupMap();
             modal.remove();
         });
@@ -287,6 +293,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
+                // Restore original location value
+                if (locationField) {
+                    locationField.value = originalLocationValue;
+                }
                 cleanupMap();
                 modal.remove();
             }
