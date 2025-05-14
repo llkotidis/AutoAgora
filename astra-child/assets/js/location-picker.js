@@ -5,31 +5,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedCity = null;
     let selectedDistrict = null;
     let selectedCoordinates = null;
+    let isDataLoaded = false;
 
     // Load cities data
-    fetch('/wp-content/themes/astra-child/simple_jsons/cities.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            cities = data;
-            console.log('Cities data loaded:', cities); // Debug log
-        })
-        .catch(error => {
-            console.error('Error loading cities data:', error);
-            alert('Error loading location data. Please try again later.');
-        });
+    const citiesJsonPath = `${window.location.origin}/wp-content/themes/astra-child/simple_jsons/cities.json`;
+    console.log('Attempting to load cities from:', citiesJsonPath);
 
-    // Show location picker modal
+    // Function to show location picker
     function showLocationPicker() {
-        if (!cities) {
+        if (!isDataLoaded) {
             alert('Location data is still loading. Please try again in a moment.');
             return;
         }
 
+        // Create modal
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
         modal.innerHTML = `
@@ -40,54 +29,90 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="location-picker-body">
                     <div class="location-selection-container">
-                        <div class="cities-list"></div>
-                        <div class="districts-list"></div>
+                        <div class="cities-list">
+                            <h3>Cities</h3>
+                            <div class="list-container"></div>
+                        </div>
+                        <div class="districts-list">
+                            <h3>Districts</h3>
+                            <div class="list-container"></div>
+                        </div>
                     </div>
                     <div class="location-map"></div>
                 </div>
                 <div class="location-picker-footer">
-                    <button class="btn btn-primary continue-btn" disabled>Continue</button>
+                    <button class="choose-location-btn" disabled>Continue</button>
                 </div>
             </div>
         `;
 
+        // Add modal to body
         document.body.appendChild(modal);
 
         // Populate cities list
-        const citiesList = modal.querySelector('.cities-list');
-        Object.keys(cities).forEach(city => {
+        const citiesList = modal.querySelector('.cities-list .list-container');
+        Object.keys(cities).forEach(cityName => {
             const cityItem = document.createElement('div');
             cityItem.className = 'city-item';
-            cityItem.textContent = city;
-            cityItem.addEventListener('click', () => handleCitySelect(city, cityItem));
+            cityItem.textContent = cityName;
+            cityItem.addEventListener('click', () => handleCitySelection(cityName, modal));
             citiesList.appendChild(cityItem);
         });
 
-        // Close modal handler
-        const closeButton = modal.querySelector('.close-modal');
-        closeButton.addEventListener('click', () => {
+        // Close button functionality
+        const closeBtn = modal.querySelector('.close-modal');
+        closeBtn.addEventListener('click', () => {
             if (map) {
                 map.remove();
                 map = null;
             }
-            document.body.removeChild(modal);
+            modal.remove();
         });
 
-        // Also close on click outside the modal
+        // Close on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 if (map) {
                     map.remove();
                     map = null;
                 }
-                document.body.removeChild(modal);
+                modal.remove();
             }
         });
 
-        // Continue button handler
-        modal.querySelector('.continue-btn').addEventListener('click', () => {
-            handleContinue(modal);
+        // Continue button functionality
+        const continueBtn = modal.querySelector('.choose-location-btn');
+        continueBtn.addEventListener('click', () => handleContinue(modal));
+    }
+
+    // Load cities data
+    fetch(citiesJsonPath)
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Cities data loaded successfully:', data);
+            cities = data;
+            isDataLoaded = true;
+        })
+        .catch(error => {
+            console.error('Error loading cities data:', error);
+            console.error('Full error details:', {
+                message: error.message,
+                stack: error.stack,
+                path: citiesJsonPath
+            });
+            alert('Error loading location data. Please try again later.');
         });
+
+    // Add click handler to the button
+    const chooseLocationBtn = document.querySelector('.choose-location-btn');
+    if (chooseLocationBtn) {
+        chooseLocationBtn.addEventListener('click', showLocationPicker);
     }
 
     function handleCitySelect(city, cityElement) {
@@ -118,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mapContainer.innerHTML = '';
 
         // Disable continue button until district is selected
-        document.querySelector('.continue-btn').disabled = true;
+        document.querySelector('.choose-location-btn').disabled = true;
     }
 
     function handleDistrictSelect(city, district, districtElement) {
@@ -167,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Enable continue button
-        document.querySelector('.continue-btn').disabled = false;
+        document.querySelector('.choose-location-btn').disabled = false;
     }
 
     function handleContinue(modal) {
@@ -204,11 +229,5 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             document.body.removeChild(modal);
         }
-    }
-
-    // Add click handler to the choose location button
-    const chooseLocationBtn = document.querySelector('.choose-location-btn');
-    if (chooseLocationBtn) {
-        chooseLocationBtn.addEventListener('click', showLocationPicker);
     }
 }); 
