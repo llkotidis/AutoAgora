@@ -83,13 +83,35 @@ document.addEventListener('DOMContentLoaded', function() {
         mapContainer.classList.add('visible');
 
         try {
-            // Initialize map
+            // Initialize map with analytics disabled
             map = new mapboxgl.Map({
                 container: mapContainer,
                 style: mapboxConfig.style,
                 center: mapboxConfig.center,
                 zoom: mapboxConfig.defaultZoom,
-                accessToken: mapboxConfig.accessToken
+                accessToken: mapboxConfig.accessToken,
+                trackUserLocation: false,
+                attributionControl: true,
+                preserveDrawingBuffer: true,
+                antialias: true,
+                fadeDuration: 0,
+                collectResourceTiming: false,
+                renderWorldCopies: true,
+                maxZoom: 18,
+                minZoom: 0,
+                pitch: 0,
+                bearing: 0,
+                interactive: true,
+                failIfMajorPerformanceCaveat: false,
+                preserveDrawingBuffer: false,
+                refreshExpiredTiles: true,
+                transformRequest: (url, resourceType) => {
+                    // Disable analytics requests
+                    if (url.includes('events.mapbox.com')) {
+                        return { url: '' };
+                    }
+                    return { url };
+                }
             });
 
             // Add navigation controls
@@ -99,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             map.on('load', () => {
                 console.log('Map loaded, initializing geocoder...');
                 
-                // Initialize geocoder
+                // Initialize geocoder with analytics disabled
                 geocoder = new MapboxGeocoder({
                     accessToken: mapboxConfig.accessToken,
                     mapboxgl: mapboxgl,
@@ -108,7 +130,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     placeholder: 'Search for a location in Cyprus...',
                     countries: 'cy', // Restrict to Cyprus
                     types: 'place,neighborhood,address',
-                    language: 'en'
+                    language: 'en',
+                    enableEventLogging: false, // Disable geocoder analytics
+                    localGeocoder: null,
+                    reverseMode: 'distance',
+                    clearOnBlur: true,
+                    clearAndBlurOnEsc: true,
+                    trackProximity: false
                 });
 
                 // Add geocoder to the map
