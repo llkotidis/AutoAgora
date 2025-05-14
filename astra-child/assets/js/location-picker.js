@@ -244,16 +244,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle map movement
             let moveTimeout;
             map.on('move', () => {
+                // Keep marker centered during movement
+                if (marker) {
+                    marker.setLngLat(map.getCenter());
+                }
+            });
+
+            // Handle map movement end
+            map.on('moveend', () => {
                 // Clear any existing timeout
                 if (moveTimeout) {
                     clearTimeout(moveTimeout);
                 }
 
-                // Set a new timeout to update marker after movement stops
+                // Update coordinates and reverse geocode after movement stops
                 moveTimeout = setTimeout(() => {
                     const center = map.getCenter();
                     selectedCoordinates = [center.lng, center.lat];
-                    updateMarkerPosition(center);
                     
                     // Reverse geocode the new center position
                     reverseGeocode(center);
