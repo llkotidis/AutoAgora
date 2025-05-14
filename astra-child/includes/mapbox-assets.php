@@ -19,9 +19,13 @@ function autoagora_enqueue_mapbox_assets() {
         return;
     }
 
-    // Check if Mapbox token is defined
-    if (!defined('MAPBOX_ACCESS_TOKEN')) {
-        error_log('Mapbox access token is not defined in wp-config.php');
+    // Debug: Check if Mapbox token is defined and log its first few characters
+    if (defined('MAPBOX_ACCESS_TOKEN')) {
+        $token = MAPBOX_ACCESS_TOKEN;
+        $token_preview = substr($token, 0, 4) . '...' . substr($token, -4);
+        error_log('Mapbox token found: ' . $token_preview);
+    } else {
+        error_log('Mapbox token NOT found in wp-config.php');
         return;
     }
 
