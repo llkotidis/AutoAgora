@@ -40,68 +40,72 @@ document.addEventListener('DOMContentLoaded', function() {
         mapContainer.classList.add('visible');
 
         try {
+            // Initialize map
             map = new mapboxgl.Map({
                 container: mapContainer,
                 style: mapboxConfig.style,
-                center: [33.3823, 35.1856], // Default to Cyprus center
-                zoom: 8,
+                center: mapboxConfig.center,
+                zoom: mapboxConfig.defaultZoom,
                 accessToken: mapboxConfig.accessToken
             });
 
             // Add navigation controls
             map.addControl(new mapboxgl.NavigationControl());
 
-            // Initialize geocoder
-            geocoder = new MapboxGeocoder({
-                accessToken: mapboxConfig.accessToken,
-                mapboxgl: mapboxgl,
-                map: map,
-                marker: false, // We'll handle the marker ourselves
-                placeholder: 'Search for a location in Cyprus...',
-                countries: 'cy', // Restrict to Cyprus
-                types: 'place,neighborhood,address',
-                language: 'en'
-            });
-
-            // Add geocoder to the map
-            document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
-
-            // Handle geocoder results
-            geocoder.on('result', (event) => {
-                const result = event.result;
-                selectedCoordinates = result.center;
-                
-                // Update marker
-                if (marker) {
-                    marker.remove();
-                }
-                marker = new mapboxgl.Marker({
-                    draggable: true
-                })
-                    .setLngLat(selectedCoordinates)
-                    .addTo(map);
-
-                // Enable continue button
-                document.querySelector('.choose-location-btn').disabled = false;
-
-                // Handle marker drag end
-                marker.on('dragend', () => {
-                    const lngLat = marker.getLngLat();
-                    selectedCoordinates = [lngLat.lng, lngLat.lat];
-                    
-                    // Reverse geocode the new position
-                    reverseGeocode(lngLat);
+            // Wait for map to load before adding geocoder
+            map.on('load', () => {
+                // Initialize geocoder
+                geocoder = new MapboxGeocoder({
+                    accessToken: mapboxConfig.accessToken,
+                    mapboxgl: mapboxgl,
+                    map: map,
+                    marker: false, // We'll handle the marker ourselves
+                    placeholder: 'Search for a location in Cyprus...',
+                    countries: 'cy', // Restrict to Cyprus
+                    types: 'place,neighborhood,address',
+                    language: 'en'
                 });
-            });
 
-            // Handle geocoder clear
-            geocoder.on('clear', () => {
-                if (marker) {
-                    marker.remove();
-                    marker = null;
-                }
-                selectedCoordinates = null;
-                document.querySelector('.choose-location-btn').disabled = true;
+                // Add geocoder to the map
+                document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+                // Handle geocoder results
+                geocoder.on('result', (event) => {
+                    const result = event.result;
+                    selectedCoordinates = result.center;
+                    
+                    // Update marker
+                    if (marker) {
+                        marker.remove();
+                    }
+                    marker = new mapboxgl.Marker({
+                        draggable: true
+                    })
+                        .setLngLat(selectedCoordinates)
+                        .addTo(map);
+
+                    // Enable continue button
+                    document.querySelector('.choose-location-btn').disabled = false;
+
+                    // Handle marker drag end
+                    marker.on('dragend', () => {
+                        const lngLat = marker.getLngLat();
+                        selectedCoordinates = [lngLat.lng, lngLat.lat];
+                        
+                        // Reverse geocode the new position
+                        reverseGeocode(lngLat);
+                    });
+                });
+
+                // Handle geocoder clear
+                geocoder.on('clear', () => {
+                    if (marker) {
+                        marker.remove();
+                        marker = null;
+                    }
+                    selectedCoordinates = null;
+                    document.querySelector('.choose-location-btn').disabled = true;
+                });
             });
 
             // Handle map click

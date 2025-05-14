@@ -15,46 +15,73 @@ if (!defined('ABSPATH')) {
  * Enqueue Mapbox assets
  */
 function autoagora_enqueue_mapbox_assets() {
-    // Only load on single car pages and add listing page
-    if (!is_singular('car') && !is_page('add-listing')) {
-        return;
-    }
+    // Debug: Check if we're on the right page
+    error_log('Current page: ' . get_post_type());
+    error_log('Is singular: ' . (is_singular() ? 'yes' : 'no'));
+    error_log('Is page: ' . (is_page() ? 'yes' : 'no'));
 
-    // Debug: Check if Mapbox token is defined and log its first few characters
+    // Debug: Check Mapbox token
+    error_log('Mapbox Token: ' . (defined('MAPBOX_ACCESS_TOKEN') ? 'defined' : 'not defined'));
     if (defined('MAPBOX_ACCESS_TOKEN')) {
-        $token = MAPBOX_ACCESS_TOKEN;
-        $token_preview = substr($token, 0, 4) . '...' . substr($token, -4);
-        error_log('Mapbox token found: ' . $token_preview);
-    } else {
-        error_log('Mapbox token NOT found in wp-config.php');
-        return;
+        error_log('Token length: ' . strlen(MAPBOX_ACCESS_TOKEN));
     }
 
-    // Enqueue Mapbox CSS
-    wp_enqueue_style('mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css');
+    // Only load on single car pages or add-listing page
+    if (is_singular('car') || is_page('add-listing')) {
+        // Enqueue Mapbox GL JS
+        wp_enqueue_style(
+            'mapbox-gl-css',
+            'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css',
+            array(),
+            '2.15.0'
+        );
 
-    // Enqueue Mapbox JS
-    wp_enqueue_script('mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js', array(), null, true);
+        wp_enqueue_script(
+            'mapbox-gl-js',
+            'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js',
+            array(),
+            '2.15.0',
+            true
+        );
 
-    // Only load location picker on add-listing page
-    if (is_page('add-listing')) {
-        // Enqueue location picker styles
-        wp_enqueue_style('location-picker', get_stylesheet_directory_uri() . '/assets/css/location-picker.css');
+        // Enqueue Mapbox Geocoder
+        wp_enqueue_style(
+            'mapbox-geocoder-css',
+            'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css',
+            array('mapbox-gl-css'),
+            '5.0.0'
+        );
 
-        // Enqueue location picker script
-        wp_enqueue_script('location-picker', get_stylesheet_directory_uri() . '/assets/js/location-picker.js', array('mapbox-gl'), null, true);
+        wp_enqueue_script(
+            'mapbox-geocoder-js',
+            'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js',
+            array('mapbox-gl-js'),
+            '5.0.0',
+            true
+        );
 
-        // Pass configuration to JavaScript
-        wp_localize_script('location-picker', 'mapboxConfig', array(
+        // Enqueue location picker assets
+        wp_enqueue_style(
+            'location-picker-css',
+            get_stylesheet_directory_uri() . '/assets/css/location-picker.css',
+            array('mapbox-gl-css', 'mapbox-geocoder-css'),
+            filemtime(get_stylesheet_directory() . '/assets/css/location-picker.css')
+        );
+
+        wp_enqueue_script(
+            'location-picker-js',
+            get_stylesheet_directory_uri() . '/assets/js/location-picker.js',
+            array('mapbox-gl-js', 'mapbox-geocoder-js'),
+            filemtime(get_stylesheet_directory() . '/assets/js/location-picker.js'),
+            true
+        );
+
+        // Localize the script with Mapbox configuration
+        wp_localize_script('location-picker-js', 'mapboxConfig', array(
             'accessToken' => MAPBOX_ACCESS_TOKEN,
             'style' => 'mapbox://styles/mapbox/streets-v12',
-            'defaultZoom' => 10,
-            'center' => [35.1856, 33.3823] // Default to Nicosia
-        ));
-
-        // Pass cities JSON URL to JavaScript
-        wp_localize_script('location-picker', 'locationPickerData', array(
-            'citiesJsonUrl' => get_stylesheet_directory_uri() . '/simple_jsons/cities.json'
+            'defaultZoom' => 8,
+            'center' => [33.3823, 35.1856] // Cyprus center
         ));
     }
 }
