@@ -1,26 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     let map = null;
     let marker = null;
-    let cities = null;
-    let selectedCity = null;
-    let selectedDistrict = null;
     let selectedCoordinates = null;
-    let isDataLoaded = false;
+    let geocoder = null;
 
     // Debug: Check if mapboxConfig is available
     console.log('Mapbox Config:', mapboxConfig);
 
-    // Load cities data using the localized URL from WordPress
-    const citiesJsonPath = locationPickerData.citiesJsonUrl;
-    console.log('Attempting to load cities from:', citiesJsonPath);
-
     // Function to show location picker
     function showLocationPicker() {
-        if (!isDataLoaded) {
-            alert('Location data is still loading. Please try again in a moment.');
-            return;
-        }
-
         // Create modal
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
@@ -32,13 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="location-picker-body">
                     <div class="location-selection-container">
-                        <div class="cities-list">
-                            <h3>Cities</h3>
-                            <div class="list-container"></div>
-                        </div>
-                        <div class="districts-list">
-                            <h3>Districts</h3>
-                            <div class="list-container"></div>
+                        <div class="search-container">
+                            <div id="geocoder" class="geocoder"></div>
                         </div>
                     </div>
                     <div class="location-map"></div>
@@ -52,15 +35,98 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add modal to body
         document.body.appendChild(modal);
 
-        // Populate cities list
-        const citiesList = modal.querySelector('.cities-list .list-container');
-        Object.keys(cities).forEach(cityName => {
-            const cityItem = document.createElement('div');
-            cityItem.className = 'city-item';
-            cityItem.textContent = cityName;
-            cityItem.addEventListener('click', () => handleCitySelect(cityName, cityItem));
-            citiesList.appendChild(cityItem);
-        });
+        // Initialize map
+        const mapContainer = modal.querySelector('.location-map');
+        mapContainer.classList.add('visible');
+
+        try {
+            map = new mapboxgl.Map({
+                container: mapContainer,
+                style: mapboxConfig.style,
+                center: [33.3823, 35.1856], // Default to Cyprus center
+                zoom: 8,
+                accessToken: mapboxConfig.accessToken
+            });
+
+            // Add navigation controls
+            map.addControl(new mapboxgl.NavigationControl());
+
+            // Initialize geocoder
+            geocoder = new MapboxGeocoder({
+                accessToken: mapboxConfig.accessToken,
+                mapboxgl: mapboxgl,
+                map: map,
+                marker: false, // We'll handle the marker ourselves
+                placeholder: 'Search for a location in Cyprus...',
+                countries: 'cy', // Restrict to Cyprus
+                types: 'place,neighborhood,address',
+                language: 'en'
+            });
+
+            // Add geocoder to the map
+            document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+            // Handle geocoder results
+            geocoder.on('result', (event) => {
+                const result = event.result;
+                selectedCoordinates = result.center;
+                
+                // Update marker
+                if (marker) {
+                    marker.remove();
+                }
+                marker = new mapboxgl.Marker({
+                    draggable: true
+                })
+                    .setLngLat(selectedCoordinates)
+                    .addTo(map);
+
+                // Enable continue button
+                document.querySelector('.choose-location-btn').disabled = false;
+
+                // Handle marker drag end
+                marker.on('dragend', () => {
+                    const lngLat = marker.getLngLat();
+                    selectedCoordinates = [lngLat.lng, lngLat.lat];
+                    
+                    // Reverse geocode the new position
+                    reverseGeocode(lngLat);
+                });
+            });
+
+            // Handle geocoder clear
+            geocoder.on('clear', () => {
+                if (marker) {
+                    marker.remove();
+                    marker = null;
+                }
+                selectedCoordinates = null;
+                document.querySelector('.choose-location-btn').disabled = true;
+            });
+
+            // Handle map click
+            map.on('click', (e) => {
+                if (marker) {
+                    marker.remove();
+                }
+                marker = new mapboxgl.Marker({
+                    draggable: true
+                })
+                    .setLngLat(e.lngLat)
+                    .addTo(map);
+
+                selectedCoordinates = [e.lngLat.lng, e.lngLat.lat];
+                
+                // Reverse geocode the clicked position
+                reverseGeocode(e.lngLat);
+                
+                // Enable continue button
+                document.querySelector('.choose-location-btn').disabled = false;
+            });
+
+        } catch (error) {
+            console.error('Error initializing map:', error);
+        }
 
         // Close button functionality
         const closeBtn = modal.querySelector('.close-modal');
@@ -88,29 +154,25 @@ document.addEventListener('DOMContentLoaded', function() {
         continueBtn.addEventListener('click', () => handleContinue(modal));
     }
 
-    // Load cities data
-    fetch(citiesJsonPath)
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Cities data loaded successfully:', data);
-            cities = data;
-            isDataLoaded = true;
-        })
-        .catch(error => {
-            console.error('Error loading cities data:', error);
-            console.error('Full error details:', {
-                message: error.message,
-                stack: error.stack,
-                path: citiesJsonPath
+    // Function to reverse geocode coordinates
+    function reverseGeocode(lngLat) {
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,neighborhood,address&country=cy`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.features && data.features.length > 0) {
+                    // Update the geocoder input with the new address
+                    const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
+                    if (geocoderInput) {
+                        geocoderInput.value = data.features[0].place_name;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error reverse geocoding:', error);
             });
-            alert('Error loading location data. Please try again later.');
-        });
+    }
 
     // Add click handler to the button
     const chooseLocationBtn = document.querySelector('.choose-location-btn');
@@ -118,107 +180,13 @@ document.addEventListener('DOMContentLoaded', function() {
         chooseLocationBtn.addEventListener('click', showLocationPicker);
     }
 
-    function handleCitySelect(city, cityElement) {
-        selectedCity = city;
-        selectedDistrict = null;
-        selectedCoordinates = null;
-
-        // Update selected city UI
-        document.querySelectorAll('.city-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        cityElement.classList.add('selected');
-
-        // Populate districts list
-        const districtsList = document.querySelector('.districts-list .list-container');
-        districtsList.innerHTML = '';
-        cities[city].districts.forEach(district => {
-            const districtItem = document.createElement('div');
-            districtItem.className = 'district-item';
-            districtItem.textContent = district;
-            districtItem.addEventListener('click', () => handleDistrictSelect(city, district, districtItem));
-            districtsList.appendChild(districtItem);
-        });
-
-        // Hide map initially
-        const mapContainer = document.querySelector('.location-map');
-        mapContainer.classList.remove('visible');
-        mapContainer.innerHTML = '';
-
-        // Disable continue button until district is selected
-        document.querySelector('.choose-location-btn').disabled = true;
-    }
-
-    function handleDistrictSelect(city, district, districtElement) {
-        selectedDistrict = district;
-        // Swap coordinates for Mapbox [longitude, latitude]
-        const coords = cities[city].center;
-        selectedCoordinates = [coords[1], coords[0]]; // Swap lat/lng for Mapbox
-
-        console.log('Selected coordinates:', selectedCoordinates);
-        console.log('Mapbox Config:', mapboxConfig);
-
-        // Update selected district UI
-        document.querySelectorAll('.district-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        districtElement.classList.add('selected');
-
-        // Show and initialize map
-        const mapContainer = document.querySelector('.location-map');
-        mapContainer.classList.add('visible');
-        
-        try {
-            if (!map) {
-                console.log('Initializing new map...');
-                map = new mapboxgl.Map({
-                    container: mapContainer,
-                    style: mapboxConfig.style,
-                    center: selectedCoordinates,
-                    zoom: mapboxConfig.defaultZoom,
-                    accessToken: mapboxConfig.accessToken
-                });
-
-                map.addControl(new mapboxgl.NavigationControl());
-
-                map.on('load', () => {
-                    console.log('Map loaded successfully');
-                    if (marker) {
-                        marker.remove();
-                    }
-                    marker = new mapboxgl.Marker()
-                        .setLngLat(selectedCoordinates)
-                        .addTo(map);
-                });
-
-                map.on('error', (e) => {
-                    console.error('Mapbox error:', e);
-                });
-            } else {
-                console.log('Updating existing map...');
-                map.flyTo({
-                    center: selectedCoordinates,
-                    zoom: mapboxConfig.defaultZoom
-                });
-                if (marker) {
-                    marker.remove();
-                }
-                marker = new mapboxgl.Marker()
-                    .setLngLat(selectedCoordinates)
-                    .addTo(map);
-            }
-        } catch (error) {
-            console.error('Error initializing map:', error);
-        }
-
-        // Enable continue button
-        document.querySelector('.choose-location-btn').disabled = false;
-    }
-
     function handleContinue(modal) {
-        if (selectedCity && selectedDistrict && selectedCoordinates) {
+        if (selectedCoordinates) {
             const locationInput = document.getElementById('location');
-            locationInput.value = `${selectedDistrict}, ${selectedCity}`;
+            const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
+            
+            // Use the current geocoder input value
+            locationInput.value = geocoderInput ? geocoderInput.value : '';
             
             // Add hidden inputs for coordinates if they don't exist
             let latInput = document.getElementById('latitude');
@@ -240,10 +208,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 locationInput.parentNode.appendChild(lngInput);
             }
             
-            // Store the original coordinates (not swapped)
-            const coords = cities[selectedCity].center;
-            latInput.value = coords[0]; // Original latitude
-            lngInput.value = coords[1]; // Original longitude
+            // Store the coordinates
+            latInput.value = selectedCoordinates[1]; // Latitude
+            lngInput.value = selectedCoordinates[0]; // Longitude
             
             if (map) {
                 map.remove();
