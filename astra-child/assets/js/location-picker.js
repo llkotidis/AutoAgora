@@ -52,24 +52,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to update marker position
     function updateMarkerPosition(lngLat) {
-        if (marker) {
-            marker.remove();
-        }
-        marker = new mapboxgl.Marker({
-            draggable: true
-        })
-            .setLngLat(lngLat)
-            .addTo(map);
+        if (!marker) {
+            // Create marker only if it doesn't exist
+            marker = new mapboxgl.Marker({
+                draggable: true
+            })
+                .setLngLat(lngLat)
+                .addTo(map);
 
-        // Handle marker drag end
-        marker.on('dragend', () => {
-            const newLngLat = marker.getLngLat();
-            selectedCoordinates = [newLngLat.lng, newLngLat.lat];
-            console.log('Marker dragged to:', selectedCoordinates);
-            
-            // Reverse geocode the new position
-            reverseGeocode(newLngLat);
-        });
+            // Handle marker drag end
+            marker.on('dragend', () => {
+                const newLngLat = marker.getLngLat();
+                selectedCoordinates = [newLngLat.lng, newLngLat.lat];
+                console.log('Marker dragged to:', selectedCoordinates);
+                
+                // Reverse geocode the new position
+                reverseGeocode(newLngLat);
+            });
+        } else {
+            // Just update position if marker exists
+            marker.setLngLat(lngLat);
+        }
 
         // Enable continue button
         const continueBtn = document.querySelector('.location-picker-modal .choose-location-btn');
@@ -194,6 +197,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Update marker position
                     updateMarkerPosition(result.center);
+
+                    // Update the location field immediately
+                    const locationField = document.getElementById('location');
+                    if (locationField) {
+                        locationField.value = result.place_name;
+                        console.log('Updated location field with:', result.place_name);
+                    } else {
+                        console.warn('Location field not found');
+                    }
                 });
 
                 // Handle geocoder clear
