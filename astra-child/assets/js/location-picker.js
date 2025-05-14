@@ -294,25 +294,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
             const searchValue = geocoderInput ? geocoderInput.value : selectedLocation.address;
             
-            // Update all location fields with correct ACF field names
-            const fields = {
-                'car_city': selectedLocation.city,
-                'car_district': selectedLocation.district,
-                'car_address': searchValue, // Use the search input value
-                'car_latitude': selectedLocation.latitude,
-                'car_longitude': selectedLocation.longitude
-            };
-
-            // Update each field
-            Object.entries(fields).forEach(([fieldName, value]) => {
-                const field = document.getElementById(fieldName);
-                if (field) {
-                    field.value = value;
-                    console.log(`Updated ${fieldName} with:`, value);
-                } else {
-                    console.warn(`Field ${fieldName} not found`);
-                }
-            });
+            // Update the location field with the full address
+            const locationField = document.getElementById('location');
+            if (locationField) {
+                locationField.value = searchValue;
+                console.log('Updated location field with:', searchValue);
+            } else {
+                console.warn('Location field not found');
+            }
             
             if (map) {
                 map.remove();
