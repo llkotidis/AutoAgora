@@ -136,11 +136,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     reverseMode: 'distance',
                     clearOnBlur: true,
                     clearAndBlurOnEsc: true,
-                    trackProximity: false
+                    trackProximity: false,
+                    minLength: 2, // Minimum characters before search starts
+                    limit: 5, // Maximum number of results to show
+                    flyTo: {
+                        animate: true,
+                        duration: 2000,
+                        zoom: 15
+                    }
                 });
 
                 // Add geocoder to the map
-                document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+                const geocoderContainer = document.getElementById('geocoder');
+                if (geocoderContainer) {
+                    geocoderContainer.appendChild(geocoder.onAdd(map));
+                    console.log('Geocoder added to container');
+                } else {
+                    console.error('Geocoder container not found');
+                }
 
                 // Handle geocoder results
                 geocoder.on('result', (event) => {
@@ -193,6 +206,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const continueBtn = modal.querySelector('.choose-location-btn');
                     continueBtn.disabled = true;
                     console.log('Continue button disabled');
+                });
+
+                // Handle geocoder loading state
+                geocoder.on('loading', () => {
+                    console.log('Geocoder loading...');
+                });
+
+                // Handle geocoder errors
+                geocoder.on('error', (error) => {
+                    console.error('Geocoder error:', error);
                 });
             });
 
