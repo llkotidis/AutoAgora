@@ -133,7 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     language: 'en',
                     enableEventLogging: false, // Disable geocoder analytics
                     localGeocoder: null,
-                    reverseMode: 'distance',
                     clearOnBlur: true,
                     clearAndBlurOnEsc: true,
                     trackProximity: false,
