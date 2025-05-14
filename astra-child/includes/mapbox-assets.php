@@ -51,6 +51,11 @@ function autoagora_enqueue_mapbox_assets() {
             'defaultZoom' => 10,
             'center' => [35.1856, 33.3823] // Default to Nicosia
         ));
+
+        // Pass cities JSON URL to JavaScript
+        wp_localize_script('location-picker', 'locationPickerData', array(
+            'citiesJsonUrl' => get_stylesheet_directory_uri() . '/simple_jsons/cities.json'
+        ));
     }
 }
 add_action('wp_enqueue_scripts', 'autoagora_enqueue_mapbox_assets'); 

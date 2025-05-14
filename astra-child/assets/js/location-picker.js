@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedCoordinates = null;
     let isDataLoaded = false;
 
+    // Debug: Check if mapboxConfig is available
+    console.log('Mapbox Config:', mapboxConfig);
+
     // Load cities data using the localized URL from WordPress
     const citiesJsonPath = locationPickerData.citiesJsonUrl;
     console.log('Attempting to load cities from:', citiesJsonPath);
@@ -150,6 +153,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedDistrict = district;
         selectedCoordinates = cities[city].center;
 
+        console.log('Selected coordinates:', selectedCoordinates);
+        console.log('Mapbox Config:', mapboxConfig);
+
         // Update selected district UI
         document.querySelectorAll('.district-item').forEach(item => {
             item.classList.remove('selected');
@@ -160,35 +166,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const mapContainer = document.querySelector('.location-map');
         mapContainer.classList.add('visible');
         
-        if (!map) {
-            map = new mapboxgl.Map({
-                container: mapContainer,
-                style: mapboxConfig.style,
-                center: selectedCoordinates,
-                zoom: mapboxConfig.defaultZoom
-            });
+        try {
+            if (!map) {
+                console.log('Initializing new map...');
+                map = new mapboxgl.Map({
+                    container: mapContainer,
+                    style: mapboxConfig.style,
+                    center: selectedCoordinates,
+                    zoom: mapboxConfig.defaultZoom,
+                    accessToken: mapboxConfig.accessToken
+                });
 
-            map.addControl(new mapboxgl.NavigationControl());
+                map.addControl(new mapboxgl.NavigationControl());
 
-            map.on('load', () => {
+                map.on('load', () => {
+                    console.log('Map loaded successfully');
+                    if (marker) {
+                        marker.remove();
+                    }
+                    marker = new mapboxgl.Marker()
+                        .setLngLat(selectedCoordinates)
+                        .addTo(map);
+                });
+
+                map.on('error', (e) => {
+                    console.error('Mapbox error:', e);
+                });
+            } else {
+                console.log('Updating existing map...');
+                map.flyTo({
+                    center: selectedCoordinates,
+                    zoom: mapboxConfig.defaultZoom
+                });
                 if (marker) {
                     marker.remove();
                 }
                 marker = new mapboxgl.Marker()
                     .setLngLat(selectedCoordinates)
                     .addTo(map);
-            });
-        } else {
-            map.flyTo({
-                center: selectedCoordinates,
-                zoom: mapboxConfig.defaultZoom
-            });
-            if (marker) {
-                marker.remove();
             }
-            marker = new mapboxgl.Marker()
-                .setLngLat(selectedCoordinates)
-                .addTo(map);
+        } catch (error) {
+            console.error('Error initializing map:', error);
         }
 
         // Enable continue button
