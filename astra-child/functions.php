@@ -2,9 +2,6 @@
 
 require_once get_stylesheet_directory() . '/vendor/autoload.php';
 
-// Define Mapbox token constant
-define('MAPBOX_ACCESS_TOKEN', getenv('MAPBOX_ACCESS_TOKEN'));
-
 // Include car listings functionality
 require_once get_stylesheet_directory() . '/includes/car-listings.php';
 
@@ -40,9 +37,6 @@ require_once get_stylesheet_directory() . '/includes/login-logout.php';
 
 // Include AJAX handlers
 require_once get_stylesheet_directory() . '/includes/ajax.php';
-
-// Include Mapbox functionality
-require_once get_stylesheet_directory() . '/includes/mapbox.php';
 
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
