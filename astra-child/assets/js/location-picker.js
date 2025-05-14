@@ -386,6 +386,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if (locationField) {
                 locationField.value = searchValue;
                 console.log('Updated location field with:', searchValue);
+                
+                // Add hidden fields for location components
+                const form = locationField.closest('form');
+                if (form) {
+                    // Remove any existing hidden fields first
+                    ['city', 'district', 'latitude', 'longitude'].forEach(field => {
+                        const existingField = form.querySelector(`input[name="${field}"]`);
+                        if (existingField) existingField.remove();
+                    });
+                    
+                    // Add new hidden fields
+                    const fields = {
+                        'city': selectedLocation.city,
+                        'district': selectedLocation.district,
+                        'latitude': selectedLocation.latitude,
+                        'longitude': selectedLocation.longitude
+                    };
+                    
+                    Object.entries(fields).forEach(([name, value]) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
+                    
+                    console.log('Added hidden fields for location components');
+                }
             } else {
                 console.warn('Location field not found');
             }

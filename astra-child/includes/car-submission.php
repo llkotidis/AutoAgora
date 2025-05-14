@@ -80,6 +80,10 @@ function handle_add_car_listing() {
     $mileage = intval($_POST['mileage']);
     $price = intval($_POST['price']);
     $location = sanitize_text_field($_POST['location']);
+    $city = sanitize_text_field($_POST['city']);
+    $district = sanitize_text_field($_POST['district']);
+    $latitude = floatval($_POST['latitude']);
+    $longitude = floatval($_POST['longitude']);
     $engine_capacity = sanitize_text_field($_POST['engine_capacity']);
     $fuel_type = sanitize_text_field($_POST['fuel_type']);
     $transmission = sanitize_text_field($_POST['transmission']);
@@ -127,6 +131,10 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'mileage', $mileage);
     update_post_meta($post_id, 'price', $price);
     update_post_meta($post_id, 'location', $location);
+    update_post_meta($post_id, 'city', $city);
+    update_post_meta($post_id, 'district', $district);
+    update_post_meta($post_id, 'latitude', $latitude);
+    update_post_meta($post_id, 'longitude', $longitude);
     update_post_meta($post_id, 'engine_capacity', $engine_capacity);
     update_post_meta($post_id, 'fuel_type', $fuel_type);
     update_post_meta($post_id, 'transmission', $transmission);
