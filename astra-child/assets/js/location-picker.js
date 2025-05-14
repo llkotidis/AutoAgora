@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .setLngLat(lngLat)
                 .addTo(map);
 
-            // Handle marker drag end
+             // Handle marker drag end
             marker.on('dragend', () => {
                 const newLngLat = marker.getLngLat();
                 selectedCoordinates = [newLngLat.lng, newLngLat.lat];
@@ -215,14 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update marker position immediately
                     updateMarkerPosition(result.center);
 
-                    // Update the location field immediately
-                    const locationField = document.getElementById('location');
-                    if (locationField) {
-                        locationField.value = result.place_name;
-                        console.log('Updated location field with:', result.place_name);
-                    } else {
-                        console.warn('Location field not found');
-                    }
+                    // Don't update the location field here - wait for continue button
                 });
 
                 // Handle geocoder clear
@@ -381,10 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('Location field not found');
             }
             
-            if (map) {
-                map.remove();
-                map = null;
-            }
+            cleanupMap();
             modal.remove();
         } else {
             console.log('No location selected');
