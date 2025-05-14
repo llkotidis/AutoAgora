@@ -233,13 +233,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Don't remove the marker, just move it back to center
                     updateMarkerPosition(map.getCenter());
                     selectedCoordinates = [map.getCenter().lng, map.getCenter().lat]; // Keep coordinates
-                    selectedLocation = {
-                        city: '',
-                        district: '',
-                        address: '',
-                        latitude: map.getCenter().lat,
-                        longitude: map.getCenter().lng
-                    };
+                    
+                    // Preserve the selectedLocation data instead of resetting it
+                    if (selectedLocation.latitude && selectedLocation.longitude) {
+                        console.log('Preserving selected location data:', selectedLocation);
+                    } else {
+                        selectedLocation = {
+                            city: '',
+                            district: '',
+                            address: '',
+                            latitude: map.getCenter().lat,
+                            longitude: map.getCenter().lng
+                        };
+                    }
                     // Don't disable the continue button since we still have valid coordinates
                     console.log('Geocoder cleared but keeping continue button enabled');
                 });
@@ -391,8 +397,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update the location field with the full address
             const locationField = document.getElementById('location');
             if (locationField) {
-                locationField.value = searchValue;
-                console.log('Updated location field with:', searchValue);
+                // Use the search value if available, otherwise use the selected location address
+                const finalAddress = searchValue || selectedLocation.address;
+                locationField.value = finalAddress;
+                console.log('Updated location field with:', finalAddress);
                 
                 // Add hidden fields for location components
                 const form = locationField.closest('form');
@@ -409,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         'car_district': selectedLocation.district,
                         'car_latitude': selectedLocation.latitude,
                         'car_longitude': selectedLocation.longitude,
-                        'car_address': searchValue
+                        'car_address': finalAddress
                     };
                     
                     Object.entries(fields).forEach(([name, value]) => {
