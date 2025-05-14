@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         context.forEach(item => {
             if (item.id.startsWith('place')) {
                 location.city = item.text;
-            } else if (item.id.startsWith('neighborhood')) {
+            } else if (item.id.startsWith('neighborhood') || item.id.startsWith('locality')) {
                 location.district = item.text;
             }
         });
@@ -42,11 +42,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!location.district && placeName) {
             const parts = placeName.split(',');
             if (parts.length > 1) {
-                location.district = parts[0].trim();
+                // Try to get district from the first part of the address
+                const firstPart = parts[0].trim();
+                // Only use it if it's not the same as the city
+                if (firstPart !== location.city) {
+                    location.district = firstPart;
+                }
             }
         }
 
+        // If still no district, use the city as district
+        if (!location.district && location.city) {
+            location.district = location.city;
+        }
+
         console.log('Parsed location details:', location);
+        console.log('District value:', location.district);
         return location;
     }
 
@@ -414,11 +425,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Add new hidden fields
                     const fields = {
                         'car_city': selectedLocation.city,
-                        'car_district': selectedLocation.district,
+                        'car_district': selectedLocation.district || selectedLocation.city, // Fallback to city if no district
                         'car_latitude': selectedLocation.latitude,
                         'car_longitude': selectedLocation.longitude,
                         'car_address': finalAddress
                     };
+                    
+                    console.log('Adding hidden fields with values:', fields);
                     
                     Object.entries(fields).forEach(([name, value]) => {
                         const input = document.createElement('input');
@@ -426,6 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         input.name = name;
                         input.value = value;
                         form.appendChild(input);
+                        console.log(`Added hidden field ${name} with value:`, value);
                     });
                     
                     console.log('Added hidden fields for location components');
