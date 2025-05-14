@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const cityItem = document.createElement('div');
             cityItem.className = 'city-item';
             cityItem.textContent = cityName;
-            cityItem.addEventListener('click', () => handleCitySelection(cityName, modal));
+            cityItem.addEventListener('click', () => handleCitySelect(cityName, cityItem));
             citiesList.appendChild(cityItem);
         });
 
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cityElement.classList.add('selected');
 
         // Populate districts list
-        const districtsList = document.querySelector('.districts-list');
+        const districtsList = document.querySelector('.districts-list .list-container');
         districtsList.innerHTML = '';
         cities[city].districts.forEach(district => {
             const districtItem = document.createElement('div');
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 map.remove();
                 map = null;
             }
-            document.body.removeChild(modal);
+            modal.remove();
         }
     }
 }); 

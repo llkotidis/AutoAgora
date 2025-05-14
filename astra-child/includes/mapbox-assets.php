@@ -36,9 +36,6 @@ function autoagora_enqueue_mapbox_assets() {
     // Enqueue Mapbox JS
     wp_enqueue_script('mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js', array(), null, true);
 
-    // Enqueue custom map script
-    wp_enqueue_script('custom-map', get_stylesheet_directory_uri() . '/assets/js/custom-map.js', array('mapbox-gl'), null, true);
-
     // Only load location picker on add-listing page
     if (is_page('add-listing')) {
         // Enqueue location picker styles
