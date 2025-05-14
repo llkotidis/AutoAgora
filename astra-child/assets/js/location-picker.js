@@ -218,6 +218,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Update marker position immediately
                     updateMarkerPosition(result.center);
+                    
+                    // Enable continue button since we have valid coordinates
+                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    if (continueBtn) {
+                        continueBtn.disabled = false;
+                        console.log('Continue button enabled after search');
+                    }
                 });
 
                 // Handle geocoder clear
