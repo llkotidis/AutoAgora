@@ -118,6 +118,10 @@ function handle_add_car_listing() {
         }
     }
     
+    // Debug logging
+    error_log('Vehicle History POST data: ' . print_r($_POST['vehiclehistory'], true));
+    error_log('Processed Vehicle History: ' . print_r($vehiclehistory, true));
+    
     // Prepare post data
     $post_title = $year . ' ' . $make . ' ' . $model . ' ' . $variant;
     
@@ -174,6 +178,10 @@ function handle_add_car_listing() {
     // Save vehicle history both as post meta and ACF field to ensure compatibility
     update_post_meta($post_id, 'vehiclehistory', $vehiclehistory);
     update_field('vehiclehistory', $vehiclehistory, $post_id);
+    
+    // Debug logging after save
+    error_log('Saved Vehicle History (post meta): ' . print_r(get_post_meta($post_id, 'vehiclehistory', true), true));
+    error_log('Saved Vehicle History (ACF): ' . print_r(get_field('vehiclehistory', $post_id), true));
     
     // Process image uploads
     $image_ids = handle_car_image_uploads($post_id);
