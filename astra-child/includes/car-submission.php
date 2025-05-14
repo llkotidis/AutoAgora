@@ -170,6 +170,9 @@ function handle_add_car_listing() {
     update_field('hp', $hp, $post_id);
     update_field('numowners', $numowners, $post_id);
     update_field('isantique', $isantique, $post_id);
+    
+    // Save vehicle history both as post meta and ACF field to ensure compatibility
+    update_post_meta($post_id, 'vehiclehistory', $vehiclehistory);
     update_field('vehiclehistory', $vehiclehistory, $post_id);
     
     // Process image uploads
