@@ -398,17 +398,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const form = locationField.closest('form');
                 if (form) {
                     // Remove any existing hidden fields first
-                    ['city', 'district', 'latitude', 'longitude'].forEach(field => {
+                    ['car_city', 'car_district', 'car_latitude', 'car_longitude', 'car_address'].forEach(field => {
                         const existingField = form.querySelector(`input[name="${field}"]`);
                         if (existingField) existingField.remove();
                     });
                     
                     // Add new hidden fields
                     const fields = {
-                        'city': selectedLocation.city,
-                        'district': selectedLocation.district,
-                        'latitude': selectedLocation.latitude,
-                        'longitude': selectedLocation.longitude
+                        'car_city': selectedLocation.city,
+                        'car_district': selectedLocation.district,
+                        'car_latitude': selectedLocation.latitude,
+                        'car_longitude': selectedLocation.longitude,
+                        'car_address': searchValue
                     };
                     
                     Object.entries(fields).forEach(([name, value]) => {

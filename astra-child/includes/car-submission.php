@@ -82,11 +82,11 @@ function handle_add_car_listing() {
     $location = sanitize_text_field($_POST['location']);
     
     // Process location fields
-    $city = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
-    $district = isset($_POST['district']) ? sanitize_text_field($_POST['district']) : '';
-    $latitude = isset($_POST['latitude']) ? floatval($_POST['latitude']) : 0;
-    $longitude = isset($_POST['longitude']) ? floatval($_POST['longitude']) : 0;
-    $address = isset($_POST['address']) ? sanitize_text_field($_POST['address']) : '';
+    $city = isset($_POST['car_city']) ? sanitize_text_field($_POST['car_city']) : '';
+    $district = isset($_POST['car_district']) ? sanitize_text_field($_POST['car_district']) : '';
+    $latitude = isset($_POST['car_latitude']) ? floatval($_POST['car_latitude']) : 0;
+    $longitude = isset($_POST['car_longitude']) ? floatval($_POST['car_longitude']) : 0;
+    $address = isset($_POST['car_address']) ? sanitize_text_field($_POST['car_address']) : '';
     
     $engine_capacity = sanitize_text_field($_POST['engine_capacity']);
     $fuel_type = sanitize_text_field($_POST['fuel_type']);
@@ -148,11 +148,11 @@ function handle_add_car_listing() {
     update_post_meta($post_id, 'mileage', $mileage);
     update_post_meta($post_id, 'price', $price);
     update_post_meta($post_id, 'location', $location);
-    update_post_meta($post_id, 'city', $city);
-    update_post_meta($post_id, 'district', $district);
-    update_post_meta($post_id, 'latitude', $latitude);
-    update_post_meta($post_id, 'longitude', $longitude);
-    update_post_meta($post_id, 'address', $address);
+    update_post_meta($post_id, 'car_city', $city);
+    update_post_meta($post_id, 'car_district', $district);
+    update_post_meta($post_id, 'car_latitude', $latitude);
+    update_post_meta($post_id, 'car_longitude', $longitude);
+    update_post_meta($post_id, 'car_address', $address);
     update_post_meta($post_id, 'engine_capacity', $engine_capacity);
     update_post_meta($post_id, 'fuel_type', $fuel_type);
     update_post_meta($post_id, 'transmission', $transmission);
