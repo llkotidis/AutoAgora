@@ -2,6 +2,9 @@
 
 require_once get_stylesheet_directory() . '/vendor/autoload.php';
 
+// Include Mapbox assets
+require_once get_stylesheet_directory() . '/includes/mapbox-assets.php';
+
 // Include car listings functionality
 require_once get_stylesheet_directory() . '/includes/car-listings.php';
 
