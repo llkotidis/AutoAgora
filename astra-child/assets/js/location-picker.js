@@ -72,10 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Enable continue button
-        const continueBtn = document.querySelector('.choose-location-btn');
+        const continueBtn = document.querySelector('.location-picker-modal .choose-location-btn');
         if (continueBtn) {
             continueBtn.disabled = false;
             console.log('Continue button enabled');
+        } else {
+            console.warn('Continue button not found');
         }
     }
 
@@ -235,16 +237,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 reverseGeocode(e.lngLat);
             });
 
-            // Handle map move end
-            map.on('moveend', () => {
-                if (marker) {
+            // Handle map movement
+            let moveTimeout;
+            map.on('move', () => {
+                // Clear any existing timeout
+                if (moveTimeout) {
+                    clearTimeout(moveTimeout);
+                }
+
+                // Set a new timeout to update marker after movement stops
+                moveTimeout = setTimeout(() => {
                     const center = map.getCenter();
                     selectedCoordinates = [center.lng, center.lat];
                     updateMarkerPosition(center);
                     
                     // Reverse geocode the new center position
                     reverseGeocode(center);
-                }
+                }, 150); // Wait 150ms after movement stops
             });
 
         } catch (error) {
