@@ -74,28 +74,33 @@
 /* Location input and button styles */
 .form-row {
     position: relative;
+    margin-bottom: 20px;
 }
 
 .form-row input[type="text"] {
-    padding-right: 120px; /* Make room for the button */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
 }
 
 .choose-location-btn {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    padding: 0 15px;
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
     background-color: #f8f9fa;
-    border: 1px solid #ced4da;
-    border-left: none;
-    border-radius: 0 4px 4px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    text-align: center;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 .choose-location-btn:hover {
     background-color: #e9ecef;
+    border-color: #ced4da;
 }
 
 /* Responsive adjustments */
