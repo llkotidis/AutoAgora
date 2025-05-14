@@ -225,17 +225,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Geocoder cleared');
                     // Don't remove the marker, just move it back to center
                     updateMarkerPosition(map.getCenter());
-                    selectedCoordinates = null;
+                    selectedCoordinates = [map.getCenter().lng, map.getCenter().lat]; // Keep coordinates
                     selectedLocation = {
                         city: '',
                         district: '',
                         address: '',
-                        latitude: null,
-                        longitude: null
+                        latitude: map.getCenter().lat,
+                        longitude: map.getCenter().lng
                     };
-                    const continueBtn = modal.querySelector('.choose-location-btn');
-                    continueBtn.disabled = true;
-                    console.log('Continue button disabled');
+                    // Don't disable the continue button since we still have valid coordinates
+                    console.log('Geocoder cleared but keeping continue button enabled');
                 });
             });
 
@@ -269,6 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 moveTimeout = setTimeout(() => {
                     const center = map.getCenter();
                     selectedCoordinates = [center.lng, center.lat];
+                    
+                    // Enable continue button since we have valid coordinates
+                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    if (continueBtn) {
+                        continueBtn.disabled = false;
+                        console.log('Continue button enabled after map movement');
+                    }
                     
                     // Reverse geocode the new center position
                     reverseGeocode(center);
