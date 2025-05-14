@@ -69,3 +69,15 @@ function add_favourites_button_to_header() {
     echo do_shortcode('[favourites_button]');
 }
 add_action('astra_header_right', 'add_favourites_button_to_header', 5);
+
+// Add this function to handle the cities.json file
+function autoagora_enqueue_cities_data() {
+    // Get the theme directory URL
+    $theme_url = get_stylesheet_directory_uri();
+    
+    // Add the cities data URL to the page
+    wp_localize_script('location-picker', 'locationPickerData', array(
+        'citiesJsonUrl' => $theme_url . '/simple_jsons/cities.json'
+    ));
+}
+add_action('wp_enqueue_scripts', 'autoagora_enqueue_cities_data');

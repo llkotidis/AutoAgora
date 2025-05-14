@@ -31,55 +31,29 @@ function autoagora_enqueue_mapbox_assets() {
     }
 
     // Enqueue Mapbox CSS
-    wp_enqueue_style(
-        'mapbox-gl-css',
-        'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css',
-        array(),
-        '2.15.0'
-    );
+    wp_enqueue_style('mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css');
 
     // Enqueue Mapbox JS
-    wp_enqueue_script(
-        'mapbox-gl-js',
-        'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js',
-        array(),
-        '2.15.0',
-        true
-    );
+    wp_enqueue_script('mapbox-gl', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js', array(), null, true);
 
-    // Enqueue our custom map script
-    wp_enqueue_script(
-        'autoagora-map',
-        get_stylesheet_directory_uri() . '/assets/js/map.js',
-        array('mapbox-gl-js'),
-        filemtime(get_stylesheet_directory() . '/assets/js/map.js'),
-        true
-    );
+    // Enqueue custom map script
+    wp_enqueue_script('custom-map', get_stylesheet_directory_uri() . '/assets/js/custom-map.js', array('mapbox-gl'), null, true);
 
-    // Enqueue location picker script and styles
+    // Only load location picker on add-listing page
     if (is_page('add-listing')) {
-        wp_enqueue_style(
-            'location-picker-css',
-            get_stylesheet_directory_uri() . '/assets/css/location-picker.css',
-            array(),
-            filemtime(get_stylesheet_directory() . '/assets/css/location-picker.css')
-        );
+        // Enqueue location picker styles
+        wp_enqueue_style('location-picker', get_stylesheet_directory_uri() . '/assets/css/location-picker.css');
 
-        wp_enqueue_script(
-            'location-picker-js',
-            get_stylesheet_directory_uri() . '/assets/js/location-picker.js',
-            array('mapbox-gl-js'),
-            filemtime(get_stylesheet_directory() . '/assets/js/location-picker.js'),
-            true
-        );
+        // Enqueue location picker script
+        wp_enqueue_script('location-picker', get_stylesheet_directory_uri() . '/assets/js/location-picker.js', array('mapbox-gl'), null, true);
+
+        // Pass configuration to JavaScript
+        wp_localize_script('location-picker', 'mapboxConfig', array(
+            'accessToken' => MAPBOX_ACCESS_TOKEN,
+            'style' => 'mapbox://styles/mapbox/streets-v12',
+            'defaultZoom' => 10,
+            'center' => [35.1856, 33.3823] // Default to Nicosia
+        ));
     }
-
-    // Pass configuration to JavaScript
-    wp_localize_script('autoagora-map', 'mapboxConfig', array(
-        'accessToken' => MAPBOX_ACCESS_TOKEN,
-        'styleUrl' => 'mapbox://styles/mapbox/streets-v12',
-        'defaultZoom' => 12,
-        'defaultCenter' => array(35.1856, 33.3823) // Default to Nicosia
-    ));
 }
 add_action('wp_enqueue_scripts', 'autoagora_enqueue_mapbox_assets'); 

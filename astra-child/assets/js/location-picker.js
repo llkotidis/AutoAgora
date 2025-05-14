@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedCoordinates = null;
     let isDataLoaded = false;
 
-    // Load cities data
-    const citiesJsonPath = `${window.location.origin}/wp-content/themes/astra-child/simple_jsons/cities.json`;
+    // Load cities data using the localized URL from WordPress
+    const citiesJsonPath = locationPickerData.citiesJsonUrl;
     console.log('Attempting to load cities from:', citiesJsonPath);
 
     // Function to show location picker
