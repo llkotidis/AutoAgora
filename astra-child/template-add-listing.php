@@ -189,8 +189,34 @@ get_header(); ?>
 										</div>
 
 										<div class="form-row">
-											<label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
-											<input type="text" id="location" name="location" class="form-control" required>
+											<label for="car_city"><i class="fas fa-city"></i> <?php esc_html_e( 'City', 'astra-child' ); ?></label>
+											<select id="car_city" name="car_city" class="form-control" required>
+												<option value=""><?php esc_html_e( 'Select City', 'astra-child' ); ?></option>
+												<option value="limassol"><?php esc_html_e( 'Limassol', 'astra-child' ); ?></option>
+												<option value="nicosia"><?php esc_html_e( 'Nicosia', 'astra-child' ); ?></option>
+												<option value="larnaca"><?php esc_html_e( 'Larnaca', 'astra-child' ); ?></option>
+												<option value="paphos"><?php esc_html_e( 'Paphos', 'astra-child' ); ?></option>
+												<option value="ayia_napa"><?php esc_html_e( 'Ayia Napa', 'astra-child' ); ?></option>
+											</select>
+										</div>
+
+										<div class="form-row">
+											<label for="car_district"><i class="fas fa-map-marker-alt"></i> <?php esc_html_e( 'District', 'astra-child' ); ?></label>
+											<select id="car_district" name="car_district" class="form-control" required>
+												<option value=""><?php esc_html_e( 'Select District', 'astra-child' ); ?></option>
+											</select>
+										</div>
+
+										<div class="form-row">
+											<label for="car_address"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Address', 'astra-child' ); ?></label>
+											<input type="text" id="car_address" name="car_address" class="form-control" required>
+										</div>
+
+										<div class="form-row">
+											<label><i class="fas fa-map"></i> <?php esc_html_e( 'Location on Map', 'astra-child' ); ?></label>
+											<div id="car-map" style="height: 400px; width: 100%; margin-top: 10px;"></div>
+											<input type="hidden" id="car_latitude" name="car_latitude" required>
+											<input type="hidden" id="car_longitude" name="car_longitude" required>
 										</div>
 
 										<div class="form-row">

@@ -73,12 +73,22 @@ function display_car_listings($atts) {
     // Start the output
     ?>
     <div class="car-listings-container">
-        <!-- Active Filters Bar (structure kept, but no filters to display) -->
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" data-view="grid">
+                <i class="fas fa-th"></i> Grid
+            </button>
+            <button class="view-toggle-btn" data-view="map">
+                <i class="fas fa-map"></i> Map
+            </button>
+        </div>
+
+        <!-- Active Filters Bar -->
         <div class="active-filters-bar">
             <div class="active-filters-container">
                 <!-- Active filters area - will be empty -->
             </div>
-            <button class="filters-button">Filters</button> <!-- Button kept, though popup is empty -->
+            <button class="filters-button">Filters</button>
         </div>
 
         <!-- Filters Popup -->
@@ -89,10 +99,14 @@ function display_car_listings($atts) {
                     <button class="close-filters">&times;</button>
                 </div>
                 <?php 
-                // Display the new filter form with 'listings_page' context
                 echo display_car_filter_form('listings_page'); 
                 ?>
             </div>
+        </div>
+
+        <!-- Map View -->
+        <div class="car-listings-map" style="display: none;">
+            <div id="listings-map" style="height: 600px; width: 100%;"></div>
         </div>
 
         <!-- Listings Grid -->
@@ -207,7 +221,19 @@ function display_car_listings($atts) {
                                     $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                     echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                                     ?>
-                                    <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></p>
+                                    <?php
+                                    $car_city = get_post_meta(get_the_ID(), 'car_city', true);
+                                    $car_district = get_post_meta(get_the_ID(), 'car_district', true);
+                                    $car_address = get_post_meta(get_the_ID(), 'car_address', true);
+                                    $location_parts = array();
+                                    if (!empty($car_address)) $location_parts[] = $car_address;
+                                    if (!empty($car_district)) $location_parts[] = $car_district;
+                                    if (!empty($car_city)) $location_parts[] = $car_city;
+                                    ?>
+                                    <p class="car-location">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <?php echo esc_html(implode(', ', $location_parts)); ?>
+                                    </p>
                                 </div>
                             </div>
                         </a>
@@ -233,6 +259,89 @@ function display_car_listings($atts) {
             ?>
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // View toggle functionality
+        const viewToggleBtns = document.querySelectorAll('.view-toggle-btn');
+        const gridView = document.querySelector('.car-listings-grid');
+        const mapView = document.querySelector('.car-listings-map');
+        let map = null;
+
+        viewToggleBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const view = this.dataset.view;
+                
+                // Update active button
+                viewToggleBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show/hide appropriate view
+                if (view === 'map') {
+                    gridView.style.display = 'none';
+                    mapView.style.display = 'block';
+                    
+                    // Initialize map if not already done
+                    if (!map) {
+                        map = initMap('listings-map');
+                        
+                        // Add markers for each car
+                        <?php
+                        $car_query->rewind_posts();
+                        while ($car_query->have_posts()) : $car_query->the_post();
+                            $lat = get_post_meta(get_the_ID(), 'car_latitude', true);
+                            $lng = get_post_meta(get_the_ID(), 'car_longitude', true);
+                            if (!empty($lat) && !empty($lng)) :
+                        ?>
+                            addMarker(map, [<?php echo esc_js($lng); ?>, <?php echo esc_js($lat); ?>], {
+                                color: '#FF0000',
+                                popup: {
+                                    title: '<?php echo esc_js(get_the_title()); ?>',
+                                    price: '€<?php echo esc_js(number_format(get_post_meta(get_the_ID(), 'price', true))); ?>',
+                                    url: '<?php echo esc_js(get_permalink()); ?>'
+                                }
+                            });
+                        <?php
+                            endif;
+                        endwhile;
+                        wp_reset_postdata();
+                        ?>
+                    }
+                } else {
+                    gridView.style.display = 'grid';
+                    mapView.style.display = 'none';
+                }
+            });
+        });
+    });
+    </script>
+
+    <style>
+    .view-toggle {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+    }
+
+    .view-toggle-btn {
+        padding: 8px 16px;
+        margin-left: 10px;
+        border: 1px solid #ddd;
+        background: #fff;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .view-toggle-btn.active {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .car-listings-map {
+        margin-bottom: 20px;
+    }
+    </style>
 
     <?php
     // Return the buffered content

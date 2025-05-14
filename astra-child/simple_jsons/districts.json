@@ -1,0 +1,62 @@
+{
+    "limassol": [
+        {"value": "ayia_fyla", "label": "Ayia Fyla"},
+        {"value": "germasogeia", "label": "Germasogeia"},
+        {"value": "kato_polemidia", "label": "Kato Polemidia"},
+        {"value": "mesa_geitonia", "label": "Mesa Geitonia"},
+        {"value": "agios_athanasios", "label": "Agios Athanasios"},
+        {"value": "agios_tichonas", "label": "Agios Tichonas"},
+        {"value": "kapsalos", "label": "Kapsalos"},
+        {"value": "tsirion", "label": "Tsirion"},
+        {"value": "agios_nikolaos", "label": "Agios Nikolaos"},
+        {"value": "pano_polemidia", "label": "Pano Polemidia"}
+    ],
+    "nicosia": [
+        {"value": "agios_dometios", "label": "Agios Dometios"},
+        {"value": "aglantzia", "label": "Aglantzia"},
+        {"value": "engomi", "label": "Engomi"},
+        {"value": "lakatamia", "label": "Lakatamia"},
+        {"value": "latsia", "label": "Latsia"},
+        {"value": "strovolos", "label": "Strovolos"},
+        {"value": "agios_antonios", "label": "Agios Antonios"},
+        {"value": "kaimakli", "label": "Kaimakli"},
+        {"value": "pallouriotissa", "label": "Pallouriotissa"},
+        {"value": "omorfita", "label": "Omorfita"}
+    ],
+    "larnaca": [
+        {"value": "agios_lazaros", "label": "Agios Lazaros"},
+        {"value": "makenzy", "label": "Makenzy"},
+        {"value": "finikoudes", "label": "Finikoudes"},
+        {"value": "dromolaxia", "label": "Dromolaxia"},
+        {"value": "aradippou", "label": "Aradippou"},
+        {"value": "livadia", "label": "Livadia"},
+        {"value": "agios_nikolaos", "label": "Agios Nikolaos"},
+        {"value": "kiti", "label": "Kiti"},
+        {"value": "perivolia", "label": "Perivolia"},
+        {"value": "pyla", "label": "Pyla"}
+    ],
+    "paphos": [
+        {"value": "kato_paphos", "label": "Kato Paphos"},
+        {"value": "chlorakas", "label": "Chlorakas"},
+        {"value": "geroskipou", "label": "Geroskipou"},
+        {"value": "tala", "label": "Tala"},
+        {"value": "pegeia", "label": "Pegeia"},
+        {"value": "empa", "label": "Empa"},
+        {"value": "mesogi", "label": "Mesogi"},
+        {"value": "koloni", "label": "Koloni"},
+        {"value": "tremithousa", "label": "Tremithousa"},
+        {"value": "kissonerga", "label": "Kissonerga"}
+    ],
+    "ayia_napa": [
+        {"value": "protaras", "label": "Protaras"},
+        {"value": "paralimni", "label": "Paralimni"},
+        {"value": "sotira", "label": "Sotira"},
+        {"value": "liopetri", "label": "Liopetri"},
+        {"value": "avgorou", "label": "Avgorou"},
+        {"value": "xylofagou", "label": "Xylofagou"},
+        {"value": "ayia_thekla", "label": "Ayia Thekla"},
+        {"value": "kapparis", "label": "Kapparis"},
+        {"value": "pernera", "label": "Pernera"},
+        {"value": "vrysoulles", "label": "Vrysoulles"}
+    ]
+} 
