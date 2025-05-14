@@ -151,7 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleDistrictSelect(city, district, districtElement) {
         selectedDistrict = district;
-        selectedCoordinates = cities[city].center;
+        // Swap coordinates for Mapbox [longitude, latitude]
+        const coords = cities[city].center;
+        selectedCoordinates = [coords[1], coords[0]]; // Swap lat/lng for Mapbox
 
         console.log('Selected coordinates:', selectedCoordinates);
         console.log('Mapbox Config:', mapboxConfig);
@@ -238,8 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 locationInput.parentNode.appendChild(lngInput);
             }
             
-            latInput.value = selectedCoordinates[0];
-            lngInput.value = selectedCoordinates[1];
+            // Store the original coordinates (not swapped)
+            const coords = cities[selectedCity].center;
+            latInput.value = coords[0]; // Original latitude
+            lngInput.value = coords[1]; // Original longitude
             
             if (map) {
                 map.remove();
