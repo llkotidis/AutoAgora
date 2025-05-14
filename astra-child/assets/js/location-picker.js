@@ -8,16 +8,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load cities data
     fetch('/wp-content/themes/astra-child/simple_jsons/cities.json')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             cities = data;
+            console.log('Cities data loaded:', cities); // Debug log
         })
         .catch(error => {
             console.error('Error loading cities data:', error);
+            alert('Error loading location data. Please try again later.');
         });
 
     // Show location picker modal
     function showLocationPicker() {
+        if (!cities) {
+            alert('Location data is still loading. Please try again in a moment.');
+            return;
+        }
+
         const modal = document.createElement('div');
         modal.className = 'location-picker-modal';
         modal.innerHTML = `
@@ -52,8 +64,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Close modal handler
-        modal.querySelector('.close-modal').addEventListener('click', () => {
+        const closeButton = modal.querySelector('.close-modal');
+        closeButton.addEventListener('click', () => {
+            if (map) {
+                map.remove();
+                map = null;
+            }
             document.body.removeChild(modal);
+        });
+
+        // Also close on click outside the modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                if (map) {
+                    map.remove();
+                    map = null;
+                }
+                document.body.removeChild(modal);
+            }
         });
 
         // Continue button handler
@@ -170,10 +198,17 @@ document.addEventListener('DOMContentLoaded', function() {
             latInput.value = selectedCoordinates[0];
             lngInput.value = selectedCoordinates[1];
             
+            if (map) {
+                map.remove();
+                map = null;
+            }
             document.body.removeChild(modal);
         }
     }
 
     // Add click handler to the choose location button
-    document.querySelector('.choose-location-btn').addEventListener('click', showLocationPicker);
+    const chooseLocationBtn = document.querySelector('.choose-location-btn');
+    if (chooseLocationBtn) {
+        chooseLocationBtn.addEventListener('click', showLocationPicker);
+    }
 }); 
