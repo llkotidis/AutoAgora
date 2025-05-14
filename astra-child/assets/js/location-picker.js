@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Wait for map to load before adding geocoder
             map.on('load', () => {
+                console.log('Map loaded, initializing geocoder...');
+                
                 // Initialize geocoder
                 geocoder = new MapboxGeocoder({
                     accessToken: mapboxConfig.accessToken,
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Handle geocoder results
                 geocoder.on('result', (event) => {
+                    console.log('Geocoder result:', event.result);
                     const result = event.result;
                     selectedCoordinates = result.center;
                     
@@ -85,12 +88,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         .addTo(map);
 
                     // Enable continue button
-                    document.querySelector('.choose-location-btn').disabled = false;
+                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    continueBtn.disabled = false;
+                    console.log('Continue button enabled');
 
                     // Handle marker drag end
                     marker.on('dragend', () => {
                         const lngLat = marker.getLngLat();
                         selectedCoordinates = [lngLat.lng, lngLat.lat];
+                        console.log('Marker dragged to:', selectedCoordinates);
                         
                         // Reverse geocode the new position
                         reverseGeocode(lngLat);
@@ -99,17 +105,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Handle geocoder clear
                 geocoder.on('clear', () => {
+                    console.log('Geocoder cleared');
                     if (marker) {
                         marker.remove();
                         marker = null;
                     }
                     selectedCoordinates = null;
-                    document.querySelector('.choose-location-btn').disabled = true;
+                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    continueBtn.disabled = true;
+                    console.log('Continue button disabled');
                 });
             });
 
             // Handle map click
             map.on('click', (e) => {
+                console.log('Map clicked at:', e.lngLat);
                 if (marker) {
                     marker.remove();
                 }
@@ -125,7 +135,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 reverseGeocode(e.lngLat);
                 
                 // Enable continue button
-                document.querySelector('.choose-location-btn').disabled = false;
+                const continueBtn = modal.querySelector('.choose-location-btn');
+                continueBtn.disabled = false;
+                console.log('Continue button enabled after map click');
             });
 
         } catch (error) {
@@ -155,21 +167,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Continue button functionality
         const continueBtn = modal.querySelector('.choose-location-btn');
-        continueBtn.addEventListener('click', () => handleContinue(modal));
+        continueBtn.addEventListener('click', () => {
+            console.log('Continue button clicked');
+            console.log('Selected coordinates:', selectedCoordinates);
+            handleContinue(modal);
+        });
     }
 
     // Function to reverse geocode coordinates
     function reverseGeocode(lngLat) {
+        console.log('Reverse geocoding:', lngLat);
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,neighborhood,address&country=cy`;
         
         fetch(url)
             .then(response => response.json())
             .then(data => {
+                console.log('Reverse geocode result:', data);
                 if (data.features && data.features.length > 0) {
                     // Update the geocoder input with the new address
                     const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
                     if (geocoderInput) {
                         geocoderInput.value = data.features[0].place_name;
+                        console.log('Updated geocoder input with:', data.features[0].place_name);
                     }
                 }
             })
@@ -185,12 +204,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleContinue(modal) {
+        console.log('Handling continue...');
         if (selectedCoordinates) {
+            console.log('Coordinates selected:', selectedCoordinates);
             const locationInput = document.getElementById('location');
             const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
             
             // Use the current geocoder input value
-            locationInput.value = geocoderInput ? geocoderInput.value : '';
+            const locationValue = geocoderInput ? geocoderInput.value : '';
+            console.log('Setting location value:', locationValue);
+            locationInput.value = locationValue;
             
             // Add hidden inputs for coordinates if they don't exist
             let latInput = document.getElementById('latitude');
@@ -215,12 +238,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store the coordinates
             latInput.value = selectedCoordinates[1]; // Latitude
             lngInput.value = selectedCoordinates[0]; // Longitude
+            console.log('Stored coordinates:', { lat: latInput.value, lng: lngInput.value });
             
             if (map) {
                 map.remove();
                 map = null;
             }
             modal.remove();
+        } else {
+            console.log('No coordinates selected');
         }
     }
 }); 
