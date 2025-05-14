@@ -189,15 +189,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Add click handler to location input
-    const locationInput = document.getElementById('location');
-    if (locationInput) {
-        const chooseLocationBtn = document.createElement('button');
-        chooseLocationBtn.type = 'button';
-        chooseLocationBtn.className = 'btn btn-secondary choose-location-btn';
-        chooseLocationBtn.textContent = 'Choose Location >';
+    // Add click handler to the choose location button
+    const chooseLocationBtn = document.querySelector('.choose-location-btn');
+    if (chooseLocationBtn) {
         chooseLocationBtn.addEventListener('click', showLocationPicker);
-        
-        locationInput.parentNode.appendChild(chooseLocationBtn);
     }
 }); 
