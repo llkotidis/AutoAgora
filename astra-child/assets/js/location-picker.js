@@ -262,13 +262,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedLocation.latitude && selectedLocation.longitude) {
             console.log('Location selected:', selectedLocation);
             
-            // Update all location fields
+            // Get the current search input value
+            const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
+            const searchValue = geocoderInput ? geocoderInput.value : selectedLocation.address;
+            
+            // Update all location fields with correct ACF field names
             const fields = {
-                'city': selectedLocation.city,
-                'district': selectedLocation.district,
-                'address': selectedLocation.address,
-                'latitude': selectedLocation.latitude,
-                'longitude': selectedLocation.longitude
+                'car_city': selectedLocation.city,
+                'car_district': selectedLocation.district,
+                'car_address': searchValue, // Use the search input value
+                'car_latitude': selectedLocation.latitude,
+                'car_longitude': selectedLocation.longitude
             };
 
             // Update each field
