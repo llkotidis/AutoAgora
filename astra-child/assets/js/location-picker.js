@@ -55,7 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!marker) {
             // Create marker only if it doesn't exist
             marker = new mapboxgl.Marker({
-                draggable: true
+                draggable: true,
+                color: '#FF0000' // Make it more visible
             })
                 .setLngLat(lngLat)
                 .addTo(map);
@@ -151,6 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add navigation controls
             map.addControl(new mapboxgl.NavigationControl());
 
+            // Create initial marker at map center
+            updateMarkerPosition(map.getCenter());
+
             // Wait for map to load before adding geocoder
             map.on('load', () => {
                 console.log('Map loaded, initializing geocoder...');
@@ -195,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedCoordinates = result.center;
                     selectedLocation = parseLocationDetails(result);
                     
-                    // Update marker position
+                    // Update marker position immediately
                     updateMarkerPosition(result.center);
 
                     // Update the location field immediately
@@ -211,10 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle geocoder clear
                 geocoder.on('clear', () => {
                     console.log('Geocoder cleared');
-                    if (marker) {
-                        marker.remove();
-                        marker = null;
-                    }
+                    // Don't remove the marker, just move it back to center
+                    updateMarkerPosition(map.getCenter());
                     selectedCoordinates = null;
                     selectedLocation = {
                         city: '',
@@ -226,16 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const continueBtn = modal.querySelector('.choose-location-btn');
                     continueBtn.disabled = true;
                     console.log('Continue button disabled');
-                });
-
-                // Handle geocoder loading state
-                geocoder.on('loading', () => {
-                    console.log('Geocoder loading...');
-                });
-
-                // Handle geocoder errors
-                geocoder.on('error', (error) => {
-                    console.error('Geocoder error:', error);
                 });
             });
 
