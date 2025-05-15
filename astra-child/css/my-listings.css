@@ -73,10 +73,10 @@
 }
 
 .listing-title {
-  font-size: 1.25rem;
+  font-size: 1.25rem !important;
   font-weight: 600;
-  color: var(--text-color);
-  text-decoration: none;
+  color: var(--text-color) !important;
+  text-decoration: none !important;
 }
 
 .listing-title:hover {
@@ -98,7 +98,7 @@
 }
 
 .button {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.25rem !important;
   border-radius: var(--border-radius-small);
   cursor: pointer;
   transition: opacity 0.1s ease;
