@@ -296,8 +296,10 @@ function display_my_listings($atts) {
                                new Date(b.querySelector('.listing-date').textContent.split(': ')[1]);
                     case 'price-high':
                     case 'price-low':
-                        const priceA = parseInt(a.querySelector('.listing-title').textContent.match(/€([\d,]+)/)[1].replace(/,/g, ''));
-                        const priceB = parseInt(b.querySelector('.listing-title').textContent.match(/€([\d,]+)/)[1].replace(/,/g, ''));
+                        const priceTextA = a.querySelector('.listing-price').textContent.match(/€([\d,.]+)/)[1];
+                        const priceTextB = b.querySelector('.listing-price').textContent.match(/€([\d,.]+)/)[1];
+                        const priceA = parseFloat(priceTextA.replace(/,/g, ''));
+                        const priceB = parseFloat(priceTextB.replace(/,/g, ''));
                         return sortValue === 'price-high' ? priceB - priceA : priceA - priceB;
                     default:
                         return 0;
