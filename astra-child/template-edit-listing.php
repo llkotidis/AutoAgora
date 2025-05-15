@@ -38,6 +38,18 @@ if (!$car || $car->post_type !== 'car' || $car->post_author != get_current_user_
 $make = get_field('make', $car_id);
 $model = get_field('model', $car_id);
 $variant = get_field('variant', $car_id);
+
+// Get the makes data structure
+$add_listing_makes = [];
+$add_listing_data = get_field('add_listing_data', 'option');
+if ($add_listing_data) {
+    foreach ($add_listing_data as $make_name => $models) {
+        $add_listing_makes[$make_name] = $models;
+    }
+    ksort($add_listing_makes);
+}
+
+// Get other car details
 $year = get_field('year', $car_id);
 $price = get_field('price', $car_id);
 $mileage = get_field('mileage', $car_id);
@@ -152,26 +164,15 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                 <div class="form-row form-row-thirds">
                                     <div class="form-third">
                                         <label for="make"><i class="fas fa-car-side"></i> <?php esc_html_e('Make', 'astra-child'); ?></label>
-                                        <select id="make" name="make" class="form-control" required>
-                                            <option value=""><?php esc_html_e('Select Make', 'astra-child'); ?></option>
-                                            <?php
-                                            foreach ($add_listing_makes as $make_name => $models) {
-                                                echo '<option value="' . esc_attr($make_name) . '" ' . selected($make, $make_name, false) . '>' . esc_html($make_name) . '</option>';
-                                            }
-                                            ?>
-                                        </select>
+                                        <input type="text" id="make" name="make" class="form-control" value="<?php echo esc_attr($make); ?>" readonly>
                                     </div>
                                     <div class="form-third">
                                         <label for="model"><i class="fas fa-car"></i> <?php esc_html_e('Model', 'astra-child'); ?></label>
-                                        <select id="model" name="model" class="form-control" required>
-                                            <option value=""><?php esc_html_e('Select Model', 'astra-child'); ?></option>
-                                        </select>
+                                        <input type="text" id="model" name="model" class="form-control" value="<?php echo esc_attr($model); ?>" readonly>
                                     </div>
                                     <div class="form-third">
                                         <label for="variant"><i class="fas fa-car-side"></i> <?php esc_html_e('Variant', 'astra-child'); ?></label>
-                                        <select id="variant" name="variant" class="form-control" required>
-                                            <option value=""><?php esc_html_e('Select Variant', 'astra-child'); ?></option>
-                                        </select>
+                                        <input type="text" id="variant" name="variant" class="form-control" value="<?php echo esc_attr($variant); ?>" readonly>
                                     </div>
                                 </div>
 
