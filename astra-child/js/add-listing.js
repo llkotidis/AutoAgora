@@ -130,7 +130,7 @@ jQuery(document).ready(function($) {
         // Validate image count
         const fileCount = fileInput[0].files.length;
         if (fileCount < 5) {
-            alert('Please upload at least 5 images');
+            alert('Please upload at least 5 images before submitting the form');
             return;
         }
         if (fileCount > 25) {
@@ -270,11 +270,6 @@ jQuery(document).ready(function($) {
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
-        
-        // Check if we're below minimum image count
-        if (fileInput[0].files.length < 5) {
-            alert('Please upload at least 5 images');
-        }
     }
     
     // Create preview for a single file
@@ -337,10 +332,5 @@ jQuery(document).ready(function($) {
         // Update the file input
         fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
-        
-        // Check if we're below minimum image count
-        if (fileInput[0].files.length < 5) {
-            alert('Please upload at least 5 images');
-        }
     }
 }); 
