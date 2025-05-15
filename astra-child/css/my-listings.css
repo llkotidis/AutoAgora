@@ -237,4 +237,12 @@
     width: 100%;
     max-width: 100%;
   }
+
+  .listings-filter {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    width: 100%;
+  }
 }
