@@ -103,6 +103,7 @@
   cursor: pointer;
   transition: opacity 0.1s ease;
   text-decoration: none !important;
+  font-weight: 600 !important;
 }
 
 .button:hover {
