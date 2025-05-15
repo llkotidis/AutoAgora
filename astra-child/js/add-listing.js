@@ -55,6 +55,7 @@ jQuery(document).ready(function($) {
     const fileInput = $('#car_images');
     const fileUploadArea = $('#file-upload-area');
     const imagePreview = $('#image-preview');
+    let accumulatedFilesList = []; // Source of truth for selected files
     
     // Add mileage formatting
     const mileageInput = $('#mileage');
@@ -125,15 +126,14 @@ jQuery(document).ready(function($) {
 
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
-        
-        // Validate image count
-        const fileCount = fileInput[0].files.length;
-        if (fileCount < 5) {
+        // Validate image count using accumulatedFilesList
+        if (accumulatedFilesList.length < 5) {
+            e.preventDefault(); // Prevent default form submission
             alert('Please upload at least 5 images before submitting the form');
             return;
         }
-        if (fileCount > 25) {
+        if (accumulatedFilesList.length > 25) {
+            e.preventDefault(); // Prevent default form submission
             alert('Maximum 25 images allowed');
             return;
         }
@@ -167,8 +167,9 @@ jQuery(document).ready(function($) {
         priceInput.prop('disabled', true);
         $('#hp').prop('disabled', true);
         
-        // Submit the form
-        this.submit();
+        // Ensure fileInput has the correct files from accumulatedFilesList
+        updateActualFileInput(); 
+        // Form will submit with fileInput populated by accumulatedFilesList
     });
     
     console.log('[Add Listing] Elements found:', {
@@ -189,12 +190,14 @@ jQuery(document).ready(function($) {
     fileInput.on('change', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
-        if (this.files.length > 0) {
-            // Create a new FileList from the selected files
-            const newFiles = Array.from(this.files);
-            handleFiles(newFiles, true);
+        const newlySelectedThroughDialog = Array.from(this.files);
+        console.log('[Add Listing] Files selected through file dialog:', newlySelectedThroughDialog.length);
+        if (newlySelectedThroughDialog.length > 0) {
+            processNewFiles(newlySelectedThroughDialog);
         }
+        // Clear the file input's displayed value to allow re-selecting the same file(s)
+        // and ensure 'change' event fires consistently.
+        $(this).val('');
     });
     
     // Handle drag and drop
@@ -214,147 +217,104 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         e.stopPropagation();
         $(this).removeClass('dragover');
-        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
         const droppedFiles = Array.from(e.originalEvent.dataTransfer.files);
-        handleFiles(droppedFiles, false);
+        console.log('[Add Listing] Files dropped:', droppedFiles.length);
+        processNewFiles(droppedFiles);
     });
     
-    // Process the files - common function for both methods
-    function handleFiles(files, isFileDialog) {
-        console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
-        
+    function processNewFiles(candidateFiles) {
+        console.log('[Add Listing] Processing', candidateFiles.length, 'new candidate files.');
         const maxFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        
-        // Get current files from input
-        const currentFiles = Array.from(fileInput[0].files || []);
-        console.log('[Add Listing] Current files:', currentFiles.length);
-        
-        // Create a Map to track unique files by name and size
-        const uniqueFiles = new Map();
-        
-        // Add existing files to the map
-        currentFiles.forEach(file => {
-            const key = `${file.name}-${file.size}`;
-            uniqueFiles.set(key, file);
-        });
-        
-        // Process each new file
-        files.forEach(file => {
-            try {
-                // Check if adding this file would exceed the maximum
-                if (uniqueFiles.size >= maxFiles) {
-                    alert('Maximum ' + maxFiles + ' files allowed');
-                    return; // Skip this file
-                }
-                
-                const key = `${file.name}-${file.size}`;
-                
-                // Check if duplicate
-                if (uniqueFiles.has(key)) {
-                    console.log('[Add Listing] Skipping duplicate file:', file.name);
-                    return; // Skip this file
-                }
-                
-                // Validate file type
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Only JPG, PNG, GIF, and WebP files are allowed');
-                    return; // Skip this file
-                }
-                
-                // Validate file size
-                if (file.size > maxFileSize) {
-                    alert('File size must be less than 5MB');
-                    return; // Skip this file
-                }
-                
-                // Add valid file to our collection
-                uniqueFiles.set(key, file);
-                
-                // Create preview for this file
-                createPreviewForFile(file);
-            } catch (error) {
-                console.error('[Add Listing] Error processing file:', file.name, error);
+
+        let filesAddedThisBatchCount = 0;
+
+        candidateFiles.forEach(file => {
+            // Check if adding this file would exceed the maximum, considering those already processed in this batch
+            if (accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
+                alert('Maximum ' + maxFiles + ' files allowed. Some files were not added.');
+                return false; // Effectively breaks forEach for this iteration's candidateFiles
             }
+
+            const isDuplicate = accumulatedFilesList.some(
+                existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+            );
+
+            if (isDuplicate) {
+                console.log('[Add Listing] Skipping duplicate file:', file.name);
+                return; // to next candidate in forEach
+            }
+
+            if (!allowedTypes.includes(file.type)) {
+                alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
+                return; // to next candidate in forEach
+            }
+
+            if (file.size > maxFileSize) {
+                alert(`File ${file.name} is too large (max 5MB).`);
+                return; // to next candidate in forEach
+            }
+
+            // If all checks pass, add to accumulated list and create preview
+            accumulatedFilesList.push(file);
+            createAndDisplayPreview(file); // Create preview for the newly added file
+            filesAddedThisBatchCount++;
         });
-        
-        try {
-            // Create a new DataTransfer object
-            const dataTransfer = new DataTransfer();
-            
-            // Add all unique files to the DataTransfer object
-            uniqueFiles.forEach(file => {
-                dataTransfer.items.add(file);
-            });
-            
-            // Update the file input with all files
-            fileInput[0].files = dataTransfer.files;
-            console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
-        } catch (error) {
-            console.error('[Add Listing] Error updating file input:', error);
+
+        if (filesAddedThisBatchCount > 0) {
+            updateActualFileInput(); // Update the hidden file input with the new state of accumulatedFilesList
         }
+        console.log('[Add Listing] Processed batch. Accumulated files count:', accumulatedFilesList.length);
     }
     
-    // Create preview for a single file
-    function createPreviewForFile(file) {
+    function createAndDisplayPreview(file) {
         console.log('[Add Listing] Creating preview for:', file.name);
-        
-        // Create a FileReader to read the image
         const reader = new FileReader();
-        
         reader.onload = function(e) {
-            console.log('[Add Listing] File read complete, creating preview');
-            
-            // Create preview container
+            console.log('[Add Listing] File read complete for preview, creating DOM element for:', file.name);
             const previewItem = $('<div>').addClass('image-preview-item');
-            
-            // Create image element
-            const img = $('<img>').attr({
-                'src': e.target.result,
-                'alt': file.name
-            });
-            
-            // Create remove button
+            const img = $('<img>').attr({ 'src': e.target.result, 'alt': file.name });
             const removeBtn = $('<div>').addClass('remove-image')
                 .html('<i class="fas fa-times"></i>')
                 .on('click', function() {
-                    removeFile(file.name);
-                    previewItem.remove();
+                    console.log('[Add Listing] Remove button clicked for:', file.name);
+                    removeFileFromSelection(file.name); // Pass file name to identify for removal
+                    previewItem.remove(); // Remove the preview DOM element
                 });
-            
-            // Add image and button to preview item
             previewItem.append(img).append(removeBtn);
-            
-            // Add to preview container
-            imagePreview.append(previewItem);
-            console.log('[Add Listing] Preview added for:', file.name);
+            imagePreview.append(previewItem); // Append to the main preview container
+            console.log('[Add Listing] Preview added to DOM for:', file.name);
         };
-        
         reader.onerror = function() {
-            console.error('[Add Listing] Error reading file:', file.name);
+            console.error('[Add Listing] Error reading file for preview:', file.name);
         };
-        
-        // Start reading the file
         reader.readAsDataURL(file);
     }
+
+    function removeFileFromSelection(fileNameToRemove) {
+        console.log('[Add Listing] Attempting to remove file from selection:', fileNameToRemove);
+        accumulatedFilesList = accumulatedFilesList.filter(
+            file => file.name !== fileNameToRemove
+        );
+        updateActualFileInput(); // Refresh the actual file input
+        console.log('[Add Listing] File removed. Accumulated files count:', accumulatedFilesList.length);
+    }
     
-    // Remove a file by name
-    function removeFile(fileName) {
-        console.log('[Add Listing] Removing file:', fileName);
-        
+    function updateActualFileInput() {
         const dataTransfer = new DataTransfer();
-        const currentFiles = Array.from(fileInput[0].files);
-        
-        // Add all files except the one to remove
-        currentFiles.forEach(file => {
-            if (file.name !== fileName) {
+        accumulatedFilesList.forEach(file => {
+            try {
                 dataTransfer.items.add(file);
+            } catch (error) {
+                console.error('[Add Listing] Error adding file to DataTransfer:', file.name, error);
             }
         });
-        
-        // Update the file input
-        fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
+        try {
+            fileInput[0].files = dataTransfer.files;
+        } catch (error) {
+            console.error('[Add Listing] Error setting files on input element:', error);
+        }
+        console.log('[Add Listing] Actual file input updated. Count:', fileInput[0].files.length);
     }
 }); 
