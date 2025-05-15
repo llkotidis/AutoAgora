@@ -503,7 +503,7 @@ get_header(); ?>
 
 							<div class="add-listing-images-section">
 								<h2><?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
-								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
+								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
 								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
 								<div class="image-upload-container">
 									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
