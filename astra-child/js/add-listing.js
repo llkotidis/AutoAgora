@@ -179,34 +179,44 @@ jQuery(document).ready(function($) {
     
     // Handle click on upload area
     fileUploadArea.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('[Add Listing] Upload area clicked');
         fileInput.trigger('click');
     });
     
     // Handle when files are selected through the file dialog
     fileInput.on('change', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('[Add Listing] Files selected through file dialog:', this.files.length);
         if (this.files.length > 0) {
-            handleFiles(this.files, true);
+            // Create a new FileList from the selected files
+            const newFiles = Array.from(this.files);
+            handleFiles(newFiles, true);
         }
     });
     
     // Handle drag and drop
     fileUploadArea.on('dragover', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         $(this).addClass('dragover');
     });
     
     fileUploadArea.on('dragleave', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         $(this).removeClass('dragover');
     });
     
     fileUploadArea.on('drop', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         $(this).removeClass('dragover');
         console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
-        handleFiles(e.originalEvent.dataTransfer.files, false);
+        const droppedFiles = Array.from(e.originalEvent.dataTransfer.files);
+        handleFiles(droppedFiles, false);
     });
     
     // Process the files - common function for both methods
@@ -226,49 +236,61 @@ jQuery(document).ready(function($) {
         
         // Add existing files first
         currentFiles.forEach(file => {
-            dataTransfer.items.add(file);
+            try {
+                dataTransfer.items.add(file);
+            } catch (error) {
+                console.error('[Add Listing] Error adding existing file:', error);
+            }
         });
         
         // Process each new file
-        Array.from(files).forEach(file => {
-            // Check if adding this file would exceed the maximum
-            if (dataTransfer.files.length >= maxFiles) {
-                alert('Maximum ' + maxFiles + ' files allowed');
-                return; // Skip this file
+        files.forEach(file => {
+            try {
+                // Check if adding this file would exceed the maximum
+                if (dataTransfer.files.length >= maxFiles) {
+                    alert('Maximum ' + maxFiles + ' files allowed');
+                    return; // Skip this file
+                }
+                
+                // Check if duplicate
+                const isDuplicate = currentFiles.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size
+                );
+                
+                if (isDuplicate) {
+                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    return; // Skip this file
+                }
+                
+                // Validate file type
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only JPG, PNG, GIF, and WebP files are allowed');
+                    return; // Skip this file
+                }
+                
+                // Validate file size
+                if (file.size > maxFileSize) {
+                    alert('File size must be less than 5MB');
+                    return; // Skip this file
+                }
+                
+                // Add valid file to our collection
+                dataTransfer.items.add(file);
+                
+                // Create preview for this file
+                createPreviewForFile(file);
+            } catch (error) {
+                console.error('[Add Listing] Error processing file:', file.name, error);
             }
-            
-            // Check if duplicate
-            const isDuplicate = currentFiles.some(
-                existingFile => existingFile.name === file.name && existingFile.size === file.size
-            );
-            
-            if (isDuplicate) {
-                console.log('[Add Listing] Skipping duplicate file:', file.name);
-                return; // Skip this file
-            }
-            
-            // Validate file type
-            if (!allowedTypes.includes(file.type)) {
-                alert('Only JPG, PNG, GIF, and WebP files are allowed');
-                return; // Skip this file
-            }
-            
-            // Validate file size
-            if (file.size > maxFileSize) {
-                alert('File size must be less than 5MB');
-                return; // Skip this file
-            }
-            
-            // Add valid file to our collection
-            dataTransfer.items.add(file);
-            
-            // Create preview for this file
-            createPreviewForFile(file);
         });
         
-        // Update the file input with all files
-        fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
+        try {
+            // Update the file input with all files
+            fileInput[0].files = dataTransfer.files;
+            console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
+        } catch (error) {
+            console.error('[Add Listing] Error updating file input:', error);
+        }
     }
     
     // Create preview for a single file
