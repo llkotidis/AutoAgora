@@ -44,4 +44,24 @@ $('#add-car-listing-form').on('submit', function(e) {
 
     // If we get here, validation passed - submit the form
     this.submit();
+});
+
+// Also handle submit button click
+$('.submit-button').on('click', function(e) {
+    e.preventDefault(); // Prevent default button action
+    
+    // Validate image count
+    const imageCount = fileInput[0].files.length;
+    if (imageCount < 5) {
+        alert('Please upload at least 5 images for your car listing.');
+        return false;
+    }
+
+    if (imageCount > 25) {
+        alert('You can upload a maximum of 25 images for your car listing.');
+        return false;
+    }
+    
+    // If validation passes, trigger form submission
+    $('#add-car-listing-form').submit();
 }); 
