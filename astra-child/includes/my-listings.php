@@ -190,7 +190,7 @@ function display_my_listings($atts) {
                                     ?></span>
                                 </div>
                                 <div class="listing-actions">
-                                    <a href="<?php echo get_edit_post_link(); ?>" class="button"><i class="fas fa-pencil-alt"></i> Edit</a>
+                                    <a href="<?php echo esc_url(add_query_arg('car_id', $post_id, home_url('/edit-listing/'))); ?>" class="button"><i class="fas fa-pencil-alt"></i> Edit</a>
                                     <?php 
                                     if (get_post_status() === 'publish') {
                                         $is_sold = get_field('is_sold', $post_id);
