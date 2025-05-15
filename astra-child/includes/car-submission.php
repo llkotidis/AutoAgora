@@ -501,6 +501,20 @@ function handle_edit_car_listing() {
         update_post_meta($car_id, 'hp', sanitize_text_field($_POST['hp']));
     }
     
+    // Process vehicle history
+    $vehiclehistory = array();
+    if (isset($_POST['vehiclehistory']) && is_array($_POST['vehiclehistory'])) {
+        foreach ($_POST['vehiclehistory'] as $history_item) {
+            $vehiclehistory[] = sanitize_text_field($history_item);
+        }
+    }
+    update_post_meta($car_id, 'vehiclehistory', $vehiclehistory);
+    update_field('vehiclehistory', $vehiclehistory, $car_id);
+    
+    // Process extras
+    $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
+    update_post_meta($car_id, 'extras', $extras);
+    
     // Handle images
     if (!empty($_FILES['car_images']['name'][0])) {
         require_once(ABSPATH . 'wp-admin/includes/image.php');

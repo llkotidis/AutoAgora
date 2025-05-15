@@ -63,10 +63,21 @@ $extras = get_post_meta($car_id, 'extras', true);
 
 // Ensure vehicle_history and extras are arrays and properly formatted
 if (!is_array($vehicle_history)) {
-    $vehicle_history = array();
     if (!empty($vehicle_history)) {
         $vehicle_history = array($vehicle_history);
+    } else {
+        $vehicle_history = array();
     }
+}
+
+// Convert any serialized data to arrays
+if (is_serialized($vehicle_history)) {
+    $vehicle_history = maybe_unserialize($vehicle_history);
+}
+
+// Ensure we have arrays
+if (!is_array($vehicle_history)) {
+    $vehicle_history = array();
 }
 if (!is_array($extras)) {
     $extras = array();
@@ -76,17 +87,11 @@ if (!is_array($extras)) {
 }
 
 // Convert any serialized data to arrays
-if (is_serialized($vehicle_history)) {
-    $vehicle_history = maybe_unserialize($vehicle_history);
-}
 if (is_serialized($extras)) {
     $extras = maybe_unserialize($extras);
 }
 
 // Ensure we have arrays
-if (!is_array($vehicle_history)) {
-    $vehicle_history = array();
-}
 if (!is_array($extras)) {
     $extras = array();
 }
@@ -390,16 +395,27 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                             <div class="form-section vehicle-history-section">
                                 <h2><?php esc_html_e('Vehicle History', 'astra-child'); ?></h2>
                                 <div class="form-row">
-                                    <div class="checkbox-group">
+                                    <div class="vehicle-history-grid">
                                         <?php
                                         $vehicle_history_options = array(
-                                            'service_history' => 'Full Service History',
-                                            'accident_free' => 'Accident Free',
-                                            'one_owner' => 'One Owner',
-                                            'warranty' => 'Warranty',
-                                            'imported' => 'Imported',
-                                            'tax_paid' => 'Tax Paid',
-                                            'hpi_clear' => 'HPI Clear'
+                                            'no_accidents' => 'No Accidents',
+                                            'minor_accidents' => 'Minor Accidents',
+                                            'major_accidents' => 'Major Accidents',
+                                            'regular_maintenance' => 'Regular Maintenance',
+                                            'engine_overhaul' => 'Engine Overhaul',
+                                            'transmission_replacement' => 'Transmission Replacement',
+                                            'repainted' => 'Repainted',
+                                            'bodywork_repair' => 'Bodywork Repair',
+                                            'rust_treatment' => 'Rust Treatment',
+                                            'no_modifications' => 'No Modifications',
+                                            'performance_upgrades' => 'Performance Upgrades',
+                                            'cosmetic_modifications' => 'Cosmetic Modifications',
+                                            'flood_damage' => 'Flood Damage',
+                                            'fire_damage' => 'Fire Damage',
+                                            'hail_damage' => 'Hail Damage',
+                                            'clear_title' => 'Clear Title',
+                                            'no_known_issues' => 'No Known Issues',
+                                            'odometer_replacement' => 'Odometer Replacement'
                                         );
                                         
                                         foreach ($vehicle_history_options as $value => $label) {
