@@ -56,23 +56,11 @@
   gap: 1.35rem;
 }
 
-/* Specific styling for #more-options when inside .gb-element-8d8a1d2e */
 .gb-element-8d8a1d2e #more-options {
   position: absolute;
-  z-index: 1000; /* Ensure it's on top of other content */
-
-  /* Override flex item behavior from the general #more-options rule as it's now out of flow */
+  z-index: 1000;
   flex: none;
-  width: 450px; /* Explicit width, using max-width from general #more-options rule. Adjust as needed. */
-
-  /* 
-    Note: The parent element (e.g., .gb-element-8d8a1d2e) should have 'position: relative;' 
-    for correct positioning of this absolute element. 
-    You'll also need to add 'top', 'left', 'right', or 'bottom' properties 
-    to this rule to position the #more-options panel, for example:
-    top: 100%;  (Position below the parent)
-    right: 0;   (Align to the right of the parent)
-  */
+  width: 450px;
 }
 
 #more-options.show {
