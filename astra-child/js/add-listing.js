@@ -252,8 +252,8 @@ jQuery(document).ready(function($) {
                     return; // Skip this file
                 }
                 
-                // Check if duplicate
-                const isDuplicate = currentFiles.some(
+                // Check if duplicate by comparing file name and size
+                const isDuplicate = Array.from(dataTransfer.files).some(
                     existingFile => existingFile.name === file.name && existingFile.size === file.size
                 );
                 
