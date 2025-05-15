@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     placeholder: 'Search for a location in Cyprus...',
                     countries: 'cy', // Restrict to Cyprus
                     types: 'place,neighborhood,address',
-                    language: 'en',
+                    language: 'en', // Force English results
                     enableEventLogging: false, // Disable geocoder analytics
                     localGeocoder: null,
                     clearOnBlur: true,
@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to reverse geocode coordinates
     function reverseGeocode(lngLat) {
         console.log('Reverse geocoding:', lngLat);
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,neighborhood,address&country=cy`;
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,neighborhood,address&country=cy&language=en`;
         
         fetch(url)
             .then(response => response.json())
