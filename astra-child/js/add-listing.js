@@ -187,7 +187,58 @@ jQuery(document).ready(function($) {
     fileInput.on('change', function(e) {
         console.log('[Add Listing] Files selected through file dialog:', this.files.length);
         if (this.files.length > 0) {
-            handleFiles(this.files, true);
+            // Create a new DataTransfer object
+            const dataTransfer = new DataTransfer();
+            
+            // Get current files
+            const currentFiles = Array.from(fileInput[0].files || []);
+            console.log('[Add Listing] Current files:', currentFiles.length);
+            
+            // Add existing files first
+            currentFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            
+            // Process each new file
+            Array.from(this.files).forEach(file => {
+                // Check if adding this file would exceed the maximum
+                if (dataTransfer.files.length >= 25) {
+                    alert('Maximum 25 files allowed');
+                    return; // Skip this file
+                }
+                
+                // Check if duplicate
+                const isDuplicate = currentFiles.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size
+                );
+                
+                if (isDuplicate) {
+                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    return; // Skip this file
+                }
+                
+                // Validate file type
+                if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+                    alert('Only JPG, PNG, GIF, and WebP files are allowed');
+                    return; // Skip this file
+                }
+                
+                // Validate file size
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    return; // Skip this file
+                }
+                
+                // Add valid file to our collection
+                dataTransfer.items.add(file);
+                
+                // Create preview for this file
+                createPreviewForFile(file);
+            });
+            
+            // Update the file input with all files
+            fileInput[0].files = dataTransfer.files;
+            console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
         }
     });
     
