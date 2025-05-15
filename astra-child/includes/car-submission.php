@@ -145,30 +145,30 @@ function handle_add_car_listing() {
     }
     
     // Add post meta for all the car details
-    update_post_meta($post_id, 'make', $make);
-    update_post_meta($post_id, 'model', $model);
-    update_post_meta($post_id, 'variant', $variant);
-    update_post_meta($post_id, 'year', $year);
-    update_post_meta($post_id, 'mileage', $mileage);
-    update_post_meta($post_id, 'price', $price);
-    update_post_meta($post_id, 'location', $location);
-    update_post_meta($post_id, 'car_city', $city);
-    update_post_meta($post_id, 'car_district', $district);
-    update_post_meta($post_id, 'car_latitude', $latitude);
-    update_post_meta($post_id, 'car_longitude', $longitude);
-    update_post_meta($post_id, 'car_address', $address);
-    update_post_meta($post_id, 'engine_capacity', $engine_capacity);
-    update_post_meta($post_id, 'fuel_type', $fuel_type);
-    update_post_meta($post_id, 'transmission', $transmission);
-    update_post_meta($post_id, 'body_type', $body_type);
-    update_post_meta($post_id, 'drive_type', $drive_type);
-    update_post_meta($post_id, 'exterior_color', $exterior_color);
-    update_post_meta($post_id, 'interior_color', $interior_color);
-    update_post_meta($post_id, 'description', $description);
-    update_post_meta($post_id, 'number_of_doors', $number_of_doors);
-    update_post_meta($post_id, 'number_of_seats', $number_of_seats);
-    update_post_meta($post_id, 'motuntil', $motuntil);
-    update_post_meta($post_id, 'extras', $extras);
+    update_field('make', $make, $post_id);
+    update_field('model', $model, $post_id);
+    update_field('variant', $variant, $post_id);
+    update_field('year', $year, $post_id);
+    update_field('mileage', $mileage, $post_id);
+    update_field('price', $price, $post_id);
+    update_field('location', $location, $post_id);
+    update_field('car_city', $city, $post_id);
+    update_field('car_district', $district, $post_id);
+    update_field('car_latitude', $latitude, $post_id);
+    update_field('car_longitude', $longitude, $post_id);
+    update_field('car_address', $address, $post_id);
+    update_field('engine_capacity', $engine_capacity, $post_id);
+    update_field('fuel_type', $fuel_type, $post_id);
+    update_field('transmission', $transmission, $post_id);
+    update_field('body_type', $body_type, $post_id);
+    update_field('drive_type', $drive_type, $post_id);
+    update_field('exterior_color', $exterior_color, $post_id);
+    update_field('interior_color', $interior_color, $post_id);
+    update_field('description', $description, $post_id);
+    update_field('number_of_doors', $number_of_doors, $post_id);
+    update_field('number_of_seats', $number_of_seats, $post_id);
+    update_field('motuntil', $motuntil, $post_id);
+    update_field('extras', $extras, $post_id);
     
     // Update ACF fields
     update_field('hp', $hp, $post_id);
@@ -176,7 +176,6 @@ function handle_add_car_listing() {
     update_field('isantique', $isantique, $post_id);
     
     // Save vehicle history both as post meta and ACF field to ensure compatibility
-    update_post_meta($post_id, 'vehiclehistory', $vehiclehistory);
     update_field('vehiclehistory', $vehiclehistory, $post_id);
     
     // Debug logging after save
@@ -493,12 +492,12 @@ function handle_edit_car_listing() {
     
     // Update all meta fields
     foreach ($required_fields as $field_key => $field_label) {
-        update_post_meta($car_id, $field_key, sanitize_text_field($_POST[$field_key]));
+        update_field($field_key, sanitize_text_field($_POST[$field_key]), $car_id);
     }
     
     // Update optional fields
     if (isset($_POST['hp'])) {
-        update_post_meta($car_id, 'hp', sanitize_text_field($_POST['hp']));
+        update_field('hp', sanitize_text_field($_POST['hp']), $car_id);
     }
     
     // Process vehicle history
@@ -508,12 +507,11 @@ function handle_edit_car_listing() {
             $vehiclehistory[] = sanitize_text_field($history_item);
         }
     }
-    update_post_meta($car_id, 'vehiclehistory', $vehiclehistory);
     update_field('vehiclehistory', $vehiclehistory, $car_id);
     
     // Process extras
     $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
-    update_post_meta($car_id, 'extras', $extras);
+    update_field('extras', $extras, $car_id);
     
     // Handle images
     if (!empty($_FILES['car_images']['name'][0])) {
