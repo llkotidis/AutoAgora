@@ -214,7 +214,7 @@
   }
 
   .post-99 {
-    padding: 0.5rem !important;
+    padding: 1.5rem 0.5rem !important;
   }
 }
 
@@ -236,5 +236,13 @@
   .listing-image-container {
     width: 100%;
     max-width: 100%;
+  }
+
+  .listings-filter {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    width: 100%;
   }
 }

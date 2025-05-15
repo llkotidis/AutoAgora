@@ -49,10 +49,6 @@ function display_my_listings($atts) {
                         <option value="sold" <?php selected($current_filter, 'sold'); ?>>Sold</option>
                     </select>
                 </form>
-                <div class="search-container">
-                    <label for="listing-search">Search:</label>
-                    <input type="text" id="listing-search" placeholder="Search listings..." class="search-input">
-                </div>
                 <div class="sort-container">
                     <label for="sort-select">Sort by:</label>
                     <select id="sort-select" class="sort-select">
@@ -61,6 +57,10 @@ function display_my_listings($atts) {
                         <option value="price-high">Price: High to Low</option>
                         <option value="price-low">Price: Low to High</option>
                     </select>
+                </div>
+                <div class="search-container">
+                    <label for="listing-search">Search:</label>
+                    <input type="text" id="listing-search" placeholder="Search listings..." class="search-input">
                 </div>
             </div>
 
