@@ -49,6 +49,7 @@ function display_my_listings($atts) {
                 </select>
             </form>
             <div class="search-container">
+                <label for="listing-search">Search:</label>
                 <input type="text" id="listing-search" placeholder="Search listings..." class="search-input">
             </div>
             <div class="sort-container">
