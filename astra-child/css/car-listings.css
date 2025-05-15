@@ -1,11 +1,11 @@
 .car-listings-container {
-  max-width: 1480px !important;
+  max-width: 1700px !important;
   margin: 0 auto;
   padding: 0;
 }
 
-#content .ast-container:first-child {
-  max-width: 1480px !important;
+.page-id-127 #content .ast-container:first-child {
+  max-width: 1700px !important;
 }
 
 .car-listings-filters {
@@ -50,7 +50,7 @@
 .car-listings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 30px;
+  gap: 1.5rem;
   margin-bottom: 40px;
 }
 
