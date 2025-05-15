@@ -1,6 +1,7 @@
 jQuery(document).ready(function($) {
     // Store the makes data
     const makesData = editListingData.makesData;
+    let accumulatedFilesList = []; // For newly added files
     
     // Set initial make value
     const selectedMake = editListingData.selectedMake;
@@ -87,69 +88,153 @@ jQuery(document).ready(function($) {
     // Handle image upload and preview
     const fileInput = $('#car_images');
     const fileUploadArea = $('#file-upload-area');
-    const imagePreview = $('#image-preview');
+    const imagePreviewContainer = $('#image-preview'); // Renamed for clarity
     
     // Handle click on upload area
-    fileUploadArea.on('click', function() {
-        fileInput.click();
+    fileUploadArea.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.trigger('click');
     });
     
-    // Handle file selection
-    fileInput.on('change', function() {
-        handleFiles(this.files);
+    // Handle file selection through dialog
+    fileInput.on('change', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const newlySelectedThroughDialog = Array.from(this.files);
+        if (newlySelectedThroughDialog.length > 0) {
+            processNewFiles(newlySelectedThroughDialog);
+        }
+        $(this).val(''); // Clear the input to allow re-selecting the same file
     });
     
     // Handle drag and drop
     fileUploadArea.on('dragover', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         $(this).addClass('dragover');
     });
     
-    fileUploadArea.on('dragleave', function() {
+    fileUploadArea.on('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         $(this).removeClass('dragover');
     });
     
     fileUploadArea.on('drop', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         $(this).removeClass('dragover');
-        handleFiles(e.originalEvent.dataTransfer.files);
+        const droppedFiles = Array.from(e.originalEvent.dataTransfer.files);
+        processNewFiles(droppedFiles);
     });
     
-    // Handle remove image
-    imagePreview.on('click', '.remove-image', function(e) {
+    // Handle removing EXISTING images (those loaded with the page)
+    imagePreviewContainer.on('click', '.remove-image[data-image-id]', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         const imageId = $(this).data('image-id');
         if (imageId) {
-            // Add hidden input to track removed images
+            // Add hidden input to track removed images for the backend
             $('<input>').attr({
                 type: 'hidden',
                 name: 'removed_images[]',
                 value: imageId
             }).appendTo('#edit-car-listing-form');
+            console.log('[Edit Listing] Marked existing image for removal, ID:', imageId);
         }
-        $(this).parent().remove();
-        
-        // Reset the file input to allow selecting the same files again
-        fileInput.val('');
+        $(this).closest('.image-preview-item').remove(); // Use closest to ensure the correct item is removed
     });
     
-    function handleFiles(files) {
-        if (!files.length) return;
-        
-        Array.from(files).forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewItem = $('<div>').addClass('image-preview-item');
-                const img = $('<img>').attr('src', e.target.result);
-                const removeBtn = $('<button>').addClass('remove-image').text('×');
-                
-                previewItem.append(img).append(removeBtn);
-                imagePreview.append(previewItem);
-            };
-            reader.readAsDataURL(file);
+    function processNewFiles(candidateFiles) {
+        console.log('[Edit Listing] Processing', candidateFiles.length, 'new candidate files.');
+        const maxFiles = 25;
+        const maxFileSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        let filesAddedThisBatchCount = 0;
+
+        const currentExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+
+        candidateFiles.forEach(file => {
+            if (currentExistingImageCount + accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
+                alert('Maximum ' + maxFiles + ' total images allowed. Some files were not added.');
+                return false; 
+            }
+
+            const isDuplicateInNew = accumulatedFilesList.some(
+                existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+            );
+            if (isDuplicateInNew) {
+                console.log('[Edit Listing] Skipping duplicate new file:', file.name);
+                return;
+            }
+            if (!allowedTypes.includes(file.type)) {
+                alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
+                return;
+            }
+            if (file.size > maxFileSize) {
+                alert(`File ${file.name} is too large (max 5MB).`);
+                return;
+            }
+
+            accumulatedFilesList.push(file);
+            createAndDisplayPreviewForNewFile(file);
+            filesAddedThisBatchCount++;
         });
+
+        if (filesAddedThisBatchCount > 0) {
+            updateActualFileInput();
+        }
+        console.log('[Edit Listing] Processed batch. New accumulated files count:', accumulatedFilesList.length);
+    }
+
+    function createAndDisplayPreviewForNewFile(file) {
+        console.log('[Edit Listing] Creating preview for new file:', file.name);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewItem = $('<div>').addClass('image-preview-item new-image'); // Add 'new-image' class for styling/selection if needed
+            const img = $('<img>').attr({ 'src': e.target.result, 'alt': file.name });
+            const removeBtn = $('<div>').addClass('remove-image remove-new-image') // Specific class for new image removal
+                .html('<i class="fas fa-times"></i>')
+                .on('click', function(event) {
+                    event.stopPropagation(); // Prevent potential parent clicks
+                    console.log('[Edit Listing] Remove button clicked for new file:', file.name);
+                    removeNewFileFromSelection(file.name);
+                    previewItem.remove();
+                });
+            previewItem.append(img).append(removeBtn);
+            imagePreviewContainer.append(previewItem);
+        };
+        reader.onerror = function() {
+            console.error('[Edit Listing] Error reading new file for preview:', file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeNewFileFromSelection(fileNameToRemove) {
+        console.log('[Edit Listing] Attempting to remove new file from selection:', fileNameToRemove);
+        accumulatedFilesList = accumulatedFilesList.filter(
+            file => file.name !== fileNameToRemove
+        );
+        updateActualFileInput();
+        console.log('[Edit Listing] New file removed. Accumulated new files count:', accumulatedFilesList.length);
+    }
+    
+    function updateActualFileInput() {
+        const dataTransfer = new DataTransfer();
+        accumulatedFilesList.forEach(file => {
+            try {
+                dataTransfer.items.add(file);
+            } catch (error) {
+                console.error('[Edit Listing] Error adding new file to DataTransfer:', file.name, error);
+            }
+        });
+        try {
+            fileInput[0].files = dataTransfer.files;
+        } catch (error) {
+            console.error('[Edit Listing] Error setting new files on input element:', error);
+        }
+        console.log('[Edit Listing] Actual file input updated with new files. Count:', fileInput[0].files.length);
     }
     
     // Format numbers with commas
@@ -222,21 +307,23 @@ jQuery(document).ready(function($) {
         $('#mileage, #price, #hp').prop('disabled', true);
 
         // Validate image count
-        const existingImages = $('.image-preview-item').length;
-        const newImages = fileInput[0].files.length;
-        const totalImages = existingImages + newImages;
+        const existingImagesCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+        const newImagesCount = accumulatedFilesList.length;
+        const totalImages = existingImagesCount + newImagesCount;
 
         if (totalImages < 5) {
             e.preventDefault();
-            alert('Please upload at least 5 images for your car listing.');
+            alert('Please ensure there are at least 5 images for your car listing (including existing and newly added).');
             return false;
         }
 
         if (totalImages > 25) {
             e.preventDefault();
-            alert('You can upload a maximum of 25 images for your car listing.');
+            alert('You can have a maximum of 25 images for your car listing (including existing and newly added).');
             return false;
         }
+        // Ensure the file input is up-to-date with new files before submission
+        updateActualFileInput();
     });
 
     // Initialize location picker
