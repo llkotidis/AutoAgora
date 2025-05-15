@@ -128,43 +128,29 @@ jQuery(document).ready(function($) {
             }).appendTo('#edit-car-listing-form');
         }
         $(this).parent().remove();
+        
+        // Reset the file input to allow selecting the same files again
+        fileInput.val('');
     });
     
     function handleFiles(files) {
-        const maxFiles = 25;
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!files.length) return;
         
-        // Check if adding new files would exceed the limit
-        const currentImages = imagePreview.find('.image-preview-item').length;
-        if (currentImages + files.length > maxFiles) {
-            alert('Maximum ' + maxFiles + ' images allowed.');
-            return;
+        // Clear existing previews if this is a new upload
+        if (fileInput.val()) {
+            imagePreview.empty();
         }
         
         Array.from(files).forEach(file => {
-            if (!allowedTypes.includes(file.type)) {
-                alert('Invalid file type. Allowed types: JPG, PNG, GIF, WEBP');
-                return;
-            }
-            
-            if (file.size > maxSize) {
-                alert('File size exceeds 5MB limit: ' + file.name);
-                return;
-            }
+            if (!file.type.startsWith('image/')) return;
             
             const reader = new FileReader();
             reader.onload = function(e) {
                 const previewItem = $('<div>').addClass('image-preview-item');
-                
                 const img = $('<img>').attr('src', e.target.result);
+                const removeBtn = $('<button>').addClass('remove-image').text('×');
                 
-                const removeButton = $('<button>')
-                    .attr('type', 'button')
-                    .addClass('remove-image')
-                    .html('&times;');
-                
-                previewItem.append(img, removeButton);
+                previewItem.append(img).append(removeBtn);
                 imagePreview.append(previewItem);
             };
             reader.readAsDataURL(file);
