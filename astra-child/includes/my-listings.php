@@ -187,7 +187,6 @@ function display_my_listings($atts) {
                             </div>
                             <div class="listing-actions">
                                 <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
-                                <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
                                 <?php 
                                 if (get_post_status() === 'publish') {
                                     $is_sold = get_field('is_sold', $post_id);
@@ -199,6 +198,7 @@ function display_my_listings($atts) {
                                         <?php echo esc_html($button_text); ?>
                                     </button>
                                 <?php } ?>
+                                <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
                             </div>
                         </div>
                     </div>
