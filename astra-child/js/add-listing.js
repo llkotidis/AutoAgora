@@ -13,12 +13,19 @@ jQuery(document).ready(function($) {
     // Add a counter for images
     let imageCounter = 0;
     
+    // Function to update and display count
+    function updateImageCount() {
+        console.log('📸 Current Image Count:', imageCounter);
+        // You can also add a visual counter on the page if needed
+        $('#image-count-display').text(`Images: ${imageCounter}/25`);
+    }
+    
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
         e.preventDefault(); // Always prevent default submission first
         
         console.log('=== FORM SUBMISSION VALIDATION ===');
-        console.log('Current image count:', imageCounter);
+        updateImageCount();
         console.log('Checking if count is between 5 and 25...');
         
         // Get the raw values from data attributes
@@ -75,7 +82,8 @@ jQuery(document).ready(function($) {
     
     // Handle when files are selected through the file dialog
     fileInput.on('change', function(e) {
-        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
+        console.log('=== FILES SELECTED ===');
+        console.log('Files selected through file dialog:', this.files.length);
         if (this.files.length > 0) {
             handleFiles(this.files, true);
         }
@@ -95,14 +103,15 @@ jQuery(document).ready(function($) {
     fileUploadArea.on('drop', function(e) {
         e.preventDefault();
         $(this).removeClass('dragover');
-        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
+        console.log('=== FILES DROPPED ===');
+        console.log('Files dropped:', e.originalEvent.dataTransfer.files.length);
         handleFiles(e.originalEvent.dataTransfer.files, false);
     });
 
     // Process the files - common function for both methods
     function handleFiles(files, isFileDialog) {
         console.log('=== ADDING FILES ===');
-        console.log('Current image count before adding:', imageCounter);
+        updateImageCount();
         console.log('Attempting to add', files.length, 'files');
         
         const maxFiles = 25;
@@ -169,7 +178,7 @@ jQuery(document).ready(function($) {
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
         console.log('✅ Successfully added', successfullyAdded, 'files');
-        console.log('New total image count:', imageCounter);
+        updateImageCount();
     }
     
     // Create preview for a single file
@@ -218,7 +227,7 @@ jQuery(document).ready(function($) {
     // Remove a file by name
     function removeFile(fileName) {
         console.log('=== REMOVING FILE ===');
-        console.log('Current image count before removal:', imageCounter);
+        updateImageCount();
         console.log('Removing file:', fileName);
         
         const dataTransfer = new DataTransfer();
@@ -238,7 +247,7 @@ jQuery(document).ready(function($) {
         imageCounter--;
         
         console.log('✅ File removed successfully');
-        console.log('New total image count:', imageCounter);
+        updateImageCount();
         
         // Check if we're below minimum after removal
         if (imageCounter < 5) {
