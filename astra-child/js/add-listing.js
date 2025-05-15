@@ -25,11 +25,13 @@ jQuery(document).ready(function($) {
         
         if (imageCount < 5) {
             alert('Please upload at least 5 images for your car listing.');
+            e.preventDefault();
             return false;
         }
 
         if (imageCount > 25) {
             alert('You can upload a maximum of 25 images for your car listing.');
+            e.preventDefault();
             return false;
         }
 
