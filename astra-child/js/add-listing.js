@@ -183,34 +183,6 @@ jQuery(document).ready(function($) {
         fileInput.trigger('click');
     });
     
-    // Handle when files are selected through the file dialog
-    fileInput.on('change', function(e) {
-        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
-        if (this.files.length > 0) {
-            // For file dialog selection, we want to replace the current files
-            handleFiles(this.files, true);
-        }
-    });
-    
-    // Handle drag and drop
-    fileUploadArea.on('dragover', function(e) {
-        e.preventDefault();
-        $(this).addClass('dragover');
-    });
-    
-    fileUploadArea.on('dragleave', function(e) {
-        e.preventDefault();
-        $(this).removeClass('dragover');
-    });
-    
-    fileUploadArea.on('drop', function(e) {
-        e.preventDefault();
-        $(this).removeClass('dragover');
-        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
-        // For drag and drop, we want to append to existing files
-        handleFiles(e.originalEvent.dataTransfer.files, false);
-    });
-    
     // Process the files - common function for both methods
     function handleFiles(files, isFileDialog) {
         console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
@@ -271,6 +243,32 @@ jQuery(document).ready(function($) {
         fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
     }
+    
+    // Handle when files are selected through the file dialog
+    fileInput.on('change', function(e) {
+        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
+        if (this.files.length > 0) {
+            handleFiles(this.files, true);
+        }
+    });
+    
+    // Handle drag and drop
+    fileUploadArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    fileUploadArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    fileUploadArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
+        handleFiles(e.originalEvent.dataTransfer.files, false);
+    });
     
     // Create preview for a single file
     function createPreviewForFile(file) {
