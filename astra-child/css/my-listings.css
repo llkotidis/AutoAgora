@@ -115,6 +115,10 @@
   color: var(--white);
 }
 
+.button i {
+  margin-right: 0.5rem;
+}
+
 .delete-button {
   background-color: red !important;
   color: var(--white);
