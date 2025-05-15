@@ -93,6 +93,10 @@
   font-size: 1.25rem !important;
 }
 
+.listing-title-link {
+  text-decoration: none !important;
+}
+
 .listing-title {
   font-weight: 600;
   color: var(--text-color) !important;
@@ -142,6 +146,7 @@
 .delete-button {
   background-color: red !important;
   color: var(--white);
+  margin-left: auto;
 }
 
 .sold-button {
