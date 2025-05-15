@@ -281,50 +281,22 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                     </div>
                                     <div class="form-third">
                                         <label for="exterior_color"><i class="fas fa-paint-brush"></i> <?php esc_html_e('Exterior Color', 'astra-child'); ?></label>
-                                        <select id="exterior_color" name="exterior_color" class="form-control" required>
-                                            <option value=""><?php esc_html_e('Select Exterior Color', 'astra-child'); ?></option>
-                                            <option value="Black" <?php selected($exterior_color, 'Black'); ?>><?php esc_html_e('Black', 'astra-child'); ?></option>
-                                            <option value="White" <?php selected($exterior_color, 'White'); ?>><?php esc_html_e('White', 'astra-child'); ?></option>
-                                            <option value="Silver" <?php selected($exterior_color, 'Silver'); ?>><?php esc_html_e('Silver', 'astra-child'); ?></option>
-                                            <option value="Gray" <?php selected($exterior_color, 'Gray'); ?>><?php esc_html_e('Gray', 'astra-child'); ?></option>
-                                            <option value="Red" <?php selected($exterior_color, 'Red'); ?>><?php esc_html_e('Red', 'astra-child'); ?></option>
-                                            <option value="Blue" <?php selected($exterior_color, 'Blue'); ?>><?php esc_html_e('Blue', 'astra-child'); ?></option>
-                                            <option value="Green" <?php selected($exterior_color, 'Green'); ?>><?php esc_html_e('Green', 'astra-child'); ?></option>
-                                            <option value="Yellow" <?php selected($exterior_color, 'Yellow'); ?>><?php esc_html_e('Yellow', 'astra-child'); ?></option>
-                                            <option value="Orange" <?php selected($exterior_color, 'Orange'); ?>><?php esc_html_e('Orange', 'astra-child'); ?></option>
-                                            <option value="Purple" <?php selected($exterior_color, 'Purple'); ?>><?php esc_html_e('Purple', 'astra-child'); ?></option>
-                                            <option value="Brown" <?php selected($exterior_color, 'Brown'); ?>><?php esc_html_e('Brown', 'astra-child'); ?></option>
-                                            <option value="Beige" <?php selected($exterior_color, 'Beige'); ?>><?php esc_html_e('Beige', 'astra-child'); ?></option>
-                                            <option value="Gold" <?php selected($exterior_color, 'Gold'); ?>><?php esc_html_e('Gold', 'astra-child'); ?></option>
-                                        </select>
+                                        <input type="text" id="exterior_color" name="exterior_color" class="form-control" value="<?php echo esc_attr($exterior_color); ?>" readonly>
                                     </div>
                                     <div class="form-third">
                                         <label for="interior_color"><i class="fas fa-paint-brush"></i> <?php esc_html_e('Interior Color', 'astra-child'); ?></label>
-                                        <select id="interior_color" name="interior_color" class="form-control" required>
-                                            <option value=""><?php esc_html_e('Select Interior Color', 'astra-child'); ?></option>
-                                            <option value="Black" <?php selected($interior_color, 'Black'); ?>><?php esc_html_e('Black', 'astra-child'); ?></option>
-                                            <option value="White" <?php selected($interior_color, 'White'); ?>><?php esc_html_e('White', 'astra-child'); ?></option>
-                                            <option value="Gray" <?php selected($interior_color, 'Gray'); ?>><?php esc_html_e('Gray', 'astra-child'); ?></option>
-                                            <option value="Beige" <?php selected($interior_color, 'Beige'); ?>><?php esc_html_e('Beige', 'astra-child'); ?></option>
-                                            <option value="Brown" <?php selected($interior_color, 'Brown'); ?>><?php esc_html_e('Brown', 'astra-child'); ?></option>
-                                            <option value="Red" <?php selected($interior_color, 'Red'); ?>><?php esc_html_e('Red', 'astra-child'); ?></option>
-                                            <option value="Blue" <?php selected($interior_color, 'Blue'); ?>><?php esc_html_e('Blue', 'astra-child'); ?></option>
-                                        </select>
-                                    </div>
-                                    <div class="form-third">
-                                        <label for="number_of_doors"><i class="fas fa-door-open"></i> <?php esc_html_e('Number of Doors', 'astra-child'); ?></label>
-                                        <input type="text" id="number_of_doors" name="number_of_doors" class="form-control" value="<?php echo esc_attr($number_of_doors); ?>" readonly>
+                                        <input type="text" id="interior_color" name="interior_color" class="form-control" value="<?php echo esc_attr($interior_color); ?>" readonly>
                                     </div>
                                 </div>
 
                                 <div class="form-row form-row-halves">
                                     <div class="form-half">
-                                        <label for="number_of_seats"><i class="fas fa-chair"></i> <?php esc_html_e('Number of Seats', 'astra-child'); ?></label>
-                                        <input type="text" id="number_of_seats" name="number_of_seats" class="form-control" value="<?php echo esc_attr($number_of_seats); ?>" readonly>
+                                        <label for="number_of_doors"><i class="fas fa-door-open"></i> <?php esc_html_e('Number of Doors', 'astra-child'); ?></label>
+                                        <input type="text" id="number_of_doors" name="number_of_doors" class="form-control" value="<?php echo esc_attr($number_of_doors); ?>" readonly>
                                     </div>
                                     <div class="form-half">
-                                        <label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e('MOT Status', 'astra-child'); ?></label>
-                                        <input type="text" id="motuntil" name="motuntil" class="form-control" value="<?php echo esc_attr($mot_status); ?>" readonly>
+                                        <label for="number_of_seats"><i class="fas fa-chair"></i> <?php esc_html_e('Number of Seats', 'astra-child'); ?></label>
+                                        <input type="text" id="number_of_seats" name="number_of_seats" class="form-control" value="<?php echo esc_attr($number_of_seats); ?>" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -333,12 +305,12 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                 <h2><?php esc_html_e('Registration & Background Info', 'astra-child'); ?></h2>
                                 <div class="form-row">
                                     <label for="numowners"><i class="fas fa-users"></i> <?php esc_html_e('Number of Owners', 'astra-child'); ?></label>
-                                    <input type="text" id="numowners" name="numowners" class="form-control" value="<?php echo esc_attr($num_owners); ?>" readonly>
+                                    <input type="text" id="numowners" name="numowners" class="form-control" value="<?php echo esc_attr($num_owners); ?>" required>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="checkbox-field">
-                                        <input type="checkbox" id="isantique" name="isantique" value="1" <?php checked($is_antique, '1'); ?>>
+                                        <input type="text" id="isantique" name="isantique" class="form-control" value="<?php echo $is_antique ? esc_html__('Yes', 'astra-child') : esc_html__('No', 'astra-child'); ?>" readonly>
                                         <label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e('Written as antique', 'astra-child'); ?></label>
                                     </div>
                                 </div>
