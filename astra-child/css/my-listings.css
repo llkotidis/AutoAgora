@@ -207,10 +207,19 @@
     max-width: 300px;
     aspect-ratio: 4 / 3;
   }
+
+  .listing-details {
+    width: 100%;
+  }
 }
 
-@media (max-width: 499.98px) {
+@media (max-width: 599.98px) {
   .listing-actions {
     flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+    text-align: center !important;
   }
 }
