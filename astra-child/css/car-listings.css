@@ -1,7 +1,11 @@
 .car-listings-container {
   max-width: 1480px !important;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
+}
+
+#content .ast-container:first-child {
+  max-width: 1480px !important;
 }
 
 .car-listings-filters {
@@ -396,12 +400,20 @@
 }
 
 .info-box {
-  flex: 1;
+  /* flex: 1; */
   background: var(--light-bg);
   border: none;
   border-radius: var(--border-radius-small);
   padding: 6px 18px;
   text-align: center;
+}
+
+.info-box:first-child {
+  width: 35%;
+}
+
+.info-box:last-child {
+  width: 65%;
 }
 
 .info-value {
