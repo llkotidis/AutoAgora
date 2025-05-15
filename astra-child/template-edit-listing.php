@@ -169,8 +169,13 @@ get_header();
                                             <option value="Petrol" <?php selected($fuel_type, 'Petrol'); ?>><?php esc_html_e('Petrol', 'astra-child'); ?></option>
                                             <option value="Diesel" <?php selected($fuel_type, 'Diesel'); ?>><?php esc_html_e('Diesel', 'astra-child'); ?></option>
                                             <option value="Electric" <?php selected($fuel_type, 'Electric'); ?>><?php esc_html_e('Electric', 'astra-child'); ?></option>
-                                            <option value="Hybrid" <?php selected($fuel_type, 'Hybrid'); ?>><?php esc_html_e('Hybrid', 'astra-child'); ?></option>
-                                            <option value="LPG" <?php selected($fuel_type, 'LPG'); ?>><?php esc_html_e('LPG', 'astra-child'); ?></option>
+                                            <option value="Petrol hybrid" <?php selected($fuel_type, 'Petrol hybrid'); ?>><?php esc_html_e('Petrol hybrid', 'astra-child'); ?></option>
+                                            <option value="Diesel hybrid" <?php selected($fuel_type, 'Diesel hybrid'); ?>><?php esc_html_e('Diesel hybrid', 'astra-child'); ?></option>
+                                            <option value="Plug-in petrol" <?php selected($fuel_type, 'Plug-in petrol'); ?>><?php esc_html_e('Plug-in petrol', 'astra-child'); ?></option>
+                                            <option value="Plug-in diesel" <?php selected($fuel_type, 'Plug-in diesel'); ?>><?php esc_html_e('Plug-in diesel', 'astra-child'); ?></option>
+                                            <option value="Bi Fuel" <?php selected($fuel_type, 'Bi Fuel'); ?>><?php esc_html_e('Bi Fuel', 'astra-child'); ?></option>
+                                            <option value="Hydrogen" <?php selected($fuel_type, 'Hydrogen'); ?>><?php esc_html_e('Hydrogen', 'astra-child'); ?></option>
+                                            <option value="Natural Gas" <?php selected($fuel_type, 'Natural Gas'); ?>><?php esc_html_e('Natural Gas', 'astra-child'); ?></option>
                                         </select>
                                     </div>
                                     <div class="form-third">
@@ -287,6 +292,87 @@ get_header();
                                             <option value="8" <?php selected($number_of_seats, '8'); ?>>8</option>
                                             <option value="9" <?php selected($number_of_seats, '9'); ?>>9</option>
                                         </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section vehicle-history-section">
+                                <h2><?php esc_html_e('Vehicle History', 'astra-child'); ?></h2>
+                                <div class="form-row">
+                                    <div class="vehicle-history-grid">
+                                        <?php
+                                        $vehicle_history_options = array(
+                                            'no_accidents' => 'No Accidents',
+                                            'minor_accidents' => 'Minor Accidents',
+                                            'major_accidents' => 'Major Accidents',
+                                            'regular_maintenance' => 'Regular Maintenance',
+                                            'engine_overhaul' => 'Engine Overhaul',
+                                            'transmission_replacement' => 'Transmission Replacement',
+                                            'repainted' => 'Repainted',
+                                            'bodywork_repair' => 'Bodywork Repair',
+                                            'rust_treatment' => 'Rust Treatment',
+                                            'no_modifications' => 'No Modifications',
+                                            'performance_upgrades' => 'Performance Upgrades',
+                                            'cosmetic_modifications' => 'Cosmetic Modifications',
+                                            'flood_damage' => 'Flood Damage',
+                                            'fire_damage' => 'Fire Damage',
+                                            'hail_damage' => 'Hail Damage',
+                                            'clear_title' => 'Clear Title',
+                                            'no_known_issues' => 'No Known Issues',
+                                            'odometer_replacement' => 'Odometer Replacement'
+                                        );
+                                        $selected_history = get_post_meta($car_id, 'vehicle_history', true);
+                                        if (!is_array($selected_history)) {
+                                            $selected_history = array();
+                                        }
+                                        foreach ($vehicle_history_options as $value => $label) {
+                                            echo '<div class="vehicle-history-option">';
+                                            echo '<input type="checkbox" id="vehiclehistory_' . esc_attr($value) . '" name="vehicle_history[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $selected_history), true, false) . '>';
+                                            echo '<label for="vehiclehistory_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
+                                            echo '</div>';
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section extras-section">
+                                <h2><?php esc_html_e('Extras (Optional)', 'astra-child'); ?></h2>
+                                <div class="form-row">
+                                    <div class="extras-grid">
+                                        <?php
+                                        $extras_options = array(
+                                            'alloy_wheels' => 'Alloy Wheels',
+                                            'cruise_control' => 'Cruise Control',
+                                            'disabled_accessible' => 'Disabled Accessible',
+                                            'keyless_start' => 'Keyless Start',
+                                            'rear_view_camera' => 'Rear View Camera',
+                                            'start_stop' => 'Start/Stop',
+                                            'sunroof' => 'Sunroof',
+                                            'heated_seats' => 'Heated Seats',
+                                            'android_auto' => 'Android Auto',
+                                            'apple_carplay' => 'Apple CarPlay',
+                                            'folding_mirrors' => 'Folding Mirrors',
+                                            'leather_seats' => 'Leather Seats',
+                                            'panoramic_roof' => 'Panoramic Roof',
+                                            'parking_sensors' => 'Parking Sensors',
+                                            'camera_360' => '360° Camera',
+                                            'adaptive_cruise_control' => 'Adaptive Cruise Control',
+                                            'blind_spot_mirror' => 'Blind Spot Mirror',
+                                            'lane_assist' => 'Lane Assist',
+                                            'power_tailgate' => 'Power Tailgate'
+                                        );
+                                        $selected_extras = get_post_meta($car_id, 'extras', true);
+                                        if (!is_array($selected_extras)) {
+                                            $selected_extras = array();
+                                        }
+                                        foreach ($extras_options as $value => $label) {
+                                            echo '<div class="extra-option">';
+                                            echo '<input type="checkbox" id="extra_' . esc_attr($value) . '" name="extras[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $selected_extras), true, false) . '>';
+                                            echo '<label for="extra_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
+                                            echo '</div>';
+                                        }
+                                        ?>
                                     </div>
                                 </div>
                             </div>
