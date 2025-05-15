@@ -506,6 +506,9 @@ get_header(); ?>
 						</form>
 
 						<script>
+						// Pass makes data to JavaScript
+						window.makesData = <?php echo json_encode($add_listing_makes); ?>;
+						
 						// Debug check for jQuery
 						console.log('[Add Listing] jQuery version:', typeof jQuery !== 'undefined' ? jQuery.fn.jquery : 'not loaded');
 						
