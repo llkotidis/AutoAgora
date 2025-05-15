@@ -72,18 +72,6 @@ function handle_add_car_listing() {
         exit;
     }
     
-    // Check image count
-    $image_count = count($_FILES['car_images']['name']);
-    if ($image_count < 5) {
-        wp_redirect(add_query_arg('error', 'insufficient_images', wp_get_referer()));
-        exit;
-    }
-
-    if ($image_count > 25) {
-        wp_redirect(add_query_arg('error', 'too_many_images', wp_get_referer()));
-        exit;
-    }
-    
     // Sanitize form data
     $make = sanitize_text_field($_POST['make']);
     $model = sanitize_text_field($_POST['model']);

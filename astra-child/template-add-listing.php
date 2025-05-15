@@ -89,17 +89,9 @@ get_header(); ?>
                                     echo '<p>' . esc_html__('Please fill in all required fields.', 'astra-child') . '</p>';
                                     echo '</div>';
                                 }
-                            } elseif ($_GET['error'] === 'no_images') {
+                            } elseif ($_GET['error'] === 'images') {
                                 echo '<div class="form-error-message">';
                                 echo '<p>' . esc_html__('Please upload at least one image for your listing.', 'astra-child') . '</p>';
-                                echo '</div>';
-                            } elseif ($_GET['error'] === 'insufficient_images') {
-                                echo '<div class="form-error-message">';
-                                echo '<p>' . esc_html__('Please upload at least 5 images for your listing.', 'astra-child') . '</p>';
-                                echo '</div>';
-                            } elseif ($_GET['error'] === 'too_many_images') {
-                                echo '<div class="form-error-message">';
-                                echo '<p>' . esc_html__('You can upload a maximum of 25 images for your listing.', 'astra-child') . '</p>';
                                 echo '</div>';
                             } elseif ($_GET['error'] === 'post_creation') {
                                 echo '<div class="form-error-message">';

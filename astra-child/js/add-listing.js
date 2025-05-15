@@ -2,7 +2,12 @@
 $('#add-car-listing-form').on('submit', function(e) {
     e.preventDefault(); // Always prevent default submission first
     
-    // Validate image count first, before any other processing
+    // Get the raw values from data attributes
+    const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
+    const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
+    const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
+    
+    // Validate image count
     const imageCount = fileInput[0].files.length;
     if (imageCount < 5) {
         alert('Please upload at least 5 images for your car listing.');
@@ -13,14 +18,8 @@ $('#add-car-listing-form').on('submit', function(e) {
         alert('You can upload a maximum of 25 images for your car listing.');
         return false;
     }
-    
-    // Only proceed with form processing if validation passes
-    // Get the raw values from data attributes
-    const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
-    const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
-    const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
-    
-    // Create hidden inputs with the raw values
+
+    // If validation passes, create hidden inputs and submit
     $('<input>').attr({
         type: 'hidden',
         name: 'mileage',
@@ -42,16 +41,15 @@ $('#add-car-listing-form').on('submit', function(e) {
     // Disable the original inputs
     $('#mileage, #price, #hp').prop('disabled', true);
 
-    // If we get here, validation passed - submit the form
+    // Submit the form
     this.submit();
-});
+}); 
 
-// Process the files - common function for both methods
+// Add image count validation to file handling
 function handleFiles(files, isFileDialog) {
     console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
     
     const maxFiles = 25;
-    const minFiles = 5;
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     
     // Get current files from input
@@ -110,21 +108,9 @@ function handleFiles(files, isFileDialog) {
     // Update the file input with all files
     fileInput[0].files = dataTransfer.files;
     console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
-    
-    // Update submit button state based on file count
-    const totalFiles = fileInput[0].files.length;
-    const submitButton = $('.submit-button');
-    
-    if (totalFiles < minFiles) {
-        submitButton.prop('disabled', true).attr('title', 'Please upload at least 5 images');
-    } else if (totalFiles > maxFiles) {
-        submitButton.prop('disabled', true).attr('title', 'Maximum 25 images allowed');
-    } else {
-        submitButton.prop('disabled', false).attr('title', '');
-    }
 }
 
-// Remove a file by name
+// Update remove file function to validate count
 function removeFile(fileName) {
     console.log('[Add Listing] Removing file:', fileName);
     
@@ -142,17 +128,8 @@ function removeFile(fileName) {
     fileInput[0].files = dataTransfer.files;
     console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
     
-    // Update submit button state based on new file count
-    const totalFiles = fileInput[0].files.length;
-    const submitButton = $('.submit-button');
-    
-    if (totalFiles < 5) {
-        submitButton.prop('disabled', true).attr('title', 'Please upload at least 5 images');
-    } else if (totalFiles > 25) {
-        submitButton.prop('disabled', true).attr('title', 'Maximum 25 images allowed');
-    } else {
-        submitButton.prop('disabled', false).attr('title', '');
+    // Check if we're below minimum after removal
+    if (fileInput[0].files.length < 5) {
+        alert('Please upload at least 5 images for your car listing.');
     }
-}
-
-// Remove the separate submit button handler since we already handle it in the form submit 
+} 
