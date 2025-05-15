@@ -147,34 +147,6 @@ get_header();
     .input-with-suffix input[readonly] + .input-suffix {
         color: #666 !important;
     }
-
-    .location-input-container {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .location-input-container input {
-        flex: 1;
-    }
-
-    .choose-location-btn {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s;
-        white-space: nowrap;
-    }
-
-    .choose-location-btn:hover {
-        background: #0056b3;
-        transform: translateY(-1px);
-    }
 </style>
 
 <?php
@@ -189,20 +161,6 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
     'selectedModel' => esc_js($model),
     'selectedVariant' => esc_js($variant)
 ));
-
-// Add location picker modal
-?>
-<div id="location-picker-modal" class="location-picker-modal">
-    <div class="location-picker-content">
-        <div class="location-picker-header">
-            <h3><?php esc_html_e('Choose Location', 'astra-child'); ?></h3>
-            <button type="button" class="close-modal">&times;</button>
-        </div>
-        <div class="location-picker-body">
-            <div id="location-map" class="location-map"></div>
-        </div>
-    </div>
-</div>
 
 <div class="page-edit-listing">
     <div class="ast-container">
@@ -264,15 +222,13 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
 
                                 <div class="form-row">
                                     <label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e('Location', 'astra-child'); ?></label>
-                                    <div class="location-input-container">
-                                        <input type="text" id="location" name="location" class="form-control" value="<?php echo esc_attr($location); ?>" required>
-                                        <button type="button" class="choose-location-btn"><?php esc_html_e('Choose Location', 'astra-child'); ?></button>
-                                    </div>
-                                    <input type="hidden" name="car_city" value="<?php echo esc_attr(get_field('car_city', $car_id)); ?>">
-                                    <input type="hidden" name="car_district" value="<?php echo esc_attr(get_field('car_district', $car_id)); ?>">
-                                    <input type="hidden" name="car_latitude" value="<?php echo esc_attr(get_field('car_latitude', $car_id)); ?>">
-                                    <input type="hidden" name="car_longitude" value="<?php echo esc_attr(get_field('car_longitude', $car_id)); ?>">
-                                    <input type="hidden" name="car_address" value="<?php echo esc_attr(get_field('car_address', $car_id)); ?>">
+                                    <input type="text" id="location" name="location" class="form-control" value="<?php echo esc_attr($location); ?>" required>
+                                    <button type="button" class="btn btn-secondary choose-location-btn">Choose Location ></button>
+                                    <input type="hidden" name="car_city" id="car_city" value="<?php echo esc_attr(get_field('car_city', $car_id)); ?>">
+                                    <input type="hidden" name="car_district" id="car_district" value="<?php echo esc_attr(get_field('car_district', $car_id)); ?>">
+                                    <input type="hidden" name="car_latitude" id="car_latitude" value="<?php echo esc_attr(get_field('car_latitude', $car_id)); ?>">
+                                    <input type="hidden" name="car_longitude" id="car_longitude" value="<?php echo esc_attr(get_field('car_longitude', $car_id)); ?>">
+                                    <input type="hidden" name="car_address" id="car_address" value="<?php echo esc_attr(get_field('car_address', $car_id)); ?>">
                                 </div>
                             </div>
 
@@ -494,6 +450,17 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Picker Modal -->
+<div id="location-picker-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 5px;">
+        <h2 style="margin-top: 0;">Choose Location</h2>
+        <div id="location-map" style="height: 400px; margin-bottom: 20px;"></div>
+        <div class="text-right">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('location-picker-modal').style.display='none'">Close</button>
         </div>
     </div>
 </div>
