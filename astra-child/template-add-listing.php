@@ -513,7 +513,7 @@ get_header(); ?>
 											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
 										</div>
 									</div>
-									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" required>
+									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
 									<div id="image-preview" class="image-preview"></div>
 								</div>
 							</div>
