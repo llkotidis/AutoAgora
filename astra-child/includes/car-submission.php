@@ -530,6 +530,8 @@ function handle_edit_car_listing() {
                 unset($existing_images[$key]);
             }
         }
+        // Reindex array after removal
+        $existing_images = array_values($existing_images);
     }
 
     // Process new image uploads if any
@@ -564,16 +566,20 @@ function handle_edit_car_listing() {
         $all_images = array_merge($existing_images, $image_ids);
     } else {
         // If no new images uploaded, just use the existing images after removal
-        $all_images = array_values($existing_images); // Reindex array
+        $all_images = $existing_images;
+    }
+
+    // Check if we have any images left
+    if (empty($all_images)) {
+        wp_redirect(add_query_arg('error', 'no_images', wp_get_referer()));
+        exit;
     }
     
     // Update the car_images field
     update_field('car_images', $all_images, $car_id);
     
-    // Set the first image as featured image if no featured image exists
-    if (!has_post_thumbnail($car_id) && !empty($all_images)) {
-        set_post_thumbnail($car_id, $all_images[0]);
-    }
+    // Set the first image as featured image
+    set_post_thumbnail($car_id, $all_images[0]);
     
     // Redirect to my listings page with success message
     wp_redirect(add_query_arg('listing_updated', '1', home_url('/my-listings/')));
