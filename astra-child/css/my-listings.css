@@ -193,9 +193,24 @@
   }
 
   .listings-container {
-    padding: 0;
+    padding: 0 !important;
   }
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 799.98px) {
+  .listing-item {
+    flex-direction: column;
+  }
+
+  .listing-image-container {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (max-width: 499.98px) {
+  .listing-actions {
+    flex-direction: column;
+  }
 }
