@@ -187,7 +187,32 @@ jQuery(document).ready(function($) {
     fileInput.on('change', function(e) {
         console.log('[Add Listing] Files selected through file dialog:', this.files.length);
         if (this.files.length > 0) {
-            handleFiles(this.files, true);
+            // Create a new FileList containing both existing and new files
+            const dataTransfer = new DataTransfer();
+            
+            // Add existing files first
+            const currentFiles = Array.from(fileInput[0].files || []);
+            currentFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            
+            // Add new files
+            Array.from(this.files).forEach(file => {
+                // Check if duplicate
+                const isDuplicate = currentFiles.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size
+                );
+                
+                if (!isDuplicate) {
+                    dataTransfer.items.add(file);
+                }
+            });
+            
+            // Update the file input with all files
+            fileInput[0].files = dataTransfer.files;
+            
+            // Process the files
+            handleFiles(dataTransfer.files, true);
         }
     });
     
@@ -216,36 +241,14 @@ jQuery(document).ready(function($) {
         const maxFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         
-        // Get current files from input
-        const currentFiles = Array.from(fileInput[0].files || []);
-        console.log('[Add Listing] Current files:', currentFiles.length);
-        
         // Check if too many files
-        if (currentFiles.length + files.length > maxFiles) {
+        if (files.length > maxFiles) {
             alert('Maximum ' + maxFiles + ' files allowed');
             return;
         }
         
-        // Create a DataTransfer object to manage files
-        const dataTransfer = new DataTransfer();
-        
-        // Add existing files first
-        currentFiles.forEach(file => {
-            dataTransfer.items.add(file);
-        });
-        
-        // Process each new file
+        // Process each file
         Array.from(files).forEach(file => {
-            // Check if duplicate
-            const isDuplicate = currentFiles.some(
-                existingFile => existingFile.name === file.name && existingFile.size === file.size
-            );
-            
-            if (isDuplicate) {
-                console.log('[Add Listing] Skipping duplicate file:', file.name);
-                return; // Skip this file
-            }
-            
             // Validate file type
             if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
                 alert('Only JPG, PNG, GIF, and WebP files are allowed');
@@ -258,15 +261,10 @@ jQuery(document).ready(function($) {
                 return; // Skip this file
             }
             
-            // Add valid file to our collection
-            dataTransfer.items.add(file);
-            
             // Create preview for this file
             createPreviewForFile(file);
         });
         
-        // Update the file input with all files
-        fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
     }
     
