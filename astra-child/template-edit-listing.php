@@ -457,16 +457,5 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
     </div>
 </div>
 
-<!-- Location Picker Modal -->
-<div id="location-picker-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
-    <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 5px;">
-        <h2 style="margin-top: 0;">Choose Location</h2>
-        <div id="location-map" style="height: 400px; margin-bottom: 20px;"></div>
-        <div class="text-right">
-            <button type="button" class="btn btn-secondary" onclick="document.getElementById('location-picker-modal').style.display='none'">Close</button>
-        </div>
-    </div>
-</div>
-
 <?php
 get_footer(); 
