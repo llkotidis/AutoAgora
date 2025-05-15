@@ -160,3 +160,16 @@
   background-color: green !important;
   color: var(--white);
 }
+
+.listings-area {
+  display: flex;
+  gap: 2rem;
+}
+
+.listings-filter {
+  width: 20%;
+}
+
+.listings-grid {
+  width: 80%;
+}
