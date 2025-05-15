@@ -3,6 +3,15 @@ jQuery(document).ready(function($) {
     const makesData = editListingData.makesData;
     let accumulatedFilesList = []; // For newly added files
     
+    // Define these early for use in initial count and event handlers
+    const fileInput = $('#car_images');
+    const fileUploadArea = $('#file-upload-area');
+    const imagePreviewContainer = $('#image-preview');
+    
+    // Initial count of existing images on page load
+    const initialExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+    console.log('[Edit Listing] Initial existing images on page load:', initialExistingImageCount);
+
     // Set initial make value
     const selectedMake = editListingData.selectedMake;
     if (selectedMake) {
