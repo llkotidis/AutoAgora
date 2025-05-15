@@ -81,6 +81,18 @@ if (is_array($additional_images)) {
 }
 
 get_header();
+
+// Enqueue jQuery and our custom script
+wp_enqueue_script('jquery');
+wp_enqueue_script('edit-listing-script', get_stylesheet_directory_uri() . '/js/edit-listing.js', array('jquery'), '1.0.0', true);
+
+// Localize the script with necessary data
+wp_localize_script('edit-listing-script', 'editListingData', array(
+    'makesData' => $add_listing_makes,
+    'selectedMake' => $make,
+    'selectedModel' => $model,
+    'selectedVariant' => $variant
+));
 ?>
 
 <div class="page-edit-listing">
@@ -477,111 +489,131 @@ get_header();
 </div>
 
 <script>
-jQuery(document).ready(function($) {
+document.addEventListener('DOMContentLoaded', function() {
     // Store the makes data
-    const makesData = <?php echo json_encode($add_listing_makes); ?>;
+    const makesData = editListingData.makesData;
     
     // Set initial model and variant options based on the selected make
-    const selectedMake = $('#make').val();
+    const selectedMake = document.getElementById('make').value;
     if (selectedMake && makesData[selectedMake]) {
-        const modelSelect = $('#model');
+        const modelSelect = document.getElementById('model');
         Object.keys(makesData[selectedMake]).forEach(model => {
-            modelSelect.append(`<option value="${model}" ${model === '<?php echo esc_js($model); ?>' ? 'selected' : ''}>${model}</option>`);
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            if (model === editListingData.selectedModel) {
+                option.selected = true;
+            }
+            modelSelect.appendChild(option);
         });
         
         // Set initial variant options
-        const selectedModel = '<?php echo esc_js($model); ?>';
+        const selectedModel = editListingData.selectedModel;
         if (selectedModel && makesData[selectedMake][selectedModel]) {
-            const variantSelect = $('#variant');
+            const variantSelect = document.getElementById('variant');
             makesData[selectedMake][selectedModel].forEach(variant => {
                 if (variant) {
-                    variantSelect.append(`<option value="${variant}" ${variant === '<?php echo esc_js($variant); ?>' ? 'selected' : ''}>${variant}</option>`);
+                    const option = document.createElement('option');
+                    option.value = variant;
+                    option.textContent = variant;
+                    if (variant === editListingData.selectedVariant) {
+                        option.selected = true;
+                    }
+                    variantSelect.appendChild(option);
                 }
             });
         }
     }
     
     // Handle make selection change
-    $('#make').on('change', function() {
-        const selectedMake = $(this).val();
-        const modelSelect = $('#model');
-        const variantSelect = $('#variant');
+    document.getElementById('make').addEventListener('change', function() {
+        const selectedMake = this.value;
+        const modelSelect = document.getElementById('model');
+        const variantSelect = document.getElementById('variant');
         
         // Clear existing options
-        modelSelect.empty().append('<option value=""><?php esc_html_e('Select Model', 'astra-child'); ?></option>');
-        variantSelect.empty().append('<option value=""><?php esc_html_e('Select Variant', 'astra-child'); ?></option>');
+        modelSelect.innerHTML = '<option value="">Select Model</option>';
+        variantSelect.innerHTML = '<option value="">Select Variant</option>';
         
         if (selectedMake && makesData[selectedMake]) {
             // Add model options
             Object.keys(makesData[selectedMake]).forEach(model => {
-                modelSelect.append(`<option value="${model}">${model}</option>`);
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelSelect.appendChild(option);
             });
         }
     });
     
     // Handle model selection change
-    $('#model').on('change', function() {
-        const selectedMake = $('#make').val();
-        const selectedModel = $(this).val();
-        const variantSelect = $('#variant');
+    document.getElementById('model').addEventListener('change', function() {
+        const selectedMake = document.getElementById('make').value;
+        const selectedModel = this.value;
+        const variantSelect = document.getElementById('variant');
         
         // Clear existing options
-        variantSelect.empty().append('<option value=""><?php esc_html_e('Select Variant', 'astra-child'); ?></option>');
+        variantSelect.innerHTML = '<option value="">Select Variant</option>';
         
         if (selectedMake && selectedModel && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
             // Add variant options
             makesData[selectedMake][selectedModel].forEach(variant => {
                 if (variant) {
-                    variantSelect.append(`<option value="${variant}">${variant}</option>`);
+                    const option = document.createElement('option');
+                    option.value = variant;
+                    option.textContent = variant;
+                    variantSelect.appendChild(option);
                 }
             });
         }
     });
 
     // Handle image upload and preview
-    const fileInput = $('#car_images');
-    const fileUploadArea = $('#file-upload-area');
-    const imagePreview = $('#image-preview');
+    const fileInput = document.getElementById('car_images');
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const imagePreview = document.getElementById('image-preview');
     
     // Handle click on upload area
-    fileUploadArea.on('click', function() {
-        fileInput.trigger('click');
+    fileUploadArea.addEventListener('click', function() {
+        fileInput.click();
     });
     
     // Handle file selection
-    fileInput.on('change', function() {
+    fileInput.addEventListener('change', function() {
         handleFiles(this.files);
     });
     
     // Handle drag and drop
-    fileUploadArea.on('dragover', function(e) {
+    fileUploadArea.addEventListener('dragover', function(e) {
         e.preventDefault();
-        $(this).addClass('dragover');
+        this.classList.add('dragover');
     });
     
-    fileUploadArea.on('dragleave', function() {
-        $(this).removeClass('dragover');
+    fileUploadArea.addEventListener('dragleave', function() {
+        this.classList.remove('dragover');
     });
     
-    fileUploadArea.on('drop', function(e) {
+    fileUploadArea.addEventListener('drop', function(e) {
         e.preventDefault();
-        $(this).removeClass('dragover');
-        handleFiles(e.originalEvent.dataTransfer.files);
+        this.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
     });
     
     // Handle remove image
-    imagePreview.on('click', '.remove-image', function(e) {
-        e.preventDefault();
-        const imageId = $(this).data('image-id');
-        if (imageId) {
-            // Add hidden input to track removed images
-            $('<input>').attr({
-                type: 'hidden',
-                name: 'removed_images[]',
-                value: imageId
-            }).appendTo('#edit-car-listing-form');
+    imagePreview.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-image')) {
+            e.preventDefault();
+            const imageId = e.target.dataset.imageId;
+            if (imageId) {
+                // Add hidden input to track removed images
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'removed_images[]';
+                input.value = imageId;
+                document.getElementById('edit-car-listing-form').appendChild(input);
+            }
+            e.target.parentElement.remove();
         }
-        $(this).parent().remove();
     });
     
     function handleFiles(files) {
@@ -590,7 +622,7 @@ jQuery(document).ready(function($) {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         
         // Check if adding new files would exceed the limit
-        const currentImages = imagePreview.find('.image-preview-item').length;
+        const currentImages = imagePreview.querySelectorAll('.image-preview-item').length;
         if (currentImages + files.length > maxFiles) {
             alert('Maximum ' + maxFiles + ' images allowed.');
             return;
@@ -609,10 +641,20 @@ jQuery(document).ready(function($) {
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                const previewItem = $('<div class="image-preview-item">')
-                    .append($('<img>').attr('src', e.target.result))
-                    .append($('<button type="button" class="remove-image">&times;</button>'));
-                imagePreview.append(previewItem);
+                const previewItem = document.createElement('div');
+                previewItem.className = 'image-preview-item';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'remove-image';
+                removeButton.innerHTML = '&times;';
+                
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeButton);
+                imagePreview.appendChild(previewItem);
             };
             reader.readAsDataURL(file);
         });
@@ -629,67 +671,68 @@ jQuery(document).ready(function($) {
     }
     
     // Format mileage input
-    const mileageInput = $('#mileage');
-    mileageInput.on('input', function() {
-        let value = $(this).val().replace(/[^\d]/g, '');
+    const mileageInput = document.getElementById('mileage');
+    mileageInput.addEventListener('input', function() {
+        let value = this.value.replace(/[^\d]/g, '');
         if (value.length > 0) {
             value = parseInt(value).toLocaleString();
         }
-        $(this).val(value);
-        $(this).data('raw-value', value.replace(/[^\d]/g, ''));
+        this.value = value;
+        this.dataset.rawValue = value.replace(/[^\d]/g, '');
     });
     
     // Format price input
-    const priceInput = $('#price');
-    priceInput.on('input', function() {
-        let value = $(this).val().replace(/[^\d]/g, '');
+    const priceInput = document.getElementById('price');
+    priceInput.addEventListener('input', function() {
+        let value = this.value.replace(/[^\d]/g, '');
         if (value.length > 0) {
             value = parseInt(value).toLocaleString();
         }
-        $(this).val(value);
-        $(this).data('raw-value', value.replace(/[^\d]/g, ''));
+        this.value = value;
+        this.dataset.rawValue = value.replace(/[^\d]/g, '');
     });
     
     // Format HP input
-    $('#hp').on('input', function() {
-        let value = $(this).val().replace(/[^\d]/g, '');
+    const hpInput = document.getElementById('hp');
+    hpInput.addEventListener('input', function() {
+        let value = this.value.replace(/[^\d]/g, '');
         if (value.length > 0) {
             value = parseInt(value).toLocaleString();
         }
-        $(this).val(value);
-        $(this).data('raw-value', value.replace(/[^\d]/g, ''));
+        this.value = value;
+        this.dataset.rawValue = value.replace(/[^\d]/g, '');
     });
     
     // Handle form submission
-    $('#edit-car-listing-form').on('submit', function(e) {
+    document.getElementById('edit-car-listing-form').addEventListener('submit', function(e) {
         // Get the raw values from data attributes
-        const rawMileage = mileageInput.data('raw-value') || unformatNumber(mileageInput.val());
-        const rawPrice = priceInput.data('raw-value') || unformatNumber(priceInput.val());
-        const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
+        const rawMileage = mileageInput.dataset.rawValue || unformatNumber(mileageInput.value);
+        const rawPrice = priceInput.dataset.rawValue || unformatNumber(priceInput.value);
+        const rawHp = hpInput.dataset.rawValue || unformatNumber(hpInput.value);
         
         // Create hidden inputs with the raw values
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'mileage',
-            value: rawMileage
-        }).appendTo(this);
+        const mileageInput = document.createElement('input');
+        mileageInput.type = 'hidden';
+        mileageInput.name = 'mileage';
+        mileageInput.value = rawMileage;
+        this.appendChild(mileageInput);
         
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'price',
-            value: rawPrice
-        }).appendTo(this);
+        const priceInput = document.createElement('input');
+        priceInput.type = 'hidden';
+        priceInput.name = 'price';
+        priceInput.value = rawPrice;
+        this.appendChild(priceInput);
         
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'hp',
-            value: rawHp
-        }).appendTo(this);
+        const hpInput = document.createElement('input');
+        hpInput.type = 'hidden';
+        hpInput.name = 'hp';
+        hpInput.value = rawHp;
+        this.appendChild(hpInput);
         
         // Disable the original inputs
-        mileageInput.prop('disabled', true);
-        priceInput.prop('disabled', true);
-        $('#hp').prop('disabled', true);
+        mileageInput.disabled = true;
+        priceInput.disabled = true;
+        hpInput.disabled = true;
     });
 });
 </script>
