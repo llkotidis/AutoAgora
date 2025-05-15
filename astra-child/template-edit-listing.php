@@ -309,10 +309,8 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                 </div>
 
                                 <div class="form-row">
-                                    <div class="checkbox-field">
-                                        <input type="text" id="isantique" name="isantique" class="form-control" value="<?php echo $is_antique ? esc_html__('Yes', 'astra-child') : esc_html__('No', 'astra-child'); ?>" readonly>
-                                        <label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e('Written as antique', 'astra-child'); ?></label>
-                                    </div>
+                                    <label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e('Written as antique', 'astra-child'); ?></label>
+                                    <input type="text" id="isantique" name="isantique" class="form-control" value="<?php echo $is_antique ? esc_html__('Yes', 'astra-child') : esc_html__('No', 'astra-child'); ?>" readonly>
                                 </div>
                             </div>
 
