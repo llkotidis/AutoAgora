@@ -163,9 +163,12 @@ function display_my_listings($atts) {
                             <?php endif; ?>
                         </div>
                         <div class="listing-details">
-                            <a href="<?php echo esc_url(get_permalink($post_id)); ?>" class="listing-title">
-                                <?php the_title(); ?> (€<?php echo number_format($price); ?>)
-                            </a>
+                            <div class="title-and-price">
+                                <a href="<?php echo esc_url(get_permalink($post_id)); ?>" class="listing-title-link">
+                                    <h3 class="listing-title"><?php the_title(); ?></h3>
+                                </a>
+                                <h4 class="listing-price">€<?php echo number_format(floatval(str_replace(',', '', $price))); ?></h4>
+                            </div>
                             <div class="listing-meta">
                                 <span class="listing-date">Published: <?php echo get_the_date(); ?></span>
                                 <span class="listing-status<?php 

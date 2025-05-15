@@ -72,6 +72,13 @@
   gap: 1rem;
 }
 
+.title-and-price {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
 .listing-title {
   font-size: 1.25rem !important;
   font-weight: 600;
