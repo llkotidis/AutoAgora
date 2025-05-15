@@ -17,6 +17,10 @@ jQuery(document).ready(function($) {
     $('#add-car-listing-form').on('submit', function(e) {
         e.preventDefault(); // Always prevent default submission first
         
+        console.log('=== FORM SUBMISSION VALIDATION ===');
+        console.log('Current image count:', imageCounter);
+        console.log('Checking if count is between 5 and 25...');
+        
         // Get the raw values from data attributes
         const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
         const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
@@ -24,14 +28,18 @@ jQuery(document).ready(function($) {
         
         // Simple validation using our counter
         if (imageCounter < 5) {
+            console.log('❌ Validation failed: Image count (' + imageCounter + ') is less than 5');
             alert('Please upload at least 5 images for your car listing.');
             return false;
         }
 
         if (imageCounter > 25) {
+            console.log('❌ Validation failed: Image count (' + imageCounter + ') is more than 25');
             alert('You can upload a maximum of 25 images for your car listing.');
             return false;
         }
+
+        console.log('✅ Validation passed: Image count (' + imageCounter + ') is between 5 and 25');
 
         // If validation passes, create hidden inputs and submit
         $('<input>').attr({
@@ -93,13 +101,16 @@ jQuery(document).ready(function($) {
 
     // Process the files - common function for both methods
     function handleFiles(files, isFileDialog) {
-        console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
+        console.log('=== ADDING FILES ===');
+        console.log('Current image count before adding:', imageCounter);
+        console.log('Attempting to add', files.length, 'files');
         
         const maxFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         
         // Check if adding these files would exceed the maximum
         if (imageCounter + files.length > maxFiles) {
+            console.log('❌ Cannot add files: Would exceed maximum of', maxFiles, 'files');
             alert('Maximum ' + maxFiles + ' files allowed');
             return;
         }
@@ -114,6 +125,8 @@ jQuery(document).ready(function($) {
             });
         }
         
+        let successfullyAdded = 0;
+        
         // Process each new file
         Array.from(files).forEach(file => {
             // Check if duplicate (only for drag and drop)
@@ -123,19 +136,21 @@ jQuery(document).ready(function($) {
                 );
                 
                 if (isDuplicate) {
-                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    console.log('⚠️ Skipping duplicate file:', file.name);
                     return; // Skip this file
                 }
             }
             
             // Validate file type
             if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+                console.log('❌ Invalid file type:', file.name);
                 alert('Only JPG, PNG, GIF, and WebP files are allowed');
                 return; // Skip this file
             }
             
             // Validate file size
             if (file.size > maxFileSize) {
+                console.log('❌ File too large:', file.name);
                 alert('File size must be less than 5MB');
                 return; // Skip this file
             }
@@ -145,6 +160,7 @@ jQuery(document).ready(function($) {
             
             // Increment our counter
             imageCounter++;
+            successfullyAdded++;
             
             // Create preview for this file
             createPreviewForFile(file);
@@ -152,7 +168,8 @@ jQuery(document).ready(function($) {
         
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] Updated file input, now has', imageCounter, 'files');
+        console.log('✅ Successfully added', successfullyAdded, 'files');
+        console.log('New total image count:', imageCounter);
     }
     
     // Create preview for a single file
@@ -200,7 +217,9 @@ jQuery(document).ready(function($) {
     
     // Remove a file by name
     function removeFile(fileName) {
-        console.log('[Add Listing] Removing file:', fileName);
+        console.log('=== REMOVING FILE ===');
+        console.log('Current image count before removal:', imageCounter);
+        console.log('Removing file:', fileName);
         
         const dataTransfer = new DataTransfer();
         const currentFiles = Array.from(fileInput[0].files);
@@ -218,10 +237,12 @@ jQuery(document).ready(function($) {
         // Decrement our counter
         imageCounter--;
         
-        console.log('[Add Listing] After removal, image counter is', imageCounter);
+        console.log('✅ File removed successfully');
+        console.log('New total image count:', imageCounter);
         
         // Check if we're below minimum after removal
         if (imageCounter < 5) {
+            console.log('⚠️ Warning: Image count (' + imageCounter + ') is now below minimum of 5');
             alert('Please upload at least 5 images for your car listing.');
         }
     }
