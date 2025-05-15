@@ -223,8 +223,13 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
 
                                 <div class="form-row">
                                     <label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e('Location', 'astra-child'); ?></label>
-                                    <input type="text" id="location" name="location" class="form-control" value="<?php echo esc_attr($location); ?>" required readonly>
+                                    <input type="text" id="location" name="location" class="form-control" value="<?php echo esc_attr($location); ?>" required>
                                     <button type="button" class="btn btn-secondary choose-location-btn">Choose Location ></button>
+                                    <input type="hidden" name="car_city" id="car_city" value="<?php echo esc_attr(get_field('car_city', $car_id)); ?>">
+                                    <input type="hidden" name="car_district" id="car_district" value="<?php echo esc_attr(get_field('car_district', $car_id)); ?>">
+                                    <input type="hidden" name="car_latitude" id="car_latitude" value="<?php echo esc_attr(get_field('car_latitude', $car_id)); ?>">
+                                    <input type="hidden" name="car_longitude" id="car_longitude" value="<?php echo esc_attr(get_field('car_longitude', $car_id)); ?>">
+                                    <input type="hidden" name="car_address" id="car_address" value="<?php echo esc_attr(get_field('car_address', $car_id)); ?>">
                                 </div>
                             </div>
 
