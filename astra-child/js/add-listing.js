@@ -219,7 +219,7 @@ jQuery(document).ready(function($) {
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         
         // Get current files from input
-        const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
+        const currentFiles = Array.from(fileInput[0].files || []);
         console.log('[Add Listing] Current files:', currentFiles.length);
         
         // Check if too many files
@@ -231,25 +231,21 @@ jQuery(document).ready(function($) {
         // Create a DataTransfer object to manage files
         const dataTransfer = new DataTransfer();
         
-        // Add existing files first (only for drag and drop)
-        if (!isFileDialog) {
-            currentFiles.forEach(file => {
-                dataTransfer.items.add(file);
-            });
-        }
+        // Add existing files first
+        currentFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
         
         // Process each new file
         Array.from(files).forEach(file => {
-            // Check if duplicate (only for drag and drop)
-            if (!isFileDialog) {
-                const isDuplicate = currentFiles.some(
-                    existingFile => existingFile.name === file.name && existingFile.size === file.size
-                );
-                
-                if (isDuplicate) {
-                    console.log('[Add Listing] Skipping duplicate file:', file.name);
-                    return; // Skip this file
-                }
+            // Check if duplicate
+            const isDuplicate = currentFiles.some(
+                existingFile => existingFile.name === file.name && existingFile.size === file.size
+            );
+            
+            if (isDuplicate) {
+                console.log('[Add Listing] Skipping duplicate file:', file.name);
+                return; // Skip this file
             }
             
             // Validate file type
@@ -274,6 +270,11 @@ jQuery(document).ready(function($) {
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
+        
+        // Check if we're below minimum image count
+        if (fileInput[0].files.length < 5) {
+            alert('Please upload at least 5 images');
+        }
     }
     
     // Create preview for a single file
