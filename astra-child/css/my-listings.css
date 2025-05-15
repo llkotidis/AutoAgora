@@ -174,3 +174,14 @@
 .listings-grid {
   width: 80%;
 }
+
+@media (max-width: 1199.98px) {
+  .listings-area {
+    flex-direction: column;
+  }
+
+  .listings-filter,
+  .listings-grid {
+    width: 100%;
+  }
+}
