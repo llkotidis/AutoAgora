@@ -3,10 +3,14 @@ jQuery(document).ready(function($) {
     
     // Store the makes data from localized script
     const makesData = addListingData.makesData;
+    console.log('[Add Listing] Makes data:', makesData);
     
     // Handle make selection change
     $('#make').on('change', function() {
         const selectedMake = $(this).val();
+        console.log('[Add Listing] Selected make:', selectedMake);
+        console.log('[Add Listing] Makes data for selected make:', makesData[selectedMake]);
+        
         const modelSelect = $('#model');
         const variantSelect = $('#variant');
         
@@ -14,11 +18,13 @@ jQuery(document).ready(function($) {
         modelSelect.empty().append('<option value="">Select Model</option>');
         variantSelect.empty().append('<option value="">Select Variant</option>');
         
-        if (selectedMake && makesData[selectedMake]) {
+        if (selectedMake && makesData && makesData[selectedMake]) {
             // Add model options
             Object.keys(makesData[selectedMake]).forEach(model => {
                 modelSelect.append(`<option value="${model}">${model}</option>`);
             });
+        } else {
+            console.error('[Add Listing] No data found for make:', selectedMake);
         }
     });
     
@@ -26,18 +32,23 @@ jQuery(document).ready(function($) {
     $('#model').on('change', function() {
         const selectedMake = $('#make').val();
         const selectedModel = $(this).val();
+        console.log('[Add Listing] Selected model:', selectedModel);
+        console.log('[Add Listing] Makes data for selected model:', makesData[selectedMake]?.[selectedModel]);
+        
         const variantSelect = $('#variant');
         
         // Clear existing options
         variantSelect.empty().append('<option value="">Select Variant</option>');
         
-        if (selectedMake && selectedModel && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
+        if (selectedMake && selectedModel && makesData && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
             // Add variant options
             makesData[selectedMake][selectedModel].forEach(variant => {
                 if (variant) { // Only add non-empty variants
                     variantSelect.append(`<option value="${variant}">${variant}</option>`);
                 }
             });
+        } else {
+            console.error('[Add Listing] No data found for model:', selectedModel);
         }
     });
     
