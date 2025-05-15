@@ -30,6 +30,7 @@
 
 .listings-filter input {
   color: var(--text-color);
+  box-shadow: none !important;
 }
 
 .listing-item {
