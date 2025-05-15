@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         context.forEach(item => {
             if (item.id.startsWith('place')) {
                 location.city = item.text;
-            } else if (item.id.startsWith('neighborhood') || item.id.startsWith('locality') || item.id.startsWith('district')) {
+            } else if (item.id.startsWith('neighborhood') || item.id.startsWith('locality')) {
                 location.district = item.text;
             }
         });
@@ -44,22 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (parts.length > 1) {
                 // Try to get district from the first part of the address
                 const firstPart = parts[0].trim();
-                // Only use it if it's not the same as the city and doesn't contain a number
-                if (firstPart !== location.city && !/\d/.test(firstPart)) {
+                // Only use it if it's not the same as the city
+                if (firstPart !== location.city) {
                     location.district = firstPart;
-                }
-            }
-        }
-
-        // If still no district, try to find it in the place_name
-        if (!location.district && placeName) {
-            const parts = placeName.split(',');
-            for (let part of parts) {
-                part = part.trim();
-                // Look for parts that don't contain numbers and aren't the city
-                if (!/\d/.test(part) && part !== location.city && part !== 'Cyprus') {
-                    location.district = part;
-                    break;
                 }
             }
         }
@@ -208,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     marker: false, // We'll handle the marker ourselves
                     placeholder: 'Search for a location in Cyprus...',
                     countries: 'cy', // Restrict to Cyprus
-                    types: 'neighborhood,place,address,locality', // Prioritize neighborhood
+                    types: 'place,neighborhood,address',
                     language: 'en', // Force English results
                     enableEventLogging: false, // Disable geocoder analytics
                     localGeocoder: null,
@@ -380,57 +367,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to reverse geocode coordinates
     function reverseGeocode(lngLat) {
         console.log('Reverse geocoding:', lngLat);
-        // First try to get neighborhood information
-        const neighborhoodUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=neighborhood&country=cy&language=en`;
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,neighborhood,address&country=cy&language=en`;
         
-        fetch(neighborhoodUrl)
+        fetch(url)
             .then(response => response.json())
             .then(data => {
-                console.log('Neighborhood geocode result:', data);
+                console.log('Reverse geocode result:', data);
                 if (data.features && data.features.length > 0) {
-                    // If we found a neighborhood, use it
-                    const neighborhood = data.features[0];
-                    selectedLocation.district = neighborhood.text;
+                    const result = data.features[0];
+                    selectedLocation = parseLocationDetails(result);
                     
-                    // Now get the full address details
-                    const fullAddressUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,address&country=cy&language=en`;
-                    
-                    fetch(fullAddressUrl)
-                        .then(response => response.json())
-                        .then(fullData => {
-                            if (fullData.features && fullData.features.length > 0) {
-                                const result = fullData.features[0];
-                                selectedLocation = parseLocationDetails(result);
-                                // Keep the neighborhood we found
-                                selectedLocation.district = neighborhood.text;
-                                
-                                // Update the geocoder input with the new address
-                                const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
-                                if (geocoderInput) {
-                                    geocoderInput.value = result.place_name;
-                                    console.log('Updated geocoder input with:', result.place_name);
-                                }
-                            }
-                        });
-                } else {
-                    // If no neighborhood found, get the full address
-                    const fullAddressUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxConfig.accessToken}&types=place,address&country=cy&language=en`;
-                    
-                    fetch(fullAddressUrl)
-                        .then(response => response.json())
-                        .then(fullData => {
-                            if (fullData.features && fullData.features.length > 0) {
-                                const result = fullData.features[0];
-                                selectedLocation = parseLocationDetails(result);
-                                
-                                // Update the geocoder input with the new address
-                                const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
-                                if (geocoderInput) {
-                                    geocoderInput.value = result.place_name;
-                                    console.log('Updated geocoder input with:', result.place_name);
-                                }
-                            }
-                        });
+                    // Update the geocoder input with the new address
+                    const geocoderInput = document.querySelector('.mapboxgl-ctrl-geocoder input');
+                    if (geocoderInput) {
+                        geocoderInput.value = result.place_name;
+                        console.log('Updated geocoder input with:', result.place_name);
+                    }
                 }
             })
             .catch(error => {
