@@ -422,24 +422,11 @@ add_action('transition_post_status', 'store_car_publication_date', 10, 3);
 function handle_edit_car_listing() {
     // Initialize variables for error tracking
     $errors = array();
-    $required_fields = array(
-        'make' => 'Make',
-        'model' => 'Model',
-        'variant' => 'Variant',
-        'year' => 'Year',
+    $editable_fields = array(
         'mileage' => 'Mileage',
         'price' => 'Price',
         'location' => 'Location',
-        'engine_capacity' => 'Engine Capacity',
-        'fuel_type' => 'Fuel Type',
-        'transmission' => 'Transmission',
-        'body_type' => 'Body Type',
-        'drive_type' => 'Drive Type',
-        'exterior_color' => 'Exterior Color',
-        'interior_color' => 'Interior Color',
-        'description' => 'Description',
-        'number_of_doors' => 'Number of Doors',
-        'number_of_seats' => 'Number of Seats'
+        'description' => 'Description'
     );
     
     // Verify nonce
@@ -462,9 +449,9 @@ function handle_edit_car_listing() {
         exit;
     }
     
-    // Check for required fields
+    // Check for required editable fields
     $missing_fields = array();
-    foreach ($required_fields as $field_key => $field_label) {
+    foreach ($editable_fields as $field_key => $field_label) {
         if (!isset($_POST[$field_key]) || empty(trim($_POST[$field_key]))) {
             $missing_fields[] = $field_key;
         }
@@ -483,21 +470,36 @@ function handle_edit_car_listing() {
         exit;
     }
     
-    // Update post title
-    $post_title = sanitize_text_field($_POST['make'] . ' ' . $_POST['model'] . ' ' . $_POST['variant']);
-    wp_update_post(array(
-        'ID' => $car_id,
-        'post_title' => $post_title
-    ));
-    
-    // Update all meta fields
-    foreach ($required_fields as $field_key => $field_label) {
+    // Update only editable fields
+    foreach ($editable_fields as $field_key => $field_label) {
         update_field($field_key, sanitize_text_field($_POST[$field_key]), $car_id);
+    }
+    
+    // Update location-related fields
+    if (isset($_POST['car_city'])) {
+        update_field('car_city', sanitize_text_field($_POST['car_city']), $car_id);
+    }
+    if (isset($_POST['car_district'])) {
+        update_field('car_district', sanitize_text_field($_POST['car_district']), $car_id);
+    }
+    if (isset($_POST['car_latitude'])) {
+        update_field('car_latitude', floatval($_POST['car_latitude']), $car_id);
+    }
+    if (isset($_POST['car_longitude'])) {
+        update_field('car_longitude', floatval($_POST['car_longitude']), $car_id);
+    }
+    if (isset($_POST['car_address'])) {
+        update_field('car_address', sanitize_text_field($_POST['car_address']), $car_id);
     }
     
     // Update optional fields
     if (isset($_POST['hp'])) {
         update_field('hp', sanitize_text_field($_POST['hp']), $car_id);
+    }
+    
+    // Update number of owners
+    if (isset($_POST['numowners'])) {
+        update_field('numowners', intval($_POST['numowners']), $car_id);
     }
     
     // Process vehicle history
