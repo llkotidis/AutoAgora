@@ -516,6 +516,23 @@ function handle_edit_car_listing() {
     update_field('extras', $extras, $car_id);
     
     // Handle images
+    // Get existing images
+    $existing_images = get_field('car_images', $car_id);
+    if (!is_array($existing_images)) {
+        $existing_images = array();
+    }
+
+    // Remove deleted images
+    if (!empty($_POST['removed_images'])) {
+        foreach ($_POST['removed_images'] as $removed_id) {
+            $key = array_search($removed_id, $existing_images);
+            if ($key !== false) {
+                unset($existing_images[$key]);
+            }
+        }
+    }
+
+    // Process new image uploads if any
     if (!empty($_FILES['car_images']['name'][0])) {
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -543,32 +560,19 @@ function handle_edit_car_listing() {
             }
         }
         
-        // Get existing images
-        $existing_images = get_field('car_images', $car_id);
-        if (!is_array($existing_images)) {
-            $existing_images = array();
-        }
-        
-        // Remove deleted images
-        if (!empty($_POST['removed_images'])) {
-            foreach ($_POST['removed_images'] as $removed_id) {
-                $key = array_search($removed_id, $existing_images);
-                if ($key !== false) {
-                    unset($existing_images[$key]);
-                }
-            }
-        }
-        
         // Combine existing and new images
         $all_images = array_merge($existing_images, $image_ids);
-        
-        // Update the car_images field
-        update_field('car_images', $all_images, $car_id);
-        
-        // Set the first image as featured image if no featured image exists
-        if (!has_post_thumbnail($car_id) && !empty($all_images)) {
-            set_post_thumbnail($car_id, $all_images[0]);
-        }
+    } else {
+        // If no new images uploaded, just use the existing images after removal
+        $all_images = array_values($existing_images); // Reindex array
+    }
+    
+    // Update the car_images field
+    update_field('car_images', $all_images, $car_id);
+    
+    // Set the first image as featured image if no featured image exists
+    if (!has_post_thumbnail($car_id) && !empty($all_images)) {
+        set_post_thumbnail($car_id, $all_images[0]);
     }
     
     // Redirect to my listings page with success message
