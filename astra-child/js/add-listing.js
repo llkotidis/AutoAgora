@@ -10,12 +10,14 @@ jQuery(document).ready(function($) {
     // Store the makes data - this will be populated by PHP in the template
     const makesData = window.makesData || {};
     
-    // Add a counter for images
+    // Initialize image counter
     let imageCounter = 0;
+    console.log('[Add Listing] 📸 Initial Image Count:', imageCounter);
     
     // Function to update and display count
     function updateImageCount() {
         console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
+        return imageCounter;
     }
     
     // Handle form submission
@@ -80,8 +82,9 @@ jQuery(document).ready(function($) {
     
     // Handle when files are selected through the file dialog
     fileInput.on('change', function(e) {
-        console.log('=== FILES SELECTED ===');
-        console.log('Files selected through file dialog:', this.files.length);
+        console.log('[Add Listing] === FILES SELECTED ===');
+        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
+        console.log('[Add Listing] 📸 Current Image Count before adding:', imageCounter);
         if (this.files.length > 0) {
             handleFiles(this.files, true);
         }
@@ -101,8 +104,9 @@ jQuery(document).ready(function($) {
     fileUploadArea.on('drop', function(e) {
         e.preventDefault();
         $(this).removeClass('dragover');
-        console.log('=== FILES DROPPED ===');
-        console.log('Files dropped:', e.originalEvent.dataTransfer.files.length);
+        console.log('[Add Listing] === FILES DROPPED ===');
+        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
+        console.log('[Add Listing] 📸 Current Image Count before adding:', imageCounter);
         handleFiles(e.originalEvent.dataTransfer.files, false);
     });
 
