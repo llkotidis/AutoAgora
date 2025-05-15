@@ -7,3 +7,21 @@
 .my-listings-container h2 {
   margin-bottom: 2rem;
 }
+
+.listings-filter {
+  display: flex;
+  gap: 2rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  background-color: var(--light-bg);
+  border-radius: var(--border-radius-large);
+}
+
+.listings-filter label {
+  font-size: 0.875rem;
+  color: var(--text-color);
+}
+
+.listings-filter input {
+  color: var(--text-color);
+}
