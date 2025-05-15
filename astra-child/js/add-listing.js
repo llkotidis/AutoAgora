@@ -10,6 +10,9 @@ jQuery(document).ready(function($) {
     // Store the makes data - this will be populated by PHP in the template
     const makesData = window.makesData || {};
     
+    // Add a counter for images
+    let imageCounter = 0;
+    
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
         e.preventDefault(); // Always prevent default submission first
@@ -19,19 +22,14 @@ jQuery(document).ready(function($) {
         const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
         const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
         
-        // Validate image count
-        const imageCount = fileInput[0].files.length;
-        console.log('[Add Listing] Current image count:', imageCount);
-        
-        if (imageCount < 5) {
+        // Simple validation using our counter
+        if (imageCounter < 5) {
             alert('Please upload at least 5 images for your car listing.');
-            e.preventDefault();
             return false;
         }
 
-        if (imageCount > 25) {
+        if (imageCounter > 25) {
             alert('You can upload a maximum of 25 images for your car listing.');
-            e.preventDefault();
             return false;
         }
 
@@ -100,12 +98,8 @@ jQuery(document).ready(function($) {
         const maxFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         
-        // Get current files from input
-        const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
-        console.log('[Add Listing] Current files:', currentFiles.length);
-        
-        // Check if too many files
-        if (currentFiles.length + files.length > maxFiles) {
+        // Check if adding these files would exceed the maximum
+        if (imageCounter + files.length > maxFiles) {
             alert('Maximum ' + maxFiles + ' files allowed');
             return;
         }
@@ -115,7 +109,7 @@ jQuery(document).ready(function($) {
         
         // Add existing files first (only for drag and drop)
         if (!isFileDialog) {
-            currentFiles.forEach(file => {
+            Array.from(fileInput[0].files).forEach(file => {
                 dataTransfer.items.add(file);
             });
         }
@@ -124,7 +118,7 @@ jQuery(document).ready(function($) {
         Array.from(files).forEach(file => {
             // Check if duplicate (only for drag and drop)
             if (!isFileDialog) {
-                const isDuplicate = currentFiles.some(
+                const isDuplicate = Array.from(fileInput[0].files).some(
                     existingFile => existingFile.name === file.name && existingFile.size === file.size
                 );
                 
@@ -149,13 +143,16 @@ jQuery(document).ready(function($) {
             // Add valid file to our collection
             dataTransfer.items.add(file);
             
+            // Increment our counter
+            imageCounter++;
+            
             // Create preview for this file
             createPreviewForFile(file);
         });
         
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
+        console.log('[Add Listing] Updated file input, now has', imageCounter, 'files');
     }
     
     // Create preview for a single file
@@ -217,10 +214,14 @@ jQuery(document).ready(function($) {
         
         // Update the file input
         fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
+        
+        // Decrement our counter
+        imageCounter--;
+        
+        console.log('[Add Listing] After removal, image counter is', imageCounter);
         
         // Check if we're below minimum after removal
-        if (fileInput[0].files.length < 5) {
+        if (imageCounter < 5) {
             alert('Please upload at least 5 images for your car listing.');
         }
     }
