@@ -103,15 +103,28 @@ function display_car_listings($atts) {
                     // Generate the detail page URL once
                     $car_detail_url = esc_url(get_permalink(get_the_ID()));
 
-                    $make = get_post_meta(get_the_ID(), 'make', true);
-                    $model = get_post_meta(get_the_ID(), 'model', true);
-                    $variant = get_post_meta(get_the_ID(), 'variant', true);
-                    $price = get_post_meta(get_the_ID(), 'price', true);
-                    $year = get_post_meta(get_the_ID(), 'year', true);
-                    $engine_capacity = get_post_meta(get_the_ID(), 'engine_capacity', true);
-                    $transmission = get_post_meta(get_the_ID(), 'transmission', true);
-                    $mileage = get_post_meta(get_the_ID(), 'mileage', true);
-                    $location = get_post_meta(get_the_ID(), 'location', true);
+                    // Get car details
+                    $make = get_field('make', get_the_ID());
+                    $model = get_field('model', get_the_ID());
+                    $variant = get_field('variant', get_the_ID());
+                    $year = get_field('year', get_the_ID());
+                    $price = get_field('price', get_the_ID());
+                    $mileage = get_field('mileage', get_the_ID());
+                    $location = get_field('location', get_the_ID());
+                    $engine_capacity = get_field('engine_capacity', get_the_ID());
+                    $fuel_type = get_field('fuel_type', get_the_ID());
+                    $transmission = get_field('transmission', get_the_ID());
+                    $exterior_color = get_field('exterior_color', get_the_ID());
+                    $interior_color = get_field('interior_color', get_the_ID());
+                    $description = get_field('description', get_the_ID());
+                    $body_type = get_field('body_type', get_the_ID());
+                    $drive_type = get_field('drive_type', get_the_ID());
+                    $number_of_doors = get_field('number_of_doors', get_the_ID());
+                    $number_of_seats = get_field('number_of_seats', get_the_ID());
+                    $motuntil = get_field('motuntil', get_the_ID());
+                    $extras = get_field('extras', get_the_ID());
+                    $vehiclehistory = get_field('vehiclehistory', get_the_ID());
+                    $publication_date = get_field('publication_date', get_the_ID());
                     ?>
                     <div class="car-listing-card">
                         <?php 
@@ -176,7 +189,6 @@ function display_car_listings($atts) {
                                     //     $specs_array[] = esc_html($fuel_type); // Removed
                                     // } // Removed
                                     
-                                    $body_type = get_post_meta(get_the_ID(), 'body_type', true);
                                     if (!empty($body_type)) {
                                         $specs_array[] = esc_html($body_type);
                                     }
@@ -199,7 +211,6 @@ function display_car_listings($atts) {
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
                                 <div class="car-listing-additional-info">
                                     <?php 
-                                    $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
                                     if (!$publication_date) {
                                         $publication_date = get_the_date('Y-m-d H:i:s');
                                         update_post_meta(get_the_ID(), 'publication_date', $publication_date);

@@ -124,15 +124,29 @@ function display_favourite_listings($atts) {
             <?php
             if ($car_query->have_posts()) :
                 while ($car_query->have_posts()) : $car_query->the_post();
-                    $make = get_post_meta(get_the_ID(), 'make', true);
-                    $model = get_post_meta(get_the_ID(), 'model', true);
-                    $variant = get_post_meta(get_the_ID(), 'variant', true);
-                    $price = get_post_meta(get_the_ID(), 'price', true);
-                    $year = get_post_meta(get_the_ID(), 'year', true);
-                    $engine_capacity = get_post_meta(get_the_ID(), 'engine_capacity', true);
-                    $transmission = get_post_meta(get_the_ID(), 'transmission', true);
-                    $mileage = get_post_meta(get_the_ID(), 'mileage', true);
-                    $location = get_post_meta(get_the_ID(), 'location', true);
+                    $post_id = get_the_ID();
+                    // Get car details
+                    $make = get_field('make', $post_id);
+                    $model = get_field('model', $post_id);
+                    $variant = get_field('variant', $post_id);
+                    $year = get_field('year', $post_id);
+                    $price = get_field('price', $post_id);
+                    $mileage = get_field('mileage', $post_id);
+                    $location = get_field('location', $post_id);
+                    $engine_capacity = get_field('engine_capacity', $post_id);
+                    $fuel_type = get_field('fuel_type', $post_id);
+                    $transmission = get_field('transmission', $post_id);
+                    $exterior_color = get_field('exterior_color', $post_id);
+                    $interior_color = get_field('interior_color', $post_id);
+                    $description = get_field('description', $post_id);
+                    $body_type = get_field('body_type', $post_id);
+                    $drive_type = get_field('drive_type', $post_id);
+                    $number_of_doors = get_field('number_of_doors', $post_id);
+                    $number_of_seats = get_field('number_of_seats', $post_id);
+                    $motuntil = get_field('motuntil', $post_id);
+                    $extras = get_field('extras', $post_id);
+                    $vehiclehistory = get_field('vehiclehistory', $post_id);
+                    $publication_date = get_field('publication_date', $post_id);
                     ?>
                     <div class="car-listing-card">
                         <?php 
@@ -181,12 +195,10 @@ function display_favourite_listings($atts) {
                                     <?php echo esc_html($engine_capacity); ?>L
                                     <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
                                     <?php 
-                                        $body_type = get_post_meta(get_the_ID(), 'body_type', true);
                                         echo !empty($body_type) ? ' ' . esc_html($body_type) : '';
                                     ?>
                                     <?php echo !empty($transmission) ? ' ' . esc_html($transmission) : ''; ?>
                                     <?php 
-                                        $drive_type = get_post_meta(get_the_ID(), 'drive_type', true);
                                         echo !empty($drive_type) ? ' ' . esc_html($drive_type) : '';
                                     ?>
                                 </div>
@@ -200,10 +212,9 @@ function display_favourite_listings($atts) {
                                 </div>
                                 <div class="car-price">€<?php echo number_format($price); ?></div>
                                 <?php 
-                                $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
                                 if (!$publication_date) {
                                     $publication_date = get_the_date('Y-m-d H:i:s');
-                                    update_post_meta(get_the_ID(), 'publication_date', $publication_date);
+                                    update_post_meta($post_id, 'publication_date', $publication_date);
                                 }
                                 $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                 echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';

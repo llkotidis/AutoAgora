@@ -16,19 +16,19 @@ if (have_posts()) :
         if (get_post_type($car_id) === 'car') :
 
             // Get all car details (copied from car-listing-detailed.php and adapted)
-            $make = get_post_meta($car_id, 'make', true);
-            $model = get_post_meta($car_id, 'model', true);
-            $variant = get_post_meta($car_id, 'variant', true);
-            $year = get_post_meta($car_id, 'year', true);
-            $price = get_post_meta($car_id, 'price', true);
-            $mileage = get_post_meta($car_id, 'mileage', true);
-            $location = get_post_meta($car_id, 'location', true);
-            $engine_capacity = get_post_meta($car_id, 'engine_capacity', true);
-            $fuel_type = get_post_meta($car_id, 'fuel_type', true);
-            $transmission = get_post_meta($car_id, 'transmission', true);
-            $exterior_color = get_post_meta($car_id, 'exterior_color', true);
-            $interior_color = get_post_meta($car_id, 'interior_color', true);
-            $description = get_post_meta($car_id, 'description', true);
+            $make = get_field('make', $car_id);
+            $model = get_field('model', $car_id);
+            $variant = get_field('variant', $car_id);
+            $year = get_field('year', $car_id);
+            $price = get_field('price', $car_id);
+            $mileage = get_field('mileage', $car_id);
+            $location = get_field('location', $car_id);
+            $engine_capacity = get_field('engine_capacity', $car_id);
+            $fuel_type = get_field('fuel_type', $car_id);
+            $transmission = get_field('transmission', $car_id);
+            $exterior_color = get_field('exterior_color', $car_id);
+            $interior_color = get_field('interior_color', $car_id);
+            $description = get_field('description', $car_id);
 
             // Get all car images (copied from car-listing-detailed.php)
             $featured_image = get_post_thumbnail_id($car_id);
@@ -156,12 +156,12 @@ if (have_posts()) :
                                 <?php echo esc_html($engine_capacity); ?>L
                                 <?php echo !empty($variant) ? ' ' . esc_html($variant) : ''; ?>
                                 <?php 
-                                    $body_type = get_post_meta($car_id, 'body_type', true);
+                                    $body_type = get_field('body_type', $car_id);
                                     echo !empty($body_type) ? ' ' . esc_html($body_type) : '';
                                 ?>
                                 <?php echo !empty($transmission) ? ' ' . esc_html($transmission) : ''; ?>
                                 <?php 
-                                    $drive_type = get_post_meta($car_id, 'drive_type', true);
+                                    $drive_type = get_field('drive_type', $car_id);
                                     echo !empty($drive_type) ? ' ' . esc_html($drive_type) : '';
                                 ?>
                             </div>
@@ -183,7 +183,7 @@ if (have_posts()) :
 
                             <div class="car-price">€<?php echo number_format($price); ?></div>
                             <?php 
-                            $publication_date = get_post_meta($car_id, 'publication_date', true);
+                            $publication_date = get_field('publication_date', $car_id);
                             if (!$publication_date) {
                                 $publication_date = get_the_date('Y-m-d H:i:s');
                                 update_post_meta($car_id, 'publication_date', $publication_date);
@@ -247,12 +247,12 @@ if (have_posts()) :
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Availability:</span>
-                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'availability', true)); ?></span>
+                                    <span class="detail-value"><?php echo esc_html(get_field('availability', $car_id)); ?></span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">MOT Status:</span>
                                     <span class="detail-value"><?php 
-                                        $mot_status = get_post_meta($car_id, 'motuntil', true);
+                                        $mot_status = get_field('motuntil', $car_id);
                                         if ($mot_status === 'Expired') {
                                             echo 'Expired';
                                         } elseif (!empty($mot_status)) {
@@ -284,11 +284,11 @@ if (have_posts()) :
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Number of Doors:</span>
-                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'number_of_doors', true)); ?></span>
+                                    <span class="detail-value"><?php echo esc_html(get_field('number_of_doors', $car_id)); ?></span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Number of Seats:</span>
-                                    <span class="detail-value"><?php echo esc_html(get_post_meta($car_id, 'number_of_seats', true)); ?></span>
+                                    <span class="detail-value"><?php echo esc_html(get_field('number_of_seats', $car_id)); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -303,7 +303,7 @@ if (have_posts()) :
                             <div class="specs-features-content" style="display: none;">
                                 <div class="extras-grid">
                                     <?php
-                                    $extras = get_post_meta($car_id, 'extras', true);
+                                    $extras = get_field('extras', $car_id);
                                     if (!empty($extras) && is_array($extras)) {
                                         foreach ($extras as $extra) {
                                             // Get the label from the ACF field

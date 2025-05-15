@@ -159,15 +159,15 @@ function ajax_filter_car_listings_handler() {
     if ($car_query->have_posts()) :
         while ($car_query->have_posts()) : $car_query->the_post();
             // --- START Card Rendering Logic (copied from includes/car-listings.php) ---
-            $make = get_post_meta(get_the_ID(), 'make', true);
-            $model = get_post_meta(get_the_ID(), 'model', true);
-            $variant = get_post_meta(get_the_ID(), 'variant', true);
-            $price = get_post_meta(get_the_ID(), 'price', true);
-            $year = get_post_meta(get_the_ID(), 'year', true);
-            $engine_capacity = get_post_meta(get_the_ID(), 'engine_capacity', true);
-            $transmission = get_post_meta(get_the_ID(), 'transmission', true);
-            $mileage = get_post_meta(get_the_ID(), 'mileage', true);
-            $location = get_post_meta(get_the_ID(), 'location', true);
+            $make = get_field('make', get_the_ID());
+            $model = get_field('model', get_the_ID());
+            $variant = get_field('variant', get_the_ID());
+            $price = get_field('price', get_the_ID());
+            $year = get_field('year', get_the_ID());
+            $engine_capacity = get_field('engine_capacity', get_the_ID());
+            $transmission = get_field('transmission', get_the_ID());
+            $mileage = get_field('mileage', get_the_ID());
+            $location = get_field('location', get_the_ID());
             ?>
             <div class="car-listing-card">
                 <?php 
@@ -232,7 +232,7 @@ function ajax_filter_car_listings_handler() {
                             //     $specs_array[] = esc_html($fuel_type); // Removed
                             // } // Removed
                             
-                            $body_type = get_post_meta(get_the_ID(), 'body_type', true);
+                            $body_type = get_field('body_type', get_the_ID());
                             if (!empty($body_type)) {
                                 $specs_array[] = esc_html($body_type);
                             }
@@ -241,7 +241,7 @@ function ajax_filter_car_listings_handler() {
                                 $specs_array[] = esc_html($transmission);
                             }
                             
-                            $drive_type = get_post_meta(get_the_ID(), 'drive_type', true);
+                            $drive_type = get_field('drive_type', get_the_ID());
                             if (!empty($drive_type)) {
                                $specs_array[] = esc_html($drive_type);
                             }
@@ -260,7 +260,7 @@ function ajax_filter_car_listings_handler() {
                         <div class="car-price">€<?php echo number_format(floatval(str_replace(',', '', $price))); ?></div>
                         <div class="car-listing-additional-info">
                             <?php 
-                            $publication_date = get_post_meta(get_the_ID(), 'publication_date', true);
+                            $publication_date = get_field('publication_date', get_the_ID());
                             if (!$publication_date) {
                                 $publication_date = get_the_date('Y-m-d H:i:s');
                                 update_post_meta(get_the_ID(), 'publication_date', $publication_date);
