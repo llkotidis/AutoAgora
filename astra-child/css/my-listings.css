@@ -174,3 +174,28 @@
 .listings-grid {
   width: 80%;
 }
+
+@media (max-width: 1199.98px) {
+  .listings-area {
+    flex-direction: column;
+  }
+
+  .listings-filter,
+  .listings-grid {
+    width: 100%;
+  }
+
+  .listings-filter {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .listings-container {
+    padding: 0;
+  }
+}
+
+@media (max-width: 767.98px) {
+}
