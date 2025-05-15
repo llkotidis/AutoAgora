@@ -8,8 +8,11 @@ jQuery(document).ready(function($) {
     const fileUploadArea = $('#file-upload-area');
     const imagePreviewContainer = $('#image-preview');
     
+    // Selector for identifying existing image preview items
+    const existingImageSelector = '.image-preview-item:has(.remove-image[data-image-id])';
+
     // Initial count of existing images on page load
-    const initialExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+    const initialExistingImageCount = imagePreviewContainer.find(existingImageSelector).length;
     console.log('[Edit Listing] Initial existing images on page load:', initialExistingImageCount);
 
     // Set initial make value
@@ -139,27 +142,20 @@ jQuery(document).ready(function($) {
     
     function processNewFiles(candidateFiles) {
         console.log('[Edit Listing] Processing', candidateFiles.length, 'new candidate files.');
-        const maxTotalFiles = 25; // Max total images (existing + new)
+        const maxTotalFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         let filesActuallyAddedInThisBatch = 0;
 
-        // Get the count of images that are already part of the listing and not marked for removal
-        const currentPersistedExistingImageCount = imagePreviewContainer.find('.image-preview-item:not(:has(input[name="removed_images[]"])) img[data-image-id]').length;
-        // A more direct way if removed items are immediately detached from DOM:
-        // const currentPersistedExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
-        // Assuming previews of removed existing images are detached from DOM, the above simpler one is fine.
-        // Sticking to the simpler one as per current remove logic for existing images.
-        const currentExistingImageDOMCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+        const currentExistingImageDOMCount = imagePreviewContainer.find(existingImageSelector).length;
 
-        console.log('[Edit Listing] Current existing images in DOM:', currentExistingImageDOMCount);
+        console.log('[Edit Listing] Current existing images in DOM (for processNewFiles):', currentExistingImageDOMCount);
         console.log('[Edit Listing] Currently accumulated new files:', accumulatedFilesList.length);
 
         candidateFiles.forEach(file => {
-            // Check if adding THIS one new file would exceed the total limit
             if (currentExistingImageDOMCount + accumulatedFilesList.length >= maxTotalFiles) {
                 alert('Maximum ' + maxTotalFiles + ' total images allowed. Cannot add "' + file.name + '".');
-                return; // Skips this file, continues to the next in candidateFiles if any
+                return;
             }
 
             const isDuplicateInNew = accumulatedFilesList.some(
@@ -308,22 +304,22 @@ jQuery(document).ready(function($) {
         $('#mileage, #price, #hp').prop('disabled', true);
 
         // Validate image count
-        const existingImagesCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+        const existingImagesCount = imagePreviewContainer.find(existingImageSelector).length;
         const newImagesCount = accumulatedFilesList.length;
         const totalImages = existingImagesCount + newImagesCount;
+
+        console.log('[Edit Listing] Submit validation - Existing images:', existingImagesCount, 'New images:', newImagesCount, 'Total:', totalImages);
 
         if (totalImages < 5) {
             e.preventDefault();
             alert('Please ensure there are at least 5 images for your car listing (including existing and newly added).');
             return false;
         }
-
         if (totalImages > 25) {
             e.preventDefault();
             alert('You can have a maximum of 25 images for your car listing (including existing and newly added).');
             return false;
         }
-        // Ensure the file input is up-to-date with new files before submission
         updateActualFileInput();
     });
 
