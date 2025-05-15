@@ -59,6 +59,14 @@ $is_antique = get_post_meta($car_id, 'isantique', true);
 $vehicle_history = get_post_meta($car_id, 'vehicle_history', true);
 $extras = get_post_meta($car_id, 'extras', true);
 
+// Ensure vehicle_history and extras are arrays
+if (!is_array($vehicle_history)) {
+    $vehicle_history = array();
+}
+if (!is_array($extras)) {
+    $extras = array();
+}
+
 // Get all car images
 $featured_image = get_post_thumbnail_id($car_id);
 $additional_images = get_field('car_images', $car_id);
@@ -357,14 +365,20 @@ get_header();
                                             'tax_paid' => 'Tax Paid',
                                             'hpi_clear' => 'HPI Clear'
                                         );
-                                        if (!is_array($vehicle_history)) {
-                                            $vehicle_history = array();
-                                        }
+                                        
                                         foreach ($vehicle_history_options as $value => $label) {
-                                            echo '<div class="vehicle-history-option">';
-                                            echo '<input type="checkbox" id="vehiclehistory_' . esc_attr($value) . '" name="vehicle_history[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $vehicle_history), true, false) . '>';
-                                            echo '<label for="vehiclehistory_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
-                                            echo '</div>';
+                                            ?>
+                                            <div class="vehicle-history-option">
+                                                <input type="checkbox" 
+                                                       id="vehiclehistory_<?php echo esc_attr($value); ?>" 
+                                                       name="vehicle_history[]" 
+                                                       value="<?php echo esc_attr($value); ?>" 
+                                                       <?php checked(in_array($value, $vehicle_history), true); ?>>
+                                                <label for="vehiclehistory_<?php echo esc_attr($value); ?>">
+                                                    <?php echo esc_html($label); ?>
+                                                </label>
+                                            </div>
+                                            <?php
                                         }
                                         ?>
                                     </div>
@@ -388,14 +402,20 @@ get_header();
                                             'xenon_lights' => 'Xenon Lights',
                                             'alloy_wheels' => 'Alloy Wheels'
                                         );
-                                        if (!is_array($extras)) {
-                                            $extras = array();
-                                        }
+                                        
                                         foreach ($extras_options as $value => $label) {
-                                            echo '<div class="extra-option">';
-                                            echo '<input type="checkbox" id="extra_' . esc_attr($value) . '" name="extras[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $extras), true, false) . '>';
-                                            echo '<label for="extra_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
-                                            echo '</div>';
+                                            ?>
+                                            <div class="extra-option">
+                                                <input type="checkbox" 
+                                                       id="extra_<?php echo esc_attr($value); ?>" 
+                                                       name="extras[]" 
+                                                       value="<?php echo esc_attr($value); ?>" 
+                                                       <?php checked(in_array($value, $extras), true); ?>>
+                                                <label for="extra_<?php echo esc_attr($value); ?>">
+                                                    <?php echo esc_html($label); ?>
+                                                </label>
+                                            </div>
+                                            <?php
                                         }
                                         ?>
                                     </div>
