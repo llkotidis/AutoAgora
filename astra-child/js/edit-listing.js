@@ -136,11 +136,6 @@ jQuery(document).ready(function($) {
     function handleFiles(files) {
         if (!files.length) return;
         
-        // Clear existing previews if this is a new upload
-        if (fileInput.val()) {
-            imagePreview.empty();
-        }
-        
         Array.from(files).forEach(file => {
             if (!file.type.startsWith('image/')) return;
             
