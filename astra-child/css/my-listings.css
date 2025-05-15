@@ -79,8 +79,21 @@
   gap: 0.5rem;
 }
 
-.listing-title {
+.title-and-price h3,
+.title-and-price h4 {
+  margin: 0 !important;
+  text-decoration: none !important;
+}
+
+.title-and-price h3 {
+  font-size: 1.5rem !important;
+}
+
+.title-and-price h4 {
   font-size: 1.25rem !important;
+}
+
+.listing-title {
   font-weight: 600;
   color: var(--text-color) !important;
   text-decoration: none !important;
