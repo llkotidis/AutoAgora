@@ -2,8 +2,13 @@ jQuery(document).ready(function($) {
     // Store the makes data
     const makesData = editListingData.makesData;
     
+    // Set initial make value
+    const selectedMake = editListingData.selectedMake;
+    if (selectedMake) {
+        $('#make').val(selectedMake);
+    }
+    
     // Set initial model and variant options based on the selected make
-    const selectedMake = $('#make').val();
     if (selectedMake && makesData[selectedMake]) {
         const modelSelect = $('#model');
         Object.keys(makesData[selectedMake]).forEach(model => {

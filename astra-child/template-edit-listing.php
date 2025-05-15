@@ -118,9 +118,9 @@ wp_enqueue_script('edit-listing-script', get_stylesheet_directory_uri() . '/js/e
 // Localize the script with necessary data
 wp_localize_script('edit-listing-script', 'editListingData', array(
     'makesData' => $add_listing_makes,
-    'selectedMake' => $make,
-    'selectedModel' => $model,
-    'selectedVariant' => $variant
+    'selectedMake' => esc_js($make),
+    'selectedModel' => esc_js($model),
+    'selectedVariant' => esc_js($variant)
 ));
 ?>
 
