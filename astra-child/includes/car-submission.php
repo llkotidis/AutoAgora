@@ -527,6 +527,8 @@ function handle_edit_car_listing() {
         foreach ($_POST['removed_images'] as $removed_id) {
             $key = array_search($removed_id, $existing_images);
             if ($key !== false) {
+                // Delete the attachment from the media library
+                wp_delete_attachment($removed_id, true);
                 unset($existing_images[$key]);
             }
         }
@@ -560,8 +562,13 @@ function handle_edit_car_listing() {
             }
         }
         
-        // Combine existing and new images
-        $all_images = array_merge($existing_images, $image_ids);
+        // If we have new images, use only those
+        if (!empty($image_ids)) {
+            $all_images = $image_ids;
+        } else {
+            // If no new images were successfully uploaded, use remaining existing images
+            $all_images = array_values($existing_images);
+        }
     } else {
         // If no new images uploaded, just use the existing images after removal
         $all_images = array_values($existing_images); // Reindex array
