@@ -186,19 +186,20 @@ function display_my_listings($atts) {
                                 ?></span>
                             </div>
                             <div class="listing-actions">
-                                <a href="<?php echo get_edit_post_link(); ?>" class="button">Edit</a>
+                                <a href="<?php echo get_edit_post_link(); ?>" class="button"><i class="fas fa-pencil-alt"></i> Edit</a>
                                 <?php 
                                 if (get_post_status() === 'publish') {
                                     $is_sold = get_field('is_sold', $post_id);
-                                    $button_text = $is_sold ? 'Mark as Available' : 'Mark as Sold';
+                                    $button_text = $is_sold ? ' Mark as Available' : ' Mark as Sold';
                                     $button_class = $is_sold ? 'button available-button' : 'button sold-button';
+                                    $icon_class = $is_sold ? 'fas fa-undo-alt' : 'fas fa-check-circle';
                                     ?>
                                     <button class="<?php echo esc_attr($button_class); ?>" 
                                             onclick="toggleCarStatus(<?php echo $post_id; ?>, <?php echo $is_sold ? 'false' : 'true'; ?>)">
-                                        <?php echo esc_html($button_text); ?>
+                                        <i class="<?php echo esc_attr($icon_class); ?>"></i><?php echo esc_html($button_text); ?>
                                     </button>
                                 <?php } ?>
-                                <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</a>
+                                <a href="<?php echo get_delete_post_link(); ?>" class="button delete-button" onclick="return confirm('Are you sure you want to delete this listing?');"><i class="fas fa-trash-alt"></i> Delete</a>
                             </div>
                         </div>
                     </div>
