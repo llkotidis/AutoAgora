@@ -416,3 +416,150 @@ function store_car_publication_date($new_status, $old_status, $post) {
     }
 }
 add_action('transition_post_status', 'store_car_publication_date', 10, 3);
+
+/**
+ * Process form submission for editing a car listing
+ */
+function handle_edit_car_listing() {
+    // Initialize variables for error tracking
+    $errors = array();
+    $required_fields = array(
+        'make' => 'Make',
+        'model' => 'Model',
+        'variant' => 'Variant',
+        'year' => 'Year',
+        'mileage' => 'Mileage',
+        'price' => 'Price',
+        'location' => 'Location',
+        'engine_capacity' => 'Engine Capacity',
+        'fuel_type' => 'Fuel Type',
+        'transmission' => 'Transmission',
+        'body_type' => 'Body Type',
+        'drive_type' => 'Drive Type',
+        'exterior_color' => 'Exterior Color',
+        'interior_color' => 'Interior Color',
+        'description' => 'Description',
+        'number_of_doors' => 'Number of Doors',
+        'number_of_seats' => 'Number of Seats'
+    );
+    
+    // Verify nonce
+    if (!isset($_POST['edit_car_listing_nonce']) || !wp_verify_nonce($_POST['edit_car_listing_nonce'], 'edit_car_listing_nonce')) {
+        wp_redirect(add_query_arg('listing_error', 'nonce_failed', wp_get_referer()));
+        exit;
+    }
+    
+    // Get car ID
+    $car_id = isset($_POST['car_id']) ? intval($_POST['car_id']) : 0;
+    if (!$car_id) {
+        wp_redirect(add_query_arg('listing_error', 'invalid_car', wp_get_referer()));
+        exit;
+    }
+    
+    // Check if user owns the car
+    $car = get_post($car_id);
+    if (!$car || $car->post_type !== 'car' || $car->post_author != get_current_user_id()) {
+        wp_redirect(add_query_arg('listing_error', 'unauthorized', wp_get_referer()));
+        exit;
+    }
+    
+    // Check for required fields
+    $missing_fields = array();
+    foreach ($required_fields as $field_key => $field_label) {
+        if (!isset($_POST[$field_key]) || empty(trim($_POST[$field_key]))) {
+            $missing_fields[] = $field_key;
+        }
+    }
+    
+    if (!empty($missing_fields)) {
+        // Redirect back with error message
+        $redirect_url = add_query_arg(
+            array(
+                'error' => 'validation',
+                'fields' => implode(',', $missing_fields)
+            ),
+            wp_get_referer()
+        );
+        wp_redirect($redirect_url);
+        exit;
+    }
+    
+    // Update post title
+    $post_title = sanitize_text_field($_POST['make'] . ' ' . $_POST['model'] . ' ' . $_POST['variant']);
+    wp_update_post(array(
+        'ID' => $car_id,
+        'post_title' => $post_title
+    ));
+    
+    // Update all meta fields
+    foreach ($required_fields as $field_key => $field_label) {
+        update_post_meta($car_id, $field_key, sanitize_text_field($_POST[$field_key]));
+    }
+    
+    // Update optional fields
+    if (isset($_POST['hp'])) {
+        update_post_meta($car_id, 'hp', sanitize_text_field($_POST['hp']));
+    }
+    
+    // Handle images
+    if (!empty($_FILES['car_images']['name'][0])) {
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        
+        $image_ids = array();
+        
+        // Upload new images
+        foreach ($_FILES['car_images']['name'] as $key => $value) {
+            if ($_FILES['car_images']['error'][$key] === 0) {
+                $file = array(
+                    'name'     => $_FILES['car_images']['name'][$key],
+                    'type'     => $_FILES['car_images']['type'][$key],
+                    'tmp_name' => $_FILES['car_images']['tmp_name'][$key],
+                    'error'    => $_FILES['car_images']['error'][$key],
+                    'size'     => $_FILES['car_images']['size'][$key]
+                );
+                
+                $_FILES['car_image'] = $file;
+                $attachment_id = media_handle_upload('car_image', $car_id);
+                
+                if (!is_wp_error($attachment_id)) {
+                    $image_ids[] = $attachment_id;
+                }
+            }
+        }
+        
+        // Get existing images
+        $existing_images = get_field('car_images', $car_id);
+        if (!is_array($existing_images)) {
+            $existing_images = array();
+        }
+        
+        // Remove deleted images
+        if (!empty($_POST['removed_images'])) {
+            foreach ($_POST['removed_images'] as $removed_id) {
+                $key = array_search($removed_id, $existing_images);
+                if ($key !== false) {
+                    unset($existing_images[$key]);
+                }
+            }
+        }
+        
+        // Combine existing and new images
+        $all_images = array_merge($existing_images, $image_ids);
+        
+        // Update the car_images field
+        update_field('car_images', $all_images, $car_id);
+        
+        // Set the first image as featured image if no featured image exists
+        if (!has_post_thumbnail($car_id) && !empty($all_images)) {
+            set_post_thumbnail($car_id, $all_images[0]);
+        }
+    }
+    
+    // Redirect to my listings page with success message
+    wp_redirect(add_query_arg('listing_updated', '1', home_url('/my-listings/')));
+    exit;
+}
+add_action('admin_post_edit_car_listing', 'handle_edit_car_listing');
+add_action('admin_post_nopriv_edit_car_listing', 'handle_edit_car_listing');
