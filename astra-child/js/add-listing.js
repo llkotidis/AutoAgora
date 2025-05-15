@@ -231,33 +231,28 @@ jQuery(document).ready(function($) {
         const currentFiles = Array.from(fileInput[0].files || []);
         console.log('[Add Listing] Current files:', currentFiles.length);
         
-        // Create a DataTransfer object to manage files
-        const dataTransfer = new DataTransfer();
+        // Create a Map to track unique files by name and size
+        const uniqueFiles = new Map();
         
-        // Add existing files first
+        // Add existing files to the map
         currentFiles.forEach(file => {
-            try {
-                dataTransfer.items.add(file);
-            } catch (error) {
-                console.error('[Add Listing] Error adding existing file:', error);
-            }
+            const key = `${file.name}-${file.size}`;
+            uniqueFiles.set(key, file);
         });
         
         // Process each new file
         files.forEach(file => {
             try {
                 // Check if adding this file would exceed the maximum
-                if (dataTransfer.files.length >= maxFiles) {
+                if (uniqueFiles.size >= maxFiles) {
                     alert('Maximum ' + maxFiles + ' files allowed');
                     return; // Skip this file
                 }
                 
-                // Check if duplicate by comparing file name and size
-                const isDuplicate = Array.from(dataTransfer.files).some(
-                    existingFile => existingFile.name === file.name && existingFile.size === file.size
-                );
+                const key = `${file.name}-${file.size}`;
                 
-                if (isDuplicate) {
+                // Check if duplicate
+                if (uniqueFiles.has(key)) {
                     console.log('[Add Listing] Skipping duplicate file:', file.name);
                     return; // Skip this file
                 }
@@ -275,7 +270,7 @@ jQuery(document).ready(function($) {
                 }
                 
                 // Add valid file to our collection
-                dataTransfer.items.add(file);
+                uniqueFiles.set(key, file);
                 
                 // Create preview for this file
                 createPreviewForFile(file);
@@ -285,6 +280,14 @@ jQuery(document).ready(function($) {
         });
         
         try {
+            // Create a new DataTransfer object
+            const dataTransfer = new DataTransfer();
+            
+            // Add all unique files to the DataTransfer object
+            uniqueFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            
             // Update the file input with all files
             fileInput[0].files = dataTransfer.files;
             console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
