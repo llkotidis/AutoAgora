@@ -18,8 +18,6 @@ require_once get_stylesheet_directory() . '/includes/car-listing-detailed.php';
 require_once get_stylesheet_directory() . '/includes/my-account.php';
 require_once get_stylesheet_directory() . '/includes/my-listings.php';
 
-// Include Edit Listing functionality
-require_once get_stylesheet_directory() . '/includes/edit-listing.php';
 
 // Include Favourite Listings functionality
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourite-listings.php';
