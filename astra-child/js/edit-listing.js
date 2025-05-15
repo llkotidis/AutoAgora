@@ -148,24 +148,34 @@ jQuery(document).ready(function($) {
     
     function processNewFiles(candidateFiles) {
         console.log('[Edit Listing] Processing', candidateFiles.length, 'new candidate files.');
-        const maxFiles = 25;
+        const maxTotalFiles = 25; // Max total images (existing + new)
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        let filesAddedThisBatchCount = 0;
+        let filesActuallyAddedInThisBatch = 0;
 
-        const currentExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+        // Get the count of images that are already part of the listing and not marked for removal
+        const currentPersistedExistingImageCount = imagePreviewContainer.find('.image-preview-item:not(:has(input[name="removed_images[]"])) img[data-image-id]').length;
+        // A more direct way if removed items are immediately detached from DOM:
+        // const currentPersistedExistingImageCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+        // Assuming previews of removed existing images are detached from DOM, the above simpler one is fine.
+        // Sticking to the simpler one as per current remove logic for existing images.
+        const currentExistingImageDOMCount = imagePreviewContainer.find('.image-preview-item img[data-image-id]').length;
+
+        console.log('[Edit Listing] Current existing images in DOM:', currentExistingImageDOMCount);
+        console.log('[Edit Listing] Currently accumulated new files:', accumulatedFilesList.length);
 
         candidateFiles.forEach(file => {
-            if (currentExistingImageCount + accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
-                alert('Maximum ' + maxFiles + ' total images allowed. Some files were not added.');
-                return false; 
+            // Check if adding THIS one new file would exceed the total limit
+            if (currentExistingImageDOMCount + accumulatedFilesList.length >= maxTotalFiles) {
+                alert('Maximum ' + maxTotalFiles + ' total images allowed. Cannot add "' + file.name + '".');
+                return; // Skips this file, continues to the next in candidateFiles if any
             }
 
             const isDuplicateInNew = accumulatedFilesList.some(
                 existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
             );
             if (isDuplicateInNew) {
-                console.log('[Edit Listing] Skipping duplicate new file:', file.name);
+                console.log('[Edit Listing] Skipping duplicate new file (already in this edit session):', file.name);
                 return;
             }
             if (!allowedTypes.includes(file.type)) {
@@ -179,13 +189,13 @@ jQuery(document).ready(function($) {
 
             accumulatedFilesList.push(file);
             createAndDisplayPreviewForNewFile(file);
-            filesAddedThisBatchCount++;
+            filesActuallyAddedInThisBatch++;
         });
 
-        if (filesAddedThisBatchCount > 0) {
+        if (filesActuallyAddedInThisBatch > 0) {
             updateActualFileInput();
         }
-        console.log('[Edit Listing] Processed batch. New accumulated files count:', accumulatedFilesList.length);
+        console.log('[Edit Listing] Processed batch. Total new files added in session:', accumulatedFilesList.length);
     }
 
     function createAndDisplayPreviewForNewFile(file) {
