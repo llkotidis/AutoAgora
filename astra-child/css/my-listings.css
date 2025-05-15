@@ -41,6 +41,7 @@
   padding: 1.5rem;
   border-radius: var(--border-radius-large);
   transition: background-color 0.1s ease;
+  border: var(--border);
 }
 
 .listing-item:hover {
@@ -192,10 +193,48 @@
     gap: 1rem;
   }
 
-  .listings-container {
-    padding: 0;
+  .my-listings-container {
+    padding: 0 !important;
   }
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 799.98px) {
+  .listing-item {
+    flex-direction: column;
+  }
+
+  .listing-image-container {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .listing-details {
+    width: 100%;
+  }
+
+  .post-99 {
+    padding: 0.5rem !important;
+  }
+}
+
+@media (max-width: 599.98px) {
+  .listing-actions {
+    flex-direction: column;
+  }
+
+  .listing-details {
+    gap: 1.5rem;
+  }
+
+  .button {
+    width: 100%;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+
+  .listing-image-container {
+    width: 100%;
+    max-width: 100%;
+  }
 }
