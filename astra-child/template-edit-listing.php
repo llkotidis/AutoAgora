@@ -162,6 +162,9 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
     'selectedVariant' => esc_js($variant)
 ));
 
+// Mapbox is loaded through mapbox-assets.php
+?>
+
 <div class="page-edit-listing">
     <div class="ast-container">
         <div class="ast-row">
