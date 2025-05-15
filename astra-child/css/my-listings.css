@@ -212,6 +212,10 @@
   .listing-details {
     width: 100%;
   }
+
+  .post-99 {
+    padding: 0.5rem !important;
+  }
 }
 
 @media (max-width: 599.98px) {
