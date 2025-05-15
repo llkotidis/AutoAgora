@@ -191,6 +191,10 @@
     align-items: center;
     gap: 1rem;
   }
+
+  .listings-container {
+    padding: 0;
+  }
 }
 
 @media (max-width: 767.98px) {
