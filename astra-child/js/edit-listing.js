@@ -220,6 +220,23 @@ jQuery(document).ready(function($) {
         
         // Disable the original inputs
         $('#mileage, #price, #hp').prop('disabled', true);
+
+        // Validate image count
+        const existingImages = $('.image-preview-item').length;
+        const newImages = fileInput[0].files.length;
+        const totalImages = existingImages + newImages;
+
+        if (totalImages < 5) {
+            e.preventDefault();
+            alert('Please upload at least 5 images for your car listing.');
+            return false;
+        }
+
+        if (totalImages > 25) {
+            e.preventDefault();
+            alert('You can upload a maximum of 25 images for your car listing.');
+            return false;
+        }
     });
 
     // Initialize location picker

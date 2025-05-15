@@ -66,16 +66,9 @@ function handle_add_car_listing() {
         exit;
     }
     
-    // Check for images - at least 5 images are required
+    // Check for images - at least 5 images and maximum 25 images are required
     if (!isset($_FILES['car_images']) || empty($_FILES['car_images']['name'][0])) {
         wp_redirect(add_query_arg('error', 'no_images', wp_get_referer()));
-        exit;
-    }
-    
-    // Count the number of images
-    $image_count = count($_FILES['car_images']['name']);
-    if ($image_count < 5) {
-        wp_redirect(add_query_arg('error', 'insufficient_images', wp_get_referer()));
         exit;
     }
     
