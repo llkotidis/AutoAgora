@@ -109,14 +109,18 @@ jQuery(document).ready(function($) {
     // Process the files - common function for both methods
     function handleFiles(files, isFileDialog) {
         console.log('[Add Listing] === ADDING FILES ===');
-        updateImageCount();
+        console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
         console.log('[Add Listing] Attempting to add', files.length, 'files');
         
         const maxFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         
-        // Check if adding these files would exceed the maximum
-        if (imageCounter + files.length > maxFiles) {
+        // Get current files from input
+        const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
+        console.log('[Add Listing] Current files:', currentFiles.length);
+        
+        // Check if too many files
+        if (currentFiles.length + files.length > maxFiles) {
             console.log('[Add Listing] ❌ Cannot add files: Would exceed maximum of', maxFiles, 'files');
             alert('Maximum ' + maxFiles + ' files allowed');
             return;
@@ -127,7 +131,7 @@ jQuery(document).ready(function($) {
         
         // Add existing files first (only for drag and drop)
         if (!isFileDialog) {
-            Array.from(fileInput[0].files).forEach(file => {
+            currentFiles.forEach(file => {
                 dataTransfer.items.add(file);
             });
         }
@@ -138,7 +142,7 @@ jQuery(document).ready(function($) {
         Array.from(files).forEach(file => {
             // Check if duplicate (only for drag and drop)
             if (!isFileDialog) {
-                const isDuplicate = Array.from(fileInput[0].files).some(
+                const isDuplicate = currentFiles.some(
                     existingFile => existingFile.name === file.name && existingFile.size === file.size
                 );
                 
@@ -176,7 +180,7 @@ jQuery(document).ready(function($) {
         // Update the file input with all files
         fileInput[0].files = dataTransfer.files;
         console.log('[Add Listing] ✅ Successfully added', successfullyAdded, 'files');
-        updateImageCount();
+        console.log('[Add Listing] 📸 New Image Count:', imageCounter);
     }
     
     // Create preview for a single file
@@ -225,7 +229,7 @@ jQuery(document).ready(function($) {
     // Remove a file by name
     function removeFile(fileName) {
         console.log('[Add Listing] === REMOVING FILE ===');
-        updateImageCount();
+        console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
         console.log('[Add Listing] Removing file:', fileName);
         
         const dataTransfer = new DataTransfer();
@@ -245,7 +249,7 @@ jQuery(document).ready(function($) {
         imageCounter--;
         
         console.log('[Add Listing] ✅ File removed successfully');
-        updateImageCount();
+        console.log('[Add Listing] 📸 New Image Count:', imageCounter);
         
         // Check if we're below minimum after removal
         if (imageCounter < 5) {
