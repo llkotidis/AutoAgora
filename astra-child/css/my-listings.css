@@ -218,9 +218,14 @@
     flex-direction: column;
   }
 
+  .listing-details {
+    gap: 1.5rem;
+  }
+
   .button {
     width: 100%;
     text-align: center !important;
+    margin: 0 !important;
   }
 
   .listing-image-container {
