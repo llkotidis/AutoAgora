@@ -2,12 +2,7 @@
 $('#add-car-listing-form').on('submit', function(e) {
     e.preventDefault(); // Always prevent default submission first
     
-    // Get the raw values from data attributes
-    const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
-    const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
-    const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
-    
-    // Validate image count
+    // Validate image count first, before any other processing
     const imageCount = fileInput[0].files.length;
     if (imageCount < 5) {
         alert('Please upload at least 5 images for your car listing.');
@@ -18,6 +13,12 @@ $('#add-car-listing-form').on('submit', function(e) {
         alert('You can upload a maximum of 25 images for your car listing.');
         return false;
     }
+    
+    // Only proceed with form processing if validation passes
+    // Get the raw values from data attributes
+    const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
+    const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
+    const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
     
     // Create hidden inputs with the raw values
     $('<input>').attr({
