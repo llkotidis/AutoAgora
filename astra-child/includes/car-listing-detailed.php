@@ -131,7 +131,7 @@
                     <div class="car-listing-details-right">
                         <h1 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h1>
 
-                        <?php if (get_post_meta($car_id, 'car_status', true) === 'sold') : ?>
+                        <?php if (get_field('car_status', $car_id) === 'sold') : ?>
                             <div class="sold-badge">SOLD</div>
                         <?php endif; ?>
 

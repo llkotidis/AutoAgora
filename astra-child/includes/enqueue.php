@@ -110,19 +110,19 @@ function astra_child_enqueue_styles() {
                 $car_id = get_the_ID();
                 $all_cars_data[] = array(
                     'id' => $car_id,
-                    'make' => get_post_meta($car_id, 'make', true),
-                    'model' => get_post_meta($car_id, 'model', true),
-                    'variant' => get_post_meta($car_id, 'variant', true),
-                    'location' => get_post_meta($car_id, 'location', true),
-                    'price' => get_post_meta($car_id, 'price', true),
-                    'year' => get_post_meta($car_id, 'year', true),
-                    'mileage' => get_post_meta($car_id, 'mileage', true),
-                    'engine_capacity' => get_post_meta($car_id, 'engine_capacity', true),
-                    'fuel_type' => get_post_meta($car_id, 'fuel_type', true),
-                    'body_type' => get_post_meta($car_id, 'body_type', true),
-                    'drive_type' => get_post_meta($car_id, 'drive_type', true),
-                    'exterior_color' => get_post_meta($car_id, 'exterior_color', true),
-                    'interior_color' => get_post_meta($car_id, 'interior_color', true),
+                    'make' => get_field('make', $car_id),
+                    'model' => get_field('model', $car_id),
+                    'variant' => get_field('variant', $car_id),
+                    'location' => get_field('location', $car_id),
+                    'price' => get_field('price', $car_id),
+                    'year' => get_field('year', $car_id),
+                    'mileage' => get_field('mileage', $car_id),
+                    'engine_capacity' => get_field('engine_capacity', $car_id),
+                    'fuel_type' => get_field('fuel_type', $car_id),
+                    'body_type' => get_field('body_type', $car_id),
+                    'drive_type' => get_field('drive_type', $car_id),
+                    'exterior_color' => get_field('exterior_color', $car_id),
+                    'interior_color' => get_field('interior_color', $car_id),
                     // Add other relevant fields if needed by JS filtering
                 );
             }

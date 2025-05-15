@@ -134,7 +134,7 @@ function display_my_listings($atts) {
                 <div class="listings-grid">
                     <?php while ($user_listings->have_posts()) : $user_listings->the_post(); 
                         $post_id = get_the_ID();
-                        $price = get_post_meta($post_id, 'price', true);
+                        $price = get_field('price', $post_id);
                         
                         // Get all car images
                         $featured_image = get_post_thumbnail_id($post_id);

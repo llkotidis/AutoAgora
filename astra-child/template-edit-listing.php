@@ -35,31 +35,31 @@ if (!$car || $car->post_type !== 'car' || $car->post_author != get_current_user_
 }
 
 // Get all car details
-$make = get_post_meta($car_id, 'make', true);
-$model = get_post_meta($car_id, 'model', true);
-$variant = get_post_meta($car_id, 'variant', true);
-$year = get_post_meta($car_id, 'year', true);
-$price = get_post_meta($car_id, 'price', true);
-$mileage = get_post_meta($car_id, 'mileage', true);
-$location = get_post_meta($car_id, 'location', true);
-$engine_capacity = get_post_meta($car_id, 'engine_capacity', true);
-$fuel_type = get_post_meta($car_id, 'fuel_type', true);
-$transmission = get_post_meta($car_id, 'transmission', true);
-$body_type = get_post_meta($car_id, 'body_type', true);
-$drive_type = get_post_meta($car_id, 'drive_type', true);
-$exterior_color = get_post_meta($car_id, 'exterior_color', true);
-$interior_color = get_post_meta($car_id, 'interior_color', true);
-$description = get_post_meta($car_id, 'description', true);
-$number_of_doors = get_post_meta($car_id, 'number_of_doors', true);
-$number_of_seats = get_post_meta($car_id, 'number_of_seats', true);
-$hp = get_post_meta($car_id, 'hp', true);
-$mot_status = get_post_meta($car_id, 'motuntil', true);
-$num_owners = get_post_meta($car_id, 'numowners', true);
-$is_antique = get_post_meta($car_id, 'isantique', true);
+$make = get_field('make', $car_id);
+$model = get_field('model', $car_id);
+$variant = get_field('variant', $car_id);
+$year = get_field('year', $car_id);
+$price = get_field('price', $car_id);
+$mileage = get_field('mileage', $car_id);
+$location = get_field('location', $car_id);
+$engine_capacity = get_field('engine_capacity', $car_id);
+$fuel_type = get_field('fuel_type', $car_id);
+$transmission = get_field('transmission', $car_id);
+$body_type = get_field('body_type', $car_id);
+$drive_type = get_field('drive_type', $car_id);
+$exterior_color = get_field('exterior_color', $car_id);
+$interior_color = get_field('interior_color', $car_id);
+$description = get_field('description', $car_id);
+$number_of_doors = get_field('number_of_doors', $car_id);
+$number_of_seats = get_field('number_of_seats', $car_id);
+$hp = get_field('hp', $car_id);
+$mot_status = get_field('motuntil', $car_id);
+$num_owners = get_field('numowners', $car_id);
+$is_antique = get_field('isantique', $car_id);
 
-// Get vehicle history and extras as arrays
-$vehicle_history = get_post_meta($car_id, 'vehiclehistory', true);
-$extras = get_post_meta($car_id, 'extras', true);
+// Get vehicle history and extras
+$vehicle_history = get_field('vehiclehistory', $car_id);
+$extras = get_field('extras', $car_id);
 
 // Ensure vehicle_history and extras are arrays and properly formatted
 if (!is_array($vehicle_history)) {

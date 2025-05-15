@@ -151,10 +151,10 @@ function display_user_favorite_cars_page() {
                         $car = get_post($car_id);
                         if (!$car || $car->post_type !== 'car') continue;
                         
-                        $make = get_post_meta($car_id, 'make', true);
-                        $model = get_post_meta($car_id, 'model', true);
-                        $year = get_post_meta($car_id, 'year', true);
-                        $price = get_post_meta($car_id, 'price', true);
+                        $make = get_field('make', $car_id);
+                        $model = get_field('model', $car_id);
+                        $year = get_field('year', $car_id);
+                        $price = get_field('price', $car_id);
                     ?>
                         <tr>
                             <td><?php echo esc_html($car_id); ?></td>
