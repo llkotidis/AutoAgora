@@ -1,267 +1,54 @@
-// Handle form submission
 jQuery(document).ready(function($) {
     console.log('[Add Listing] jQuery ready');
     
-    // Define fileInput at the top level of the ready function
+    // Store the makes data from localized script
+    const makesData = addListingData.makesData;
+    
+    // Handle make selection change
+    $('#make').on('change', function() {
+        const selectedMake = $(this).val();
+        const modelSelect = $('#model');
+        const variantSelect = $('#variant');
+        
+        // Clear existing options
+        modelSelect.empty().append('<option value="">Select Model</option>');
+        variantSelect.empty().append('<option value="">Select Variant</option>');
+        
+        if (selectedMake && makesData[selectedMake]) {
+            // Add model options
+            Object.keys(makesData[selectedMake]).forEach(model => {
+                modelSelect.append(`<option value="${model}">${model}</option>`);
+            });
+        }
+    });
+    
+    // Handle model selection change
+    $('#model').on('change', function() {
+        const selectedMake = $('#make').val();
+        const selectedModel = $(this).val();
+        const variantSelect = $('#variant');
+        
+        // Clear existing options
+        variantSelect.empty().append('<option value="">Select Variant</option>');
+        
+        if (selectedMake && selectedModel && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
+            // Add variant options
+            makesData[selectedMake][selectedModel].forEach(variant => {
+                if (variant) { // Only add non-empty variants
+                    variantSelect.append(`<option value="${variant}">${variant}</option>`);
+                }
+            });
+        }
+    });
+    
     const fileInput = $('#car_images');
     const fileUploadArea = $('#file-upload-area');
     const imagePreview = $('#image-preview');
     
-    // Store the makes data - this will be populated by PHP in the template
-    const makesData = window.makesData || {};
+    // Add mileage formatting
+    const mileageInput = $('#mileage');
+    const priceInput = $('#price');
     
-    // Initialize image counter
-    let imageCounter = 0;
-    console.log('[Add Listing] 📸 Initial Image Count:', imageCounter);
-    
-    // Function to update and display count
-    function updateImageCount() {
-        console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
-        return imageCounter;
-    }
-    
-    // Handle form submission
-    $('#add-car-listing-form').on('submit', function(e) {
-        e.preventDefault(); // Always prevent default submission first
-        
-        console.log('[Add Listing] === FORM SUBMISSION VALIDATION ===');
-        updateImageCount();
-        console.log('[Add Listing] Checking if count is between 5 and 25...');
-        
-        // Get the raw values from data attributes
-        const rawMileage = $('#mileage').data('raw-value') || unformatNumber($('#mileage').val());
-        const rawPrice = $('#price').data('raw-value') || unformatNumber($('#price').val());
-        const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
-        
-        // Simple validation using our counter
-        if (imageCounter < 5) {
-            console.log('[Add Listing] ❌ Validation failed: Image count (' + imageCounter + ') is less than 5');
-            alert('Please upload at least 5 images for your car listing.');
-            return false;
-        }
-
-        if (imageCounter > 25) {
-            console.log('[Add Listing] ❌ Validation failed: Image count (' + imageCounter + ') is more than 25');
-            alert('You can upload a maximum of 25 images for your car listing.');
-            return false;
-        }
-
-        console.log('[Add Listing] ✅ Validation passed: Image count (' + imageCounter + ') is between 5 and 25');
-
-        // If validation passes, create hidden inputs and submit
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'mileage',
-            value: rawMileage
-        }).appendTo(this);
-        
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'price',
-            value: rawPrice
-        }).appendTo(this);
-        
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'hp',
-            value: rawHp
-        }).appendTo(this);
-        
-        // Disable the original inputs
-        $('#mileage, #price, #hp').prop('disabled', true);
-
-        // Submit the form
-        this.submit();
-    });
-
-    // Handle click on upload area
-    fileUploadArea.on('click', function(e) {
-        console.log('[Add Listing] Upload area clicked');
-        fileInput.trigger('click');
-    });
-    
-    // Handle when files are selected through the file dialog
-    fileInput.on('change', function(e) {
-        console.log('[Add Listing] === FILES SELECTED ===');
-        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
-        console.log('[Add Listing] 📸 Current Image Count before adding:', imageCounter);
-        if (this.files.length > 0) {
-            handleFiles(this.files, true);
-        }
-    });
-    
-    // Handle drag and drop
-    fileUploadArea.on('dragover', function(e) {
-        e.preventDefault();
-        $(this).addClass('dragover');
-    });
-    
-    fileUploadArea.on('dragleave', function(e) {
-        e.preventDefault();
-        $(this).removeClass('dragover');
-    });
-    
-    fileUploadArea.on('drop', function(e) {
-        e.preventDefault();
-        $(this).removeClass('dragover');
-        console.log('[Add Listing] === FILES DROPPED ===');
-        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
-        console.log('[Add Listing] 📸 Current Image Count before adding:', imageCounter);
-        handleFiles(e.originalEvent.dataTransfer.files, false);
-    });
-
-    // Process the files - common function for both methods
-    function handleFiles(files, isFileDialog) {
-        console.log('[Add Listing] === ADDING FILES ===');
-        console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
-        console.log('[Add Listing] Attempting to add', files.length, 'files');
-        
-        const maxFiles = 25;
-        const maxFileSize = 5 * 1024 * 1024; // 5MB
-        
-        // Get current files from input
-        const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
-        console.log('[Add Listing] Current files:', currentFiles.length);
-        
-        // Check if too many files
-        if (currentFiles.length + files.length > maxFiles) {
-            console.log('[Add Listing] ❌ Cannot add files: Would exceed maximum of', maxFiles, 'files');
-            alert('Maximum ' + maxFiles + ' files allowed');
-            return;
-        }
-        
-        // Create a DataTransfer object to manage files
-        const dataTransfer = new DataTransfer();
-        
-        // Add existing files first (only for drag and drop)
-        if (!isFileDialog) {
-            currentFiles.forEach(file => {
-                dataTransfer.items.add(file);
-            });
-        }
-        
-        let successfullyAdded = 0;
-        
-        // Process each new file
-        Array.from(files).forEach(file => {
-            // Check if duplicate (only for drag and drop)
-            if (!isFileDialog) {
-                const isDuplicate = currentFiles.some(
-                    existingFile => existingFile.name === file.name && existingFile.size === file.size
-                );
-                
-                if (isDuplicate) {
-                    console.log('[Add Listing] ⚠️ Skipping duplicate file:', file.name);
-                    return; // Skip this file
-                }
-            }
-            
-            // Validate file type
-            if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
-                console.log('[Add Listing] ❌ Invalid file type:', file.name);
-                alert('Only JPG, PNG, GIF, and WebP files are allowed');
-                return; // Skip this file
-            }
-            
-            // Validate file size
-            if (file.size > maxFileSize) {
-                console.log('[Add Listing] ❌ File too large:', file.name);
-                alert('File size must be less than 5MB');
-                return; // Skip this file
-            }
-            
-            // Add valid file to our collection
-            dataTransfer.items.add(file);
-            
-            // Increment our counter
-            imageCounter++;
-            successfullyAdded++;
-            
-            // Create preview for this file
-            createPreviewForFile(file);
-        });
-        
-        // Update the file input with all files
-        fileInput[0].files = dataTransfer.files;
-        console.log('[Add Listing] ✅ Successfully added', successfullyAdded, 'files');
-        console.log('[Add Listing] 📸 New Image Count:', imageCounter);
-    }
-    
-    // Create preview for a single file
-    function createPreviewForFile(file) {
-        console.log('[Add Listing] Creating preview for:', file.name);
-        
-        // Create a FileReader to read the image
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            console.log('[Add Listing] File read complete, creating preview');
-            
-            // Create preview container
-            const previewItem = $('<div>').addClass('image-preview-item');
-            
-            // Create image element
-            const img = $('<img>').attr({
-                'src': e.target.result,
-                'alt': file.name
-            });
-            
-            // Create remove button
-            const removeBtn = $('<div>').addClass('remove-image')
-                .html('<i class="fas fa-times"></i>')
-                .on('click', function() {
-                    removeFile(file.name);
-                    previewItem.remove();
-                });
-            
-            // Add image and button to preview item
-            previewItem.append(img).append(removeBtn);
-            
-            // Add to preview container
-            imagePreview.append(previewItem);
-            console.log('[Add Listing] Preview added for:', file.name);
-        };
-        
-        reader.onerror = function() {
-            console.error('[Add Listing] Error reading file:', file.name);
-        };
-        
-        // Start reading the file
-        reader.readAsDataURL(file);
-    }
-    
-    // Remove a file by name
-    function removeFile(fileName) {
-        console.log('[Add Listing] === REMOVING FILE ===');
-        console.log('[Add Listing] 📸 Current Image Count:', imageCounter);
-        console.log('[Add Listing] Removing file:', fileName);
-        
-        const dataTransfer = new DataTransfer();
-        const currentFiles = Array.from(fileInput[0].files);
-        
-        // Add all files except the one to remove
-        currentFiles.forEach(file => {
-            if (file.name !== fileName) {
-                dataTransfer.items.add(file);
-            }
-        });
-        
-        // Update the file input
-        fileInput[0].files = dataTransfer.files;
-        
-        // Decrement our counter
-        imageCounter--;
-        
-        console.log('[Add Listing] ✅ File removed successfully');
-        console.log('[Add Listing] 📸 New Image Count:', imageCounter);
-        
-        // Check if we're below minimum after removal
-        if (imageCounter < 5) {
-            console.log('[Add Listing] ⚠️ Warning: Image count (' + imageCounter + ') is now below minimum of 5');
-            alert('Please upload at least 5 images for your car listing.');
-        }
-    }
-
     // Format number with commas
     function formatNumber(number) {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -271,10 +58,6 @@ jQuery(document).ready(function($) {
     function unformatNumber(formattedNumber) {
         return parseInt(formattedNumber.replace(/[^0-9]/g, '')) || 0;
     }
-
-    // Add mileage formatting
-    const mileageInput = $('#mileage');
-    const priceInput = $('#price');
     
     // Format mileage with commas
     mileageInput.on('input', function(e) {
@@ -328,4 +111,224 @@ jQuery(document).ready(function($) {
         // Store the raw value
         $(this).data('raw-value', value.replace(/[^\d]/g, ''));
     });
+
+    // Handle form submission
+    $('#add-car-listing-form').on('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+        
+        // Validate image count
+        const fileCount = fileInput[0].files.length;
+        if (fileCount < 5) {
+            alert('Please upload at least 5 images');
+            return;
+        }
+        if (fileCount > 25) {
+            alert('Maximum 25 images allowed');
+            return;
+        }
+        
+        // Get the raw values from data attributes
+        const rawMileage = mileageInput.data('raw-value') || unformatNumber(mileageInput.val());
+        const rawPrice = priceInput.data('raw-value') || unformatNumber(priceInput.val().replace('€', ''));
+        const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
+        
+        // Create hidden inputs with the raw values
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'mileage',
+            value: rawMileage
+        }).appendTo(this);
+
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'price',
+            value: rawPrice
+        }).appendTo(this);
+
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'hp',
+            value: rawHp
+        }).appendTo(this);
+        
+        // Remove the original inputs from submission
+        mileageInput.prop('disabled', true);
+        priceInput.prop('disabled', true);
+        $('#hp').prop('disabled', true);
+        
+        // Submit the form
+        this.submit();
+    });
+    
+    console.log('[Add Listing] Elements found:', {
+        fileInput: fileInput.length,
+        fileUploadArea: fileUploadArea.length,
+        imagePreview: imagePreview.length
+    });
+    
+    // Handle click on upload area
+    fileUploadArea.on('click', function(e) {
+        console.log('[Add Listing] Upload area clicked');
+        fileInput.trigger('click');
+    });
+    
+    // Handle when files are selected through the file dialog
+    fileInput.on('change', function(e) {
+        console.log('[Add Listing] Files selected through file dialog:', this.files.length);
+        if (this.files.length > 0) {
+            // For file dialog selection, we want to replace the current files
+            handleFiles(this.files, true);
+        }
+    });
+    
+    // Handle drag and drop
+    fileUploadArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    fileUploadArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    fileUploadArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        console.log('[Add Listing] Files dropped:', e.originalEvent.dataTransfer.files.length);
+        // For drag and drop, we want to append to existing files
+        handleFiles(e.originalEvent.dataTransfer.files, false);
+    });
+    
+    // Process the files - common function for both methods
+    function handleFiles(files, isFileDialog) {
+        console.log('[Add Listing] Processing', files.length, 'files, isFileDialog:', isFileDialog);
+        
+        const maxFiles = 25;
+        const maxFileSize = 5 * 1024 * 1024; // 5MB
+        
+        // Get current files from input
+        const currentFiles = isFileDialog ? [] : Array.from(fileInput[0].files);
+        console.log('[Add Listing] Current files:', currentFiles.length);
+        
+        // Check if too many files
+        if (currentFiles.length + files.length > maxFiles) {
+            alert('Maximum ' + maxFiles + ' files allowed');
+            return;
+        }
+        
+        // Create a DataTransfer object to manage files
+        const dataTransfer = new DataTransfer();
+        
+        // Add existing files first (only for drag and drop)
+        if (!isFileDialog) {
+            currentFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+        }
+        
+        // Process each new file
+        Array.from(files).forEach(file => {
+            // Check if duplicate (only for drag and drop)
+            if (!isFileDialog) {
+                const isDuplicate = currentFiles.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size
+                );
+                
+                if (isDuplicate) {
+                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    return; // Skip this file
+                }
+            }
+            
+            // Validate file type
+            if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
+                alert('Only JPG, PNG, GIF, and WebP files are allowed');
+                return; // Skip this file
+            }
+            
+            // Validate file size
+            if (file.size > maxFileSize) {
+                alert('File size must be less than 5MB');
+                return; // Skip this file
+            }
+            
+            // Add valid file to our collection
+            dataTransfer.items.add(file);
+            
+            // Create preview for this file
+            createPreviewForFile(file);
+        });
+        
+        // Update the file input with all files
+        fileInput[0].files = dataTransfer.files;
+        console.log('[Add Listing] Updated file input, now has', fileInput[0].files.length, 'files');
+    }
+    
+    // Create preview for a single file
+    function createPreviewForFile(file) {
+        console.log('[Add Listing] Creating preview for:', file.name);
+        
+        // Create a FileReader to read the image
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            console.log('[Add Listing] File read complete, creating preview');
+            
+            // Create preview container
+            const previewItem = $('<div>').addClass('image-preview-item');
+            
+            // Create image element
+            const img = $('<img>').attr({
+                'src': e.target.result,
+                'alt': file.name
+            });
+            
+            // Create remove button
+            const removeBtn = $('<div>').addClass('remove-image')
+                .html('<i class="fas fa-times"></i>')
+                .on('click', function() {
+                    removeFile(file.name);
+                    previewItem.remove();
+                });
+            
+            // Add image and button to preview item
+            previewItem.append(img).append(removeBtn);
+            
+            // Add to preview container
+            imagePreview.append(previewItem);
+            console.log('[Add Listing] Preview added for:', file.name);
+        };
+        
+        reader.onerror = function() {
+            console.error('[Add Listing] Error reading file:', file.name);
+        };
+        
+        // Start reading the file
+        reader.readAsDataURL(file);
+    }
+    
+    // Remove a file by name
+    function removeFile(fileName) {
+        console.log('[Add Listing] Removing file:', fileName);
+        
+        const dataTransfer = new DataTransfer();
+        const currentFiles = Array.from(fileInput[0].files);
+        
+        // Add all files except the one to remove
+        currentFiles.forEach(file => {
+            if (file.name !== fileName) {
+                dataTransfer.items.add(file);
+            }
+        });
+        
+        // Update the file input
+        fileInput[0].files = dataTransfer.files;
+        console.log('[Add Listing] After removal, file input has', fileInput[0].files.length, 'files');
+        
+        // Check if we're below minimum image count
+        if (fileInput[0].files.length < 5) {
+            alert('Please upload at least 5 images');
+        }
+    }
 }); 
