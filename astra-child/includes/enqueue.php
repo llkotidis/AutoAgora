@@ -46,6 +46,11 @@ function astra_child_enqueue_styles() {
         wp_enqueue_style( 'astra-child-add-listing-css', get_stylesheet_directory_uri() . '/css/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
     }
 
+    // Enqueue edit listing styles
+    if (is_page_template('template-edit-listing.php')) {
+        wp_enqueue_style( 'astra-child-edit-listing-css', get_stylesheet_directory_uri() . '/css/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+    }
+
     // Enqueue my-listings styles
     wp_enqueue_style( 'astra-child-my-listings-css', get_stylesheet_directory_uri() . '/css/my-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
