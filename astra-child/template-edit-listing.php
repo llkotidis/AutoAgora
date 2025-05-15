@@ -56,10 +56,34 @@ $hp = get_post_meta($car_id, 'hp', true);
 $mot_status = get_post_meta($car_id, 'motuntil', true);
 $num_owners = get_post_meta($car_id, 'numowners', true);
 $is_antique = get_post_meta($car_id, 'isantique', true);
+
+// Get vehicle history and extras as arrays
 $vehicle_history = get_post_meta($car_id, 'vehicle_history', true);
 $extras = get_post_meta($car_id, 'extras', true);
 
-// Ensure vehicle_history and extras are arrays
+// Ensure vehicle_history and extras are arrays and properly formatted
+if (!is_array($vehicle_history)) {
+    $vehicle_history = array();
+    if (!empty($vehicle_history)) {
+        $vehicle_history = array($vehicle_history);
+    }
+}
+if (!is_array($extras)) {
+    $extras = array();
+    if (!empty($extras)) {
+        $extras = array($extras);
+    }
+}
+
+// Convert any serialized data to arrays
+if (is_serialized($vehicle_history)) {
+    $vehicle_history = maybe_unserialize($vehicle_history);
+}
+if (is_serialized($extras)) {
+    $extras = maybe_unserialize($extras);
+}
+
+// Ensure we have arrays
 if (!is_array($vehicle_history)) {
     $vehicle_history = array();
 }
@@ -385,7 +409,7 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                                        id="vehiclehistory_<?php echo esc_attr($value); ?>" 
                                                        name="vehicle_history[]" 
                                                        value="<?php echo esc_attr($value); ?>" 
-                                                       <?php checked(in_array($value, $vehicle_history), true); ?>>
+                                                       <?php checked(in_array($value, (array)$vehicle_history), true); ?>>
                                                 <label for="vehiclehistory_<?php echo esc_attr($value); ?>">
                                                     <?php echo esc_html($label); ?>
                                                 </label>
@@ -422,7 +446,7 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                                        id="extra_<?php echo esc_attr($value); ?>" 
                                                        name="extras[]" 
                                                        value="<?php echo esc_attr($value); ?>" 
-                                                       <?php checked(in_array($value, $extras), true); ?>>
+                                                       <?php checked(in_array($value, (array)$extras), true); ?>>
                                                 <label for="extra_<?php echo esc_attr($value); ?>">
                                                     <?php echo esc_html($label); ?>
                                                 </label>
