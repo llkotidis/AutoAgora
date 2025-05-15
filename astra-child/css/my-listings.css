@@ -28,7 +28,7 @@
 
 .listing-item {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
   padding: 1.5rem;
   border-radius: var(--border-radius-large);
   transition: background-color 0.1s ease;
@@ -51,7 +51,7 @@
 .listing-image-container img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .image-count {
@@ -63,4 +63,63 @@
   padding: 0.25rem 0.5rem;
   border-radius: var(--border-radius-small);
   font-size: 0.875rem;
+}
+
+.listing-details {
+  width: 65%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.listing-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.listing-title:hover {
+  text-decoration: underline;
+}
+
+.listing-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-size: 0.875rem;
+  color: var(--text-color);
+}
+
+.listing-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.button {
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: opacity 0.1s ease;
+  text-decoration: none !important;
+}
+
+.button:hover {
+  opacity: 0.8;
+}
+
+.button:first-child {
+  background-color: var(--dark-blue) !important;
+  color: var(--white);
+}
+
+.delete-button {
+  background-color: red !important;
+  color: var(--white);
+}
+
+.sold-button {
+  background-color: green !important;
+  color: var(--white);
 }
