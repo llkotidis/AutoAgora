@@ -57,48 +57,30 @@ jQuery(document).ready(function($) {
         const modelSelect = $('#model');
         const variantSelect = $('#variant');
         
-        // Clear existing options
         modelSelect.html('<option value="">Select Model</option>');
         variantSelect.html('<option value="">Select Variant</option>');
         
         if (selectedMake && makesData[selectedMake]) {
-            // Add model options
             Object.keys(makesData[selectedMake]).forEach(model => {
-                modelSelect.append($('<option>', {
-                    value: model,
-                    text: model
-                }));
+                modelSelect.append($('<option>', { value: model, text: model }));
             });
         }
     });
     
-    // Handle model selection change
     $('#model').on('change', function() {
         const selectedMake = $('#make').val();
         const selectedModel = $(this).val();
         const variantSelect = $('#variant');
-        
-        // Clear existing options
         variantSelect.html('<option value="">Select Variant</option>');
-        
         if (selectedMake && selectedModel && makesData[selectedMake] && makesData[selectedMake][selectedModel]) {
-            // Add variant options
             makesData[selectedMake][selectedModel].forEach(variant => {
                 if (variant) {
-                    variantSelect.append($('<option>', {
-                        value: variant,
-                        text: variant
-                    }));
+                    variantSelect.append($('<option>', { value: variant, text: variant }));
                 }
             });
         }
     });
 
-    // Handle image upload and preview
-    const fileInput = $('#car_images');
-    const fileUploadArea = $('#file-upload-area');
-    const imagePreviewContainer = $('#image-preview'); // Renamed for clarity
-    
     // Handle click on upload area
     fileUploadArea.on('click', function(e) {
         e.preventDefault();
