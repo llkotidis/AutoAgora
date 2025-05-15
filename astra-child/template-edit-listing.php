@@ -52,6 +52,12 @@ $interior_color = get_post_meta($car_id, 'interior_color', true);
 $description = get_post_meta($car_id, 'description', true);
 $number_of_doors = get_post_meta($car_id, 'number_of_doors', true);
 $number_of_seats = get_post_meta($car_id, 'number_of_seats', true);
+$hp = get_post_meta($car_id, 'hp', true);
+$mot_status = get_post_meta($car_id, 'motuntil', true);
+$num_owners = get_post_meta($car_id, 'numowners', true);
+$is_antique = get_post_meta($car_id, 'isantique', true);
+$vehicle_history = get_post_meta($car_id, 'vehicle_history', true);
+$extras = get_post_meta($car_id, 'extras', true);
 
 // Get all car images
 $featured_image = get_post_thumbnail_id($car_id);
@@ -203,7 +209,7 @@ get_header();
                                     <div class="form-half">
                                         <label for="hp"><i class="fas fa-horse"></i> <?php esc_html_e('HorsePower (Optional)', 'astra-child'); ?></label>
                                         <div class="input-with-suffix">
-                                            <input type="text" id="hp" name="hp" class="form-control" value="<?php echo esc_attr(get_post_meta($car_id, 'hp', true)); ?>">
+                                            <input type="text" id="hp" name="hp" class="form-control" value="<?php echo esc_attr($hp); ?>">
                                             <span class="input-suffix">HP</span>
                                         </div>
                                     </div>
@@ -296,38 +302,67 @@ get_header();
                                 </div>
                             </div>
 
+                            <div class="form-section mot-section">
+                                <h2><?php esc_html_e('Registration & Background Info', 'astra-child'); ?></h2>
+                                <div class="form-row">
+                                    <label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e('MOT Status', 'astra-child'); ?></label>
+                                    <select id="motuntil" name="motuntil" class="form-control">
+                                        <option value=""><?php esc_html_e('Select MOT Status', 'astra-child'); ?></option>
+                                        <option value="Expired" <?php selected($mot_status, 'Expired'); ?>><?php esc_html_e('Expired', 'astra-child'); ?></option>
+                                        <?php
+                                        // Get current date
+                                        $current_date = new DateTime();
+                                        // Set to first day of current month
+                                        $current_date->modify('first day of this month');
+                                        // Create end date (2 years from now)
+                                        $end_date = new DateTime();
+                                        $end_date->modify('+2 years');
+                                        $end_date->modify('last day of this month');
+
+                                        // Generate options
+                                        while ($current_date <= $end_date) {
+                                            $value = $current_date->format('Y-m');
+                                            $display = $current_date->format('F Y');
+                                            echo '<option value="' . esc_attr($value) . '" ' . selected($mot_status, $value, false) . '>' . esc_html($display) . '</option>';
+                                            $current_date->modify('+1 month');
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="numowners"><i class="fas fa-users"></i> <?php esc_html_e('Number of Owners', 'astra-child'); ?></label>
+                                    <input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" value="<?php echo esc_attr($num_owners); ?>" required>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="checkbox-field">
+                                        <input type="checkbox" id="isantique" name="isantique" value="1" <?php checked($is_antique, '1'); ?>>
+                                        <label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e('Written as antique', 'astra-child'); ?></label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-section vehicle-history-section">
                                 <h2><?php esc_html_e('Vehicle History', 'astra-child'); ?></h2>
                                 <div class="form-row">
-                                    <div class="vehicle-history-grid">
+                                    <div class="checkbox-group">
                                         <?php
                                         $vehicle_history_options = array(
-                                            'no_accidents' => 'No Accidents',
-                                            'minor_accidents' => 'Minor Accidents',
-                                            'major_accidents' => 'Major Accidents',
-                                            'regular_maintenance' => 'Regular Maintenance',
-                                            'engine_overhaul' => 'Engine Overhaul',
-                                            'transmission_replacement' => 'Transmission Replacement',
-                                            'repainted' => 'Repainted',
-                                            'bodywork_repair' => 'Bodywork Repair',
-                                            'rust_treatment' => 'Rust Treatment',
-                                            'no_modifications' => 'No Modifications',
-                                            'performance_upgrades' => 'Performance Upgrades',
-                                            'cosmetic_modifications' => 'Cosmetic Modifications',
-                                            'flood_damage' => 'Flood Damage',
-                                            'fire_damage' => 'Fire Damage',
-                                            'hail_damage' => 'Hail Damage',
-                                            'clear_title' => 'Clear Title',
-                                            'no_known_issues' => 'No Known Issues',
-                                            'odometer_replacement' => 'Odometer Replacement'
+                                            'service_history' => 'Full Service History',
+                                            'accident_free' => 'Accident Free',
+                                            'one_owner' => 'One Owner',
+                                            'warranty' => 'Warranty',
+                                            'imported' => 'Imported',
+                                            'tax_paid' => 'Tax Paid',
+                                            'hpi_clear' => 'HPI Clear'
                                         );
-                                        $selected_history = get_post_meta($car_id, 'vehicle_history', true);
-                                        if (!is_array($selected_history)) {
-                                            $selected_history = array();
+                                        if (!is_array($vehicle_history)) {
+                                            $vehicle_history = array();
                                         }
                                         foreach ($vehicle_history_options as $value => $label) {
                                             echo '<div class="vehicle-history-option">';
-                                            echo '<input type="checkbox" id="vehiclehistory_' . esc_attr($value) . '" name="vehicle_history[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $selected_history), true, false) . '>';
+                                            echo '<input type="checkbox" id="vehiclehistory_' . esc_attr($value) . '" name="vehicle_history[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $vehicle_history), true, false) . '>';
                                             echo '<label for="vehiclehistory_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
                                             echo '</div>';
                                         }
@@ -337,38 +372,28 @@ get_header();
                             </div>
 
                             <div class="form-section extras-section">
-                                <h2><?php esc_html_e('Extras (Optional)', 'astra-child'); ?></h2>
+                                <h2><?php esc_html_e('Extras & Features', 'astra-child'); ?></h2>
                                 <div class="form-row">
-                                    <div class="extras-grid">
+                                    <div class="checkbox-group">
                                         <?php
                                         $extras_options = array(
-                                            'alloy_wheels' => 'Alloy Wheels',
+                                            'air_conditioning' => 'Air Conditioning',
                                             'cruise_control' => 'Cruise Control',
-                                            'disabled_accessible' => 'Disabled Accessible',
-                                            'keyless_start' => 'Keyless Start',
-                                            'rear_view_camera' => 'Rear View Camera',
-                                            'start_stop' => 'Start/Stop',
-                                            'sunroof' => 'Sunroof',
-                                            'heated_seats' => 'Heated Seats',
-                                            'android_auto' => 'Android Auto',
-                                            'apple_carplay' => 'Apple CarPlay',
-                                            'folding_mirrors' => 'Folding Mirrors',
-                                            'leather_seats' => 'Leather Seats',
-                                            'panoramic_roof' => 'Panoramic Roof',
                                             'parking_sensors' => 'Parking Sensors',
-                                            'camera_360' => '360° Camera',
-                                            'adaptive_cruise_control' => 'Adaptive Cruise Control',
-                                            'blind_spot_mirror' => 'Blind Spot Mirror',
-                                            'lane_assist' => 'Lane Assist',
-                                            'power_tailgate' => 'Power Tailgate'
+                                            'parking_camera' => 'Parking Camera',
+                                            'bluetooth' => 'Bluetooth',
+                                            'navigation' => 'Navigation System',
+                                            'leather_seats' => 'Leather Seats',
+                                            'sunroof' => 'Sunroof',
+                                            'xenon_lights' => 'Xenon Lights',
+                                            'alloy_wheels' => 'Alloy Wheels'
                                         );
-                                        $selected_extras = get_post_meta($car_id, 'extras', true);
-                                        if (!is_array($selected_extras)) {
-                                            $selected_extras = array();
+                                        if (!is_array($extras)) {
+                                            $extras = array();
                                         }
                                         foreach ($extras_options as $value => $label) {
                                             echo '<div class="extra-option">';
-                                            echo '<input type="checkbox" id="extra_' . esc_attr($value) . '" name="extras[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $selected_extras), true, false) . '>';
+                                            echo '<input type="checkbox" id="extra_' . esc_attr($value) . '" name="extras[]" value="' . esc_attr($value) . '" ' . checked(in_array($value, $extras), true, false) . '>';
                                             echo '<label for="extra_' . esc_attr($value) . '">' . esc_html($label) . '</label>';
                                             echo '</div>';
                                         }
