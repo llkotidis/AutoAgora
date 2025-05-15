@@ -58,7 +58,7 @@ $num_owners = get_post_meta($car_id, 'numowners', true);
 $is_antique = get_post_meta($car_id, 'isantique', true);
 
 // Get vehicle history and extras as arrays
-$vehicle_history = get_post_meta($car_id, 'vehicle_history', true);
+$vehicle_history = get_post_meta($car_id, 'vehiclehistory', true);
 $extras = get_post_meta($car_id, 'extras', true);
 
 // Ensure vehicle_history and extras are arrays and properly formatted
@@ -407,7 +407,7 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                             <div class="vehicle-history-option">
                                                 <input type="checkbox" 
                                                        id="vehiclehistory_<?php echo esc_attr($value); ?>" 
-                                                       name="vehicle_history[]" 
+                                                       name="vehiclehistory[]" 
                                                        value="<?php echo esc_attr($value); ?>" 
                                                        <?php checked(in_array($value, (array)$vehicle_history), true); ?>>
                                                 <label for="vehiclehistory_<?php echo esc_attr($value); ?>">
