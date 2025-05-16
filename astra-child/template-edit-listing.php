@@ -123,50 +123,10 @@ if (is_array($additional_images)) {
 
 get_header();
 
-// Add custom styles for readonly fields
-?>
-<style>
-    input[readonly],
-    input[readonly]:hover,
-    input[readonly]:focus {
-        background-color: #f5f5f5 !important;
-        color: #666 !important;
-        cursor: not-allowed !important;
-        border-color: #ddd !important;
-    }
-
-    input[readonly]:hover {
-        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="red"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>') 12 12, not-allowed !important;
-    }
-
-    .input-with-suffix input[readonly] {
-        background-color: #f5f5f5 !important;
-        color: #666 !important;
-    }
-
-    .input-with-suffix input[readonly] + .input-suffix {
-        color: #666 !important;
-    }
-
-    /* Styles for collapsible sections */
-    .collapsible-section-title {
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .collapsible-section-title .toggle-arrow {
-        font-size: 0.8em;
-        transition: transform 0.3s ease;
-    }
-
-    .collapsible-section-title.active .toggle-arrow {
-        transform: rotate(180deg);
-    }
-</style>
-
 <?php
+// Inline styles have been moved to astra-child/css/edit-listing.css
+wp_enqueue_style('edit-listing-style', get_stylesheet_directory_uri() . '/css/edit-listing.css', array(), '1.0.1'); // Incremented version
+
 // Enqueue jQuery and our custom script
 wp_enqueue_script('jquery');
 wp_enqueue_script('edit-listing-script', get_stylesheet_directory_uri() . '/js/edit-listing.js', array('jquery'), '1.0.0', true);
