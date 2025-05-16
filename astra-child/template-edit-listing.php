@@ -407,7 +407,19 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
                                 <h2><?php esc_html_e('Description', 'astra-child'); ?></h2>
                                 <div class="form-row">
                                     <label for="description"><i class="fas fa-align-left"></i> <?php esc_html_e('Description', 'astra-child'); ?></label>
-                                    <textarea id="description" name="description" class="form-control" rows="6" required><?php echo esc_textarea($description); ?></textarea>
+                                    <?php
+                                    // Ensure $description is not overly escaped if it comes from ACF WYSIWYG
+                                    // Typically, data from get_field for WYSIWYG is already in the correct format for wp_editor.
+                                    $editor_settings = array(
+                                        'textarea_name' => 'description', // Important: matches the expected POST variable
+                                        'media_buttons' => false,          // Set to true if you want media buttons
+                                        'textarea_rows' => 10,             // Adjust rows as needed
+                                        'editor_class'  => 'wp-editor-area form-control', // Add classes for styling
+                                        'tinymce'       => true,           // Use the visual editor
+                                        'quicktags'     => true            // Use the text editor quicktags
+                                    );
+                                    wp_editor( $description, 'description', $editor_settings ); // 'description' can be the ID here
+                                    ?>
                                 </div>
                             </div>
                         </div>
