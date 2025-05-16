@@ -123,7 +123,6 @@ if (is_array($additional_images)) {
 
 get_header();
 
-<?php
 // Inline styles have been moved to astra-child/css/edit-listing.css
 wp_enqueue_style('edit-listing-style', get_stylesheet_directory_uri() . '/css/edit-listing.css', array(), '1.0.1'); // Incremented version
 
