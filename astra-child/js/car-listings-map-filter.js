@@ -42,8 +42,9 @@ jQuery(document).ready(function($) {
             } else {
                 // If no coords, center on default and place marker there
                 map.setCenter(mapConfig.cyprusCenter);
-                updateMarkerPosition(map.getCenter().toArray());
-                updateRadiusCircle(map.getCenter().toArray(), currentRadiusKm);
+                const centerArray = map.getCenter().toArray();
+                updateMarkerPosition(centerArray);
+                updateRadiusCircle(centerArray, currentRadiusKm);
             }
         }
     });
@@ -69,7 +70,7 @@ jQuery(document).ready(function($) {
         let initialMapCenter = mapConfig.cyprusCenter;
         if (initialFilter.lat && initialFilter.lng) {
             initialMapCenter = [initialFilter.lng, initialFilter.lat];
-            selectedCoords = initialMapCenter; // Keep track of initial filter coords
+            selectedCoords = initialMapCenter; 
         }
 
         map = new mapboxgl.Map({
@@ -86,13 +87,13 @@ jQuery(document).ready(function($) {
         map.on('load', function() {
             map.addControl(new mapboxgl.NavigationControl());
 
-            // Initialize marker at the initial center of the map
-            updateMarkerPosition(map.getCenter().toArray());
-            if (selectedCoords) { // if initial filter was set, draw circle
+            const currentCenterArray = map.getCenter().toArray();
+            updateMarkerPosition(currentCenterArray);
+            if (selectedCoords) { 
                  updateRadiusCircle(selectedCoords, currentRadiusKm);
-            } else { // otherwise, use map center for initial circle display
-                 updateRadiusCircle(map.getCenter().toArray(), currentRadiusKm);
-                 selectedCoords = map.getCenter().toArray(); // Set selectedCoords to map center if not initially filtered
+            } else { 
+                 updateRadiusCircle(currentCenterArray, currentRadiusKm);
+                 selectedCoords = currentCenterArray; 
             }
 
             geocoder = new MapboxGeocoder({
@@ -101,39 +102,33 @@ jQuery(document).ready(function($) {
                 marker: false, 
                 placeholder: 'Search for a location in Cyprus...',
                 countries: 'CY',
-                language: 'en',
-                mapboxgl: mapboxgl, // Pass mapboxgl again, as per some examples
+                language: 'en'
             });
 
-            geocoderContainer.empty().append(geocoder.onAdd(map)); // Ensure container is empty before appending
+            geocoderContainer.empty().append(geocoder.onAdd(map));
 
             geocoder.on('result', function(ev) {
                 const resultCoords = ev.result.center; 
                 selectedCoords = resultCoords;
                 selectedLocationName = ev.result.place_name;
-                updateMarkerPosition(resultCoords);
-                updateRadiusCircle(resultCoords, currentRadiusKm);
-                // No map.flyTo here, marker will be at center due to move events
+                map.setCenter(resultCoords); // This will trigger move and moveend
+                // Marker and circle will update via map move/moveend events
             });
 
             geocoder.on('clear', function() {
-                // Option: Reset to Cyprus default or keep last selected?
-                // For now, let's keep the marker at the last valid selectedCoords or map center
-                // but clear the selectedLocationName if we want to indicate "All of Cyprus"
-                // For a full reset:
-                // selectedCoords = mapConfig.cyprusCenter;
-                // selectedLocationName = 'All of Cyprus';
-                // map.flyTo({ center: selectedCoords, zoom: mapConfig.defaultZoom });
-                // updateMarkerPosition(selectedCoords);
-                // updateRadiusCircle(selectedCoords, currentRadiusKm);
                 console.log('Geocoder cleared');
+                // Optional: Implement full reset logic here if desired
+                // e.g., reset selectedCoords, selectedLocationName, fly to default, update marker/circle
             });
         });
 
         map.on('move', () => {
+            const centerArray = map.getCenter().toArray();
             if (marker) {
-                marker.setLngLat(map.getCenter());
+                marker.setLngLat(centerArray);
             }
+            // Update circle visually during move for smoothness
+            updateRadiusCircle(centerArray, currentRadiusKm);
         });
 
         map.on('moveend', () => {
@@ -141,36 +136,30 @@ jQuery(document).ready(function($) {
                 clearTimeout(moveTimeout);
             }
             moveTimeout = setTimeout(() => {
-                const center = map.getCenter().toArray();
-                selectedCoords = center;
-                if (marker) { // Ensure marker is updated to final resting place
-                    marker.setLngLat(center);
-                }
-                updateRadiusCircle(center, currentRadiusKm);
-                // Perform reverse geocode to update location name for the center
-                reverseGeocode(center, (name) => {
+                const centerArray = map.getCenter().toArray();
+                selectedCoords = centerArray;
+                // Marker is already at center due to 'move' event
+                // Circle is also updated visually due to 'move' event
+                // Final update of circle data source is good practice here too
+                updateRadiusCircle(centerArray, currentRadiusKm); 
+
+                reverseGeocode(centerArray, (name) => {
                     selectedLocationName = name || 'Area around selected point';
-                    // Update geocoder input if desired, but be careful not to trigger 'result' event
-                    // const geocoderInput = geocoderContainer.find('.mapboxgl-ctrl-geocoder--input');
-                    // if (geocoderInput.length > 0 && document.activeElement !== geocoderInput[0]) {
-                    //    geocoderInput.val(selectedLocationName); 
-                    // }
                 });
-            }, 250); // Debounce for 250ms
+            }, 250); 
         });
 
-        // Clicking on map directly sets the point (alternative to drag)
         map.on('click', (e) => {
             const clickedCoords = [e.lngLat.lng, e.lngLat.lat];
-            selectedCoords = clickedCoords;
-            map.flyTo({ center: clickedCoords }); // This will trigger move and moveend
+            selectedCoords = clickedCoords; // Set selectedCoords immediately on click
+            map.flyTo({ center: clickedCoords }); // flyTo will trigger move and moveend
         });
     }
 
     function updateMarkerPosition(lngLatArray) {
         if (!map) return;
         if (!marker) {
-            marker = new mapboxgl.Marker({ draggable: false, color: '#FF0000' }) // Draggable false, as it follows map center
+            marker = new mapboxgl.Marker({ draggable: false, color: '#FF0000' }) 
                 .setLngLat(lngLatArray)
                 .addTo(map);
         } else {
@@ -179,7 +168,7 @@ jQuery(document).ready(function($) {
     }
 
     function updateRadiusCircle(centerLngLatArray, radiusKm) {
-        if (!map || !turf || !centerLngLatArray) return;
+        if (!map || !turf || !centerLngLatArray || centerLngLatArray.length !== 2) return;
 
         const center = turf.point(centerLngLatArray);
         const circlePolygon = turf.circle(center, radiusKm, { steps: 64, units: 'kilometers' });
@@ -205,7 +194,10 @@ jQuery(document).ready(function($) {
     }
 
     function reverseGeocode(coordsLngLatArray, callback) {
-        if (!mapConfig.accessToken || !coordsLngLatArray) return;
+        if (!mapConfig.accessToken || !coordsLngLatArray || coordsLngLatArray.length !== 2) {
+            callback(null); // Ensure callback is called even on invalid input
+            return;
+        }
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordsLngLatArray[0]},${coordsLngLatArray[1]}.json?access_token=${mapConfig.accessToken}&types=place,locality,neighborhood,address&limit=1&country=CY`;
         
         fetch(url)
@@ -236,12 +228,11 @@ jQuery(document).ready(function($) {
             initialFilter = { lat: null, lng: null, radius: null, text: 'All of Cyprus' };
             selectedLocationName = 'All of Cyprus';
         } else {
-             // Ensure selectedLocationName is up-to-date from the last reverse geocode or search result
             initialFilter = {
                 lat: selectedCoords[1],
                 lng: selectedCoords[0],
                 radius: currentRadiusKm,
-                text: `Within ${currentRadiusKm}km of ${selectedLocationName}` // Use the updated name
+                text: `Within ${currentRadiusKm}km of ${selectedLocationName || 'selected area'}` 
             };
         }
         currentLocationText.text(initialFilter.text);
