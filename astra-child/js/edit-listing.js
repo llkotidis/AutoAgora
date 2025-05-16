@@ -387,4 +387,19 @@ jQuery(document).ready(function($) {
             $('#location-picker-modal').hide();
         }
     });
+
+    // Collapsible sections
+    $('.collapsible-section-title').on('click', function() {
+        $(this).toggleClass('active');
+        var content = $(this).next('.collapsible-section-content');
+        content.slideToggle(300); // Use slideToggle for a smooth animation
+        
+        // Optional: Change arrow direction if you want to swap between ▼ and ▲
+        // var arrow = $(this).find('.toggle-arrow');
+        // if ($(this).hasClass('active')) {
+        //     arrow.text('▲');
+        // } else {
+        //     arrow.text('▼');
+        // }
+    });
 }); 
