@@ -22,6 +22,74 @@
     cursor: pointer;
 }
 
+/* Ensure the modal itself behaves as a pop-up overlay */
+#location-filter-modal.location-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Dimmed background */
+    display: flex; /* Used to center the content */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* High z-index to be on top; adjust if needed based on theme */
+    /* display: none; is handled by inline style initially and JS toggle */
+}
+
+/* Styles for the content box within the modal */
+#location-filter-modal .location-picker-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px; /* Max width of the modal content */
+    max-height: 90vh; /* Max height relative to viewport height */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden; /* Prevents content from spilling if too tall before scroll */
+}
+
+#location-filter-modal .location-picker-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#location-filter-modal .location-picker-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+    color: #333;
+}
+
+#location-filter-modal .close-modal {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #777;
+    padding: 5px;
+    line-height: 1;
+}
+#location-filter-modal .close-modal:hover {
+    color: #333;
+}
+
+#location-filter-modal .location-picker-body {
+    padding: 20px;
+    flex: 1; /* Allows body to grow and fill available space */
+    overflow-y: auto; /* Add scroll if content is too tall */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#location-filter-modal .location-selection-container {
+    /* Basic styling if needed, geocoder has its own specific styles */
+}
+
 /* Modal styles - can leverage existing .location-picker-modal styles if defined globally */
 /* Or define specifically if needed */
 #location-filter-modal .location-map {
@@ -29,6 +97,7 @@
     width: 100%;
     border-radius: 4px;
     border: 1px solid #ccc;
+    cursor: pointer;
 }
 
 #location-filter-modal .radius-slider-container {
