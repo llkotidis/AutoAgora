@@ -139,6 +139,7 @@ jQuery(document).ready(function($) {
             style: mapConfig.style,
             center: initialMapCenter, 
             zoom: mapConfig.defaultZoom,
+            scrollZoom: {around: 'center'},
             transformRequest: (url, resourceType) => {
                 if (url.includes('events.mapbox.com')) return { url: '' };
                 return { url };
