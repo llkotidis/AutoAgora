@@ -269,20 +269,34 @@
     font-family: inherit; /* Use the map's font */
     font-size: 16px; /* Increased font size */
     padding: 12px 18px; /* Increased padding */
-    background-color: #fff;
+    background-color: #fff !important; /* Ensure white background */
     border: none;
     border-radius: 4px;
     box-shadow: 0 0 0 2px rgba(0,0,0,.1);
     cursor: pointer;
     line-height: normal; /* Ensure text is vertically centered */
     height: auto; /* Allow height to adjust to text */
-    display: flex; /* For centering text if ever needed */
-    align-items: center; /* For centering text if ever needed */
-    color: #000000; /* Set text color to black */
+    display: flex; 
+    align-items: center; 
+    color: #000000 !important; /* Ensure black text */
+    transition: box-shadow 0.2s ease, transform 0.2s ease; /* Smooth transitions for shadow and transform */
+}
+
+.mapboxgl-ctrl-locate-me::before {
+    font-family: "Font Awesome 5 Free", "FontAwesome"; /* Added fallback FontAwesome name */
+    content: "\f124"; /* Unicode for fa-location-arrow */
+    font-weight: 900; /* For solid style icons */
+    margin-right: 8px; /* Space between icon and text */
+    font-style: normal; /* Ensure it's not italicized by other rules */
+    speak: never; /* For accessibility */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .mapboxgl-ctrl-locate-me:hover {
-    background-color: #f0f0f0; /* Slight hover effect */
+    /* background-color and color are intentionally removed to keep them consistently white/black */
+    box-shadow: 0 0 0 2px rgba(0,0,0,.1), 0 4px 10px rgba(0,0,0,0.3); /* More prominent shadow on hover */
+    transform: scale(1.03); /* Slightly enlarge button on hover */
 }
 
 /* If the button is part of a group, ensure it fits well */
