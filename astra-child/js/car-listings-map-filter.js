@@ -59,6 +59,68 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // --- Locate Me Control for Mapbox ---
+    class LocateMeControl {
+        onAdd(mapInstance) {
+            this._map = mapInstance;
+            this._container = document.createElement('div');
+            this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+            const button = document.createElement('button');
+            button.className = 'mapboxgl-ctrl-icon mapboxgl-ctrl-geolocate'; // Use a class similar to Mapbox's own for styling
+            button.type = 'button';
+            button.title = 'Show my location';
+            button.setAttribute('aria-label', 'Show my location');
+            // Simple SVG icon (crosshair/target). You can replace with a FontAwesome icon or a more detailed SVG.
+            button.innerHTML = '<span class="mapboxgl-ctrl-icon" aria-hidden="true" title="Show my location"><svg viewBox="0 0 20 20" style="width: 18px; height: 18px; fill: currentColor;"><path d="M10 4C6.686 4 4 6.686 4 10s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 10.5c-2.485 0-4.5-2.015-4.5-4.5S7.515 5.5 10 5.5s4.5 2.015 4.5 4.5-2.015 4.5-4.5 4.5z"></path><circle cx="10" cy="10" r="2"></circle></svg></span>';
+
+            button.onclick = () => {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+
+                // Add a loading/locating indicator to the button if desired
+                button.classList.add('mapboxgl-ctrl-geolocate-active'); // Optional: for styling during location fetch
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const newCoords = [position.coords.longitude, position.coords.latitude];
+                        selectedCoords = newCoords; // Update the shared selectedCoords
+
+                        this._map.flyTo({
+                            center: newCoords,
+                            zoom: 14 // Zoom in closer for better context
+                        });
+                        // The map's 'moveend' event will handle marker update, reverse geocode, and radius update.
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active'); // Remove loading state
+                    },
+                    (error) => {
+                        alert(`Error getting location: ${error.message}`);
+                        console.error('Geolocation error:', error);
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active'); // Remove loading state
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 8000, // Increased timeout
+                        maximumAge: 0
+                    }
+                );
+            };
+
+            this._container.appendChild(button);
+            return this._container;
+        }
+
+        onRemove() {
+            if (this._container && this._container.parentNode) {
+                this._container.parentNode.removeChild(this._container);
+            }
+            this._map = undefined;
+        }
+    }
+    // --- End Locate Me Control ---
+
     function initializeMap() {
         if (!mapConfig.accessToken) {
             console.error('Mapbox Access Token is not configured.');
@@ -86,6 +148,7 @@ jQuery(document).ready(function($) {
 
         map.on('load', function() {
             map.addControl(new mapboxgl.NavigationControl());
+            map.addControl(new LocateMeControl(), 'top-right'); // Add the custom locate me control
 
             const currentCenterArray = map.getCenter().toArray();
             updateMarkerPosition(currentCenterArray);
