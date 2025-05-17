@@ -262,6 +262,38 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
+
+                    // Calculate and display distances if location filter is active
+                    if (initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
+                        const pinLocation = turf.point([initialFilter.lng, initialFilter.lat]);
+
+                        $('.car-listings-grid .car-listing-card').each(function() {
+                            const $card = $(this);
+                            const cardLat = $card.data('latitude');
+                            const cardLng = $card.data('longitude');
+                            const $locationEl = $card.find('.car-location');
+                            const $locationTextSpan = $locationEl.find('span.location-text');
+
+                            if (cardLat !== undefined && cardLng !== undefined && $locationTextSpan.length) {
+                                const carLocationPoint = turf.point([parseFloat(cardLng), parseFloat(cardLat)]);
+                                const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
+                                const distanceText = ` (${distance.toFixed(1)} km away)`;
+                                
+                                // Get current text, remove old distance if any, then append new one
+                                let currentText = $locationTextSpan.text();
+                                currentText = currentText.replace(/\s*\([\d\.]+\s*km away\)/, ''); // Remove old distance
+                                $locationTextSpan.text(currentText + distanceText); // Set new text with distance
+                            }
+                        });
+                    } else {
+                        // No active location filter, ensure distances are cleared from any cards
+                        $('.car-listings-grid .car-listing-card .car-location span.location-text').each(function() {
+                            const $span = $(this);
+                            let currentText = $span.text();
+                            currentText = currentText.replace(/\s*\([\d\.]+\s*km away\)/, '');
+                            $span.text(currentText);
+                        });
+                    }
                 } else {
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data && response.data.message ? response.data.message : '') + '</p>');
                 }

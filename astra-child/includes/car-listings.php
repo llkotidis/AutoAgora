@@ -304,7 +304,7 @@ function display_car_listings($atts) {
                                     $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                     echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                                     ?>
-                                    <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($display_location); ?></p>
+                                    <p class="car-location"><i class="fas fa-map-marker-alt"></i> <span class="location-text"><?php echo esc_html($display_location); ?></span></p>
                                 </div>
                             </div>
                         </a>
@@ -428,6 +428,7 @@ function autoagora_filter_listings_by_location_ajax() {
             $year = get_field('year', $car_id);
             $price = get_field('price', $car_id);
             $mileage = get_field('mileage', $car_id);
+            
             $car_city_ajax = get_field('car_city', $car_id);
             $car_district_ajax = get_field('car_district', $car_id);
             $display_location_ajax = '';
@@ -438,12 +439,21 @@ function autoagora_filter_listings_by_location_ajax() {
             } elseif (!empty($car_district_ajax)) {
                 $display_location_ajax = $car_district_ajax;
             }
+
             $engine_capacity = get_field('engine_capacity', $car_id);
             $body_type = get_field('body_type', $car_id);
             $transmission = get_field('transmission', $car_id);
             $publication_date = get_field('publication_date', $car_id);
+
+            $car_latitude_for_card = get_field('car_latitude', $car_id);
+            $car_longitude_for_card = get_field('car_longitude', $car_id);
+            $card_data_attrs = '';
+            // Check if filter_lat and filter_lng were part of the POST request indicating an active filter
+            if (isset($_POST['filter_lat']) && $_POST['filter_lat'] !== 'null' && isset($_POST['filter_lng']) && $_POST['filter_lng'] !== 'null' && $car_latitude_for_card && $car_longitude_for_card) {
+                $card_data_attrs = ' data-latitude="' . esc_attr($car_latitude_for_card) . '" data-longitude="' . esc_attr($car_longitude_for_card) . '"';
+            }
              ?>
-            <div class="car-listing-card">
+            <div class="car-listing-card"<?php echo $card_data_attrs; ?>>
                 <?php 
                 $featured_image = get_post_thumbnail_id($car_id);
                 $additional_images = get_field('car_images', $car_id);
@@ -507,7 +517,7 @@ function autoagora_filter_listings_by_location_ajax() {
                             $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
-                            <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($display_location_ajax); ?></p>
+                            <p class="car-location"><i class="fas fa-map-marker-alt"></i> <span class="location-text"><?php echo esc_html($display_location_ajax); ?></span></p>
                         </div>
                     </div>
                 </a>
