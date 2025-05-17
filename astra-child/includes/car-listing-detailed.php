@@ -34,7 +34,17 @@
         $year = get_field('year', $car_id);
         $price = get_field('price', $car_id);
         $mileage = get_field('mileage', $car_id);
-        $location = get_field('car_address', $car_id);
+        $detail_car_city = get_field('car_city', $car_id);
+        $detail_car_district = get_field('car_district', $car_id);
+        $detail_display_location = '';
+        if (!empty($detail_car_city) && !empty($detail_car_district)) {
+            $detail_display_location = $detail_car_city . ' - ' . $detail_car_district;
+        } elseif (!empty($detail_car_city)) {
+            $detail_display_location = $detail_car_city;
+        } elseif (!empty($detail_car_district)) {
+            $detail_display_location = $detail_car_district;
+        }
+        $full_address_for_grid = get_field('car_address', $car_id);
         $engine_capacity = get_field('engine_capacity', $car_id);
         $fuel_type = get_field('fuel_type', $car_id);
         $transmission = get_field('transmission', $car_id);
@@ -171,7 +181,7 @@
                         $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                         echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                         ?>
-                        <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                        <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($detail_display_location); ?></div>
                     </div>
                 </div>
 
@@ -202,7 +212,7 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Location:</span>
-                                <span class="detail-value"><?php echo esc_html($location); ?></span>
+                                <span class="detail-value"><?php echo esc_html($full_address_for_grid); ?></span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Engine Capacity:</span>

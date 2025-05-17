@@ -132,7 +132,16 @@ function display_favourite_listings($atts) {
                     $year = get_field('year', $post_id);
                     $price = get_field('price', $post_id);
                     $mileage = get_field('mileage', $post_id);
-                    $location = get_field('car_address', $post_id);
+                    $fav_car_city = get_field('car_city', $post_id);
+                    $fav_car_district = get_field('car_district', $post_id);
+                    $fav_display_location = '';
+                    if (!empty($fav_car_city) && !empty($fav_car_district)) {
+                        $fav_display_location = $fav_car_city . ' - ' . $fav_car_district;
+                    } elseif (!empty($fav_car_city)) {
+                        $fav_display_location = $fav_car_city;
+                    } elseif (!empty($fav_car_district)) {
+                        $fav_display_location = $fav_car_district;
+                    }
                     $engine_capacity = get_field('engine_capacity', $post_id);
                     $fuel_type = get_field('fuel_type', $post_id);
                     $transmission = get_field('transmission', $post_id);
@@ -219,7 +228,7 @@ function display_favourite_listings($atts) {
                                 $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                                 echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                                 ?>
-                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
+                                <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($fav_display_location); ?></div>
                             </div>
                         </a>
                     </div>

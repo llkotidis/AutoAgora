@@ -165,7 +165,16 @@ function ajax_filter_car_listings_handler() {
             $price = get_field('price', get_the_ID());
             $year = get_field('year', get_the_ID());
             $mileage = get_field('mileage', get_the_ID());
-            $location = get_field('car_address', get_the_ID());
+            $car_city_handler = get_field('car_city', get_the_ID());
+            $car_district_handler = get_field('car_district', get_the_ID());
+            $display_location_handler = '';
+            if (!empty($car_city_handler) && !empty($car_district_handler)) {
+                $display_location_handler = $car_city_handler . ' - ' . $car_district_handler;
+            } elseif (!empty($car_city_handler)) {
+                $display_location_handler = $car_city_handler;
+            } elseif (!empty($car_district_handler)) {
+                $display_location_handler = $car_district_handler;
+            }
             $engine_capacity = get_field('engine_capacity', get_the_ID());
             $transmission = get_field('transmission', get_the_ID());
             $body_type = get_field('body_type', get_the_ID());
@@ -268,7 +277,7 @@ function ajax_filter_car_listings_handler() {
                             $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
-                            <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></p>
+                            <p class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($display_location_handler); ?></p>
                         </div>
                     </div>
                 </a>
