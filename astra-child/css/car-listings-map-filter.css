@@ -213,6 +213,11 @@
     top:10px; /* Adjust clear button position */
 }
 
+/* Ensure Geocoder suggestions appear above other modal elements like the radius slider */
+#location-filter-modal .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--suggestions {
+    z-index: 1001; /* Higher than radius slider (1000) */
+}
+
 /* Styling for the circle layer (if using CSS properties for simple circles) */
 .mapboxgl-canvas-container .mapboxgl-canvas {
     /* Ensure map is interactive */

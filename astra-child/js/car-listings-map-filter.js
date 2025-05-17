@@ -208,6 +208,13 @@ jQuery(document).ready(function($) {
 
                 reverseGeocode(centerArray, (name) => {
                     selectedLocationName = name || 'Area around selected point';
+                    // Update the geocoder input with the new location name
+                    if (geocoder && typeof geocoder.setInput === 'function') {
+                        console.log('[Move End] Updating geocoder input to:', selectedLocationName);
+                        geocoder.setInput(selectedLocationName);
+                    } else {
+                        console.warn('[Move End] Geocoder or setInput method not available for updating input.');
+                    }
                 });
             }, 250); 
         });
