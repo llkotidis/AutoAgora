@@ -281,28 +281,43 @@ jQuery(document).ready(function($) {
     radiusSlider.on('input', function() {
         currentRadiusKm = parseFloat($(this).val());
         radiusValueDisplay.text(currentRadiusKm);
+        console.log('[Radius Slider] New Radius (km):', currentRadiusKm);
 
-        // Use the current center of the map or the explicitly selected coordinates
         const centerForCircle = selectedCoords || (map ? map.getCenter().toArray() : mapConfig.cyprusCenter);
+        console.log('[Radius Slider] Center for circle:', centerForCircle);
         
         updateRadiusCircle(centerForCircle, currentRadiusKm);
 
-        // Adjust map zoom to fit the new radius circle
-        if (map && turf && centerForCircle && centerForCircle.length === 2) {
+        console.log('[Radius Slider] Map available?', !!map);
+        console.log('[Radius Slider] Turf available?', typeof turf !== 'undefined' ? !!turf : 'Turf IS UNDEFINED');
+
+        if (map && typeof turf !== 'undefined' && turf && centerForCircle && centerForCircle.length === 2) {
+            console.log('[Radius Slider] Proceeding with fitBounds logic.');
             try {
-                const circlePolygon = turf.circle(turf.point(centerForCircle), currentRadiusKm, { steps: 64, units: 'kilometers' });
-                if (circlePolygon && circlePolygon.geometry && circlePolygon.geometry.coordinates) {
+                const turfPoint = turf.point(centerForCircle);
+                console.log('[Radius Slider] Turf point:', turfPoint);
+
+                const circlePolygon = turf.circle(turfPoint, currentRadiusKm, { steps: 64, units: 'kilometers' });
+                console.log('[Radius Slider] Circle Polygon:', circlePolygon);
+
+                if (circlePolygon && circlePolygon.geometry && circlePolygon.geometry.coordinates && circlePolygon.geometry.coordinates.length > 0) {
                     const circleBbox = turf.bbox(circlePolygon);
+                    console.log('[Radius Slider] Circle BBox:', circleBbox);
+                    
+                    console.log('[Radius Slider] Calling map.fitBounds with BBox:', circleBbox);
                     map.fitBounds(circleBbox, { 
-                        padding: 40, // Adds 40px padding around the bounding box
-                        duration: 500 // Smooth animation for 0.5 seconds
+                        padding: 40, 
+                        duration: 500 
                     });
                 } else {
-                    console.warn("Could not generate valid circle polygon for fitBounds.");
+                    console.warn("[Radius Slider] Could not generate valid circle polygon for fitBounds. Polygon:", circlePolygon);
                 }
             } catch (e) {
-                console.error("Error calculating or fitting bounds for radius circle:", e);
+                console.error("[Radius Slider] Error calculating or fitting bounds for radius circle:", e);
             }
+        } else {
+            console.warn('[Radius Slider] Skipped fitBounds logic. Conditions not met.', 
+                { map: !!map, turf: typeof turf !== 'undefined' ? !!turf : 'Turf IS UNDEFINED', centerForCircle, centerLength: centerForCircle ? centerForCircle.length : 'N/A' });
         }
     });
 
