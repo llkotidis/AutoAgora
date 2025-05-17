@@ -195,6 +195,8 @@
     max-width: none !important; /* Override plugin styles if too restrictive */
     font-size: 1em; /* Adjust as needed */
     margin-bottom: 10px;
+    position: relative; /* Establish stacking context for suggestions */
+    z-index: 1002;      /* Higher than slider container (1000), but suggestions will be higher */
 }
 
 #location-filter-modal .mapboxgl-ctrl-geocoder input[type="text"] {
@@ -215,7 +217,7 @@
 
 /* Ensure Geocoder suggestions appear above other modal elements like the radius slider */
 #location-filter-modal .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--suggestions {
-    z-index: 1001; /* Higher than radius slider (1000) */
+    z-index: 1005; /* Significantly higher than radius slider (1000) and geocoder input wrapper */
 }
 
 /* Styling for the circle layer (if using CSS properties for simple circles) */
