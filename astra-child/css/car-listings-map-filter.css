@@ -218,4 +218,31 @@
 
 #location-filter-modal #apply-location-filter-btn:hover {
     background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Styling for the custom Locate Me text button */
+.mapboxgl-ctrl-locate-me {
+    font-family: inherit; /* Use the map's font */
+    font-size: 12px; /* Adjust as needed */
+    padding: 6px 10px; /* Adjust padding */
+    background-color: #fff;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 0 0 2px rgba(0,0,0,.1);
+    cursor: pointer;
+    line-height: normal; /* Ensure text is vertically centered */
+    height: auto; /* Allow height to adjust to text */
+    display: flex; /* For centering text if ever needed */
+    align-items: center; /* For centering text if ever needed */
+}
+
+.mapboxgl-ctrl-locate-me:hover {
+    background-color: #f0f0f0; /* Slight hover effect */
+}
+
+/* If the button is part of a group, ensure it fits well */
+.mapboxgl-ctrl-group .mapboxgl-ctrl-locate-me {
+    width: auto; /* Allow button to size to its content */
+    height: auto; /* Override fixed height if any from group */
+    min-height: 29px; /* Match typical Mapbox control height */
 } 

@@ -67,12 +67,11 @@ jQuery(document).ready(function($) {
             this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
 
             const button = document.createElement('button');
-            button.className = 'mapboxgl-ctrl-icon mapboxgl-ctrl-geolocate'; // Use a class similar to Mapbox's own for styling
+            button.className = 'mapboxgl-ctrl-text mapboxgl-ctrl-locate-me';
             button.type = 'button';
-            button.title = 'Show my location';
-            button.setAttribute('aria-label', 'Show my location');
-            // Simple SVG icon (crosshair/target). You can replace with a FontAwesome icon or a more detailed SVG.
-            button.innerHTML = '<span class="mapboxgl-ctrl-icon" aria-hidden="true" title="Show my location"><svg viewBox="0 0 20 20" style="width: 18px; height: 18px; fill: currentColor;"><path d="M10 4C6.686 4 4 6.686 4 10s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 10.5c-2.485 0-4.5-2.015-4.5-4.5S7.515 5.5 10 5.5s4.5 2.015 4.5 4.5-2.015 4.5-4.5 4.5z"></path><circle cx="10" cy="10" r="2"></circle></svg></span>';
+            button.title = 'Find my current location';
+            button.setAttribute('aria-label', 'Find my current location');
+            button.textContent = 'Find my current location';
 
             button.onclick = () => {
                 if (!navigator.geolocation) {
