@@ -164,10 +164,11 @@ function ajax_filter_car_listings_handler() {
             $variant = get_field('variant', get_the_ID());
             $price = get_field('price', get_the_ID());
             $year = get_field('year', get_the_ID());
+            $mileage = get_field('mileage', get_the_ID());
+            $location = get_field('car_address', get_the_ID());
             $engine_capacity = get_field('engine_capacity', get_the_ID());
             $transmission = get_field('transmission', get_the_ID());
-            $mileage = get_field('mileage', get_the_ID());
-            $location = get_field('location', get_the_ID());
+            $body_type = get_field('body_type', get_the_ID());
             ?>
             <div class="car-listing-card">
                 <?php 
@@ -232,7 +233,6 @@ function ajax_filter_car_listings_handler() {
                             //     $specs_array[] = esc_html($fuel_type); // Removed
                             // } // Removed
                             
-                            $body_type = get_field('body_type', get_the_ID());
                             if (!empty($body_type)) {
                                 $specs_array[] = esc_html($body_type);
                             }

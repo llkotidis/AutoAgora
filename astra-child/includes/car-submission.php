@@ -26,7 +26,6 @@ function handle_add_car_listing() {
         'year' => 'Year',
         'mileage' => 'Mileage',
         'price' => 'Price',
-        'location' => 'Location',
         'engine_capacity' => 'Engine Capacity',
         'fuel_type' => 'Fuel Type',
         'transmission' => 'Transmission',
@@ -79,7 +78,6 @@ function handle_add_car_listing() {
     $year = intval($_POST['year']);
     $mileage = intval($_POST['mileage']);
     $price = intval($_POST['price']);
-    $location = sanitize_text_field($_POST['location']);
     
     // Process location fields
     $city = isset($_POST['car_city']) ? sanitize_text_field($_POST['car_city']) : '';
@@ -151,7 +149,6 @@ function handle_add_car_listing() {
     update_field('year', $year, $post_id);
     update_field('mileage', $mileage, $post_id);
     update_field('price', $price, $post_id);
-    update_field('location', $location, $post_id);
     update_field('car_city', $city, $post_id);
     update_field('car_district', $district, $post_id);
     update_field('car_latitude', $latitude, $post_id);
@@ -425,7 +422,6 @@ function handle_edit_car_listing() {
     $editable_fields = array(
         'mileage' => 'Mileage',
         'price' => 'Price',
-        'location' => 'Location',
         'description' => 'Description'
     );
     

@@ -187,7 +187,7 @@ function display_car_listings($atts) {
                     $year = get_field('year', get_the_ID());
                     $price = get_field('price', get_the_ID());
                     $mileage = get_field('mileage', get_the_ID());
-                    $location = get_field('location', get_the_ID());
+                    $location = get_field('car_address', get_the_ID());
                     $engine_capacity = get_field('engine_capacity', get_the_ID());
                     $fuel_type = get_field('fuel_type', get_the_ID());
                     $transmission = get_field('transmission', get_the_ID());
@@ -419,7 +419,7 @@ function autoagora_filter_listings_by_location_ajax() {
             $year = get_field('year', $car_id);
             $price = get_field('price', $car_id);
             $mileage = get_field('mileage', $car_id);
-            $location = get_field('location', $car_id);
+            $location = get_field('car_address', $car_id);
             $engine_capacity = get_field('engine_capacity', $car_id);
             $body_type = get_field('body_type', $car_id);
             $transmission = get_field('transmission', $car_id);

@@ -132,7 +132,7 @@ function display_favourite_listings($atts) {
                     $year = get_field('year', $post_id);
                     $price = get_field('price', $post_id);
                     $mileage = get_field('mileage', $post_id);
-                    $location = get_field('location', $post_id);
+                    $location = get_field('car_address', $post_id);
                     $engine_capacity = get_field('engine_capacity', $post_id);
                     $fuel_type = get_field('fuel_type', $post_id);
                     $transmission = get_field('transmission', $post_id);

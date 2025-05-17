@@ -53,7 +53,7 @@ if ($add_listing_data) {
 $year = get_field('year', $car_id);
 $price = get_field('price', $car_id);
 $mileage = get_field('mileage', $car_id);
-$location = get_field('location', $car_id);
+$location = get_field('car_address', $car_id);
 $engine_capacity = get_field('engine_capacity', $car_id);
 $fuel_type = get_field('fuel_type', $car_id);
 $transmission = get_field('transmission', $car_id);
