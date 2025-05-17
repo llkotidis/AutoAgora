@@ -223,8 +223,8 @@
 /* Styling for the custom Locate Me text button */
 .mapboxgl-ctrl-locate-me {
     font-family: inherit; /* Use the map's font */
-    font-size: 12px; /* Adjust as needed */
-    padding: 6px 10px; /* Adjust padding */
+    font-size: 13px; /* Increased font size slightly */
+    padding: 8px 12px; /* Increased padding slightly */
     background-color: #fff;
     border: none;
     border-radius: 4px;
@@ -234,6 +234,7 @@
     height: auto; /* Allow height to adjust to text */
     display: flex; /* For centering text if ever needed */
     align-items: center; /* For centering text if ever needed */
+    color: #000000; /* Set text color to black */
 }
 
 .mapboxgl-ctrl-locate-me:hover {

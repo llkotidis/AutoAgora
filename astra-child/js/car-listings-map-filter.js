@@ -147,7 +147,7 @@ jQuery(document).ready(function($) {
 
         map.on('load', function() {
             map.addControl(new mapboxgl.NavigationControl());
-            map.addControl(new LocateMeControl(), 'top-right'); // Add the custom locate me control
+            map.addControl(new LocateMeControl(), 'bottom-right'); // Changed from top-right to bottom-right
 
             const currentCenterArray = map.getCenter().toArray();
             updateMarkerPosition(currentCenterArray);
