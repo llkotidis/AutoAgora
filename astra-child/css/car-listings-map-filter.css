@@ -117,6 +117,46 @@
 #location-filter-modal #radius-slider {
     width: 100%;
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: #ddd;
+    border-radius: 5px;
+    outline: none;
+}
+
+#location-filter-modal #radius-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #007bff; /* Blue color, adjust as needed */
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+#location-filter-modal #radius-slider::-moz-range-thumb {
+    width: 18px; /* Adjusted for consistency, border adds to size */
+    height: 18px;
+    background: #007bff;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+#location-filter-modal #radius-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #ddd;
+    border-radius: 5px;
+}
+
+#location-filter-modal #radius-slider::-moz-range-track {
+    height: 8px;
+    background: #ddd;
+    border-radius: 5px;
 }
 
 /* Ensure geocoder input is visible and styled */
@@ -153,4 +193,29 @@
 .mapboxgl-marker {
     /* Example: Change default marker color */
     /* background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff5722" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'); */
+}
+
+/* Styles for the modal footer and apply button */
+#location-filter-modal .location-picker-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end; /* Aligns button to the right */
+    align-items: center;
+}
+
+#location-filter-modal #apply-location-filter-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    color: white;
+    background-color: #007bff; /* Theme consistent blue */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0; /* Resetting any default if needed, main spacing via footer padding */
+    /* margin-left: auto; /* Pushes button to the right if justify-content wasn't flex-end */
+}
+
+#location-filter-modal #apply-location-filter-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
 } 
