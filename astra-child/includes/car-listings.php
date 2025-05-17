@@ -153,7 +153,7 @@ function display_car_listings($atts) {
         <div id="location-filter-modal" class="location-picker-modal" style="display:none;">
             <div class="location-picker-content">
                 <div class="location-picker-header">
-                    {/* <h2>Select Location & Radius</h2> Commented out or removed */}
+                    
                     <button class="close-modal" id="close-location-filter-modal">&times;</button>
                 </div>
                 <div class="location-picker-body">
