@@ -157,17 +157,16 @@ function display_car_listings($atts) {
                     <button class="close-modal" id="close-location-filter-modal">&times;</button>
                 </div>
                 <div class="location-picker-body">
-                    <div class="location-selection-container">
+                    <div class="geocoder-apply-wrapper">
                         <div id="filter-geocoder" class="geocoder"></div>
+                        <button id="apply-location-filter-btn" class="choose-location-btn">Apply Location</button>
                     </div>
-                    <div id="filter-map-container" class="location-map"></div>
-                    <div class="radius-slider-container">
-                        <label for="radius-slider">Radius: <span id="radius-value">10</span> km</label>
-                        <input type="range" min="1" max="100" value="10" class="slider" id="radius-slider">
+                    <div id="filter-map-container" class="location-map">
+                        <div class="radius-slider-container">
+                            <label for="radius-slider">Radius: <span id="radius-value">10</span> km</label>
+                            <input type="range" min="1" max="100" value="10" class="slider" id="radius-slider">
+                        </div>
                     </div>
-                </div>
-                <div class="location-picker-footer">
-                    <button id="apply-location-filter-btn" class="choose-location-btn">Apply Location</button>
                 </div>
             </div>
         </div>

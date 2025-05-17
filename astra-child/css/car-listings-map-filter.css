@@ -64,6 +64,25 @@
     color: #333;
 }
 
+/* New wrapper for geocoder and apply button */
+#location-filter-modal .geocoder-apply-wrapper {
+    display: flex;
+    align-items: center; /* Vertically align items */
+    gap: 10px; /* Space between geocoder and button */
+    margin-bottom: 15px; /* Space below this row */
+}
+
+#location-filter-modal .geocoder-apply-wrapper .geocoder {
+    flex-grow: 1; /* Geocoder takes available space */
+}
+
+#location-filter-modal .geocoder-apply-wrapper #apply-location-filter-btn {
+    padding: 10px 15px; /* Adjust padding if needed */
+    white-space: nowrap; /* Prevent button text from wrapping */
+    /* Remove margin-top from original button style if it exists, already handled by flex gap */
+    margin-top: 0;
+}
+
 #location-filter-modal .close-modal {
     background: none;
     border: none;
@@ -83,7 +102,7 @@
     overflow-y: auto; /* Add scroll if content is too tall */
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    /* gap: 15px; Removed gap, specific margins will be used */
 }
 
 #location-filter-modal .location-selection-container {
@@ -93,18 +112,29 @@
 /* Modal styles - can leverage existing .location-picker-modal styles if defined globally */
 /* Or define specifically if needed */
 #location-filter-modal .location-map {
-    height: 350px; /* Adjust as needed */
+    height: 550px; /* Increased map height significantly */
     width: 100%;
     border-radius: 4px;
     border: 1px solid #ccc;
     cursor: pointer;
+    position: relative; /* Needed for absolute positioning of children (slider) */
+    overflow: hidden; /* Ensure slider corners are clipped if map has border-radius */
 }
 
 #location-filter-modal .radius-slider-container {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f7f7f7;
-    border-radius: 4px;
+    /* margin-top: 15px; Old margin */
+    /* padding: 10px; Old padding */
+    /* background-color: #f7f7f7; Old background */
+    /* border-radius: 4px; Old border-radius */
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 1000; /* Ensure slider is above map tiles */
+    background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent white background */
+    padding: 12px 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2);
 }
 
 #location-filter-modal .radius-slider-container label {
@@ -196,16 +226,17 @@
 }
 
 /* Styles for the modal footer and apply button */
-#location-filter-modal .location-picker-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end; /* Aligns button to the right */
-    align-items: center;
-}
+/* #location-filter-modal .location-picker-footer { */
+    /* This class is no longer used for the apply button, can be removed or repurposed if needed elsewhere */
+    /* padding: 15px 20px; */
+    /* border-top: 1px solid #eee; */
+    /* display: flex; */
+    /* justify-content: flex-end; */ /* Aligns button to the right */
+    /* align-items: center; */
+/* } */
 
 #location-filter-modal #apply-location-filter-btn {
-    padding: 10px 20px;
+    padding: 10px 20px; /* This will be overridden by the .geocoder-apply-wrapper specific style */
     font-size: 1em;
     color: white;
     background-color: #007bff; /* Theme consistent blue */
