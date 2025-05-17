@@ -277,11 +277,32 @@ jQuery(document).ready(function($) {
             });
     }
 
+    // Event listener for the radius slider
     radiusSlider.on('input', function() {
-        currentRadiusKm = parseInt($(this).val());
+        currentRadiusKm = parseFloat($(this).val());
         radiusValueDisplay.text(currentRadiusKm);
-        if (selectedCoords) {
-            updateRadiusCircle(selectedCoords, currentRadiusKm);
+
+        // Use the current center of the map or the explicitly selected coordinates
+        const centerForCircle = selectedCoords || (map ? map.getCenter().toArray() : mapConfig.cyprusCenter);
+        
+        updateRadiusCircle(centerForCircle, currentRadiusKm);
+
+        // Adjust map zoom to fit the new radius circle
+        if (map && turf && centerForCircle && centerForCircle.length === 2) {
+            try {
+                const circlePolygon = turf.circle(turf.point(centerForCircle), currentRadiusKm, { steps: 64, units: 'kilometers' });
+                if (circlePolygon && circlePolygon.geometry && circlePolygon.geometry.coordinates) {
+                    const circleBbox = turf.bbox(circlePolygon);
+                    map.fitBounds(circleBbox, { 
+                        padding: 40, // Adds 40px padding around the bounding box
+                        duration: 500 // Smooth animation for 0.5 seconds
+                    });
+                } else {
+                    console.warn("Could not generate valid circle polygon for fitBounds.");
+                }
+            } catch (e) {
+                console.error("Error calculating or fitting bounds for radius circle:", e);
+            }
         }
     });
 
