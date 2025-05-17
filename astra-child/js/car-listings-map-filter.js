@@ -208,20 +208,18 @@ jQuery(document).ready(function($) {
 
                 reverseGeocode(centerArray, (name) => {
                     selectedLocationName = name || 'Area around selected point';
-                    if (geocoder && typeof geocoder.setInput === 'function') {
-                        console.log('[Move End] Updating geocoder input to:', selectedLocationName, 'without triggering search.');
-                        geocoder.setInput(selectedLocationName, false); 
+                    
+                    // Directly set the input field's value and then blur it
+                    if (geocoder && geocoder._inputEl) { 
+                        console.log('[Move End] Directly setting geocoder input value to:', selectedLocationName);
+                        geocoder._inputEl.value = selectedLocationName; // Directly set the value
 
-                        // Attempt to blur the input field to hide suggestions
-                        if (geocoder._inputEl && typeof geocoder._inputEl.blur === 'function') {
-                            console.log('[Move End] Blurring geocoder input to hide suggestions.');
+                        if (typeof geocoder._inputEl.blur === 'function') {
+                            console.log('[Move End] Blurring geocoder input after direct value set.');
                             geocoder._inputEl.blur();
-                            // Optional: If the input needs to remain focused for accessibility or UX,
-                            // we might need to re-focus it after a very short delay, but this could re-trigger suggestions.
-                            // For now, let's see if blurring alone works.
                         }
                     } else {
-                        console.warn('[Move End] Geocoder or setInput method not available for updating input.');
+                        console.warn('[Move End] Geocoder or its input element (_inputEl) not available for updating input.');
                     }
                 });
             }, 250); 
