@@ -42,7 +42,7 @@
     background: white;
     border-radius: 8px;
     width: 90%;
-    max-width: 800px; /* Max width of the modal content */
+    max-width: 950px; /* Increased max-width for a bigger modal */
     max-height: 90vh; /* Max height relative to viewport height */
     display: flex;
     flex-direction: column;
@@ -112,7 +112,7 @@
 /* Modal styles - can leverage existing .location-picker-modal styles if defined globally */
 /* Or define specifically if needed */
 #location-filter-modal .location-map {
-    height: 550px; /* Increased map height significantly */
+    height: 650px; /* Further increased map height */
     width: 100%;
     border-radius: 4px;
     border: 1px solid #ccc;
