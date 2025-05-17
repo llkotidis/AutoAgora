@@ -127,7 +127,7 @@
     /* background-color: #f7f7f7; Old background */
     /* border-radius: 4px; Old border-radius */
     position: absolute;
-    bottom: 10px;
+    top: 10px; /* Changed from bottom: 10px */
     left: 10px;
     right: 10px;
     z-index: 1000; /* Ensure slider is above map tiles */
@@ -251,11 +251,24 @@
     background-color: #0056b3; /* Darker blue on hover */
 }
 
+/* Styling for Mapbox GL JS default controls (e.g., zoom, compass) */
+/* Position zoom controls to the middle-right */
+.mapboxgl-ctrl-top-right {
+    top: 50%;
+    transform: translateY(-50%);
+    right: 10px; /* Keep it on the right */
+}
+
+/* Ensure individual controls within the group are styled appropriately if needed */
+.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group {
+    /* Add any specific group styling if default is overridden or insufficient */
+}
+
 /* Styling for the custom Locate Me text button */
 .mapboxgl-ctrl-locate-me {
     font-family: inherit; /* Use the map's font */
-    font-size: 13px; /* Increased font size slightly */
-    padding: 8px 12px; /* Increased padding slightly */
+    font-size: 16px; /* Increased font size */
+    padding: 12px 18px; /* Increased padding */
     background-color: #fff;
     border: none;
     border-radius: 4px;
@@ -276,5 +289,5 @@
 .mapboxgl-ctrl-group .mapboxgl-ctrl-locate-me {
     width: auto; /* Allow button to size to its content */
     height: auto; /* Override fixed height if any from group */
-    min-height: 29px; /* Match typical Mapbox control height */
+    min-height: 35px; /* Adjusted min-height if necessary for new size */
 } 
