@@ -643,3 +643,17 @@ label svg path,
 .upload-message svg path {
     fill: currentColor;
 }
+
+#mileage {
+  position: relative;
+
+}
+
+.input-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color);
+  pointer-events: none;
+}
