@@ -207,10 +207,45 @@ function display_car_filter_form( $context = 'default' ) {
     $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
     $initial_mileage_counts = [];
     foreach($initial_mileage_counts_raw as $value => $count) {
-         // Ensure keys are integers for matching option values
          $formatted_key = intval($value); 
          $initial_mileage_counts[$formatted_key] = $count;
     }
+
+    // --- Generate Price Range and Get Initial Price Counts ---
+    $price_field_key = 'price'; // Assuming 'price' is the meta key for car price
+    $prices_for_options = range(0, 100000, 500); // £0 to £100,000, step 500
+    $all_car_prices_raw = $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT meta_value FROM {$wpdb->postmeta} 
+             WHERE meta_key = %s AND meta_value REGEXP '^[0-9]+$'", // Ensure it's numeric
+            $price_field_key
+        )
+    );
+    $all_car_prices = array_map('intval', $all_car_prices_raw);
+
+    $initial_min_price_counts = [];
+    $initial_max_price_counts = [];
+
+    foreach ($prices_for_options as $price_point) {
+        $min_count = 0;
+        $max_count = 0;
+        foreach ($all_car_prices as $car_price) {
+            if ($car_price >= $price_point) {
+                $min_count++;
+            }
+            if ($car_price <= $price_point) {
+                $max_count++;
+            }
+        }
+        $initial_min_price_counts[$price_point] = $min_count;
+        if ($price_point > 0) { // Max price 0 doesn't make much sense unless for free items
+            $initial_max_price_counts[$price_point] = $max_count;
+        }
+    }
+    // For Max Price "Any" or no selection, the count is total cars, handled by default option.
+    // For Min Price 0, the count is total cars.
+    $total_cars_for_price_filter = count($all_car_prices);
+    $initial_min_price_counts[0] = $total_cars_for_price_filter; 
 
     // --- Get Make/Model/Variant Data from JSONs ---
     // (Existing code to read JSONs and build $make_model_variant_data)
@@ -362,17 +397,47 @@ function display_car_filter_form( $context = 'default' ) {
 
                 <!-- Year Range -->
                 <div class="filter-form-group filter-group-year">
-                    <label>Year</label>
-                    <div class="filter-range-fields">
-                        <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
-                            <option value="">Min Year</option>
-                            <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
-                        </select>
-                        <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
-                            <option value="">Max Year</option>
-                             <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
-                       </select>
-                    </div>
+                    <label for="filter-year-min-<?php echo esc_attr($context); ?>">Min Year:</label>
+                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
+                        <option value="">Any</option>
+                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
+                    </select>
+                </div>
+                <div class="filter-form-group filter-group-year">
+                    <label for="filter-year-max-<?php echo esc_attr($context); ?>">Max Year:</label>
+                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
+                        <option value="">Any</option>
+                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
+                    </select>
+                </div>
+
+                <!-- Price Filters -->
+                <div class="filter-form-group filter-group-price">
+                    <label for="filter-price-min-<?php echo esc_attr($context); ?>">Min Price:</label>
+                    <select id="filter-price-min-<?php echo esc_attr($context); ?>" name="price_min" data-filter-key="price_min">
+                        <option value="">Any</option>
+                        <?php render_range_options($prices_for_options, '', '£', $initial_min_price_counts); ?>
+                    </select>
+                </div>
+                <div class="filter-form-group filter-group-price">
+                    <label for="filter-price-max-<?php echo esc_attr($context); ?>">Max Price:</label>
+                    <select id="filter-price-max-<?php echo esc_attr($context); ?>" name="price_max" data-filter-key="price_max">
+                        <option value="">Any</option>
+                        <?php render_range_options($prices_for_options, '', '£', $initial_max_price_counts); ?>
+                    </select>
+                </div>
+
+                <!-- Mileage Range -->
+                <div class="filter-form-group filter-group-mileage">
+                    <label for="filter-mileage-min-<?php echo esc_attr($context); ?>">Min Mileage:</label>
+                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
+                        <option value="">Min KM</option>
+                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
+                    </select>
+                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
+                        <option value="">Max KM</option>
+                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
+                    </select>
                 </div>
 
                 <!-- Actions and More Options Link moved here, inside the form, but styled later -->
@@ -405,21 +470,6 @@ function display_car_filter_form( $context = 'default' ) {
                      <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Mileage Range -->
-            <div class="filter-form-group filter-group-mileage">
-                <label>Mileage (km)</label>
-                 <div class="filter-range-fields">
-                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
-                        <option value="">Min KM</option>
-                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
-                    </select>
-                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
-                        <option value="">Max KM</option>
-                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                 </div>
             </div>
