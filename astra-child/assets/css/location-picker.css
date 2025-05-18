@@ -207,7 +207,7 @@
 .choose-location-btn svg {
   width: 1em;
   height: 1em;
-  color: var(--white);
+  fill: var(--white);
 }
 
 .choose-location-btn:hover {
