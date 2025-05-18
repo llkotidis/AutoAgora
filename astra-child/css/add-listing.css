@@ -634,7 +634,7 @@ transition: all 0.1s ease;
 .upload-message svg {
     width: 3rem;
     height: 3rem;
-    fill: var(--dark-blue);
+    color: var(--dark-blue);
 }
 
 /* Ensure SVG icons maintain their color */
