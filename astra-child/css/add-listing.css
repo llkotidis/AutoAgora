@@ -1,3 +1,7 @@
+.page-id-68 .ast-container {
+  max-width: 1000px;
+}
+
 .login-required-message {
   padding: 2rem;
   background: var(--white);
