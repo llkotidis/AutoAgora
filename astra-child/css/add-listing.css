@@ -663,7 +663,19 @@ label svg path,
   pointer-events: none;
 }
 
-.form-third, .form-row {
+.form-third {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.form-row-thirds {
+  display: flex;
+  flex-direction: row;
+  gap: .5rem;
+}
+
+.form-row {
   display: flex;
   flex-direction: column;
   gap: .5rem;
