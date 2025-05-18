@@ -21,7 +21,7 @@
   color: var(--text-color);
 }
 
-.add-listing-main-row {
+.add-listing-main-info-column {
   display: flex;
   flex-direction: column;
   gap: 2rem;
