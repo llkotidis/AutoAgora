@@ -202,14 +202,13 @@ transition: all 0.1s ease;
 **/
 
 .form-row-halves {
-  display: flex;
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
 .form-half {
-  flex: 1;
-  min-width: 200px;
+  grid-column: span 1;
 }
 
 .form-row-thirds {
