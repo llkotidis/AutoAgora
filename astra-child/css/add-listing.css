@@ -40,20 +40,6 @@
   color: #C53030;
 }
 
-.upload-message i {
-  color: var(--dark-blue);
-}
-
-#add-car-listing-form h2 i {
-  font-size: 24px;
-}
-
-#add-car-listing-form h2 {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-}
-
 #file-upload-area {
   background: var(--light-bg);
   border: var(--border);
@@ -631,18 +617,24 @@ transition: all 0.1s ease;
 
 
 /* SVG Icon Styles */
-h2 svg,
-label svg {
+.page-id-68 #add-car-listing-form h2 svg,
+.page-id-68 #add-car-listing-form label svg {
     width: auto;
     height: 1em;
     vertical-align: -0.125em;
-    margin-right: 0.5rem;
     overflow: visible !important;
+}
+
+.page-id-68 #add-car-listing-form h2, .page-id-68 #add-car-listing-form label {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
 }
 
 .upload-message svg {
     width: 3rem;
     height: 3rem;
+    fill: var(--dark-blue);
 }
 
 /* Ensure SVG icons maintain their color */
