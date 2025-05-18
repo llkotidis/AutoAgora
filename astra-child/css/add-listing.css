@@ -1,5 +1,7 @@
 .page-id-68 #content .ast-container {
   max-width: 1000px !important;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 .login-required-message {
