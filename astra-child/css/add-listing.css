@@ -95,13 +95,9 @@
   display: flex;
   gap: 1rem;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: scroll;
   overflow-y: hidden;
   padding: 1rem 0;
-}
-
-#image-preview.has-images {
-  overflow-x: scroll !important;
 }
 
 .image-preview-item {

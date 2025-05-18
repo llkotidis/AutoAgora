@@ -178,16 +178,6 @@ jQuery(document).ready(function($) {
         imagePreview: imagePreview.length
     });
     
-    function updateImagePreviewClass() {
-        if (accumulatedFilesList.length > 0) {
-            imagePreview.addClass('has-images');
-            console.log('[Add Listing] Added .has-images class to #image-preview');
-        } else {
-            imagePreview.removeClass('has-images');
-            console.log('[Add Listing] Removed .has-images class from #image-preview');
-        }
-    }
-    
     // Handle click on upload area
     fileUploadArea.on('click', function(e) {
         e.preventDefault();
@@ -275,7 +265,6 @@ jQuery(document).ready(function($) {
         if (filesAddedThisBatchCount > 0) {
             updateActualFileInput(); // Update the hidden file input with the new state of accumulatedFilesList
         }
-        updateImagePreviewClass(); // Update the class for #image-preview
         console.log('[Add Listing] Processed batch. Accumulated files count:', accumulatedFilesList.length);
     }
     
@@ -309,7 +298,6 @@ jQuery(document).ready(function($) {
             file => file.name !== fileNameToRemove
         );
         updateActualFileInput(); // Refresh the actual file input
-        updateImagePreviewClass(); // Update the class for #image-preview
         console.log('[Add Listing] File removed. Accumulated files count:', accumulatedFilesList.length);
     }
     
@@ -329,7 +317,4 @@ jQuery(document).ready(function($) {
         }
         console.log('[Add Listing] Actual file input updated. Count:', fileInput[0].files.length);
     }
-
-    // Initial check for image preview class
-    updateImagePreviewClass();
 }); 
