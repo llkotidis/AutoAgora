@@ -637,6 +637,7 @@ label svg {
     height: 1em;
     vertical-align: -0.125em;
     margin-right: 0.5rem;
+    overflow: visible !important;
 }
 
 .upload-message svg {
