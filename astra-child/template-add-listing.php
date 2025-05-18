@@ -151,7 +151,7 @@ get_header(); ?>
 							<input type="hidden" name="action" value="add_new_car_listing">
 							<input type="hidden" name="post_type" value="car">
 
-							<div class="add-listing-images-section">
+							<div class="add-listing-images-section input-wrapper">
 								<h2><?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
 								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
 								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
@@ -159,24 +159,16 @@ get_header(); ?>
 									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
 										<div class="upload-message">
 											<i class="fas fa-cloud-upload-alt"></i>
-											<p><?php esc_html_e( 'Drag & drop images here or click to select files', 'astra-child' ); ?></p>
-											<div class="image-upload-guidelines">
-												<p><strong><?php esc_html_e( 'Image Upload Guidelines:', 'astra-child' ); ?></strong></p>
-												<ul>
-													<li><?php esc_html_e( 'Multiple Photos: Hold CTRL (or Command on Mac) to select multiple images.', 'astra-child' ); ?></li>
-													<li><?php esc_html_e( 'Quantity: Upload between 5 and 25 images.', 'astra-child' ); ?></li>
-													<li><?php esc_html_e( 'Max File Size: 5MB per image.', 'astra-child' ); ?></li>
-													<li><?php esc_html_e( 'Accepted Formats: .jpg, .jpeg, .png, .gif, .webp.', 'astra-child' ); ?></li>
-												</ul>
-											</div>
+											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
+											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
 										</div>
 									</div>
-									<input type="file" id="file-upload" name="car_images[]" multiple style="display: none;">
+									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
 									<div id="image-preview" class="image-preview"></div>
 								</div>
 							</div>
 
-							<div class="add-listing-description-section">
+							<div class="add-listing-description-section input-wrapper">
 								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
 								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
 								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
@@ -192,7 +184,7 @@ get_header(); ?>
 
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
-									<div class="form-section basic-details-section">
+									<div class="form-section basic-details-section input-wrapper">
 										<h2><?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
@@ -261,7 +253,7 @@ get_header(); ?>
 										</div>
 									</div>
 
-									<div class="form-section engine-performance-section">
+									<div class="form-section engine-performance-section input-wrapper">
 										<h2><?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
@@ -323,7 +315,7 @@ get_header(); ?>
 										</div>
 									</div>
 
-									<div class="form-section body-design-section">
+									<div class="form-section body-design-section input-wrapper">
 										<h2><?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
@@ -412,7 +404,7 @@ get_header(); ?>
 										</div>
 									</div>
 
-									<div class="form-section mot-section">
+									<div class="form-section mot-section input-wrapper">
 										<h2><?php esc_html_e( 'Registration & Background Info', 'astra-child' ); ?></h2>
 										<div class="form-row">
 											<label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
@@ -487,7 +479,7 @@ get_header(); ?>
 										</div>
 									</div>
 
-									<div class="form-section extras-section">
+									<div class="form-section extras-section input-wrapper">
 										<h2><?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
 										<div class="form-row">
 											<div class="extras-grid">
