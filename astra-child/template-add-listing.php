@@ -86,10 +86,10 @@ get_header(); ?>
                             ?>
                             <div class="listing-error-message">
                                 <h2><?php esc_html_e( 'Submission Error', 'astra-child' ); ?></h2>
-                                <p><?php esc_html_e( 'There was a problem with your submission. Please check all fields and try again.', 'astra-child' ); ?></p>
+                                <p><?php esc_html_e( 'An error occurred with your submission. Please review all fields and try again.', 'astra-child' ); ?></p>
                             </div>
                             <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
-                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
+                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in "My Listings" on the top of the site.', 'astra-child' ); ?></p>
                             <?php
                         } elseif ( isset( $_GET['listing_errors'] ) ) {
                             ?>
@@ -98,12 +98,12 @@ get_header(); ?>
                                 <p><?php echo esc_html( $_GET['listing_errors'] ); ?></p>
                             </div>
                             <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
-                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
+                            <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in "My Listings" on the top of the site.', 'astra-child' ); ?></p>
                             <?php
                         } else {
 						?>
                         <h1><?php esc_html_e( 'Add New Car Listing', 'astra-child' ); ?></h1>
-                        <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in «My Listings» on the top of the site.', 'astra-child' ); ?></p>
+                        <p class="listing-note"><?php esc_html_e( 'Note: Duplicate listings will be flagged and removed. You can find all your ads in "My Listings" on the top of the site.', 'astra-child' ); ?></p>
                         
                         <?php
                         // Display error messages if any
@@ -135,11 +135,11 @@ get_header(); ?>
                                 echo '</div>';
                             } elseif ($_GET['error'] === 'post_creation') {
                                 echo '<div class="form-error-message">';
-                                echo '<p>' . esc_html__('There was a problem creating your listing. Please try again.', 'astra-child') . '</p>';
+                                echo '<p>' . esc_html__('We encountered an issue creating your listing. Please try again.', 'astra-child') . '</p>';
                                 echo '</div>';
                             } elseif ($_GET['error'] === 'generic') {
                                 echo '<div class="form-error-message">';
-                                echo '<p>' . esc_html__('There was a problem with your submission. Please try again.', 'astra-child') . '</p>';
+                                echo '<p>' . esc_html__('An error occurred with your submission. Please review all fields and try again.', 'astra-child') . '</p>';
                                 echo '</div>';
                             }
                         }
@@ -150,6 +150,37 @@ get_header(); ?>
 							<?php wp_nonce_field( 'add_car_listing_nonce', 'add_car_listing_nonce' ); ?>
 							<input type="hidden" name="action" value="add_new_car_listing">
 							<input type="hidden" name="post_type" value="car">
+
+							<div class="add-listing-images-section">
+								<h2><?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
+								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
+								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
+								<div class="image-upload-container">
+									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
+										<div class="upload-message">
+											<i class="fas fa-cloud-upload-alt"></i>
+											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
+											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
+										</div>
+									</div>
+									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+									<div id="image-preview" class="image-preview"></div>
+								</div>
+							</div>
+
+							<div class="add-listing-description-section">
+								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
+								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
+								<ul class="description-guidelines-list">
+									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Repetitive or irrelevant details', 'astra-child' ); ?></li>
+								</ul>
+								<div class="form-row">
+									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
+								</div>
+							</div>
 
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
@@ -409,7 +440,7 @@ get_header(); ?>
 										<div class="form-row">
 											<div class="checkbox-field">
 												<input type="checkbox" id="isantique" name="isantique" value="1">
-												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Written as antique', 'astra-child' ); ?></label>
+												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Registered as an Antique', 'astra-child' ); ?></label>
 											</div>
 										</div>
 
@@ -484,37 +515,6 @@ get_header(); ?>
 											</div>
 										</div>
 									</div>
-								</div>
-							</div>
-
-							<div class="add-listing-description-section">
-								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
-								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
-								<p class="description-guidelines-avoid"><?php esc_html_e( '❗ Avoid:', 'astra-child' ); ?></p>
-								<ul class="description-guidelines-list">
-									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
-									<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
-									<li><?php esc_html_e( 'Repetitive or irrelevant details', 'astra-child' ); ?></li>
-								</ul>
-								<div class="form-row">
-									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
-								</div>
-							</div>
-
-							<div class="add-listing-images-section">
-								<h2><?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
-								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
-								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
-								<div class="image-upload-container">
-									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
-										<div class="upload-message">
-											<i class="fas fa-cloud-upload-alt"></i>
-											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
-											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
-										</div>
-									</div>
-									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
-									<div id="image-preview" class="image-preview"></div>
 								</div>
 							</div>
 
