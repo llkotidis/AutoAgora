@@ -159,11 +159,19 @@ get_header(); ?>
 									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
 										<div class="upload-message">
 											<i class="fas fa-cloud-upload-alt"></i>
-											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
-											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
+											<p><?php esc_html_e( 'Drag & drop images here or click to select files', 'astra-child' ); ?></p>
+											<div class="image-upload-guidelines">
+												<p><strong><?php esc_html_e( 'Image Upload Guidelines:', 'astra-child' ); ?></strong></p>
+												<ul>
+													<li><?php esc_html_e( 'Multiple Photos: Hold CTRL (or Command on Mac) to select multiple images.', 'astra-child' ); ?></li>
+													<li><?php esc_html_e( 'Quantity: Upload between 5 and 25 images.', 'astra-child' ); ?></li>
+													<li><?php esc_html_e( 'Max File Size: 5MB per image.', 'astra-child' ); ?></li>
+													<li><?php esc_html_e( 'Accepted Formats: .jpg, .jpeg, .png, .gif, .webp.', 'astra-child' ); ?></li>
+												</ul>
+											</div>
 										</div>
 									</div>
-									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+									<input type="file" id="file-upload" name="car_images[]" multiple style="display: none;">
 									<div id="image-preview" class="image-preview"></div>
 								</div>
 							</div>
