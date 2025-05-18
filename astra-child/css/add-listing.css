@@ -643,7 +643,6 @@ label svg {
 .upload-message svg {
     width: 3rem;
     height: 3rem;
-    margin-bottom: 1.5rem;
 }
 
 /* Ensure SVG icons maintain their color */
