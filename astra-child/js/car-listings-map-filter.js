@@ -446,6 +446,16 @@ jQuery(document).ready(function($) {
             localStorage.setItem('autoAgoraUserLocation', JSON.stringify(preferredLocation));
             console.log('[ApplyFilter] Location saved to localStorage:', preferredLocation);
 
+            // Dispatch event for other scripts (e.g., spec filter counts)
+            document.dispatchEvent(new CustomEvent('locationFilterApplied', { 
+                detail: { 
+                    lat: lat, 
+                    lng: lng, 
+                    radius: radius,
+                    text: locationName
+                } 
+            }));
+
         } else {
             // If no specific coords (e.g., user clears map and applies "All of Cyprus")
             currentLocationText.text('All of Cyprus');
@@ -465,6 +475,16 @@ jQuery(document).ready(function($) {
             // Clear from localStorage
             localStorage.removeItem('autoAgoraUserLocation');
             console.log('[ApplyFilter] Location cleared from localStorage.');
+
+            // Dispatch event indicating filter cleared
+            document.dispatchEvent(new CustomEvent('locationFilterApplied', { 
+                detail: { 
+                    lat: null, 
+                    lng: null, 
+                    radius: null,
+                    text: 'All of Cyprus' // Or your default text
+                } 
+            }));
         }
     });
 
@@ -579,9 +599,19 @@ jQuery(document).ready(function($) {
         initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
         console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
         fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
+        // Event dispatch for initial load is already handled above where initialFilter is processed
     } else {
         console.log('[PageLoad] No specific location active or initialFilter is incomplete/invalid, fetching default listings.', initialFilter);
         fetchFilteredListings(pageToFetch); // Fetch default (all or based on other filters)
+        // Dispatch event for default state if no specific location
+        document.dispatchEvent(new CustomEvent('locationFilterApplied', { 
+            detail: { 
+                lat: null, 
+                lng: null, 
+                radius: null,
+                text: 'All of Cyprus' // Or your default text
+            } 
+        }));
     }
 
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {
