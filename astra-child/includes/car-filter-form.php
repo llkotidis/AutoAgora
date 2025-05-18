@@ -164,9 +164,6 @@ function display_car_filter_form( $context = 'default' ) {
     $year_field_key = 'year'; // For range, not choices
     $engine_cap_field_key = 'engine_capacity'; // For range
     $mileage_field_key = 'mileage'; // For range
-    $price_field_key = 'price'; // For price range
-    $doors_field_key = 'number_of_doors';
-    $seats_field_key = 'number_of_seats';
 
     // --- Get Choices for Select Fields ---
     $fuel_type_choices = get_acf_choices_safe($fuel_type_field_key, $sample_car_post_id);
@@ -175,8 +172,6 @@ function display_car_filter_form( $context = 'default' ) {
     $int_color_choices = get_acf_choices_safe($int_color_field_key, $sample_car_post_id);
     $body_type_choices = get_acf_choices_safe($body_type_field_key, $sample_car_post_id);
     $drive_type_choices = get_acf_choices_safe($drive_type_field_key, $sample_car_post_id);
-    $doors_choices = get_acf_choices_safe($doors_field_key, $sample_car_post_id);
-    $seats_choices = get_acf_choices_safe($seats_field_key, $sample_car_post_id);
     // Note: Make/Model/Variant choices come from JSONs below
 
     // --- Get Initial Counts for Select Fields ---
@@ -186,8 +181,6 @@ function display_car_filter_form( $context = 'default' ) {
     $int_color_counts = get_counts_for_meta_key($int_color_field_key);
     $body_type_counts = get_counts_for_meta_key($body_type_field_key);
     $drive_type_counts = get_counts_for_meta_key($drive_type_field_key);
-    $doors_counts = get_counts_for_meta_key($doors_field_key);
-    $seats_counts = get_counts_for_meta_key($seats_field_key);
     // Note: Make/Model counts handled separately below, Variant via AJAX
 
     // --- Get Initial Engine Counts --- 
@@ -210,8 +203,6 @@ function display_car_filter_form( $context = 'default' ) {
     for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
     for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
 
-    $prices = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000, 18000, 20000, 25000, 30000, 35000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 125000, 150000];
-
     // --- Get Initial Mileage Counts ---
     $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
     $initial_mileage_counts = [];
@@ -219,14 +210,6 @@ function display_car_filter_form( $context = 'default' ) {
          // Ensure keys are integers for matching option values
          $formatted_key = intval($value); 
          $initial_mileage_counts[$formatted_key] = $count;
-    }
-
-    // --- Get Initial Price Counts ---
-    $initial_price_counts_raw = get_counts_for_meta_key($price_field_key);
-    $initial_price_counts = [];
-    foreach($initial_price_counts_raw as $value => $count) {
-         $formatted_key = intval($value); 
-         $initial_price_counts[$formatted_key] = $count;
     }
 
     // --- Get Make/Model/Variant Data from JSONs ---
@@ -294,38 +277,32 @@ function display_car_filter_form( $context = 'default' ) {
         'updateNonce' => $ajax_update_nonce, // Pass the new nonce
         'updateAction' => 'update_filter_counts', // Pass the new action name
         'makeModelVariantStructure' => $make_model_variant_data,
-        'allMakes' => $all_makes_from_files, // Pass all makes for dynamic population
-        'choices' => [ // All static choices needed by JS
-            'fuel_type' => $fuel_type_choices,
-            'transmission' => $transmission_choices,
-            'exterior_color' => $ext_color_choices,
-            'interior_color' => $int_color_choices,
-            'body_type' => $body_type_choices,
-            'drive_type' => $drive_type_choices,
-            'number_of_doors' => $doors_choices,
-            'number_of_seats' => $seats_choices,
-        ],
         'initialCounts' => [
             'make' => $make_counts,
-            'modelByMake' => $model_counts_by_make,
+            'modelByMake' => $model_counts_by_make, // Still useful for initial model population
             'fuelType' => $fuel_type_counts,
             'transmission' => $transmission_counts,
             'exteriorColor' => $ext_color_counts,
             'interiorColor' => $int_color_counts,
             'bodyType' => $body_type_counts,
             'driveType' => $drive_type_counts,
-            'engine_capacity' => $initial_engine_counts, // Pass formatted engine counts
-            'mileage' => $initial_mileage_counts, // Pass formatted mileage counts
-            'year' => get_counts_for_meta_key($year_field_key), // Pass formatted year counts
-            'price' => $initial_price_counts, // Pass formatted price counts
-            'number_of_doors' => $doors_counts,
-            'number_of_seats' => $seats_counts,
+            // Variant counts are now fetched via the main update AJAX
         ],
-        'ranges' => [ // Pass static ranges to JS
+        'initialYearCounts' => get_counts_for_meta_key($year_field_key),
+        'choices' => [
+             // Make choices are derived from $all_makes_from_files in the PHP
+             // Model/Variant choices are derived from makeModelVariantStructure dynamically
+             'fuelType' => $fuel_type_choices,
+             'transmission' => $transmission_choices,
+             'exteriorColor' => $ext_color_choices,
+             'interiorColor' => $int_color_choices,
+             'bodyType' => $body_type_choices,
+             'driveType' => $drive_type_choices,
+        ],
+        'ranges' => [
             'year' => $years,
-            'engine_capacity' => $engine_capacities,
+            'engineCapacity' => $engine_capacities,
             'mileage' => $mileages,
-            'price' => $prices,
         ]
     ];
 
@@ -613,41 +590,6 @@ function display_car_filter_form( $context = 'default' ) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Price Range -->
-            <div class="filter-form-group filter-group-price-range">
-                <label>Price Range</label>
-                <div class="filter-sub-group">
-                    <select name="price_min" data-filter-key="price_min">
-                        <option value="">Min Price</option>
-                        <?php render_range_options($prices, '', '€', $initial_price_counts); ?>
-                    </select>
-                </div>
-                <div class="filter-sub-group">
-                    <select name="price_max" data-filter-key="price_max">
-                        <option value="">Max Price</option>
-                        <?php render_range_options($prices, '', '€', $initial_price_counts); ?>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Number of Doors -->
-            <div class="filter-form-group">
-                <label for="filter-doors-<?php echo esc_attr($context); ?>">Number of Doors</label>
-                <select id="filter-doors-<?php echo esc_attr($context); ?>" name="number_of_doors" data-filter-key="number_of_doors">
-                    <option value="">Any Doors</option>
-                    <?php render_select_options($doors_choices, $doors_counts); ?>
-                </select>
-            </div>
-
-            <!-- Number of Seats -->
-            <div class="filter-form-group">
-                <label for="filter-seats-<?php echo esc_attr($context); ?>">Number of Seats</label>
-                <select id="filter-seats-<?php echo esc_attr($context); ?>" name="number_of_seats" data-filter-key="number_of_seats">
-                    <option value="">Any Seats</option>
-                    <?php render_select_options($seats_choices, $seats_counts); ?>
-                </select>
             </div>
 
             </div> <!-- End of #more-options -->
