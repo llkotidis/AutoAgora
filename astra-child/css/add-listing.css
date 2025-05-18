@@ -689,7 +689,7 @@ label svg path,
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .location-input-wrapper {
