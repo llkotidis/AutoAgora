@@ -781,7 +781,7 @@ label svg path,
 
 /* gradient button */
 #add-car-listing-form .submit-button {
-  padding: 0.5rem 1rem !important;
+  padding: 1rem 2rem !important;
   background: linear-gradient(
     to right,
     var(--dark-blue),
