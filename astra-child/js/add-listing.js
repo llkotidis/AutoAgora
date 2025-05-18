@@ -284,6 +284,7 @@ jQuery(document).ready(function($) {
                 });
             previewItem.append(img).append(removeBtn);
             imagePreview.append(previewItem); // Append to the main preview container
+            updateImagePreviewScrollbar(); // Update scrollbar after adding a preview
             console.log('[Add Listing] Preview added to DOM for:', file.name);
         };
         reader.onerror = function() {
@@ -298,6 +299,7 @@ jQuery(document).ready(function($) {
             file => file.name !== fileNameToRemove
         );
         updateActualFileInput(); // Refresh the actual file input
+        updateImagePreviewScrollbar(); // Update scrollbar after removing a file
         console.log('[Add Listing] File removed. Accumulated files count:', accumulatedFilesList.length);
     }
     
@@ -317,4 +319,15 @@ jQuery(document).ready(function($) {
         }
         console.log('[Add Listing] Actual file input updated. Count:', fileInput[0].files.length);
     }
+
+    function updateImagePreviewScrollbar() {
+        if (accumulatedFilesList.length > 0) {
+            imagePreview.css('overflow-x', 'auto');
+        } else {
+            imagePreview.css('overflow-x', 'hidden');
+        }
+    }
+
+    // Initial state update
+    updateImagePreviewScrollbar();
 }); 
