@@ -215,13 +215,13 @@ get_header(); ?>
 											<div class="form-third">
 												<label for="mileage"><?php echo get_svg_icon('road'); ?> <?php esc_html_e( 'Mileage', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
-													<input type="text" id="mileage" name="mileage" class="form-control" required>
+													<input type="text" id="mileage" name="mileage" class="form-control" required placeholder="E.g '180,000'">
 													<span class="input-suffix">km</span>
 												</div>
 											</div>
 											<div class="form-third">
 												<label for="price"><?php echo get_svg_icon('euro-sign'); ?> <?php esc_html_e( 'Price', 'astra-child' ); ?></label>
-												<input type="text" id="price" name="price" class="form-control" required>
+												<input type="text" id="price" name="price" class="form-control" required placeholder="E.g '10000'">
 											</div>
 										</div>
 
@@ -298,7 +298,7 @@ get_header(); ?>
 											<div class="form-half">
 												<label for="hp"><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Horsepower (Optional)', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
-													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1">
+													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1" placeholder="E.g '100'">
 													<span class="input-suffix">hp</span>
 												</div>
 											</div>
@@ -424,7 +424,7 @@ get_header(); ?>
 											</div>
 											<div class="form-half">
 												<label for="numowners"><?php echo get_svg_icon('users'); ?> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
-												<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required>
+												<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required placeholder="E.g '2'">
 											</div>
 										</div>
 
