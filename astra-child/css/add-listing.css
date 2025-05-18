@@ -53,12 +53,16 @@ text-align: center;
 
 .image-upload-note, .image-upload-info {
   font-size: 0.875rem;
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
+}
+
+.image-upload-note {
+  margin-bottom: .5rem;
 }
 
 .image-upload-info {
   margin-top: 1rem;
-  max-width: 500px;
+  max-width: 600px;
   text-align: left;
 }
 
