@@ -714,6 +714,12 @@ label svg path,
   border-radius: var(--border-radius-large);
   border: 1px solid var(--light-bg);
   transition: border 0.2s ease;
+  cursor: pointer;
+}
+
+.vehicle-history-option label {
+  font-weight: 400;
+  font-size: 1rem;
 }
 
 .vehicle-history-option:hover {
@@ -724,4 +730,5 @@ label svg path,
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  margin-top: 1rem;
 }
