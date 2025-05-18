@@ -44,6 +44,16 @@
   color: var(--dark-blue);
 }
 
+#add-car-listing-form h2 i {
+  font-size: 24px;
+}
+
+#add-car-listing-form h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 #file-upload-area {
   background: var(--light-bg);
   border: var(--border);
