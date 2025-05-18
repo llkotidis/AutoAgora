@@ -113,6 +113,25 @@
   border-radius: var(--border-radius-medium);
 }
 
+.remove-image {
+  position: absolute;
+height: 22px;
+border-radius: var(--border-radius-large);
+width: 22px;
+top: 8px;
+right: 8px;
+background-color: var(--white);
+display: flex;
+justify-content: center;
+align-items: center;
+cursor: pointer;
+}
+
+.remove-image:hover {
+  background-color: #C53030;
+  color: var(--white);
+}
+
 /* .page-add-listing {
   margin: auto;
   padding: 2rem 0 !important;
