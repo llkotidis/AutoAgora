@@ -411,15 +411,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Update simple selects (Make, Location - others are dependent or range/checkbox)
     updateSelectDisplay("make", activeFilters);
     updateSelectDisplay("location", activeFilters); // Assuming location is simple
-    // Add new single-selects here for count updates
-    updateSelectDisplay("number_of_doors", activeFilters);
-    updateSelectDisplay("number_of_seats", activeFilters);
-    updateSelectDisplay("vehiclehistory", activeFilters);
-    // Add new single-selects from user list
-    updateSelectDisplay("availability_status", activeFilters);
-    updateSelectDisplay("mot_status", activeFilters);
-    updateSelectDisplay("number_of_previous_owners", activeFilters);
-    updateSelectDisplay("is_antique_vehicle", activeFilters);
 
     // Update dependent selects (Model, Variant)
     updateModelDisplay(activeFilters);
@@ -432,13 +423,12 @@ document.addEventListener("DOMContentLoaded", function () {
       "drive_type",
       "exterior_color",
       "interior_color",
-      "extras" // Add new multi-select here
     ].forEach((fieldName) => {
       updateCheckboxGroupDisplay(fieldName, activeFilters);
     });
 
     // Update range selects
-    ["price", "year", "mileage", "engine_capacity", "hp"].forEach((fieldName) => {
+    ["price", "year", "mileage", "engine_capacity"].forEach((fieldName) => {
       updateRangeSelectDisplay(fieldName, activeFilters);
     });
   }
@@ -662,20 +652,6 @@ document.addEventListener("DOMContentLoaded", function () {
       drive_type: "Drive Type",
       exterior_color: "Exterior Color",
       interior_color: "Interior Color",
-      engine_min: "Min Engine",
-      engine_max: "Max Engine",
-      // Add new labels for chips if needed, though it tries label[for=...] first
-      number_of_doors: "Doors",
-      number_of_seats: "Seats",
-      vehiclehistory: "History",
-      extras: "Extras",
-      // Add new labels for user list filters
-      hp_min: "Min HP",
-      hp_max: "Max HP",
-      availability_status: "Availability",
-      mot_status: "MOT Status",
-      number_of_previous_owners: "Owners",
-      is_antique_vehicle: "Antique",
     };
     labelText = labelMap[fieldName] || labelText;
     if (selectedCount > 0) {
@@ -891,20 +867,8 @@ document.addEventListener("DOMContentLoaded", function () {
       interior_color: "Interior Color",
       engine_min: "Min Engine",
       engine_max: "Max Engine",
-      // Add new labels for chips if needed, though it tries label[for=...] first
-      number_of_doors: "Doors",
-      number_of_seats: "Seats",
-      vehiclehistory: "History",
-      extras: "Extras",
-      // Add new labels for user list filters
-      hp_min: "Min HP",
-      hp_max: "Max HP",
-      availability_status: "Availability",
-      mot_status: "MOT Status",
-      number_of_previous_owners: "Owners",
-      is_antique_vehicle: "Antique",
     };
-    return labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Generic fallback label
+    return labels[key] || key;
   }
 
   updateActiveFiltersDisplay();

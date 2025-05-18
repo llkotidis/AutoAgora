@@ -165,19 +165,6 @@ function display_car_filter_form( $context = 'default' ) {
     $engine_cap_field_key = 'engine_capacity'; // For range
     $mileage_field_key = 'mileage'; // For range
 
-    // New Field Keys
-    $doors_field_key = 'number_of_doors';
-    $seats_field_key = 'number_of_seats';
-    $extras_field_key = 'extras'; // Assuming this is a multi-select checkbox
-    $history_field_key = 'vehiclehistory'; // Assuming this is a single select
-
-    // EVEN MORE New Field Keys from User List
-    $hp_field_key = 'hp'; // For range
-    $availability_field_key = 'availability_status';
-    $mot_status_field_key = 'mot_status';
-    $num_owners_field_key = 'number_of_previous_owners';
-    $is_antique_field_key = 'is_antique_vehicle';
-
     // --- Get Choices for Select Fields ---
     $fuel_type_choices = get_acf_choices_safe($fuel_type_field_key, $sample_car_post_id);
     $transmission_choices = get_acf_choices_safe($transmission_field_key, $sample_car_post_id);
@@ -187,19 +174,6 @@ function display_car_filter_form( $context = 'default' ) {
     $drive_type_choices = get_acf_choices_safe($drive_type_field_key, $sample_car_post_id);
     // Note: Make/Model/Variant choices come from JSONs below
 
-    // New field choices
-    $doors_choices = get_acf_choices_safe($doors_field_key, $sample_car_post_id);
-    $seats_choices = get_acf_choices_safe($seats_field_key, $sample_car_post_id);
-    $extras_choices = get_acf_choices_safe($extras_field_key, $sample_car_post_id); // For multi-select checkboxes
-    $history_choices = get_acf_choices_safe($history_field_key, $sample_car_post_id);
-
-    // Choices for EVEN MORE New Fields
-    $availability_choices = get_acf_choices_safe($availability_field_key, $sample_car_post_id);
-    $mot_status_choices = get_acf_choices_safe($mot_status_field_key, $sample_car_post_id);
-    $num_owners_choices = get_acf_choices_safe($num_owners_field_key, $sample_car_post_id);
-    $is_antique_choices = get_acf_choices_safe($is_antique_field_key, $sample_car_post_id);
-    // HP is a range, so no direct choices here, but we'll define a range array later.
-
     // --- Get Initial Counts for Select Fields ---
     $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key);
     $transmission_counts = get_counts_for_meta_key($transmission_field_key);
@@ -208,19 +182,6 @@ function display_car_filter_form( $context = 'default' ) {
     $body_type_counts = get_counts_for_meta_key($body_type_field_key);
     $drive_type_counts = get_counts_for_meta_key($drive_type_field_key);
     // Note: Make/Model counts handled separately below, Variant via AJAX
-
-    // New field counts
-    $doors_counts = get_counts_for_meta_key($doors_field_key);
-    $seats_counts = get_counts_for_meta_key($seats_field_key);
-    $extras_counts = get_counts_for_meta_key($extras_field_key); // For multi-select checkboxes
-    $history_counts = get_counts_for_meta_key($history_field_key);
-
-    // Counts for EVEN MORE New Fields
-    $hp_counts = get_counts_for_meta_key($hp_field_key); // For range options
-    $availability_counts = get_counts_for_meta_key($availability_field_key);
-    $mot_status_counts = get_counts_for_meta_key($mot_status_field_key);
-    $num_owners_counts = get_counts_for_meta_key($num_owners_field_key);
-    $is_antique_counts = get_counts_for_meta_key($is_antique_field_key);
 
     // --- Get Initial Engine Counts --- 
     $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key);
@@ -241,10 +202,6 @@ function display_car_filter_form( $context = 'default' ) {
     for ($i = 0; $i <= 50000; $i += 5000) { $mileages[] = $i; }
     for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
     for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
-
-    // Define HP range for select options
-    $hp_range = [];
-    for ($i = 50; $i <= 500; $i += 25) { $hp_range[] = $i; } // Example: 50HP to 500HP in 25HP steps
 
     // --- Get Initial Mileage Counts ---
     $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
@@ -329,19 +286,7 @@ function display_car_filter_form( $context = 'default' ) {
             'interiorColor' => $int_color_counts,
             'bodyType' => $body_type_counts,
             'driveType' => $drive_type_counts,
-            // Add new field counts for JS
-            'doors' => $doors_counts,
-            'seats' => $seats_counts,
-            'extras' => $extras_counts,
-            'vehicleHistory' => $history_counts,
-            // Add counts for EVEN MORE new fields
-            'hp' => $hp_counts, // For range display
-            'availability' => $availability_counts,
-            'motStatus' => $mot_status_counts,
-            'numOwners' => $num_owners_counts,
-            'isAntique' => $is_antique_counts,
-            // Variant counts are now fetched via AJAX if make/model selected
-            // Price, Year, Mileage, Engine Capacity counts for ranges are handled differently within JS
+            // Variant counts are now fetched via the main update AJAX
         ],
         'initialYearCounts' => get_counts_for_meta_key($year_field_key),
         'choices' => [
@@ -353,22 +298,11 @@ function display_car_filter_form( $context = 'default' ) {
              'interiorColor' => $int_color_choices,
              'bodyType' => $body_type_choices,
              'driveType' => $drive_type_choices,
-             // Add new field choices for JS
-             'doors' => $doors_choices,
-             'seats' => $seats_choices,
-             'extras' => $extras_choices,
-             'vehicleHistory' => $history_choices,
-             // Add choices for EVEN MORE new fields
-             'availability' => $availability_choices,
-             'motStatus' => $mot_status_choices,
-             'numOwners' => $num_owners_choices,
-             'isAntique' => $is_antique_choices,
         ],
         'ranges' => [
             'year' => $years,
             'engineCapacity' => $engine_capacities,
             'mileage' => $mileages,
-            'hp' => $hp_range, // Add HP range for JS
         ]
     ];
 
@@ -656,104 +590,6 @@ function display_car_filter_form( $context = 'default' ) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Number of Doors -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="number_of_doors">
-                <label for="filter-doors-<?php echo $context; ?>" class="filter-label">Number of Doors</label>
-                <select name="number_of_doors" id="filter-doors-<?php echo $context; ?>" data-filter-key="number_of_doors">
-                    <option value="">Any Doors</option>
-                    <?php render_select_options($doors_choices, $doors_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- Number of Seats -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="number_of_seats">
-                <label for="filter-seats-<?php echo $context; ?>" class="filter-label">Number of Seats</label>
-                <select name="number_of_seats" id="filter-seats-<?php echo $context; ?>" data-filter-key="number_of_seats">
-                    <option value="">Any Seats</option>
-                    <?php render_select_options($seats_choices, $seats_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- Vehicle History -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="vehiclehistory">
-                <label for="filter-history-<?php echo $context; ?>" class="filter-label">Vehicle History</label>
-                <select name="vehiclehistory" id="filter-history-<?php echo $context; ?>" data-filter-key="vehiclehistory">
-                    <option value="">Any History</option>
-                    <?php render_select_options($history_choices, $history_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- Extras (Multi-select Checkbox) -->
-            <div class="filter-form-group filter-group-wide multi-select-filter" data-filter-key="extras">
-                <label class="filter-label">Extras</label>
-                <div class="multi-select-display" data-default-text="Select Extras">
-                    <span>Select Extras</span> <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="multi-select-popup">
-                    <?php foreach ($extras_choices as $value => $label):
-                        $count = isset($extras_counts[$value]) ? $extras_counts[$value] : 0;
-                        $disabled_attr = ($count == 0) ? ' disabled="disabled"' : ''; ?>
-                        <label class="checkbox-label"<?php echo $disabled_attr; ?>>
-                            <input type="checkbox" name="extras[]" value="<?php echo esc_attr($value); ?>" data-label="<?php echo esc_attr($label); ?>"<?php echo $disabled_attr; ?>>
-                            <?php echo esc_html($label); ?> (<?php echo $count; ?>)
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-                <input type="hidden" class="multi-select-value" name="extras" id="filter-extras-<?php echo $context; ?>" value="">
-            </div>
-
-            <!-- HP Range -->
-            <div class="filter-form-group filter-group-hp">
-                <label>HP</label>
-                <div class="filter-range-fields">
-                    <select id="filter-hp-min-<?php echo esc_attr($context); ?>" name="hp_min" data-filter-key="hp_min">
-                        <option value="">Min HP</option>
-                        <?php render_range_options($hp_range, '', ' HP', $hp_counts); ?>
-                    </select>
-                    <select id="filter-hp-max-<?php echo esc_attr($context); ?>" name="hp_max" data-filter-key="hp_max">
-                        <option value="">Max HP</option>
-                        <?php render_range_options($hp_range, '', ' HP', $hp_counts); ?>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Availability -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="availability_status">
-                <label for="filter-availability-<?php echo $context; ?>" class="filter-label">Availability</label>
-                <select name="availability_status" id="filter-availability-<?php echo $context; ?>" data-filter-key="availability_status">
-                    <option value="">Any</option>
-                    <?php render_select_options($availability_choices, $availability_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- MOT Status -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="mot_status">
-                <label for="filter-mot-status-<?php echo $context; ?>" class="filter-label">MOT Status</label>
-                <select name="mot_status" id="filter-mot-status-<?php echo $context; ?>" data-filter-key="mot_status">
-                    <option value="">Any</option>
-                    <?php render_select_options($mot_status_choices, $mot_status_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- Number of Owners -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="number_of_previous_owners">
-                <label for="filter-num-owners-<?php echo $context; ?>" class="filter-label">Number of Owners</label>
-                <select name="number_of_previous_owners" id="filter-num-owners-<?php echo $context; ?>" data-filter-key="number_of_previous_owners">
-                    <option value="">Any</option>
-                    <?php render_select_options($num_owners_choices, $num_owners_counts, '', true); ?>
-                </select>
-            </div>
-
-            <!-- Is Antique -->
-            <div class="filter-form-group filter-group-wide" data-filter-key="is_antique_vehicle">
-                <label for="filter-is-antique-<?php echo $context; ?>" class="filter-label">Antique Vehicle</label>
-                <select name="is_antique_vehicle" id="filter-is-antique-<?php echo $context; ?>" data-filter-key="is_antique_vehicle">
-                    <option value="">Any</option>
-                    <?php render_select_options($is_antique_choices, $is_antique_counts, '', true); // Assuming choices like Yes/No
-                    ?>
-                </select>
             </div>
 
             </div> <!-- End of #more-options -->

@@ -120,15 +120,6 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'model' => 'model',
         'variant' => 'variant',
         // 'location' => 'location' // This was for text-based location, map handled above
-        // Add new exact match filters if they are single select
-        'number_of_doors' => 'number_of_doors',
-        'number_of_seats' => 'number_of_seats',
-        'vehiclehistory' => 'vehiclehistory',
-        // Filters from user's new list (single select)
-        'availability_status' => 'availability_status',
-        'mot_status' => 'mot_status',
-        'number_of_previous_owners' => 'number_of_previous_owners',
-        'is_antique_vehicle' => 'is_antique_vehicle',
     );
 
     foreach ($filter_params as $filter_key => $meta_key) {
@@ -145,8 +136,7 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'price' => 'price',
         'year' => 'year',
         'km' => 'mileage', // Assuming URL/filter key is 'km_min', 'km_max'
-        'engine' => 'engine_capacity', // Assuming URL/filter key is 'engine_min', 'engine_max'
-        'hp' => 'hp' // Add HP range filter key
+        'engine' => 'engine_capacity' // Assuming URL/filter key is 'engine_min', 'engine_max'
     );
 
     foreach ($range_filters as $filter_prefix => $meta_key) {
@@ -177,9 +167,7 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'transmission' => 'transmission', // Added transmission
         'exterior_color' => 'exterior_color',
         'interior_color' => 'interior_color',
-        'drive_type' => 'drive_type',
-        // Add new multi-select (checkbox) filters here
-        'extras' => 'extras',
+        'drive_type' => 'drive_type'
     );
 
     foreach ($checkbox_filters as $filter_key => $meta_key) {
