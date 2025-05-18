@@ -29,6 +29,34 @@ jQuery(document).ready(function($) {
     radiusValueDisplay.text(currentRadiusKm);
     currentLocationText.text(selectedLocationName);
 
+    // --- Initialize from URL parameters if present ---\
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLat = urlParams.get('lat');
+    const urlLng = urlParams.get('lng');
+    const urlRadius = urlParams.get('radius');
+    const urlLocationName = urlParams.get('location_name');
+
+    if (urlLat && urlLng && urlRadius) {
+        initialFilter = {
+            lat: parseFloat(urlLat),
+            lng: parseFloat(urlLng),
+            radius: parseInt(urlRadius, 10),
+            text: urlLocationName || 'Selected on map' // Use provided name or a default
+        };
+        selectedCoords = [initialFilter.lng, initialFilter.lat];
+        currentRadiusKm = initialFilter.radius;
+        selectedLocationName = initialFilter.text;
+
+        // Update UI elements based on URL parameters
+        radiusSlider.val(currentRadiusKm);
+        radiusValueDisplay.text(currentRadiusKm);
+        currentLocationText.text(selectedLocationName);
+        console.log('[Init] Loaded filter from URL:', initialFilter);
+    } else {
+        console.log('[Init] No location filter found in URL, using defaults or WP localized data.');
+    }
+    // --- End Initialize from URL parameters ---\
+
     changeLocationBtn.on('click', function() {
         modal.show();
         if (!map) {
@@ -336,48 +364,83 @@ jQuery(document).ready(function($) {
     });
 
     applyBtn.on('click', function() {
-        if (!selectedCoords) {
-            initialFilter = { lat: null, lng: null, radius: null, text: 'All of Cyprus' };
-            selectedLocationName = 'All of Cyprus';
+        if (selectedCoords && selectedCoords.length === 2) {
+            const lat = selectedCoords[1];
+            const lng = selectedCoords[0];
+            const radius = currentRadiusKm;
+            const locationName = selectedLocationName || 'Selected on map';
+
+            currentLocationText.text(locationName);
+            modal.hide();
+            fetchFilteredListings(1, lat, lng, radius);
+
+            // Update URL
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('lat', lat.toFixed(7)); // Keep precision
+            currentUrl.searchParams.set('lng', lng.toFixed(7));
+            currentUrl.searchParams.set('radius', radius.toString());
+            currentUrl.searchParams.set('location_name', locationName); // Store the display name too
+            // Remove paged if starting a new location filter
+            currentUrl.searchParams.delete('paged'); 
+
+            history.pushState({ path: currentUrl.href }, '', currentUrl.href);
+            console.log('[ApplyFilter] URL updated to:', currentUrl.href);
+
         } else {
-            initialFilter = {
-                lat: selectedCoords[1],
-                lng: selectedCoords[0],
-                radius: currentRadiusKm,
-                text: `Within ${currentRadiusKm}km of ${selectedLocationName || 'selected area'}` 
-            };
+            // If no specific coords (e.g., user clears map and applies "All of Cyprus")
+            currentLocationText.text('All of Cyprus');
+            modal.hide();
+            fetchFilteredListings(1, null, null, null); // Fetch all
+
+            // Update URL to remove location parameters
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('lat');
+            currentUrl.searchParams.delete('lng');
+            currentUrl.searchParams.delete('radius');
+            currentUrl.searchParams.delete('location_name');
+            currentUrl.searchParams.delete('paged');
+            history.pushState({ path: currentUrl.href }, '', currentUrl.href);
+            console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
         }
-        currentLocationText.text(initialFilter.text);
-        modal.hide();
-        fetchFilteredListings(1); 
     });
 
-    function fetchFilteredListings(page = 1) {
-        $('.car-listings-grid').html('<p>Loading listings...</p>'); 
-        $('.car-listings-pagination').empty();
-
-        const ajaxData = {
+    function fetchFilteredListings(page = 1, lat = null, lng = null, radius = null) {
+        console.log(`[FetchListings] Fetching page ${page}. Lat: ${lat}, Lng: ${lng}, Radius: ${radius}, Name: ${selectedLocationName}`);
+        
+        // Preserve other existing URL parameters when fetching
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        const data = {
             action: 'filter_listings_by_location',
             nonce: nonce,
             paged: page,
-            filter_lat: initialFilter.lat,
-            filter_lng: initialFilter.lng,
-            filter_radius: initialFilter.radius,
-            per_page: 12 
+            filter_lat: lat,
+            filter_lng: lng,
+            filter_radius: radius,
+            per_page: carListingsMapFilterData.perPage || 12 // Use perPage from localized data or default
         };
+
+        // Add other existing URL parameters to the AJAX request if they are not related to location/pagination
+        // This helps if other filters (e.g. make, model) are also managed via URL and should persist
+        currentUrlParams.forEach((value, key) => {
+            if (key !== 'lat' && key !== 'lng' && key !== 'radius' && key !== 'location_name' && key !== 'paged' && key !== 'action' && key !== 'nonce') {
+                data[key] = value;
+            }
+        });
+
+        $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>'); // Show loading indicator
 
         $.ajax({
             url: ajaxurl,
             type: 'POST',
-            data: ajaxData,
+            data: data,
             success: function(response) {
                 if (response.success) {
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
                     // Calculate and display distances if location filter is active
-                    if (initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
-                        const pinLocation = turf.point([initialFilter.lng, initialFilter.lat]);
+                    if (lat !== null && lng !== null && radius !== null) {
+                        const pinLocation = turf.point([lng, lat]);
 
                         $('.car-listings-grid .car-listing-card').each(function() {
                             const $card = $(this);
@@ -415,6 +478,15 @@ jQuery(document).ready(function($) {
                  console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);
             }
         });
+    }
+
+    // Initial fetch on page load, respecting URL parameters
+    if (initialFilter.lat && initialFilter.lng && initialFilter.radius) {
+        console.log('[PageLoad] Fetching initial listings based on URL parameters.');
+        fetchFilteredListings(urlParams.get('paged') || 1, initialFilter.lat, initialFilter.lng, initialFilter.radius);
+    } else {
+        console.log('[PageLoad] No specific location in URL, fetching default listings.');
+        fetchFilteredListings(urlParams.get('paged') || 1); // Fetch default (all or based on other filters)
     }
 
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {
