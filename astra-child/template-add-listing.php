@@ -275,7 +275,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="transmission"><?php echo get_svg_icon('gearstick-manual'); ?> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
+												<label for="transmission"><?php echo get_svg_icon('car-chassis'); ?> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
 												<select id="transmission" name="transmission" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Transmission', 'astra-child' ); ?></option>
 													<option value="Automatic"><?php esc_html_e( 'Automatic', 'astra-child' ); ?></option>
@@ -342,7 +342,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="number_of_seats"><?php echo get_svg_icon('chair'); ?> <?php esc_html_e( 'Number of Seats', 'astra-child' ); ?></label>
+												<label for="number_of_seats"><?php echo get_svg_icon('car-seat'); ?> <?php esc_html_e( 'Number of Seats', 'astra-child' ); ?></label>
 												<select id="number_of_seats" name="number_of_seats" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
 													<?php
@@ -396,35 +396,36 @@ get_header(); ?>
 
 									<div class="form-section mot-section input-wrapper">
 										<h2><?php echo get_svg_icon('clipboard-list'); ?> <?php esc_html_e( 'Registration & Background Info', 'astra-child' ); ?></h2>
-										<div class="form-row">
-											<label for="motuntil"><?php echo get_svg_icon('clipboard-check'); ?> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
-											<select id="motuntil" name="motuntil" class="form-control">
-												<option value=""><?php esc_html_e( 'Select MOT Status', 'astra-child' ); ?></option>
-												<option value="Expired"><?php esc_html_e( 'Expired', 'astra-child' ); ?></option>
-												<?php
-												// Get current date
-												$current_date = new DateTime();
-												// Set to first day of current month
-												$current_date->modify('first day of this month');
-												// Create end date (2 years from now)
-												$end_date = new DateTime();
-												$end_date->modify('+2 years');
-												$end_date->modify('last day of this month');
+										<div class="form-row form-row-halves">
+											<div class="form-half">
+												<label for="motuntil"><?php echo get_svg_icon('clipboard-check'); ?> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
+												<select id="motuntil" name="motuntil" class="form-control">
+													<option value=""><?php esc_html_e( 'Select MOT Status', 'astra-child' ); ?></option>
+													<option value="Expired"><?php esc_html_e( 'Expired', 'astra-child' ); ?></option>
+													<?php
+													// Get current date
+													$current_date = new DateTime();
+													// Set to first day of current month
+													$current_date->modify('first day of this month');
+													// Create end date (2 years from now)
+													$end_date = new DateTime();
+													$end_date->modify('+2 years');
+													$end_date->modify('last day of this month');
 
-												// Generate options
-												while ($current_date <= $end_date) {
-													$value = $current_date->format('Y-m');
-													$display = $current_date->format('F Y');
-													echo '<option value="' . esc_attr($value) . '">' . esc_html($display) . '</option>';
-													$current_date->modify('+1 month');
-												}
-												?>
-											</select>
-										</div>
-
-										<div class="form-row">
-											<label for="numowners"><?php echo get_svg_icon('users'); ?> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
-											<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required>
+													// Generate options
+													while ($current_date <= $end_date) {
+														$value = $current_date->format('Y-m');
+														$display = $current_date->format('F Y');
+														echo '<option value="' . esc_attr($value) . '">' . esc_html($display) . '</option>';
+														$current_date->modify('+1 month');
+													}
+													?>
+												</select>
+											</div>
+											<div class="form-half">
+												<label for="numowners"><?php echo get_svg_icon('users'); ?> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
+												<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required>
+											</div>
 										</div>
 
 										<div class="form-row">
