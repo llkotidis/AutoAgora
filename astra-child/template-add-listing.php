@@ -431,11 +431,11 @@ get_header(); ?>
 										<div class="form-row">
 											<div class="checkbox-field">
 												<input type="checkbox" id="isantique" name="isantique" value="1">
-												<label for="isantique"><?php echo get_svg_icon('clock'); ?> <?php esc_html_e( 'Registered as an Antique', 'astra-child' ); ?></label>
+												<label for="isantique"><?php esc_html_e( 'Registered as an Antique', 'astra-child' ); ?></label>
 											</div>
 										</div>
 
-										<div class="form-row">
+										<div class="form-row" id="vehicle-history-row">
 											<label><?php echo get_svg_icon('clock-rotate-left'); ?> <?php esc_html_e( 'Vehicle History', 'astra-child' ); ?></label>
 											<div class="vehicle-history-grid">
 												<?php

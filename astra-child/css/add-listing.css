@@ -714,6 +714,10 @@ label svg path,
   border-radius: var(--border-radius-large);
   border: 1px solid var(--light-bg);
   transition: border 0.2s ease;
+}
+
+.vehicle-history-option,
+.vehicle-history-option * {
   cursor: pointer;
 }
 
@@ -731,4 +735,9 @@ label svg path,
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+#vehicle-history-row {
+  padding-top: 2rem;
+  border-top: var(--border);
 }
