@@ -193,7 +193,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="variant"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Variant', 'astra-child' ); ?></label>
+												<label for="variant"><?php echo get_svg_icon('car-mirrors'); ?> <?php esc_html_e( 'Variant', 'astra-child' ); ?></label>
 												<select id="variant" name="variant" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
 												</select>
@@ -202,7 +202,7 @@ get_header(); ?>
 
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="year"><i class="far fa-calendar-alt"></i> <?php esc_html_e( 'Year', 'astra-child' ); ?></label>
+												<label for="year"><?php echo get_svg_icon('calendar'); ?> <?php esc_html_e( 'Year', 'astra-child' ); ?></label>
 												<select id="year" name="year" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Year', 'astra-child' ); ?></option>
 													<?php
@@ -232,7 +232,7 @@ get_header(); ?>
 										</div>
 
 										<div class="form-row">
-											<label for="availability"><?php echo get_svg_icon('truck'); ?> <?php esc_html_e( 'Availability', 'astra-child' ); ?></label>
+											<label for="availability"><?php echo get_svg_icon('circle-check'); ?> <?php esc_html_e( 'Availability', 'astra-child' ); ?></label>
 											<select id="availability" name="availability" class="form-control" required>
 												<option value=""><?php esc_html_e( 'Select Availability', 'astra-child' ); ?></option>
 												<option value="In Stock"><?php esc_html_e( 'In Stock', 'astra-child' ); ?></option>
