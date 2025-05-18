@@ -187,6 +187,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Helper Functions ---
   function filterCars(cars, filters) {
     return cars.filter(car => {
+      // --- Location Filter (New) ---
+      if (filters.lat && filters.lng && filters.radius && car.car_latitude && car.car_longitude) {
+        const carPoint = turf.point([parseFloat(car.car_longitude), parseFloat(car.car_latitude)]);
+        const filterPoint = turf.point([parseFloat(filters.lng), parseFloat(filters.lat)]);
+        const distance = turf.distance(filterPoint, carPoint, { units: 'kilometers' });
+        if (distance > parseFloat(filters.radius)) {
+          return false; // Car is outside the radius
+        }
+      }
+      // --- End Location Filter ---
+
       // Check each filter
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue; // Skip empty filters

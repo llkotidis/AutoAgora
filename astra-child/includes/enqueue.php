@@ -123,6 +123,8 @@ function astra_child_enqueue_styles() {
                     'drive_type' => get_field('drive_type', $car_id),
                     'exterior_color' => get_field('exterior_color', $car_id),
                     'interior_color' => get_field('interior_color', $car_id),
+                    'car_latitude' => get_field('car_latitude', $car_id),
+                    'car_longitude' => get_field('car_longitude', $car_id),
                     // Add other relevant fields if needed by JS filtering
                 );
             }

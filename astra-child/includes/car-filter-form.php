@@ -40,22 +40,60 @@ function get_acf_choices_safe($field_key, $post_id = null) {
 }
 
 /**
- * Helper function to get counts for a specific meta key.
+ * Helper function to get counts for a specific meta key, optionally filtered by location.
  */
-function get_counts_for_meta_key($meta_key) {
+function get_counts_for_meta_key($meta_key, $filter_lat = null, $filter_lng = null, $filter_radius = null) {
     global $wpdb;
-    $sql = $wpdb->prepare(
-        "SELECT pm.meta_value, COUNT(p.ID) as count
-         FROM {$wpdb->postmeta} pm
-         JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-         WHERE pm.meta_key = %s
-         AND p.post_type = 'car'
-         AND p.post_status = 'publish'
-         AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
-         GROUP BY pm.meta_value",
-        $meta_key
-    );
-    $results = $wpdb->get_results($sql, OBJECT_K);
+
+    $location_filtered_ids = null;
+    if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null && function_exists('autoagora_calculate_distance')) {
+        $all_car_ids_query = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
+                 FROM {$wpdb->posts} p
+                 LEFT JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = %s
+                 LEFT JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = %s
+                 WHERE p.post_type = 'car' AND p.post_status = 'publish'",
+                 'car_latitude', 'car_longitude'
+            )
+        );
+        $location_filtered_ids = [0]; // Start with 0 to prevent SQL errors if no cars match
+        foreach ($all_car_ids_query as $car_data) {
+            if (!empty($car_data->latitude) && !empty($car_data->longitude)) {
+                $distance = autoagora_calculate_distance(
+                    $filter_lat, $filter_lng,
+                    floatval($car_data->latitude), floatval($car_data->longitude)
+                );
+                if ($distance <= $filter_radius) {
+                    $location_filtered_ids[] = $car_data->ID;
+                }
+            }
+        }
+        if (count($location_filtered_ids) === 1 && $location_filtered_ids[0] === 0) { // Only [0] means no matches
+            // No cars match the location, so counts for this meta_key will be 0
+            return array(); 
+        }
+    }
+
+    $sql = "SELECT pm.meta_value, COUNT(DISTINCT p.ID) as count
+            FROM {$wpdb->postmeta} pm
+            JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            WHERE pm.meta_key = %s
+            AND p.post_type = 'car'
+            AND p.post_status = 'publish'
+            AND pm.meta_value IS NOT NULL AND pm.meta_value != ''";
+
+    $params = [$meta_key];
+
+    if (is_array($location_filtered_ids) && !empty($location_filtered_ids)) {
+        $placeholders = implode(',', array_fill(0, count($location_filtered_ids), '%d'));
+        $sql .= " AND p.ID IN ({$placeholders})";
+        $params = array_merge($params, $location_filtered_ids);
+    }
+
+    $sql .= " GROUP BY pm.meta_value";
+    
+    $results = $wpdb->get_results($wpdb->prepare($sql, ...$params), OBJECT_K);
     
     $counts = array();
     if ($results) {
@@ -144,6 +182,41 @@ function render_range_options($range, $selected_value = '', $suffix = '', $initi
 function display_car_filter_form( $context = 'default' ) {
     global $wpdb;
 
+    // --- Get Location Filters from URL if present ---
+    $url_filter_lat = isset($_GET['lat']) && $_GET['lat'] !== 'null' && $_GET['lat'] !== '' ? floatval($_GET['lat']) : null;
+    $url_filter_lng = isset($_GET['lng']) && $_GET['lng'] !== 'null' && $_GET['lng'] !== '' ? floatval($_GET['lng']) : null;
+    $url_filter_radius = isset($_GET['radius']) && $_GET['radius'] !== 'null' && $_GET['radius'] !== '' ? floatval($_GET['radius']) : null;
+
+    $location_filtered_ids_for_php_counts = null;
+    if ($url_filter_lat !== null && $url_filter_lng !== null && $url_filter_radius !== null && function_exists('autoagora_calculate_distance')) {
+        $all_car_ids_query_php = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
+                 FROM {$wpdb->posts} p
+                 LEFT JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = %s
+                 LEFT JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = %s
+                 WHERE p.post_type = 'car' AND p.post_status = 'publish'",
+                 'car_latitude', 'car_longitude'
+            )
+        );
+        $location_filtered_ids_for_php_counts = [0]; // Default to prevent SQL errors
+        foreach ($all_car_ids_query_php as $car_data) {
+            if (!empty($car_data->latitude) && !empty($car_data->longitude)) {
+                $distance = autoagora_calculate_distance(
+                    $url_filter_lat, $url_filter_lng,
+                    floatval($car_data->latitude), floatval($car_data->longitude)
+                );
+                if ($distance <= $url_filter_radius) {
+                    $location_filtered_ids_for_php_counts[] = $car_data->ID;
+                }
+            }
+        }
+        if (count($location_filtered_ids_for_php_counts) === 1 && $location_filtered_ids_for_php_counts[0] === 0) {
+             // No cars match location, counts will be zero.
+        }
+    }
+    // --- End Location Filter ID Fetching ---
+
     // --- Get Sample Post ID for ACF Context ---
     $sample_car_post_id = $wpdb->get_var(
         $wpdb->prepare(
@@ -174,17 +247,17 @@ function display_car_filter_form( $context = 'default' ) {
     $drive_type_choices = get_acf_choices_safe($drive_type_field_key, $sample_car_post_id);
     // Note: Make/Model/Variant choices come from JSONs below
 
-    // --- Get Initial Counts for Select Fields ---
-    $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key);
-    $transmission_counts = get_counts_for_meta_key($transmission_field_key);
-    $ext_color_counts = get_counts_for_meta_key($ext_color_field_key);
-    $int_color_counts = get_counts_for_meta_key($int_color_field_key);
-    $body_type_counts = get_counts_for_meta_key($body_type_field_key);
-    $drive_type_counts = get_counts_for_meta_key($drive_type_field_key);
+    // --- Get Initial Counts for Select Fields (Now Location Aware) ---
+    $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
+    $transmission_counts = get_counts_for_meta_key($transmission_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
+    $ext_color_counts = get_counts_for_meta_key($ext_color_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
+    $int_color_counts = get_counts_for_meta_key($int_color_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
+    $body_type_counts = get_counts_for_meta_key($body_type_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
+    $drive_type_counts = get_counts_for_meta_key($drive_type_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
     // Note: Make/Model counts handled separately below, Variant via AJAX
 
-    // --- Get Initial Engine Counts --- 
-    $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key);
+    // --- Get Initial Engine Counts (Now Location Aware) ---
+    $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
     $initial_engine_counts = [];
     foreach($initial_engine_counts_raw as $value => $count) {
          // Ensure keys are formatted consistently (e.g., '1.0', '2.0') for matching option values
@@ -203,49 +276,14 @@ function display_car_filter_form( $context = 'default' ) {
     for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
     for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
 
-    // --- Get Initial Mileage Counts ---
-    $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
+    // --- Get Initial Mileage Counts (Now Location Aware) ---
+    $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
     $initial_mileage_counts = [];
     foreach($initial_mileage_counts_raw as $value => $count) {
+         // Ensure keys are integers for matching option values
          $formatted_key = intval($value); 
          $initial_mileage_counts[$formatted_key] = $count;
     }
-
-    // --- Generate Price Range and Get Initial Price Counts ---
-    $price_field_key = 'price'; // Assuming 'price' is the meta key for car price
-    $prices_for_options = range(0, 100000, 500); // £0 to £100,000, step 500
-    $all_car_prices_raw = $wpdb->get_col(
-        $wpdb->prepare(
-            "SELECT meta_value FROM {$wpdb->postmeta} 
-             WHERE meta_key = %s AND meta_value REGEXP '^[0-9]+$'", // Ensure it's numeric
-            $price_field_key
-        )
-    );
-    $all_car_prices = array_map('intval', $all_car_prices_raw);
-
-    $initial_min_price_counts = [];
-    $initial_max_price_counts = [];
-
-    foreach ($prices_for_options as $price_point) {
-        $min_count = 0;
-        $max_count = 0;
-        foreach ($all_car_prices as $car_price) {
-            if ($car_price >= $price_point) {
-                $min_count++;
-            }
-            if ($car_price <= $price_point) {
-                $max_count++;
-            }
-        }
-        $initial_min_price_counts[$price_point] = $min_count;
-        if ($price_point > 0) { // Max price 0 doesn't make much sense unless for free items
-            $initial_max_price_counts[$price_point] = $max_count;
-        }
-    }
-    // For Max Price "Any" or no selection, the count is total cars, handled by default option.
-    // For Min Price 0, the count is total cars.
-    $total_cars_for_price_filter = count($all_car_prices);
-    $initial_min_price_counts[0] = $total_cars_for_price_filter; 
 
     // --- Get Make/Model/Variant Data from JSONs ---
     // (Existing code to read JSONs and build $make_model_variant_data)
@@ -270,28 +308,36 @@ function display_car_filter_form( $context = 'default' ) {
     }
     // --- End Make/Model/Variant Data ---
 
-    // --- Get Counts for Makes ---
-    $make_counts = get_counts_for_meta_key($make_field_key); // Use helper
+    // --- Get Counts for Makes (Now Location Aware) ---
+    $make_counts = get_counts_for_meta_key($make_field_key, $url_filter_lat, $url_filter_lng, $url_filter_radius);
     // --- End Make Counts ---
 
-    // --- Get Counts for Models grouped by Make ---
+    // --- Get Counts for Models grouped by Make (Now Location Aware) ---
     $model_counts_by_make = array();
     if (!empty($all_makes_from_files)) {
-        // (Existing code to query and structure model counts)
         $make_placeholders = implode(', ', array_fill(0, count($all_makes_from_files), '%s'));
-        $sql = $wpdb->prepare(
-            "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-             FROM {$wpdb->posts} p
-             JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-             JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-             WHERE p.post_type = 'car'
-             AND p.post_status = 'publish'
-             AND pm_make.meta_value IN ({$make_placeholders})
-             AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-             GROUP BY pm_make.meta_value, pm_model.meta_value",
-            array_merge([$make_field_key, $model_field_key, 'car', 'publish'], $all_makes_from_files)
-        );
-        $model_counts_results = $wpdb->get_results($sql);
+        
+        $model_count_sql = "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(DISTINCT p.ID) as count
+                            FROM {$wpdb->posts} p
+                            JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+                            JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+                            WHERE p.post_type = 'car'
+                            AND p.post_status = 'publish'
+                            AND pm_make.meta_value IN ({$make_placeholders})
+                            AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''";
+        
+        $model_count_params = array_merge([$make_field_key, $model_field_key], $all_makes_from_files);
+
+        if (is_array($location_filtered_ids_for_php_counts) && !empty($location_filtered_ids_for_php_counts)) {
+            $id_placeholders = implode(',', array_fill(0, count($location_filtered_ids_for_php_counts), '%d'));
+            $model_count_sql .= " AND p.ID IN ({$id_placeholders})";
+            $model_count_params = array_merge($model_count_params, $location_filtered_ids_for_php_counts);
+        }
+        
+        $model_count_sql .= " GROUP BY pm_make.meta_value, pm_model.meta_value";
+        
+        $model_counts_results = $wpdb->get_results($wpdb->prepare($model_count_sql, ...$model_count_params));
+        
         foreach ($model_counts_results as $row) {
             if (!isset($model_counts_by_make[$row->make])) {
                 $model_counts_by_make[$row->make] = array();
@@ -397,47 +443,17 @@ function display_car_filter_form( $context = 'default' ) {
 
                 <!-- Year Range -->
                 <div class="filter-form-group filter-group-year">
-                    <label for="filter-year-min-<?php echo esc_attr($context); ?>">Min Year:</label>
-                    <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
-                        <option value="">Any</option>
-                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
-                    </select>
-                </div>
-                <div class="filter-form-group filter-group-year">
-                    <label for="filter-year-max-<?php echo esc_attr($context); ?>">Max Year:</label>
-                    <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
-                        <option value="">Any</option>
-                        <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
-                    </select>
-                </div>
-
-                <!-- Price Filters -->
-                <div class="filter-form-group filter-group-price">
-                    <label for="filter-price-min-<?php echo esc_attr($context); ?>">Min Price:</label>
-                    <select id="filter-price-min-<?php echo esc_attr($context); ?>" name="price_min" data-filter-key="price_min">
-                        <option value="">Any</option>
-                        <?php render_range_options($prices_for_options, '', '£', $initial_min_price_counts); ?>
-                    </select>
-                </div>
-                <div class="filter-form-group filter-group-price">
-                    <label for="filter-price-max-<?php echo esc_attr($context); ?>">Max Price:</label>
-                    <select id="filter-price-max-<?php echo esc_attr($context); ?>" name="price_max" data-filter-key="price_max">
-                        <option value="">Any</option>
-                        <?php render_range_options($prices_for_options, '', '£', $initial_max_price_counts); ?>
-                    </select>
-                </div>
-
-                <!-- Mileage Range -->
-                <div class="filter-form-group filter-group-mileage">
-                    <label for="filter-mileage-min-<?php echo esc_attr($context); ?>">Min Mileage:</label>
-                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
-                        <option value="">Min KM</option>
-                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
-                    </select>
-                    <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
-                        <option value="">Max KM</option>
-                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
-                    </select>
+                    <label>Year</label>
+                    <div class="filter-range-fields">
+                        <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
+                            <option value="">Min Year</option>
+                            <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
+                        </select>
+                        <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
+                            <option value="">Max Year</option>
+                             <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
+                       </select>
+                    </div>
                 </div>
 
                 <!-- Actions and More Options Link moved here, inside the form, but styled later -->
@@ -470,6 +486,21 @@ function display_car_filter_form( $context = 'default' ) {
                      <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Mileage Range -->
+            <div class="filter-form-group filter-group-mileage">
+                <label>Mileage (km)</label>
+                 <div class="filter-range-fields">
+                    <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
+                        <option value="">Min KM</option>
+                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
+                    </select>
+                     <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
+                        <option value="">Max KM</option>
+                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                 </div>
             </div>
