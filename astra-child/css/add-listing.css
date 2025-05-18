@@ -631,7 +631,7 @@ transition: all 0.1s ease;
   gap: .6rem;
 }
 
-#add-car-listing-form input {
+#add-car-listing-form input, #add-car-listing-form label, #add-car-listing-form select, #add-car-listing-form textarea, #add-car-listing-form button, #add-car-listing-form .form-row {
   margin: 0 !important;
 }
 
