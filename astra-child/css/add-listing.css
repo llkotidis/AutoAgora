@@ -767,7 +767,8 @@ label svg path,
   color: #c53030;
 }
 
-.description-guidelines-green {
+.description-guidelines-green,
+.image-upload-note {
   margin: 0 0 2rem 0 !important;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -776,4 +777,28 @@ label svg path,
   border-radius: var(--border-radius-medium);
   width: fit-content;
   color: #2e7d32;
+}
+
+/* gradient button */
+.gradient-button a {
+  padding: 0.5rem 1rem !important;
+  background: linear-gradient(
+    to right,
+    var(--dark-blue),
+    var(--light-blue)
+  ) !important;
+  color: var(--white) !important;
+  border-radius: var(--border-radius-small) !important;
+  transition: opacity var(--transition-time) !important;
+  border: none !important;
+}
+
+.gradient-button a:hover:not(.disabled) {
+  opacity: var(--opacity) !important;
+}
+
+.gradient-button a.disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }

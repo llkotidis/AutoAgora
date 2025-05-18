@@ -221,7 +221,7 @@ get_header(); ?>
 											</div>
 											<div class="form-third">
 												<label for="price"><?php echo get_svg_icon('euro-sign'); ?> <?php esc_html_e( 'Price', 'astra-child' ); ?></label>
-												<input type="text" id="price" name="price" class="form-control" required placeholder="E.g '10000'">
+												<input type="text" id="price" name="price" class="form-control" required placeholder="E.g '10,000'">
 											</div>
 										</div>
 
