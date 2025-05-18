@@ -61,7 +61,7 @@ text-align: center;
 }
 
 .image-upload-info {
-  margin-top: 1rem;
+  margin: 1rem 0 0 0;
   max-width: 600px;
   text-align: left;
 }
