@@ -95,8 +95,7 @@
   display: flex;
   gap: 1rem;
   width: 100%;
-  overflow-x: scroll;
-  overflow-y: hidden;
+  height: auto;
   padding: 1rem 0;
 }
 
