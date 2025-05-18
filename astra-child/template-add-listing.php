@@ -173,7 +173,7 @@ get_header(); ?>
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
 									<div class="form-section basic-details-section input-wrapper">
-										<h2><?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
+										<h2><i class="fas fa-info-circle"></i> <?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
 												<label for="make"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Make', 'astra-child' ); ?></label>
@@ -468,7 +468,7 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section extras-section input-wrapper">
-										<h2><?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
+										<h2><i class="fas fa-plus-circle"></i> <?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
 										<div class="form-row">
 											<div class="extras-grid">
 												<?php
@@ -507,7 +507,7 @@ get_header(); ?>
 							</div>
 
 							<div class="add-listing-description-section input-wrapper">
-								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<h2><i class="fas fa-align-left"></i> <?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
 								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
 								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
 								<ul class="description-guidelines-list">
