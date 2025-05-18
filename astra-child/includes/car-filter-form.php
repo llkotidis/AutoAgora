@@ -152,7 +152,6 @@ function display_car_filter_form( $context = 'default' ) {
     );
 
     // --- Field Keys (Verify these match your ACF setup) ---
-    $location_field_key = 'location';
     $make_field_key = 'make'; // Assuming 'make' is also stored in post meta
     $model_field_key = 'model'; // Assuming 'model' is stored
     $variant_field_key = 'variant'; // Assuming 'variant' is stored
@@ -167,7 +166,6 @@ function display_car_filter_form( $context = 'default' ) {
     $mileage_field_key = 'mileage'; // For range
 
     // --- Get Choices for Select Fields ---
-    $all_possible_locations = get_acf_choices_safe($location_field_key, $sample_car_post_id);
     $fuel_type_choices = get_acf_choices_safe($fuel_type_field_key, $sample_car_post_id);
     $transmission_choices = get_acf_choices_safe($transmission_field_key, $sample_car_post_id);
     $ext_color_choices = get_acf_choices_safe($ext_color_field_key, $sample_car_post_id);
@@ -177,7 +175,6 @@ function display_car_filter_form( $context = 'default' ) {
     // Note: Make/Model/Variant choices come from JSONs below
 
     // --- Get Initial Counts for Select Fields ---
-    $published_location_counts = get_counts_for_meta_key($location_field_key);
     $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key);
     $transmission_counts = get_counts_for_meta_key($transmission_field_key);
     $ext_color_counts = get_counts_for_meta_key($ext_color_field_key);
@@ -281,7 +278,6 @@ function display_car_filter_form( $context = 'default' ) {
         'updateAction' => 'update_filter_counts', // Pass the new action name
         'makeModelVariantStructure' => $make_model_variant_data,
         'initialCounts' => [
-            'location' => $published_location_counts,
             'make' => $make_counts,
             'modelByMake' => $model_counts_by_make, // Still useful for initial model population
             'fuelType' => $fuel_type_counts,
@@ -294,7 +290,6 @@ function display_car_filter_form( $context = 'default' ) {
         ],
         'initialYearCounts' => get_counts_for_meta_key($year_field_key),
         'choices' => [
-             'location' => $all_possible_locations,
              // Make choices are derived from $all_makes_from_files in the PHP
              // Model/Variant choices are derived from makeModelVariantStructure dynamically
              'fuelType' => $fuel_type_choices,
@@ -326,15 +321,6 @@ function display_car_filter_form( $context = 'default' ) {
                 // MOVED OUTSIDE THIS FUNCTION
                 // MOVED OUTSIDE THIS FUNCTION
                 ?>
-
-                <!-- Location Selector -->
-                <div class="filter-form-group filter-group-location">
-                    <label for="filter-location-<?php echo esc_attr($context); ?>">Location</label>
-                    <select id="filter-location-<?php echo esc_attr($context); ?>" name="location" data-filter-key="location">
-                        <option value="">All Locations</option>
-                        <?php render_select_options($all_possible_locations, $published_location_counts, '', false); ?>
-                    </select>
-                </div>
 
                 <!-- Make and Model Selectors Side-by-Side -->
                 <div class="filter-form-group filter-group-make-model">
