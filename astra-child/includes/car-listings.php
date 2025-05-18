@@ -373,54 +373,46 @@ function autoagora_filter_listings_by_location_ajax() {
     check_ajax_referer('filter_listings_by_location_nonce', 'nonce');
 
     $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
-    $filter_lat = isset($_POST['filter_lat']) && $_POST['filter_lat'] !== 'null' ? floatval($_POST['filter_lat']) : null;
-    $filter_lng = isset($_POST['filter_lng']) && $_POST['filter_lng'] !== 'null' ? floatval($_POST['filter_lng']) : null;
-    $filter_radius = isset($_POST['filter_radius']) && $_POST['filter_radius'] !== 'null' ? floatval($_POST['filter_radius']) : null; 
     $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
 
+    // Prepare all filters from POST data for build_car_listings_query_args
+    // car-listings-map-filter.js sends filter_lat, filter_lng, filter_radius directly
+    // and forwards other URL parameters as direct keys.
+    $all_filters_from_post = $_POST; // Start with all POST data
 
-    $args = array(
-        'post_type' => 'car',
-        'posts_per_page' => -1, 
-        'meta_query' => array(
-            'relation' => 'OR',
-            array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
-            array('key' => 'is_sold', 'value' => '1', 'compare' => '!=')
-        ),
-        'fields' => 'ids' 
-    );
-
-    $all_cars_query = new WP_Query($args);
-    $matching_car_ids = array();
-
-    if ($all_cars_query->have_posts()) {
-        foreach ($all_cars_query->posts as $car_id) { 
-            if ($filter_lat && $filter_lng && $filter_radius) {
-                $car_latitude = get_field('car_latitude', $car_id);
-                $car_longitude = get_field('car_longitude', $car_id);
-                if ($car_latitude && $car_longitude) {
-                    $distance = autoagora_calculate_distance($filter_lat, $filter_lng, $car_latitude, $car_longitude);
-                    if ($distance <= $filter_radius) {
-                        $matching_car_ids[] = $car_id;
-                    }
-                }
-            } else { 
-                $matching_car_ids[] = $car_id;
-            }
-        }
+    // Rename filter_lat, filter_lng, filter_radius to lat, lng, radius for build_car_listings_query_args
+    if (isset($all_filters_from_post['filter_lat'])) {
+        $all_filters_from_post['lat'] = $all_filters_from_post['filter_lat'];
+        unset($all_filters_from_post['filter_lat']);
+    }
+    if (isset($all_filters_from_post['filter_lng'])) {
+        $all_filters_from_post['lng'] = $all_filters_from_post['filter_lng'];
+        unset($all_filters_from_post['filter_lng']);
+    }
+    if (isset($all_filters_from_post['filter_radius'])) {
+        $all_filters_from_post['radius'] = $all_filters_from_post['filter_radius'];
+        unset($all_filters_from_post['filter_radius']);
     }
     
-    $paged_args = array(
-        'post_type' => 'car',
-        'posts_per_page' => $per_page,
-        'paged' => $paged,
-        'orderby' => 'date', 
-        'order' => 'DESC',   
-        'post__in' => !empty($matching_car_ids) ? $matching_car_ids : array(0), 
-        'ignore_sticky_posts' => 1
+    // Remove keys not intended for build_car_listings_query_args as filters
+    unset($all_filters_from_post['action']);
+    unset($all_filters_from_post['nonce']);
+    unset($all_filters_from_post['paged']);
+    unset($all_filters_from_post['per_page']);
+
+    // Default atts for query builder (can be overridden if passed in $all_filters_from_post)
+    $atts_for_query = array(
+        'per_page' => $per_page,
+        'orderby' => isset($all_filters_from_post['orderby']) ? sanitize_text_field($all_filters_from_post['orderby']) : 'date',
+        'order'   => isset($all_filters_from_post['order']) ? sanitize_text_field($all_filters_from_post['order']) : 'DESC'
     );
+
+    // Ensure car-listings-query.php (containing build_car_listings_query_args) is loaded
+    require_once __DIR__ . '/car-listings-query.php';
+
+    $args = build_car_listings_query_args($atts_for_query, $paged, $all_filters_from_post);
     
-    $car_query = new WP_Query($paged_args);
+    $car_query = new WP_Query($args);
 
     ob_start();
     if ($car_query->have_posts()) :
