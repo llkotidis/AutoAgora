@@ -119,6 +119,8 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'make' => 'make',
         'model' => 'model',
         'variant' => 'variant',
+        'number_of_doors' => 'number_of_doors',
+        'number_of_seats' => 'number_of_seats',
         // 'location' => 'location' // This was for text-based location, map handled above
     );
 

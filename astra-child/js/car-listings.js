@@ -338,10 +338,12 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
     // Sync other Selects (Location, Range Filters)
-    ["price", "year", "mileage", "engine_capacity", "location"].forEach(
+    ["price", "year", "mileage", "engine_capacity", "location", "number_of_doors", "number_of_seats"].forEach(
       (field) => {
         const isRange =
           field !== "location" &&
+          field !== "number_of_doors" &&
+          field !== "number_of_seats" &&
           (field === "price" ||
             field === "year" ||
             field === "mileage" ||
@@ -411,6 +413,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Update simple selects (Make, Location - others are dependent or range/checkbox)
     updateSelectDisplay("make", activeFilters);
     updateSelectDisplay("location", activeFilters); // Assuming location is simple
+    updateSelectDisplay("number_of_doors", activeFilters);
+    updateSelectDisplay("number_of_seats", activeFilters);
 
     // Update dependent selects (Model, Variant)
     updateModelDisplay(activeFilters);
@@ -438,7 +442,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectElement = filterForm.querySelector(
       `select[name="${fieldName}"]`
     );
-    if (!selectElement) return;
+    if (!selectElement) {
+        // console.warn(`[updateSelectDisplay] Select element for field '${fieldName}' not found.`);
+        return;
+    }
 
     const filtersWithoutThis = { ...activeFilters };
     delete filtersWithoutThis[fieldName];
@@ -844,7 +851,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function formatFilterLabel(key) {
     const labelElement = filterForm.querySelector(
-      `label[for="${key}"], label[for="${key}_min"]`
+      `label[for="filter-${key}"], label[for="${key}"], label[for="${key}_min"]`
     );
     if (labelElement) {
       return labelElement.textContent.replace(":", "").trim();
@@ -867,8 +874,10 @@ document.addEventListener("DOMContentLoaded", function () {
       interior_color: "Interior Color",
       engine_min: "Min Engine",
       engine_max: "Max Engine",
+      number_of_doors: "Doors",
+      number_of_seats: "Seats",
     };
-    return labels[key] || key;
+    return labels[key] || key.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
   updateActiveFiltersDisplay();
@@ -1206,7 +1215,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Generic handler for other filter changes (checkboxes, other selects)
   filterForm
     .querySelectorAll(
-      'select:not(#make):not(#model):not(#variant), input[type="checkbox"]'
+      'select:not(#filter-make-listings_page):not(#filter-model-listings_page):not(#filter-variant-listings_page), input[type="checkbox"]'
     )
     .forEach((input) => {
       input.addEventListener("change", () => {
