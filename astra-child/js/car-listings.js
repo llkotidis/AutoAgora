@@ -221,21 +221,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const filters = {};
     for (const [key, value] of formData.entries()) {
       if (value) {
-        // Only consider non-empty values
-        const cleanKey = key.replace(/\[\]$/, ""); // Remove [] for object keys
+        const cleanKey = key.replace(/\[\]$/, "");
         if (key.endsWith("[]")) {
           if (!filters[cleanKey]) {
             filters[cleanKey] = [];
           }
-          // Ensure unique values for checkboxes
           if (!filters[cleanKey].includes(value)) {
             filters[cleanKey].push(value);
           }
         } else {
-          filters[key] = value; // Keep _min, _max keys as is
+          filters[key] = value;
         }
       }
     }
+
+    // Also include lat, lng, radius, location_name from current URL if present
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const locationFilterKeys = ['lat', 'lng', 'radius', 'location_name'];
+    locationFilterKeys.forEach(key => {
+        if (currentUrlParams.has(key)) {
+            filters[key] = currentUrlParams.get(key);
+        }
+    });
+
     return filters;
   }
 
@@ -581,7 +589,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const processedValues = new Set();
 
     params.forEach((value, key) => {
-      if (value && key !== "paged") {
+      if (value && key !== "paged" && key !== "lat" && key !== "lng" && key !== "radius" && key !== "location_name") {
         const baseKey = key.replace(/\\\[\\\]$/, "");
         const label = formatFilterLabel(baseKey);
 
@@ -1251,3 +1259,4 @@ document.addEventListener("DOMContentLoaded", function () {
   reinitializeCarousels();
   reinitializeFavoriteButtons();
 });
+
