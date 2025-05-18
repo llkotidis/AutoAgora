@@ -662,3 +662,15 @@ label svg path,
   color: var(--text-color);
   pointer-events: none;
 }
+
+.form-third {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
