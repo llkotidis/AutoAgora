@@ -13,6 +13,7 @@ jQuery(document).ready(function($) {
     const circleSourceId = 'radius-circle-source';
     const circleLayerId = 'radius-circle-layer';
     let moveTimeout; // For debouncing map moveend
+    let currentListingsRequest = null; // Variable to hold the current AJAX request
 
     const modal = $('#location-filter-modal');
     const changeLocationBtn = $('#change-location-filter-btn');
@@ -470,6 +471,12 @@ jQuery(document).ready(function($) {
     function fetchFilteredListings(page = 1, lat = null, lng = null, radius = null) {
         console.log(`[FetchListings] Fetching page ${page}. Lat: ${lat}, Lng: ${lng}, Radius: ${radius}, Name: ${selectedLocationName}`);
         
+        // Abort any existing listings request if it's still running
+        if (currentListingsRequest && currentListingsRequest.readyState !== 4) {
+            console.log('[FetchListings] Aborting previous listings request.');
+            currentListingsRequest.abort();
+        }
+
         // Preserve other existing URL parameters when fetching
         const currentUrlParams = new URLSearchParams(window.location.search);
         const data = {
@@ -492,7 +499,7 @@ jQuery(document).ready(function($) {
 
         $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>'); // Show loading indicator
 
-        $.ajax({
+        currentListingsRequest = $.ajax({
             url: ajaxurl,
             type: 'POST',
             data: data,
@@ -537,8 +544,11 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                $('.car-listings-grid').html('<p>AJAX Error: ' + textStatus + ' - ' + errorThrown + '</p>');
-                 console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);
+                // Only show error if this request was not manually aborted
+                if (textStatus !== 'abort') {
+                    $('.car-listings-grid').html('<p>AJAX Error: ' + textStatus + ' - ' + errorThrown + '</p>');
+                    console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);
+                }
             }
         });
     }
