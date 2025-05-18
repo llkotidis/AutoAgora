@@ -523,13 +523,14 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // Initial fetch on page load, respecting URL parameters
+    // Initial fetch on page load, respecting URL and localStorage
+    const pageToFetch = urlParams.get('paged') || 1;
     if (initialFilter.lat && initialFilter.lng && initialFilter.radius) {
-        console.log('[PageLoad] Fetching initial listings based on URL parameters.');
-        fetchFilteredListings(urlParams.get('paged') || 1, initialFilter.lat, initialFilter.lng, initialFilter.radius);
+        console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
+        fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
     } else {
-        console.log('[PageLoad] No specific location in URL, fetching default listings.');
-        fetchFilteredListings(urlParams.get('paged') || 1); // Fetch default (all or based on other filters)
+        console.log('[PageLoad] No specific location active, fetching default listings.');
+        fetchFilteredListings(pageToFetch); // Fetch default (all or based on other filters)
     }
 
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {
