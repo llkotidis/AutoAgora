@@ -631,6 +631,10 @@ transition: all 0.1s ease;
   gap: .6rem;
 }
 
+#add-car-listing-form input {
+  margin: 0 !important;
+}
+
 .upload-message svg {
     width: 3rem;
     height: 3rem;
@@ -644,7 +648,8 @@ label svg path,
     fill: currentColor;
 }
 
-#mileage {
+
+.input-with-suffix {
   position: relative;
 
 }
