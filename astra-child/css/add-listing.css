@@ -133,6 +133,8 @@ margin: 3rem 0 0 0;
   margin-bottom: 2rem;
 }
 
+**/
+
 .form-row-halves {
   display: flex;
   gap: 1rem;
@@ -166,6 +168,8 @@ margin: 3rem 0 0 0;
   font-weight: 600;
   font-size: 1.1rem;
 }
+
+/**
 
 .price-input {
   position: relative;
