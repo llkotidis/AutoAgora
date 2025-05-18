@@ -633,7 +633,7 @@ transition: all 0.1s ease;
 /* SVG Icon Styles */
 h2 svg,
 label svg {
-    width: 1em;
+    width: auto;
     height: 1em;
     vertical-align: -0.125em;
     margin-right: 0.5rem;
