@@ -90,13 +90,18 @@ function display_car_listings($atts) {
     // Get the current page number
     $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 
+    // Check if a location filter is active via GET parameters
+    $has_location_filter_in_url = isset($_GET['lat']) && isset($_GET['lng']) && isset($_GET['radius']);
+
     // Removed fetching of filter data (makes, models, variants, locations, prices, years, etc.)
     // as the filter form content is being removed.
 
     // Build the query arguments using the helper function
     $args = array(
         'post_type' => 'car',
-        'posts_per_page' => $atts['per_page'], // Use shortcode attribute
+        // If a location filter is in the URL, load 0 posts initially, JS will fetch correctly.
+        // Otherwise, load the default number of posts per page.
+        'posts_per_page' => $has_location_filter_in_url ? 0 : $atts['per_page'], 
         'paged' => $paged,
         'orderby' => $atts['orderby'],       // Use shortcode attribute
         'order'   => $atts['order'],         // Use shortcode attribute
