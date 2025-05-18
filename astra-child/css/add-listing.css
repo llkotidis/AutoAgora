@@ -749,7 +749,7 @@ label svg path,
 }
 
 .description-guidelines-avoid {
-  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .description-guidelines-list {
@@ -757,7 +757,7 @@ label svg path,
 }
 
 .description-guidelines-avoid-wrapper {
-  margin: 0;
+  margin: 1.5rem 0 0 0;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   background-color: #fff5f5;
@@ -765,4 +765,15 @@ label svg path,
   border-radius: var(--border-radius-medium);
   width: fit-content;
   color: #c53030;
+}
+
+.description-guidelines-green {
+  margin: 0 0 2rem 0 !important;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  background-color: #f0f9eb;
+  border: 1px solid #2e7d32;
+  border-radius: var(--border-radius-medium);
+  width: fit-content;
+  color: #2e7d32;
 }
