@@ -671,6 +671,7 @@ label svg path,
 
 .form-row-thirds {
   flex-direction: row !important;
+  gap: 1rem !important;
 }
 
 .form-row {
