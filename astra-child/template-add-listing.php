@@ -514,10 +514,10 @@ get_header(); ?>
 								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
 								
 								<div class="form-row">
-									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
+									<textarea id="description" name="description" class="form-control" rows="5" required placeholder="Enter your description here..."></textarea>
 								</div>
 								<div class="description-guidelines-avoid-wrapper">
-									<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
+									<p class="description-guidelines-avoid"><strong><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></strong></p>
 									<ul class="description-guidelines-list">
 										<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
 										<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
