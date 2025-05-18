@@ -628,3 +628,26 @@ transition: all 0.1s ease;
   bottom: 0;
   z-index: 1;
 } */
+
+
+/* SVG Icon Styles */
+h2 svg,
+label svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    margin-right: 0.5rem;
+}
+
+.upload-message svg {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Ensure SVG icons maintain their color */
+h2 svg path,
+label svg path,
+.upload-message svg path {
+    fill: currentColor;
+}
