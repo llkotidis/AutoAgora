@@ -10,7 +10,11 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
+require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
+
 // Ensure the distance calculation function is available
+// MOVED - now included above
+/*
 if (!function_exists('autoagora_calculate_distance')) {
     // If it's in car-listings.php, and this file can't always assume car-listings.php has run,
     // it might be better to move autoagora_calculate_distance to a common file or duplicate it here carefully.
@@ -20,6 +24,7 @@ if (!function_exists('autoagora_calculate_distance')) {
     // If car-listings.php includes this file, then it might be okay.
     // Temporary: if it's not found, it will cause an error later.
 }
+*/
 
 /**
  * Builds the WP_Query arguments array for car listings based on shortcode attributes and GET parameters.
@@ -85,14 +90,6 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         $matching_location_car_ids = array();
 
         if ($all_car_ids_query->have_posts()) {
-            if (!function_exists('autoagora_calculate_distance')) {
-                // Attempt to include it if missing - this is a fallback, better to ensure it's always available.
-                $car_listings_path = get_stylesheet_directory() . '/includes/car-listings.php';
-                if (file_exists($car_listings_path)) {
-                    require_once $car_listings_path;
-                }
-            }
-
             if (function_exists('autoagora_calculate_distance')) {
                 foreach ($all_car_ids_query->posts as $car_id) {
                     $car_latitude = get_field('car_latitude', $car_id);

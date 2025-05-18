@@ -10,6 +10,7 @@
 require_once __DIR__ . '/car-listings-data.php';
 require_once __DIR__ . '/car-listings-query.php'; // Added this line
 require_once __DIR__ . '/car-filter-form.php'; // Include the new filter form file
+require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
 // require_once __DIR__ . '/car-listings-render.php'; // Potential future file
 
 // Register the shortcode
@@ -342,6 +343,8 @@ function display_car_listings($atts) {
 }
 
 // Helper function to calculate distance (Haversine formula)
+// MOVED to geo-utils.php
+/*
 if (!function_exists('autoagora_calculate_distance')) {
     function autoagora_calculate_distance($lat1, $lon1, $lat2, $lon2, $unit = 'K') {
         if (($lat1 == $lat2) && ($lon1 == $lon2)) {
@@ -364,6 +367,7 @@ if (!function_exists('autoagora_calculate_distance')) {
         }
     }
 }
+*/
 
 // AJAX handler for filtering listings
 add_action('wp_ajax_filter_listings_by_location', 'autoagora_filter_listings_by_location_ajax');
