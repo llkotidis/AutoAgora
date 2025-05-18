@@ -32,7 +32,8 @@
   background: var(--light-bg);
 border: var(--border);
 border-radius: var(--border-radius-large);
-padding: 2rem;
+padding: 3rem;
+max-width: 500px;
 color: var(--text-color);
 display: flex;
 flex-direction: column;
@@ -52,6 +53,19 @@ text-align: center;
 
 .image-upload-note {
   font-size: 0.875rem;
+}
+
+.input-wrapper {
+  padding: 2rem;
+border: var(--border);
+border-radius: var(--border-radius-large);
+}
+
+#add-car-listing-form {
+  display: flex;
+flex-direction: column;
+gap: 2rem;
+margin: 3rem 0 0 0;
 }
 
 /* .page-add-listing {
