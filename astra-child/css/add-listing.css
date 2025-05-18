@@ -705,7 +705,8 @@ label svg path,
   gap: 0.5rem;
 }
 
-.vehicle-history-option {
+.vehicle-history-option,
+.extra-option {
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -717,20 +718,25 @@ label svg path,
 }
 
 .vehicle-history-option,
-.vehicle-history-option * {
+.vehicle-history-option *,
+.extra-option,
+.extra-option * {
   cursor: pointer;
 }
 
-.vehicle-history-option label {
+.vehicle-history-option label,
+.extra-option label {
   font-weight: 400 !important;
   font-size: 1rem !important;
 }
 
-.vehicle-history-option:hover {
+.vehicle-history-option:hover,
+.extra-option:hover {
   border: var(--border);
 }
 
-.vehicle-history-grid {
+.vehicle-history-grid,
+.extras-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
