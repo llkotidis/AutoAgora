@@ -698,3 +698,29 @@ label svg path,
   grid-template-columns: 3fr 1fr;
   gap: 1rem;
 }
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vehicle-history-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--light-bg);
+  border-radius: var(--border-radius-large);
+  border: 1px solid var(--light-bg);
+  transition: border 0.2s ease;
+}
+
+.vehicle-history-option:hover {
+  border: var(--border);
+}
+
+.vehicle-history-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
