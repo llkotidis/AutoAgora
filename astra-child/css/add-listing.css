@@ -723,4 +723,5 @@ label svg path,
 .vehicle-history-grid {
   display: flex;
   flex-wrap: wrap;
+  gap: 1rem;
 }
