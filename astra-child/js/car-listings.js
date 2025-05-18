@@ -236,6 +236,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeFilters = document.querySelector(".close-filters");
   const filterForm = document.getElementById("car-filter-form-listings_page");
 
+  // --- Define Selectors after filterForm is confirmed to exist ---
+  let makeSelect, modelSelect, variantSelect;
+  if (filterForm) {
+      makeSelect = filterForm.querySelector('select[name="make"]');
+      modelSelect = filterForm.querySelector('select[name="model"]');
+      variantSelect = filterForm.querySelector('select[name="variant"]');
+  }
+
   // Check if essential elements exist
   if (!filtersButton || !filtersPopup || !closeFilters || !filterForm) {
     // Don't throw error, just exit if filter elements aren't on the page

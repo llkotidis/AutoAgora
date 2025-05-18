@@ -430,23 +430,25 @@ function ajax_update_filter_counts_handler() {
     }
 
     // Define filter fields and their types (simple meta, taxonomy, range)
+    // IMPORTANT: 'meta_key' should be the actual ACF field key.
+    // 'choices_function' can be used if PHP needs to know all possible choices for zero-count scenarios.
     $all_filter_definitions = [
-        'location'       => ['type' => 'simple', 'multi' => false],
-        'make'           => ['type' => 'simple', 'multi' => false],
-        'model'          => ['type' => 'simple', 'multi' => false],
-        'variant'        => ['type' => 'simple', 'multi' => false],
-        'fuel_type'      => ['type' => 'simple', 'multi' => true],
-        'transmission'   => ['type' => 'simple', 'multi' => true],
-        'exterior_color' => ['type' => 'simple', 'multi' => true],
-        'interior_color' => ['type' => 'simple', 'multi' => true],
-        'body_type'      => ['type' => 'simple', 'multi' => true],
-        'drive_type'     => ['type' => 'simple', 'multi' => true],
-        'year_min'       => ['type' => 'range_min', 'multi' => false],
-        'year_max'       => ['type' => 'range_max', 'multi' => false],
-        'engine_min'     => ['type' => 'range_min', 'multi' => false],
-        'engine_max'     => ['type' => 'range_max', 'multi' => false],
-        'mileage_min'    => ['type' => 'range_min', 'multi' => false],
-        'mileage_max'    => ['type' => 'range_max', 'multi' => false],
+        // Location is handled separately, not part of this spec filter definition for counts.
+        'make'           => ['type' => 'simple',       'meta_key' => 'make',           'multi' => false],
+        'model'          => ['type' => 'simple',       'meta_key' => 'model',          'multi' => false],
+        'variant'        => ['type' => 'simple',       'meta_key' => 'variant',        'multi' => false],
+        'fuel_type'      => ['type' => 'simple',       'meta_key' => 'fuel_type',      'multi' => true],
+        'transmission'   => ['type' => 'simple',       'meta_key' => 'transmission',   'multi' => true],
+        'exterior_color' => ['type' => 'simple',       'meta_key' => 'exterior_color', 'multi' => true],
+        'interior_color' => ['type' => 'simple',       'meta_key' => 'interior_color', 'multi' => true],
+        'body_type'      => ['type' => 'simple',       'meta_key' => 'body_type',      'multi' => true],
+        'drive_type'     => ['type' => 'simple',       'meta_key' => 'drive_type',     'multi' => true],
+        'year_min'       => ['type' => 'range_min',    'meta_key' => 'year',           'multi' => false, 'choices_function' => 'get_year_choices_for_filter'],
+        'year_max'       => ['type' => 'range_max',    'meta_key' => 'year',           'multi' => false, 'choices_function' => 'get_year_choices_for_filter'],
+        'engine_min'     => ['type' => 'range_min',    'meta_key' => 'engine_capacity','multi' => false, 'choices_function' => 'get_engine_choices_for_filter'],
+        'engine_max'     => ['type' => 'range_max',    'meta_key' => 'engine_capacity','multi' => false, 'choices_function' => 'get_engine_choices_for_filter'],
+        'mileage_min'    => ['type' => 'range_min',    'meta_key' => 'mileage',        'multi' => false, 'choices_function' => 'get_mileage_choices_for_filter'],
+        'mileage_max'    => ['type' => 'range_max',    'meta_key' => 'mileage',        'multi' => false, 'choices_function' => 'get_mileage_choices_for_filter'],
     ];
 
     // Build the MAIN meta_query from received filters
@@ -535,24 +537,33 @@ function ajax_update_filter_counts_handler() {
         // If no cars match the current COMBINATION of spec filters and location,
         // then counts for all other fields will be zero.
         $all_counts = array();
+        // Populate $all_counts with zero counts for all defined filters
         foreach (array_keys($all_filter_definitions) as $filter_key_for_zero_count) {
-            if ($all_filter_definitions[$filter_key_for_zero_count]['type'] === 'range') {
-                // For range filters, we need to provide the cumulative count structure even if it's all zeros.
-                $all_counts[$filter_key_for_zero_count . '_min_cumulative_counts'] = array();
-                $all_counts[$filter_key_for_zero_count . '_max_cumulative_counts'] = array();
-                // Initialize with all possible options having 0 count.
-                // This requires knowing the $choices for these ranges.
-                // This part might need to fetch $year_choices, $mileage_choices, $engine_choices similarly to how it's done in car-filter-form.php
-                // For now, let JS handle displaying options and PHP just sends empty count arrays if no base cars.
-            } else {
-                $all_counts[$filter_key_for_zero_count] = array();
-            }
-        }
-        // Make sure specific make/model/variant structures are also empty if needed by JS
-        $all_counts['make'] = [];
-        $all_counts['modelByMake'] = []; // Or however JS expects it
-        $all_counts['variantByModel'] = [];
+             $def = $all_filter_definitions[$filter_key_for_zero_count];
+             $def_type = $def['type'];
+             $meta_key_for_choices = $def['meta_key'] ?? $filter_key_for_zero_count;
 
+             if ($def_type === 'range_min') { // Only need to init for _min or _max once per range base
+                 $all_counts[$meta_key_for_choices . '_min_cumulative_counts'] = array();
+                 $all_counts[$meta_key_for_choices . '_max_cumulative_counts'] = array();
+             } elseif ($def_type === 'simple') {
+                 $all_counts[$filter_key_for_zero_count] = array(); // JS expects an object/array for counts
+                 // If you have a way to get all possible choices for this simple field from PHP, you could initialize them to 0 here.
+                 // For example, if choices_function was defined for simple types:
+                 // if (isset($def['choices_function']) && function_exists($def['choices_function'])) {
+                 //    $choices = $def['choices_function']();
+                 //    foreach (array_keys($choices) as $choice_val) {
+                 //        $all_counts[$filter_key_for_zero_count][$choice_val] = 0;
+                 //    }
+                 // }
+             }
+        }
+        // Ensure specific keys expected by JS for make/model/variant are present
+        if (!isset($all_counts['make'])) $all_counts['make'] = [];
+        if (!isset($all_counts['model'])) $all_counts['model'] = [];
+        if (!isset($all_counts['variant'])) $all_counts['variant'] = [];
+
+        $debug_info['zero_counts_because_no_base_matches'] = $all_counts;
         wp_send_json_success($all_counts);
         return;
     }
@@ -561,67 +572,121 @@ function ajax_update_filter_counts_handler() {
     $all_counts = array();
     global $wpdb;
 
-    foreach ($filters as $field_to_count => $value) {
-        $definition_to_count = $all_filter_definitions[$field_to_count] ?? null;
-        if ($definition_to_count) {
-            // --- Calculate counts for the current $field_to_count ---
-            $current_field_meta_query = $meta_query; // Start with base meta query from active filters
-            $current_field_tax_query = $tax_query;   // Start with base tax query
-            $current_field_post_in = $matching_post_ids; // Crucially, work with IDs that ALREADY MATCHED other filters AND location
+    // Iterate over ALL defined filter fields to calculate their available counts
+    foreach ($all_filter_definitions as $field_to_count => $definition_to_count) {
+        // $field_to_count is like 'make', 'year_min', 'fuel_type'
+        // $definition_to_count is its corresponding entry from $all_filter_definitions
 
-            // Temporarily remove the filter for the field we are currently counting,
-            // to get available options for THIS field based on OTHER active filters.
-            if ($definition_to_count['type'] === 'simple' || $definition_to_count['type'] === 'taxonomy') {
-                // Remove the filter for the current field from the query
-                $current_field_meta_query = array('relation' => 'AND');
-                $current_field_tax_query = array('relation' => 'AND');
-                $current_field_post_in = $matching_post_ids; // Use the existing matching IDs
-            }
+        $temp_meta_query = $meta_query; // Base meta query from active filters
+        $temp_tax_query = $tax_query;   // Base tax query
 
-            // Build the query to count the current field based on the contextual query
-            $count_query_args = array(
-                'post_type'      => 'car',
-                'post_status'    => 'publish',
-                'fields'         => 'ids', 
-                'posts_per_page' => -1,
-                'meta_query'     => $current_field_meta_query, 
-                'tax_query'      => $current_field_tax_query,
-                // IMPORTANT: Apply the base set of IDs (already filtered by location and other specs)
-                // This was missing, counts were too broad.
-                'post__in'       => $current_field_post_in 
-            );
+        // If the field_to_count is ITSELF an active filter, we need to temporarily remove it
+        // from $temp_meta_query or $temp_tax_query to get counts for its available options
+        // based on *other* active filters.
+        $meta_key_of_field_being_counted = $definition_to_count['meta_key'] ?? $field_to_count;
 
-            // If counting a range, we don't modify the $current_field_meta_query for the range itself further,
-            // the get_cumulative_range_counts_for_field handles it by iterating over $matching_post_ids.
-
-            if ($definition_to_count['type'] !== 'range') {
-                $field_values_query = new WP_Query($count_query_args);
-                $ids_for_this_field_count = $field_values_query->posts;
-            } else {
-                // For range, we use the $matching_post_ids directly with the helper
-                $ids_for_this_field_count = $matching_post_ids;
-            }
-
-            // --- Calculate counts for the current $field_to_count ---
-            $field_counts = array();
-            foreach ($ids_for_this_field_count as $pid) {
-                $value = get_post_meta($pid, $field_to_count, true);
-                if (!empty($value)) {
-                    if (is_array($value)) { // Handle ACF fields that might return array (e.g. checkbox)
-                        foreach ($value as $single_val) {
-                            $field_counts[$single_val] = ($field_counts[$single_val] ?? 0) + 1;
-                        }
+        if (isset($filters[$field_to_count])) { // Check if the field_to_count itself is an active filter
+            if ($definition_to_count['type'] === 'simple' || strpos($definition_to_count['type'], 'range_') === 0) {
+                $new_temp_meta = array('relation' => 'AND');
+                foreach ($temp_meta_query as $idx => $q_part) {
+                    if (is_array($q_part) && isset($q_part['key']) && $q_part['key'] === $meta_key_of_field_being_counted) {
+                        // Skip this part if it's filtering the field we are currently counting
                     } else {
-                        $field_counts[$value] = ($field_counts[$value] ?? 0) + 1;
+                        $new_temp_meta[] = $q_part;
                     }
+                }
+                $temp_meta_query = $new_temp_meta;
+            } elseif ($definition_to_count['type'] === 'taxonomy') {
+                // Similar logic for tax_query if needed, though not common for car specs here
+            }
+        }
+        
+        // Construct the query to get IDs for calculating counts for the current $field_to_count
+        $ids_for_this_count_args = array(
+            'post_type'      => 'car',
+            'post_status'    => 'publish',
+            'fields'         => 'ids', 
+            'posts_per_page' => -1,
+            'meta_query'     => $temp_meta_query, 
+            'tax_query'      => $temp_tax_query,
+        );
+        if ($location_filtered_post_ids !== null) {
+            // If location filter is active, all count queries must respect it.
+            $ids_for_this_count_args['post__in'] = $location_filtered_post_ids;
+        }
+
+        $ids_for_this_field_value_query = new WP_Query($ids_for_this_count_args);
+        $ids_to_get_values_from = $ids_for_this_field_value_query->posts;
+
+        if (empty($ids_to_get_values_from)) {
+            // If no posts match (e.g., location + other spec filters yield no results for this specific field's context)
+            // Initialize counts for this field as empty/zero.
+            if (strpos($definition_to_count['type'], 'range_') === 0) {
+                $base_range_key = $definition_to_count['meta_key'];
+                $all_counts[$base_range_key . '_min_cumulative_counts'] = array();
+                $all_counts[$base_range_key . '_max_cumulative_counts'] = array();
+            } else {
+                $all_counts[$field_to_count] = array();
+            }
+            continue; // Skip to next field_to_count
+        }
+
+        // Now, get the actual values for $field_to_count from $ids_to_get_values_from and count them
+        $actual_meta_key_to_get = $definition_to_count['meta_key'];
+
+        if ($definition_to_count['type'] === 'simple') {
+            $field_counts = array();
+            foreach ($ids_to_get_values_from as $pid) {
+                $value = get_post_meta($pid, $actual_meta_key_to_get, true);
+                if ($definition_to_count['multi'] && is_string($value)) { // Handle comma-separated stored as string for multi-select
+                    $value_array = array_map('trim', explode(',', $value));
+                    foreach ($value_array as $v_single) {
+                        if (!empty($v_single)) {
+                           $field_counts[$v_single] = ($field_counts[$v_single] ?? 0) + 1;
+                        }
+                    }
+                } elseif (is_array($value)) { // Handle ACF fields that genuinely return array (e.g. checkbox)
+                     foreach($value as $v_single){
+                        if (!empty($v_single)) {
+                           $field_counts[$v_single] = ($field_counts[$v_single] ?? 0) + 1;
+                        }
+                    }
+                } elseif (!empty($value) && is_string($value)) { // Single value
+                    $field_counts[$value] = ($field_counts[$value] ?? 0) + 1;
                 }
             }
             $all_counts[$field_to_count] = $field_counts;
+        } elseif (strpos($definition_to_count['type'], 'range_') === 0) {
+            $choices_func_name = $definition_to_count['choices_function'] ?? null;
+            $range_choices = [];
+            if ($choices_func_name && function_exists($choices_func_name)) {
+                $range_choices = $choices_func_name(); // e.g. get_year_choices_for_filter()
+            } else {
+                // Fallback to get distinct values from the DB if no choices function is defined
+                // This ensures even dynamically added years/mileages etc., could be counted.
+                $distinct_values = $wpdb->get_col($wpdb->prepare(
+                    "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN (" . implode(',', array_fill(0, count($ids_to_get_values_from), '%d')) . ") ORDER BY CAST(meta_value AS SIGNED) ASC",
+                    array_merge([$actual_meta_key_to_get], $ids_to_get_values_from)
+                ));
+                foreach ($distinct_values as $dv) {
+                    if (is_numeric($dv)) $range_choices[strval($dv)] = strval($dv);
+                }
+            }
+
+            $cumulative_counts = get_cumulative_range_counts_for_field($actual_meta_key_to_get, $range_choices, $ids_to_get_values_from);
+            $all_counts[$actual_meta_key_to_get . '_min_cumulative_counts'] = $cumulative_counts['min_counts'];
+            $all_counts[$actual_meta_key_to_get . '_max_cumulative_counts'] = $cumulative_counts['max_counts'];
         }
+        // Add other types like 'taxonomy' if needed
     }
     $debug_info['final_all_counts'] = $all_counts;
 
-    wp_send_json_success($all_counts); // $all_counts now contains counts for each filter field
+    // Ensure specific keys expected by JS for make/model/variant are present, even if empty
+    if (!isset($all_counts['make'])) $all_counts['make'] = [];
+    if (!isset($all_counts['model'])) $all_counts['model'] = [];
+    if (!isset($all_counts['variant'])) $all_counts['variant'] = [];
+
+    wp_send_json_success($all_counts);
 }
 
 // Helper function to get default choices for a range if specific choices_function isn't available
