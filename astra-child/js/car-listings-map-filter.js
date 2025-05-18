@@ -29,33 +29,64 @@ jQuery(document).ready(function($) {
     radiusValueDisplay.text(currentRadiusKm);
     currentLocationText.text(selectedLocationName);
 
-    // --- Initialize from URL parameters if present ---\
+    // --- Initialize from URL parameters if present ---
     const urlParams = new URLSearchParams(window.location.search);
     const urlLat = urlParams.get('lat');
     const urlLng = urlParams.get('lng');
     const urlRadius = urlParams.get('radius');
     const urlLocationName = urlParams.get('location_name');
 
+    let loadedFromStorage = false;
+
     if (urlLat && urlLng && urlRadius) {
         initialFilter = {
             lat: parseFloat(urlLat),
             lng: parseFloat(urlLng),
             radius: parseInt(urlRadius, 10),
-            text: urlLocationName || 'Selected on map' // Use provided name or a default
+            text: urlLocationName || 'Selected on map'
         };
         selectedCoords = [initialFilter.lng, initialFilter.lat];
         currentRadiusKm = initialFilter.radius;
         selectedLocationName = initialFilter.text;
-
-        // Update UI elements based on URL parameters
-        radiusSlider.val(currentRadiusKm);
-        radiusValueDisplay.text(currentRadiusKm);
-        currentLocationText.text(selectedLocationName);
         console.log('[Init] Loaded filter from URL:', initialFilter);
     } else {
-        console.log('[Init] No location filter found in URL, using defaults or WP localized data.');
+        // --- Try to load from localStorage if not in URL ---
+        const savedLocation = localStorage.getItem('autoAgoraUserLocation');
+        if (savedLocation) {
+            try {
+                const parsedLocation = JSON.parse(savedLocation);
+                if (parsedLocation.lat && parsedLocation.lng && parsedLocation.radius) {
+                    initialFilter = {
+                        lat: parseFloat(parsedLocation.lat),
+                        lng: parseFloat(parsedLocation.lng),
+                        radius: parseInt(parsedLocation.radius, 10),
+                        text: parsedLocation.name || 'Saved location'
+                    };
+                    selectedCoords = [initialFilter.lng, initialFilter.lat];
+                    currentRadiusKm = initialFilter.radius;
+                    selectedLocationName = initialFilter.text;
+                    loadedFromStorage = true;
+                    console.log('[Init] Loaded filter from localStorage:', initialFilter);
+                }
+            } catch (e) {
+                console.error('[Init] Error parsing location from localStorage:', e);
+                localStorage.removeItem('autoAgoraUserLocation'); // Clear corrupted data
+            }
+        }
     }
-    // --- End Initialize from URL parameters ---\
+
+    // Update UI elements (either from URL, localStorage, or defaults via wp_localize_script)
+    radiusSlider.val(currentRadiusKm);
+    radiusValueDisplay.text(currentRadiusKm);
+    currentLocationText.text(selectedLocationName);
+    if (loadedFromStorage) {
+        console.log('[Init] UI updated with localStorage data.');
+    } else if (urlLat && urlLng && urlRadius) {
+        console.log('[Init] UI updated with URL data.');
+    } else {
+        console.log('[Init] No location filter in URL or localStorage, UI reflects defaults.');
+    }
+    // --- End Initialize from URL parameters / localStorage ---
 
     changeLocationBtn.on('click', function() {
         modal.show();
@@ -376,15 +407,23 @@ jQuery(document).ready(function($) {
 
             // Update URL
             const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('lat', lat.toFixed(7)); // Keep precision
+            currentUrl.searchParams.set('lat', lat.toFixed(7));
             currentUrl.searchParams.set('lng', lng.toFixed(7));
             currentUrl.searchParams.set('radius', radius.toString());
-            currentUrl.searchParams.set('location_name', locationName); // Store the display name too
-            // Remove paged if starting a new location filter
-            currentUrl.searchParams.delete('paged'); 
-
+            currentUrl.searchParams.set('location_name', locationName);
+            currentUrl.searchParams.delete('paged');
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
             console.log('[ApplyFilter] URL updated to:', currentUrl.href);
+
+            // Save to localStorage
+            const preferredLocation = {
+                lat: lat,
+                lng: lng,
+                radius: radius,
+                name: locationName
+            };
+            localStorage.setItem('autoAgoraUserLocation', JSON.stringify(preferredLocation));
+            console.log('[ApplyFilter] Location saved to localStorage:', preferredLocation);
 
         } else {
             // If no specific coords (e.g., user clears map and applies "All of Cyprus")
@@ -401,6 +440,10 @@ jQuery(document).ready(function($) {
             currentUrl.searchParams.delete('paged');
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
             console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
+
+            // Clear from localStorage
+            localStorage.removeItem('autoAgoraUserLocation');
+            console.log('[ApplyFilter] Location cleared from localStorage.');
         }
     });
 
