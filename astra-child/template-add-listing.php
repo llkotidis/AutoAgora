@@ -229,7 +229,7 @@ get_header(); ?>
 											<label for="location"><?php echo get_svg_icon('location-dot'); ?> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
 											<div class="location-input-wrapper">
 												<input type="text" id="location" name="location" class="form-control" required readonly>
-												<button type="button" class="btn btn-secondary choose-location-btn">Choose Location ></button>
+												<button type="button" class="btn btn-secondary choose-location-btn"><?php echo get_svg_icon('map-location-dot'); ?> Choose Location</button>
 												</div>
 										</div>
 
