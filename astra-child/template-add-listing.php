@@ -286,7 +286,7 @@ get_header(); ?>
 
 										<div class="form-row form-row-halves">
 											<div class="form-half">
-												<label for="drive_type"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
+												<label for="drive_type"><?php echo get_svg_icon('tire'); ?> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
 												<select id="drive_type" name="drive_type" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
 													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
@@ -296,10 +296,10 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-half">
-												<label for="hp"><?php echo get_svg_icon('horse'); ?> <?php esc_html_e( 'HorsePower (Optional)', 'astra-child' ); ?></label>
+												<label for="hp"><?php echo get_svg_icon('engine'); ?> <?php esc_html_e( 'Horsepower (Optional)', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
 													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1">
-													<span class="input-suffix">HP</span>
+													<span class="input-suffix">hp</span>
 												</div>
 											</div>
 										</div>
@@ -330,7 +330,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="number_of_doors"><?php echo get_svg_icon('door-closed'); ?> <?php esc_html_e( 'Number of Doors', 'astra-child' ); ?></label>
+												<label for="number_of_doors"><?php echo get_svg_icon('car-door'); ?> <?php esc_html_e( 'Number of Doors', 'astra-child' ); ?></label>
 												<select id="number_of_doors" name="number_of_doors" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
 													<?php
@@ -357,7 +357,7 @@ get_header(); ?>
 
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="exterior_color"><?php echo get_svg_icon('palette'); ?> <?php esc_html_e( 'Exterior Color', 'astra-child' ); ?></label>
+												<label for="exterior_color"><?php echo get_svg_icon('paintbrush'); ?> <?php esc_html_e( 'Exterior Color', 'astra-child' ); ?></label>
 												<select id="exterior_color" name="exterior_color" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Exterior Color', 'astra-child' ); ?></option>
 													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
