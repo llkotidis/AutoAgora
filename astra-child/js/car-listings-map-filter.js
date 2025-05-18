@@ -508,6 +508,24 @@ jQuery(document).ready(function($) {
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
+                    // Re-initialize features for the new content
+                    if (typeof reinitializeCarousels === "function") {
+                        console.log('[MapFilter AJAX] Calling reinitializeCarousels');
+                        reinitializeCarousels();
+                    }
+                    if (typeof reinitializeFavoriteButtons === "function") {
+                        console.log('[MapFilter AJAX] Calling reinitializeFavoriteButtons');
+                        reinitializeFavoriteButtons();
+                    }
+                    if (typeof updateResultsCounter === "function") {
+                         console.log('[MapFilter AJAX] Calling updateResultsCounter');
+                        // Ensure data.query_vars.found_posts is available and a number
+                        const totalResults = (response.data && typeof response.data.query_vars && typeof response.data.query_vars.found_posts !== 'undefined') 
+                                             ? parseInt(response.data.query_vars.found_posts, 10) 
+                                             : null;
+                        updateResultsCounter(isNaN(totalResults) ? null : totalResults);
+                    }
+
                     // Calculate and display distances if location filter is active
                     if (lat !== null && lng !== null && radius !== null) {
                         const pinLocation = turf.point([lng, lat]);
