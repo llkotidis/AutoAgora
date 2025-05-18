@@ -670,9 +670,7 @@ label svg path,
 }
 
 .form-row-thirds {
-  display: flex;
-  flex-direction: row;
-  gap: .5rem;
+  flex-direction: row !important;
 }
 
 .form-row {
