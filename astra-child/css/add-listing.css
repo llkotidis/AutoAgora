@@ -40,6 +40,10 @@
   color: #C53030;
 }
 
+.upload-message i {
+  color: var(--dark-blue);
+}
+
 #file-upload-area {
   background: var(--light-bg);
   border: var(--border);
