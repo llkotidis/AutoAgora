@@ -35,7 +35,7 @@ if (is_dir($add_listing_jsons_dir)) {
 wp_enqueue_script('jquery');
 
 // Enqueue Font Awesome
-wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
+// wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
 
 // Enqueue add-listing script
 wp_enqueue_script(
@@ -152,12 +152,12 @@ get_header(); ?>
 							<input type="hidden" name="post_type" value="car">
 
 							<div class="add-listing-images-section input-wrapper">
-								<h2><i class="fas fa-camera"></i> <?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
+								<h2><?php echo get_svg_icon('camera'); ?> <?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
 								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
 								<div class="image-upload-container">
 									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
 										<div class="upload-message">
-											<i class="fas fa-cloud-upload-alt"></i>
+											<?php echo get_svg_icon('cloud-arrow-up'); ?>
 											<p><?php esc_html_e( 'Drag & Drop Images Here', 'astra-child' ); ?></p>
 											<p class="small"><?php esc_html_e( 'or click to select files', 'astra-child' ); ?></p>
 										</div>
@@ -173,10 +173,10 @@ get_header(); ?>
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
 									<div class="form-section basic-details-section input-wrapper">
-										<h2><i class="fas fa-info-circle"></i> <?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
+										<h2><?php echo get_svg_icon('circle-info'); ?> <?php esc_html_e( 'Basic Details', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="make"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Make', 'astra-child' ); ?></label>
+												<label for="make"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Make', 'astra-child' ); ?></label>
 												<select id="make" name="make" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Make', 'astra-child' ); ?></option>
 													<?php
@@ -187,13 +187,13 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="model"><i class="fas fa-car"></i> <?php esc_html_e( 'Model', 'astra-child' ); ?></label>
+												<label for="model"><?php echo get_svg_icon('car'); ?> <?php esc_html_e( 'Model', 'astra-child' ); ?></label>
 												<select id="model" name="model" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Model', 'astra-child' ); ?></option>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="variant"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Variant', 'astra-child' ); ?></label>
+												<label for="variant"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Variant', 'astra-child' ); ?></label>
 												<select id="variant" name="variant" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Variant', 'astra-child' ); ?></option>
 												</select>
@@ -213,26 +213,26 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="mileage"><i class="fas fa-road"></i> <?php esc_html_e( 'Mileage', 'astra-child' ); ?></label>
+												<label for="mileage"><?php echo get_svg_icon('road'); ?> <?php esc_html_e( 'Mileage', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
 													<input type="text" id="mileage" name="mileage" class="form-control" required>
 													<span class="input-suffix">km</span>
 												</div>
 											</div>
 											<div class="form-third">
-												<label for="price"><i class="fas fa-euro-sign"></i> <?php esc_html_e( 'Price', 'astra-child' ); ?></label>
+												<label for="price"><?php echo get_svg_icon('euro-sign'); ?> <?php esc_html_e( 'Price', 'astra-child' ); ?></label>
 												<input type="text" id="price" name="price" class="form-control" required>
 											</div>
 										</div>
 
 										<div class="form-row">
-											<label for="location"><i class="fas fa-map-pin"></i> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
+											<label for="location"><?php echo get_svg_icon('location-dot'); ?> <?php esc_html_e( 'Location', 'astra-child' ); ?></label>
 											<input type="text" id="location" name="location" class="form-control" required readonly>
 											<button type="button" class="btn btn-secondary choose-location-btn">Choose Location ></button>
 										</div>
 
 										<div class="form-row">
-											<label for="availability"><i class="fas fa-truck"></i> <?php esc_html_e( 'Availability', 'astra-child' ); ?></label>
+											<label for="availability"><?php echo get_svg_icon('truck'); ?> <?php esc_html_e( 'Availability', 'astra-child' ); ?></label>
 											<select id="availability" name="availability" class="form-control" required>
 												<option value=""><?php esc_html_e( 'Select Availability', 'astra-child' ); ?></option>
 												<option value="In Stock"><?php esc_html_e( 'In Stock', 'astra-child' ); ?></option>
@@ -242,10 +242,10 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section engine-performance-section input-wrapper">
-										<h2><i class="fas fa-tachometer-alt"></i> <?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
+										<h2><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="engine_capacity"><i class="fas fa-tachometer-alt"></i> <?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
+												<label for="engine_capacity"><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
 												<select id="engine_capacity" name="engine_capacity" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Engine Capacity', 'astra-child' ); ?></option>
 													<?php
@@ -257,7 +257,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="fuel_type"><i class="fas fa-gas-pump"></i> <?php esc_html_e( 'Fuel Type', 'astra-child' ); ?></label>
+												<label for="fuel_type"><?php echo get_svg_icon('gas-pump'); ?> <?php esc_html_e( 'Fuel Type', 'astra-child' ); ?></label>
 												<select id="fuel_type" name="fuel_type" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Fuel Type', 'astra-child' ); ?></option>
 													<option value="Petrol"><?php esc_html_e( 'Petrol', 'astra-child' ); ?></option>
@@ -273,7 +273,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="transmission"><i class="fas fa-cog"></i> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
+												<label for="transmission"><?php echo get_svg_icon('gear'); ?> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
 												<select id="transmission" name="transmission" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Transmission', 'astra-child' ); ?></option>
 													<option value="Automatic"><?php esc_html_e( 'Automatic', 'astra-child' ); ?></option>
@@ -284,7 +284,7 @@ get_header(); ?>
 
 										<div class="form-row form-row-halves">
 											<div class="form-half">
-												<label for="drive_type"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
+												<label for="drive_type"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Drive Type', 'astra-child' ); ?></label>
 												<select id="drive_type" name="drive_type" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Drive Type', 'astra-child' ); ?></option>
 													<option value="Front-Wheel Drive"><?php esc_html_e( 'Front-Wheel Drive', 'astra-child' ); ?></option>
@@ -294,7 +294,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-half">
-												<label for="hp"><i class="fas fa-horse"></i> <?php esc_html_e( 'HorsePower (Optional)', 'astra-child' ); ?></label>
+												<label for="hp"><?php echo get_svg_icon('horse'); ?> <?php esc_html_e( 'HorsePower (Optional)', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
 													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1">
 													<span class="input-suffix">HP</span>
@@ -304,10 +304,10 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section body-design-section input-wrapper">
-										<h2><i class="fas fa-car-side"></i> <?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
+										<h2><?php echo get_svg_icon('car'); ?> <?php esc_html_e( 'Body & Design', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="body_type"><i class="fas fa-car-side"></i> <?php esc_html_e( 'Body Type', 'astra-child' ); ?></label>
+												<label for="body_type"><?php echo get_svg_icon('car-side'); ?> <?php esc_html_e( 'Body Type', 'astra-child' ); ?></label>
 												<select id="body_type" name="body_type" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Body Type', 'astra-child' ); ?></option>
 													<option value="Hatchback"><?php esc_html_e( 'Hatchback', 'astra-child' ); ?></option>
@@ -328,7 +328,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="number_of_doors"><i class="fas fa-door-closed"></i> <?php esc_html_e( 'Number of Doors', 'astra-child' ); ?></label>
+												<label for="number_of_doors"><?php echo get_svg_icon('door-closed'); ?> <?php esc_html_e( 'Number of Doors', 'astra-child' ); ?></label>
 												<select id="number_of_doors" name="number_of_doors" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Doors', 'astra-child' ); ?></option>
 													<?php
@@ -340,7 +340,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="number_of_seats"><i class="fas fa-chair"></i> <?php esc_html_e( 'Number of Seats', 'astra-child' ); ?></label>
+												<label for="number_of_seats"><?php echo get_svg_icon('chair'); ?> <?php esc_html_e( 'Number of Seats', 'astra-child' ); ?></label>
 												<select id="number_of_seats" name="number_of_seats" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Number of Seats', 'astra-child' ); ?></option>
 													<?php
@@ -355,7 +355,7 @@ get_header(); ?>
 
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="exterior_color"><i class="fas fa-palette"></i> <?php esc_html_e( 'Exterior Color', 'astra-child' ); ?></label>
+												<label for="exterior_color"><?php echo get_svg_icon('palette'); ?> <?php esc_html_e( 'Exterior Color', 'astra-child' ); ?></label>
 												<select id="exterior_color" name="exterior_color" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Exterior Color', 'astra-child' ); ?></option>
 													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
@@ -375,7 +375,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="interior_color"><i class="fas fa-palette"></i> <?php esc_html_e( 'Interior Color', 'astra-child' ); ?></label>
+												<label for="interior_color"><?php echo get_svg_icon('palette'); ?> <?php esc_html_e( 'Interior Color', 'astra-child' ); ?></label>
 												<select id="interior_color" name="interior_color" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Interior Color', 'astra-child' ); ?></option>
 													<option value="Black"><?php esc_html_e( 'Black', 'astra-child' ); ?></option>
@@ -393,9 +393,9 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section mot-section input-wrapper">
-										<h2><i class="fas fa-clipboard-list"></i> <?php esc_html_e( 'Registration & Background Info', 'astra-child' ); ?></h2>
+										<h2><?php echo get_svg_icon('clipboard-list'); ?> <?php esc_html_e( 'Registration & Background Info', 'astra-child' ); ?></h2>
 										<div class="form-row">
-											<label for="motuntil"><i class="fas fa-clipboard-check"></i> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
+											<label for="motuntil"><?php echo get_svg_icon('clipboard-check'); ?> <?php esc_html_e( 'MOT Status', 'astra-child' ); ?></label>
 											<select id="motuntil" name="motuntil" class="form-control">
 												<option value=""><?php esc_html_e( 'Select MOT Status', 'astra-child' ); ?></option>
 												<option value="Expired"><?php esc_html_e( 'Expired', 'astra-child' ); ?></option>
@@ -421,19 +421,19 @@ get_header(); ?>
 										</div>
 
 										<div class="form-row">
-											<label for="numowners"><i class="fas fa-users"></i> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
+											<label for="numowners"><?php echo get_svg_icon('users'); ?> <?php esc_html_e( 'Number of Owners', 'astra-child' ); ?></label>
 											<input type="number" id="numowners" name="numowners" class="form-control" min="1" max="99" required>
 										</div>
 
 										<div class="form-row">
 											<div class="checkbox-field">
 												<input type="checkbox" id="isantique" name="isantique" value="1">
-												<label for="isantique"><i class="fas fa-clock"></i> <?php esc_html_e( 'Registered as an Antique', 'astra-child' ); ?></label>
+												<label for="isantique"><?php echo get_svg_icon('clock'); ?> <?php esc_html_e( 'Registered as an Antique', 'astra-child' ); ?></label>
 											</div>
 										</div>
 
 										<div class="form-row">
-											<label><i class="fas fa-history"></i> <?php esc_html_e( 'Vehicle History', 'astra-child' ); ?></label>
+											<label><?php echo get_svg_icon('clock-rotate-left'); ?> <?php esc_html_e( 'Vehicle History', 'astra-child' ); ?></label>
 											<div class="vehicle-history-grid">
 												<?php
 												$vehicle_history_options = array(
@@ -468,7 +468,7 @@ get_header(); ?>
 									</div>
 
 									<div class="form-section extras-section input-wrapper">
-										<h2><i class="fas fa-plus-circle"></i> <?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
+										<h2><?php echo get_svg_icon('plus'); ?> <?php esc_html_e( 'Extras (Optional)', 'astra-child' ); ?></h2>
 										<div class="form-row">
 											<div class="extras-grid">
 												<?php
@@ -507,7 +507,7 @@ get_header(); ?>
 							</div>
 
 							<div class="add-listing-description-section input-wrapper">
-								<h2><i class="fas fa-align-left"></i> <?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<h2><?php echo get_svg_icon('align-left'); ?> <?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
 								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
 								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
 								<ul class="description-guidelines-list">

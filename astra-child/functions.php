@@ -82,3 +82,14 @@ function autoagora_enqueue_cities_data() {
     ));
 }
 add_action('wp_enqueue_scripts', 'autoagora_enqueue_cities_data');
+
+/**
+ * Include SVG icon from assets
+ */
+function get_svg_icon($icon_name) {
+    $svg_path = get_stylesheet_directory() . '/assets/svg/regular/' . $icon_name . '.svg';
+    if (file_exists($svg_path)) {
+        return file_get_contents($svg_path);
+    }
+    return '';
+}
