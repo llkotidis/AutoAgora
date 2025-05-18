@@ -86,6 +86,26 @@ jQuery(document).ready(function($) {
     } else {
         console.log('[Init] No location filter in URL or localStorage, UI reflects defaults.');
     }
+
+    // Update URL if filter was loaded from localStorage and not from URL parameters
+    if (loadedFromStorage && !(urlLat && urlLng && urlRadius)) {
+        const currentUrl = new URL(window.location.href);
+        if (initialFilter && initialFilter.lat && initialFilter.lng && initialFilter.radius && initialFilter.text) {
+            currentUrl.searchParams.set('lat', initialFilter.lat.toFixed(7));
+            currentUrl.searchParams.set('lng', initialFilter.lng.toFixed(7));
+            currentUrl.searchParams.set('radius', initialFilter.radius.toString());
+            currentUrl.searchParams.set('location_name', initialFilter.text);
+            
+            // Manage 'paged' parameter: if not in original URL, ensure it implies page 1 for the new state
+            if (!urlParams.has('paged')) {
+                currentUrl.searchParams.delete('paged'); // Or set to 1: currentUrl.searchParams.set('paged', '1');
+            }
+            history.pushState({ path: currentUrl.href }, '', currentUrl.href);
+            console.log('[Init] URL updated from localStorage data:', currentUrl.href);
+        } else {
+            console.warn('[Init] Tried to update URL from localStorage, but initialFilter data was incomplete.');
+        }
+    }
     // --- End Initialize from URL parameters / localStorage ---
 
     changeLocationBtn.on('click', function() {
@@ -525,11 +545,14 @@ jQuery(document).ready(function($) {
 
     // Initial fetch on page load, respecting URL and localStorage
     const pageToFetch = urlParams.get('paged') || 1;
-    if (initialFilter.lat && initialFilter.lng && initialFilter.radius) {
+    // Ensure initialFilter is an object and has necessary properties before trying to access them
+    if (initialFilter && typeof initialFilter === 'object' && 
+        initialFilter.hasOwnProperty('lat') && initialFilter.hasOwnProperty('lng') && initialFilter.hasOwnProperty('radius') &&
+        initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
         console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
         fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
     } else {
-        console.log('[PageLoad] No specific location active, fetching default listings.');
+        console.log('[PageLoad] No specific location active or initialFilter is incomplete/invalid, fetching default listings.', initialFilter);
         fetchFilteredListings(pageToFetch); // Fetch default (all or based on other filters)
     }
 
