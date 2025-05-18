@@ -687,3 +687,10 @@ label svg path,
   flex-direction: column;
   gap: 2rem;
 }
+
+.location-input-wrapper {
+  display: grid;
+grid-auto-flow: row;
+grid-template-columns: 2fr 1fr;
+gap: 1rem;
+}

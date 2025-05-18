@@ -189,20 +189,19 @@
 }
 
 .choose-location-btn {
-    background: #007bff;
+    background: var(--dark-blue);
     color: white;
     border: none;
     padding: 12px 24px;
-    border-radius: 6px;
+    border-radius: var(--border-radius-small);
     cursor: pointer;
-    font-size: 15px;
+    font-size: 1rem;
     font-weight: 500;
     transition: all 0.2s;
 }
 
 .choose-location-btn:hover {
-    background: #0056b3;
-    transform: translateY(-1px);
+    opacity: var(--opacity);
 }
 
 .choose-location-btn:disabled {
