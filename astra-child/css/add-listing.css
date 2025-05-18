@@ -780,7 +780,7 @@ label svg path,
 }
 
 /* gradient button */
-.gradient-button a {
+#add-car-listing-form .gradient-button a {
   padding: 0.5rem 1rem !important;
   background: linear-gradient(
     to right,
@@ -793,12 +793,16 @@ label svg path,
   border: none !important;
 }
 
-.gradient-button a:hover:not(.disabled) {
+#add-car-listing-form .gradient-button a:hover:not(.disabled) {
   opacity: var(--opacity) !important;
 }
 
-.gradient-button a.disabled {
+#add-car-listing-form .gradient-button a.disabled {
   opacity: 0.6 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
+}
+
+.extras-section {
+  gap: 0 !important;
 }
