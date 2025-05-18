@@ -168,19 +168,7 @@ get_header(); ?>
 								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
 							</div>
 
-							<div class="add-listing-description-section input-wrapper">
-								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
-								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
-								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
-								<ul class="description-guidelines-list">
-									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
-									<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
-									<li><?php esc_html_e( 'Repetitive or irrelevant details', 'astra-child' ); ?></li>
-								</ul>
-								<div class="form-row">
-									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
-								</div>
-							</div>
+							
 
 							<div class="add-listing-main-row">
 								<div class="add-listing-main-info-column">
@@ -515,6 +503,20 @@ get_header(); ?>
 											</div>
 										</div>
 									</div>
+								</div>
+							</div>
+
+							<div class="add-listing-description-section input-wrapper">
+								<h2><?php esc_html_e( 'Description', 'astra-child' ); ?></h2>
+								<p class="description-guidelines-green"><?php esc_html_e( 'Focus on condition, upgrades, or unique features.', 'astra-child' ); ?></p>
+								<p class="description-guidelines-avoid"><?php esc_html_e( 'Avoid:', 'astra-child' ); ?></p>
+								<ul class="description-guidelines-list">
+									<li><?php esc_html_e( 'Contact info', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Specs already filled in fields', 'astra-child' ); ?></li>
+									<li><?php esc_html_e( 'Repetitive or irrelevant details', 'astra-child' ); ?></li>
+								</ul>
+								<div class="form-row">
+									<textarea id="description" name="description" class="form-control" rows="5" required></textarea>
 								</div>
 							</div>
 
