@@ -153,7 +153,6 @@ get_header(); ?>
 
 							<div class="add-listing-images-section input-wrapper">
 								<h2><i class="fas fa-camera"></i> <?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
-								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
 								<p class="image-upload-note"><?php esc_html_e( 'Note: ads with good photos get more attention', 'astra-child' ); ?></p>
 								<div class="image-upload-container">
 									<div class="file-upload-area" id="file-upload-area" role="button" tabindex="0">
@@ -166,6 +165,7 @@ get_header(); ?>
 									<input type="file" id="car_images" name="car_images[]" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
 									<div id="image-preview" class="image-preview"></div>
 								</div>
+								<p class="image-upload-info"><?php esc_html_e( 'Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp', 'astra-child' ); ?></p>
 							</div>
 
 							<div class="add-listing-description-section input-wrapper">

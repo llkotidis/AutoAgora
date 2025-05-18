@@ -51,8 +51,9 @@ text-align: center;
   margin-bottom: 1.5rem;
 }
 
-.image-upload-note {
+.image-upload-note, .image-upload-info {
   font-size: 0.875rem;
+  margin: 0;
 }
 
 .input-wrapper {
