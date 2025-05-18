@@ -718,8 +718,8 @@ label svg path,
 }
 
 .vehicle-history-option label {
-  font-weight: 400;
-  font-size: 1rem;
+  font-weight: 400 !important;
+  font-size: 1rem !important;
 }
 
 .vehicle-history-option:hover {
