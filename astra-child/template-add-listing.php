@@ -247,7 +247,7 @@ get_header(); ?>
 										<h2><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Engine & Performance', 'astra-child' ); ?></h2>
 										<div class="form-row form-row-thirds">
 											<div class="form-third">
-												<label for="engine_capacity"><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
+												<label for="engine_capacity"><?php echo get_svg_icon('engine'); ?> <?php esc_html_e( 'Engine Capacity', 'astra-child' ); ?></label>
 												<select id="engine_capacity" name="engine_capacity" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Engine Capacity', 'astra-child' ); ?></option>
 													<?php
@@ -275,7 +275,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-third">
-												<label for="transmission"><?php echo get_svg_icon('gear'); ?> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
+												<label for="transmission"><?php echo get_svg_icon('gearstick-manual'); ?> <?php esc_html_e( 'Transmission', 'astra-child' ); ?></label>
 												<select id="transmission" name="transmission" class="form-control" required>
 													<option value=""><?php esc_html_e( 'Select Transmission', 'astra-child' ); ?></option>
 													<option value="Automatic"><?php esc_html_e( 'Automatic', 'astra-child' ); ?></option>
@@ -296,7 +296,7 @@ get_header(); ?>
 												</select>
 											</div>
 											<div class="form-half">
-												<label for="hp"><?php echo get_svg_icon('engine'); ?> <?php esc_html_e( 'Horsepower (Optional)', 'astra-child' ); ?></label>
+												<label for="hp"><?php echo get_svg_icon('gauge-high'); ?> <?php esc_html_e( 'Horsepower (Optional)', 'astra-child' ); ?></label>
 												<div class="input-with-suffix">
 													<input type="text" id="hp" name="hp" class="form-control" min="0" step="1">
 													<span class="input-suffix">hp</span>
