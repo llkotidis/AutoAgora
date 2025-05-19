@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
+// Include the geo utility functions
+require_once __DIR__ . '/geo-utils.php';
+
 /**
  * Helper function to format JSON filename to Make name.
  */
@@ -41,9 +44,12 @@ function get_acf_choices_safe($field_key, $post_id = null) {
 
 /**
  * Helper function to get counts for a specific meta key.
+ * Now respecting the location filter if active.
  */
-function get_counts_for_meta_key($meta_key) {
+function get_counts_for_meta_key($meta_key, $location_filter = null) {
     global $wpdb;
+    
+    // Standard query without location filter
     $sql = $wpdb->prepare(
         "SELECT pm.meta_value, COUNT(p.ID) as count
          FROM {$wpdb->postmeta} pm
@@ -51,10 +57,56 @@ function get_counts_for_meta_key($meta_key) {
          WHERE pm.meta_key = %s
          AND p.post_type = 'car'
          AND p.post_status = 'publish'
-         AND pm.meta_value IS NOT NULL AND pm.meta_value != ''
-         GROUP BY pm.meta_value",
+         AND pm.meta_value IS NOT NULL AND pm.meta_value != ''",
         $meta_key
     );
+    
+    // If location filter is active, we need to filter the results by location
+    if ($location_filter && isset($location_filter['lat']) && isset($location_filter['lng']) && isset($location_filter['radius'])) {
+        // First get all car IDs within the radius
+        $all_car_ids_query = $wpdb->get_results(
+            "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
+             FROM {$wpdb->posts} p
+             JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
+             JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
+             WHERE p.post_type = 'car'
+             AND p.post_status = 'publish'",
+            ARRAY_A
+        );
+        
+        // Calculate which cars are within the radius
+        $matching_car_ids = array();
+        foreach ($all_car_ids_query as $car) {
+            if (!empty($car['latitude']) && !empty($car['longitude'])) {
+                $distance = autoagora_calculate_distance(
+                    $location_filter['lat'],
+                    $location_filter['lng'],
+                    floatval($car['latitude']),
+                    floatval($car['longitude'])
+                );
+                if ($distance <= $location_filter['radius']) {
+                    $matching_car_ids[] = $car['ID'];
+                }
+            }
+        }
+        
+        // If we have matching cars, add them to our query
+        if (!empty($matching_car_ids)) {
+            $placeholders = implode(',', array_fill(0, count($matching_car_ids), '%d'));
+            $sql .= $wpdb->prepare(
+                " AND pm.post_id IN ($placeholders)
+                 GROUP BY pm.meta_value",
+                $matching_car_ids
+            );
+        } else {
+            // No cars match the location criteria
+            $sql .= " AND 1=0 GROUP BY pm.meta_value";
+        }
+    } else {
+        // No location filter, just add the GROUP BY
+        $sql .= " GROUP BY pm.meta_value";
+    }
+    
     $results = $wpdb->get_results($sql, OBJECT_K);
     
     $counts = array();
@@ -151,6 +203,20 @@ function display_car_filter_form( $context = 'default' ) {
         )
     );
 
+    // --- Check for Active Location Filter ---
+    $location_filter = null;
+    $lat = isset($_GET['lat']) ? floatval($_GET['lat']) : null;
+    $lng = isset($_GET['lng']) ? floatval($_GET['lng']) : null;
+    $radius = isset($_GET['radius']) ? floatval($_GET['radius']) : null;
+    
+    if ($lat && $lng && $radius) {
+        $location_filter = array(
+            'lat' => $lat,
+            'lng' => $lng,
+            'radius' => $radius
+        );
+    }
+
     // --- Field Keys (Verify these match your ACF setup) ---
     $make_field_key = 'make'; // Assuming 'make' is also stored in post meta
     $model_field_key = 'model'; // Assuming 'model' is stored
@@ -174,17 +240,17 @@ function display_car_filter_form( $context = 'default' ) {
     $drive_type_choices = get_acf_choices_safe($drive_type_field_key, $sample_car_post_id);
     // Note: Make/Model/Variant choices come from JSONs below
 
-    // --- Get Initial Counts for Select Fields ---
-    $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key);
-    $transmission_counts = get_counts_for_meta_key($transmission_field_key);
-    $ext_color_counts = get_counts_for_meta_key($ext_color_field_key);
-    $int_color_counts = get_counts_for_meta_key($int_color_field_key);
-    $body_type_counts = get_counts_for_meta_key($body_type_field_key);
-    $drive_type_counts = get_counts_for_meta_key($drive_type_field_key);
+    // --- Get Initial Counts for Select Fields, now respecting location filter ---
+    $fuel_type_counts = get_counts_for_meta_key($fuel_type_field_key, $location_filter);
+    $transmission_counts = get_counts_for_meta_key($transmission_field_key, $location_filter);
+    $ext_color_counts = get_counts_for_meta_key($ext_color_field_key, $location_filter);
+    $int_color_counts = get_counts_for_meta_key($int_color_field_key, $location_filter);
+    $body_type_counts = get_counts_for_meta_key($body_type_field_key, $location_filter);
+    $drive_type_counts = get_counts_for_meta_key($drive_type_field_key, $location_filter);
     // Note: Make/Model counts handled separately below, Variant via AJAX
 
-    // --- Get Initial Engine Counts --- 
-    $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key);
+    // --- Get Initial Engine Counts, now respecting location filter --- 
+    $initial_engine_counts_raw = get_counts_for_meta_key($engine_cap_field_key, $location_filter);
     $initial_engine_counts = [];
     foreach($initial_engine_counts_raw as $value => $count) {
          // Ensure keys are formatted consistently (e.g., '1.0', '2.0') for matching option values
@@ -203,8 +269,8 @@ function display_car_filter_form( $context = 'default' ) {
     for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
     for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
 
-    // --- Get Initial Mileage Counts ---
-    $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key);
+    // --- Get Initial Mileage Counts, now respecting location filter ---
+    $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key, $location_filter);
     $initial_mileage_counts = [];
     foreach($initial_mileage_counts_raw as $value => $count) {
          // Ensure keys are integers for matching option values
@@ -235,33 +301,90 @@ function display_car_filter_form( $context = 'default' ) {
     }
     // --- End Make/Model/Variant Data ---
 
-    // --- Get Counts for Makes ---
-    $make_counts = get_counts_for_meta_key($make_field_key); // Use helper
+    // --- Get Counts for Makes, now respecting location filter ---
+    $make_counts = get_counts_for_meta_key($make_field_key, $location_filter); // Use helper
     // --- End Make Counts ---
 
-    // --- Get Counts for Models grouped by Make ---
+    // --- Get Counts for Models grouped by Make, now respecting location filter ---
     $model_counts_by_make = array();
     if (!empty($all_makes_from_files)) {
-        // (Existing code to query and structure model counts)
-        $make_placeholders = implode(', ', array_fill(0, count($all_makes_from_files), '%s'));
-        $sql = $wpdb->prepare(
-            "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-             FROM {$wpdb->posts} p
-             JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-             JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-             WHERE p.post_type = 'car'
-             AND p.post_status = 'publish'
-             AND pm_make.meta_value IN ({$make_placeholders})
-             AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-             GROUP BY pm_make.meta_value, pm_model.meta_value",
-            array_merge([$make_field_key, $model_field_key, 'car', 'publish'], $all_makes_from_files)
-        );
-        $model_counts_results = $wpdb->get_results($sql);
-        foreach ($model_counts_results as $row) {
-            if (!isset($model_counts_by_make[$row->make])) {
-                $model_counts_by_make[$row->make] = array();
+        // If location filter is active, we need to handle it differently
+        if ($location_filter) {
+            // Get all car IDs that match the location filter first
+            $all_car_ids_query = $wpdb->get_results(
+                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
+                 FROM {$wpdb->posts} p
+                 JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
+                 JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
+                 WHERE p.post_type = 'car'
+                 AND p.post_status = 'publish'",
+                ARRAY_A
+            );
+            
+            // Calculate which cars are within the radius
+            $matching_car_ids = array();
+            foreach ($all_car_ids_query as $car) {
+                if (!empty($car['latitude']) && !empty($car['longitude'])) {
+                    $distance = autoagora_calculate_distance(
+                        $location_filter['lat'],
+                        $location_filter['lng'],
+                        floatval($car['latitude']),
+                        floatval($car['longitude'])
+                    );
+                    if ($distance <= $location_filter['radius']) {
+                        $matching_car_ids[] = $car['ID'];
+                    }
+                }
             }
-            $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
+
+            if (!empty($matching_car_ids)) {
+                $make_placeholders = implode(', ', array_fill(0, count($all_makes_from_files), '%s'));
+                $car_id_placeholders = implode(', ', array_fill(0, count($matching_car_ids), '%d'));
+                
+                $sql = $wpdb->prepare(
+                    "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
+                     FROM {$wpdb->posts} p
+                     JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+                     JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+                     WHERE p.post_type = 'car'
+                     AND p.post_status = 'publish'
+                     AND pm_make.meta_value IN ({$make_placeholders})
+                     AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
+                     AND p.ID IN ({$car_id_placeholders})
+                     GROUP BY pm_make.meta_value, pm_model.meta_value",
+                    array_merge([$make_field_key, $model_field_key], $all_makes_from_files, $matching_car_ids)
+                );
+                
+                $model_counts_results = $wpdb->get_results($sql);
+                foreach ($model_counts_results as $row) {
+                    if (!isset($model_counts_by_make[$row->make])) {
+                        $model_counts_by_make[$row->make] = array();
+                    }
+                    $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
+                }
+            }
+        } else {
+            // Original code for when no location filter is active
+            $make_placeholders = implode(', ', array_fill(0, count($all_makes_from_files), '%s'));
+            $sql = $wpdb->prepare(
+                "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
+                 FROM {$wpdb->posts} p
+                 JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+                 JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+                 WHERE p.post_type = 'car'
+                 AND p.post_status = 'publish'
+                 AND pm_make.meta_value IN ({$make_placeholders})
+                 AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
+                 GROUP BY pm_make.meta_value, pm_model.meta_value",
+                array_merge([$make_field_key, $model_field_key], $all_makes_from_files)
+            );
+            $model_counts_results = $wpdb->get_results($sql);
+            foreach ($model_counts_results as $row) {
+                if (!isset($model_counts_by_make[$row->make])) {
+                    $model_counts_by_make[$row->make] = array();
+                }
+                $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
+            }
         }
     }
     // --- End Model Counts ---
@@ -288,7 +411,7 @@ function display_car_filter_form( $context = 'default' ) {
             'driveType' => $drive_type_counts,
             // Variant counts are now fetched via the main update AJAX
         ],
-        'initialYearCounts' => get_counts_for_meta_key($year_field_key),
+        'initialYearCounts' => get_counts_for_meta_key($year_field_key, $location_filter),
         'choices' => [
              // Make choices are derived from $all_makes_from_files in the PHP
              // Model/Variant choices are derived from makeModelVariantStructure dynamically
@@ -303,7 +426,8 @@ function display_car_filter_form( $context = 'default' ) {
             'year' => $years,
             'engineCapacity' => $engine_capacities,
             'mileage' => $mileages,
-        ]
+        ],
+        'locationFilter' => $location_filter
     ];
 
     // --- Start Form Output ---
