@@ -398,7 +398,19 @@ function autoagora_filter_listings_by_location_ajax() {
         }
     }
     
-    if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) {
+    // Add location filters to $active_filters_for_query for the main listings query
+    if ($filter_lat !== null) {
+        $active_filters_for_query['lat'] = $filter_lat;
+    }
+    if ($filter_lng !== null) {
+        $active_filters_for_query['lng'] = $filter_lng;
+    }
+    if ($filter_radius !== null) {
+        $active_filters_for_query['radius'] = $filter_radius;
+    }
+    
+    // Add location filters to $active_filters_for_counts for the counts query (already done, but ensure consistency)
+    if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) { // This structure is for $active_filters_for_counts
         $active_filters_for_counts['lat'] = $filter_lat;
         $active_filters_for_counts['lng'] = $filter_lng;
         $active_filters_for_counts['radius'] = $filter_radius;

@@ -496,14 +496,22 @@ jQuery(document).ready(function($) {
         }
     });
 
-    function updateUrlWithFilters(page, lat, lng, radius) {
+    function updateUrlWithFilters(page, latInput, lngInput, radiusInput) {
         const currentUrl = new URL(window.location.href);
+
+        // Convert to numbers, ensuring null or undefined become null, and empty strings also lead to null after parseFloat (NaN)
+        const lat = (latInput !== null && latInput !== undefined && latInput !== '') ? parseFloat(latInput) : null;
+        const lng = (lngInput !== null && lngInput !== undefined && lngInput !== '') ? parseFloat(lngInput) : null;
+        const radius = (radiusInput !== null && radiusInput !== undefined && radiusInput !== '') ? parseFloat(radiusInput) : null;
         
+        console.log('[DEBUG] updateUrlWithFilters - Processed inputs:', { page, lat, lng, radius, origLat: latInput, origLng: lngInput, origRad: radiusInput });
+
         // Update or remove location parameters
-        if (lat && lng && radius) {
+        // Check for valid numbers (not null and not NaN)
+        if (lat !== null && !isNaN(lat) && lng !== null && !isNaN(lng) && radius !== null && !isNaN(radius)) {
             currentUrl.searchParams.set('lat', lat.toFixed(7));
             currentUrl.searchParams.set('lng', lng.toFixed(7));
-            currentUrl.searchParams.set('radius', radius.toString());
+            currentUrl.searchParams.set('radius', radius.toString()); // parseFloat then toString is fine
         } else {
             currentUrl.searchParams.delete('lat');
             currentUrl.searchParams.delete('lng');
