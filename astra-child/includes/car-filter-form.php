@@ -389,6 +389,27 @@ function display_car_filter_form( $context = 'default' ) {
     }
     // --- End Model Counts ---
 
+    // --- Filter make_model_variant_data to only include filtered makes and their available models ---
+    $filtered_make_model_variant_data = array();
+    foreach ($all_makes_from_files as $make) {
+        if (isset($make_model_variant_data[$make])) {
+            // Only include models that are present in $model_counts_by_make for this make
+            $filtered_models = array();
+            if (isset($model_counts_by_make[$make])) {
+                foreach ($make_model_variant_data[$make] as $model => $variants) {
+                    if (isset($model_counts_by_make[$make][$model]) && $model_counts_by_make[$make][$model] > 0) {
+                        $filtered_models[$model] = $variants;
+                    }
+                }
+            }
+            if (!empty($filtered_models)) {
+                $filtered_make_model_variant_data[$make] = $filtered_models;
+            }
+        }
+    }
+    // Use $filtered_make_model_variant_data in the JS data instead of $make_model_variant_data
+    $js_data['makeModelVariantStructure'] = $filtered_make_model_variant_data;
+
     // --- Generate Nonce for AJAX ---
     $ajax_update_nonce = wp_create_nonce('car_filter_update_nonce'); // New nonce for updating counts
     // --- End Nonce Generation ---
@@ -399,7 +420,7 @@ function display_car_filter_form( $context = 'default' ) {
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'updateNonce' => $ajax_update_nonce, // Pass the new nonce
         'updateAction' => 'update_filter_counts', // Pass the new action name
-        'makeModelVariantStructure' => $make_model_variant_data,
+        'makeModelVariantStructure' => $filtered_make_model_variant_data,
         'initialCounts' => [
             'make' => $make_counts,
             'modelByMake' => $model_counts_by_make, // Still useful for initial model population
