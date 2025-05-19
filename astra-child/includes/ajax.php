@@ -781,28 +781,9 @@ function ajax_update_filter_counts_handler() {
     for ($y = date('Y'); $y >= 1948; $y--) {
         $master_years[] = (string)$y;
     }
-    // For makes, only include those present in the current location filter radius
-    $makes_in_radius = [];
-    if ($location_filter && !empty($matching_car_ids)) {
-        global $wpdb;
-        $placeholders = implode(',', array_fill(0, count($matching_car_ids), '%d'));
-        $sql = $wpdb->prepare(
-            "SELECT DISTINCT pm.meta_value as make
-             FROM {$wpdb->postmeta} pm
-             WHERE pm.meta_key = 'make'
-             AND pm.post_id IN ($placeholders)",
-            $matching_car_ids
-        );
-        $results = $wpdb->get_results($sql);
-        foreach ($results as $row) {
-            if (!empty($row->make)) {
-                $makes_in_radius[] = $row->make;
-            }
-        }
-    } else {
-        // If no location filter, use all makes from counts
-        $makes_in_radius = array_keys($updated_counts['make']);
-    }
+    // Make/model/variant: get from master makesData (should be localized to JS, but for backend, use DB or file)
+    // For now, use all makes present in the DB (from counts)
+    $master_makes = array_keys($updated_counts['make']);
     // For models, use the model_by_make structure if available
     $master_models_by_make = isset($updated_counts['model_by_make']) ? $updated_counts['model_by_make'] : [];
 
@@ -821,7 +802,7 @@ function ajax_update_filter_counts_handler() {
             return isset($updated_counts['year'][$year]) && $updated_counts['year'][$year] > 0;
         })),
         // For make/model, use the counts as already filtered
-        'make' => $makes_in_radius,
+        'make' => $master_makes,
         'model_by_make' => $master_models_by_make,
     ];
     // For numeric filters, also return min/max present in the result set

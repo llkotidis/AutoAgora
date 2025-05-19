@@ -451,11 +451,20 @@ function display_car_filter_form( $context = 'default' ) {
                     <div class="filter-side-by-side-fields"> <!-- Using a new class for clarity, can be styled like filter-range-fields -->
                         <div class="sub-group make-sub-group">
                             <label for="filter-make-<?php echo esc_attr($context); ?>">Make</label>
+                            <?php
+                            // Only show makes that are present in the current location (count > 0)
+                            $filtered_makes = array();
+                            foreach ($all_makes_from_files as $make) {
+                                if (!empty($make_counts[$make])) {
+                                    $filtered_makes[] = $make;
+                                }
+                            }
+                            ?>
                             <select id="filter-make-<?php echo esc_attr($context); ?>" name="make" data-filter-key="make">
                                 <option value="">All Makes</option>
                                 <?php 
-                                if (!empty($all_makes_from_files)):
-                                    $make_choices_assoc = array_combine($all_makes_from_files, $all_makes_from_files);
+                                if (!empty($filtered_makes)):
+                                    $make_choices_assoc = array_combine($filtered_makes, $filtered_makes);
                                     render_select_options($make_choices_assoc, $make_counts);
                                 endif; 
                                 ?>
