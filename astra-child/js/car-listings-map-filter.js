@@ -431,23 +431,19 @@ jQuery(document).ready(function($) {
 
             currentLocationText.text(locationName);
             modal.hide();
-            
-            // Clear the make filter when location changes
-            $('#filter-make').val('');
-            
-            // Fetch listings with new location
             fetchFilteredListings(1, lat, lng, radius);
 
-            // Update URL and localStorage as before
+            // Update URL
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('lat', lat.toFixed(7));
             currentUrl.searchParams.set('lng', lng.toFixed(7));
             currentUrl.searchParams.set('radius', radius.toString());
             currentUrl.searchParams.set('location_name', locationName);
             currentUrl.searchParams.delete('paged');
-            currentUrl.searchParams.delete('make'); // Remove make filter from URL
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
+            console.log('[ApplyFilter] URL updated to:', currentUrl.href);
 
+            // Save to localStorage
             const preferredLocation = {
                 lat: lat,
                 lng: lng,
@@ -455,22 +451,27 @@ jQuery(document).ready(function($) {
                 name: locationName
             };
             localStorage.setItem('autoAgoraUserLocation', JSON.stringify(preferredLocation));
+            console.log('[ApplyFilter] Location saved to localStorage:', preferredLocation);
+
         } else {
+            // If no specific coords (e.g., user clears map and applies "All of Cyprus")
             currentLocationText.text('All of Cyprus');
             modal.hide();
-            fetchFilteredListings(1, null, null, null);
-            
-            // Clear location parameters from URL
+            fetchFilteredListings(1, null, null, null); // Fetch all
+
+            // Update URL to remove location parameters
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('lat');
             currentUrl.searchParams.delete('lng');
             currentUrl.searchParams.delete('radius');
             currentUrl.searchParams.delete('location_name');
             currentUrl.searchParams.delete('paged');
-            currentUrl.searchParams.delete('make'); // Remove make filter from URL
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-            
+            console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
+
+            // Clear from localStorage
             localStorage.removeItem('autoAgoraUserLocation');
+            console.log('[ApplyFilter] Location cleared from localStorage.');
         }
     });
 
@@ -526,17 +527,19 @@ jQuery(document).ready(function($) {
             }
         });
 
-        console.log(`[FetchListings] Fetching page ${page}. Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}`);
-        console.log('[FetchListings] Spec Filters:', specFilters);
+        console.log(`[FetchListings] Fetching page ${page}. Location: Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}`);
         
-        // Abort any existing listings request if it's still running
+        // Abort any existing listings request
         if (currentListingsRequest && currentListingsRequest.readyState !== 4) {
             console.log('[FetchListings] Aborting previous listings request.');
             currentListingsRequest.abort();
         }
 
-        // Preserve other existing URL parameters when fetching
-        const currentUrlParams = new URLSearchParams(window.location.search);
+        // Show loading state for filters
+        $('#filter-make option').prop('disabled', true);
+        $('#filter-make').addClass('loading-filter');
+        $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>');
+
         const data = {
             action: 'filter_listings_by_location',
             nonce: nonce,
@@ -544,38 +547,19 @@ jQuery(document).ready(function($) {
             filter_lat: filterLat,
             filter_lng: filterLng,
             filter_radius: filterRadius,
-            per_page: carListingsMapFilterData.perPage || 12
+            per_page: carListingsMapFilterData.perPage || 12,
+            get_filter_counts: true // Explicitly request filter counts
         };
 
         // Add collected specification filters to the data object
         for (const key in specFilters) {
             if (specFilters.hasOwnProperty(key) && specFilters[key] !== '' && specFilters[key] !== null) {
                 if (Array.isArray(specFilters[key]) && specFilters[key].length === 0) {
-                    // Skip empty arrays for checkbox filters if nothing selected and not in URL
-                    continue; 
+                    continue;
                 }
                 data[key] = specFilters[key];
             }
         }
-
-        // Add other existing URL parameters to the AJAX request if they are not related to location/pagination/known spec filters
-        // This helps if other filters are also managed via URL and should persist
-        const knownFilterKeys = ['lat', 'lng', 'radius', 'location_name', 'paged', 'action', 'nonce', 'per_page'].concat(Object.keys(specFilters));
-        currentUrlParams.forEach((value, key) => {
-            if (!knownFilterKeys.includes(key) && !(key.endsWith('_min') || key.endsWith('_max'))) {
-                 // Check for array format like fuel_type[] from URL that might not be in specFilters if empty
-                if (key.includes('[]')) { 
-                    const plainKey = key.replace('[]', '');
-                    if (!knownFilterKeys.includes(plainKey)) {
-                        data[key] = value; // Or handle as array if needed: data[key] = currentUrlParams.getAll(key);
-                    }
-                } else {
-                    data[key] = value;
-                }
-            }
-        });
-
-        $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>'); // Show loading indicator
 
         currentListingsRequest = $.ajax({
             url: ajaxurl,
@@ -583,130 +567,103 @@ jQuery(document).ready(function($) {
             data: data,
             success: function(response) {
                 if (response.success) {
-                    // Update listings grid and pagination
+                    // Remove loading state
+                    $('#filter-make').removeClass('loading-filter');
+                    
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
-                    // Re-initialize features for the new content
+                    // Update filter counts with new data
+                    if (response.data.filter_counts) {
+                        console.log('[FetchListings] Updating filter counts:', response.data.filter_counts);
+                        updateFilterCounts(response.data.filter_counts);
+                    }
+
+                    // Calculate distances if location filter is active
+                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
+                        calculateAndDisplayDistances(filterLat, filterLng);
+                    }
+
+                    // Re-initialize features
                     if (typeof reinitializeCarousels === "function") {
-                        console.log('[MapFilter AJAX] Calling reinitializeCarousels');
                         reinitializeCarousels();
                     }
                     if (typeof reinitializeFavoriteButtons === "function") {
-                        console.log('[MapFilter AJAX] Calling reinitializeFavoriteButtons');
                         reinitializeFavoriteButtons();
                     }
                     if (typeof updateResultsCounter === "function") {
-                        console.log('[MapFilter AJAX] Calling updateResultsCounter');
-                        const totalResults = (response.data && typeof response.data.query_vars && typeof response.data.query_vars.found_posts !== 'undefined') 
-                                            ? parseInt(response.data.query_vars.found_posts, 10) 
-                                            : null;
-                        updateResultsCounter(isNaN(totalResults) ? null : totalResults);
-                    }
-
-                    // Update filter counts
-                    if (response.data.filter_counts) {
-                        console.log('[MapFilter AJAX] Updating filter counts with new data');
-                        updateFilterCounts(response.data.filter_counts);
-                    } else {
-                        console.warn('[MapFilter AJAX] No filter_counts in AJAX response');
-                    }
-
-                    // Calculate and display distances if location filter is active
-                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
-                        const pinLocation = turf.point([filterLng, filterLat]);
-
-                        $('.car-listings-grid .car-listing-card').each(function() {
-                            const $card = $(this);
-                            const cardLat = $card.data('latitude');
-                            const cardLng = $card.data('longitude');
-                            const $locationEl = $card.find('.car-location');
-                            const $locationTextSpan = $locationEl.find('span.location-text');
-
-                            if (cardLat !== undefined && cardLng !== undefined && $locationTextSpan.length) {
-                                const carLocationPoint = turf.point([parseFloat(cardLng), parseFloat(cardLat)]);
-                                const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
-                                const distanceText = ` (${distance.toFixed(1)} km away)`;
-                                
-                                // Get current text, remove old distance if any, then append new one
-                                let currentText = $locationTextSpan.text();
-                                currentText = currentText.replace(/\s*\([\d\.]+\s*km away\)/, ''); // Remove old distance
-                                $locationTextSpan.text(currentText + distanceText); // Set new text with distance
-                            }
-                        });
-                    } else {
-                        // No active location filter, ensure distances are cleared from any cards
-                        $('.car-listings-grid .car-listing-card .car-location span.location-text').each(function() {
-                            const $span = $(this);
-                            let currentText = $span.text();
-                            currentText = currentText.replace(/\s*\([\d\.]+\s*km away\)/, '');
-                            $span.text(currentText);
-                        });
+                        const totalResults = response.data.query_vars?.found_posts;
+                        updateResultsCounter(totalResults);
                     }
 
                     // Update URL with current filters
-                    const currentUrl = new URL(window.location.href);
-                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
-                        currentUrl.searchParams.set('lat', filterLat.toFixed(7));
-                        currentUrl.searchParams.set('lng', filterLng.toFixed(7));
-                        currentUrl.searchParams.set('radius', filterRadius.toString());
-                        if (selectedLocationName) {
-                            currentUrl.searchParams.set('location_name', selectedLocationName);
-                        }
-                    }
-                    currentUrl.searchParams.set('paged', page.toString());
-                    history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-
-                    console.log("[FetchListings] Completed. Map should reflect new listings.");
+                    updateUrlWithFilters(page, filterLat, filterLng, filterRadius);
                 } else {
-                    $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data && response.data.message ? response.data.message : '') + '</p>');
+                    $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data?.message || '') + '</p>');
+                    $('#filter-make').removeClass('loading-filter');
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                // Only show error if this request was not manually aborted
                 if (textStatus !== 'abort') {
-                    $('.car-listings-grid').html('<p>AJAX Error: ' + textStatus + ' - ' + errorThrown + '</p>');
-                    console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);
+                    $('.car-listings-grid').html('<p>Error loading listings. Please try again.</p>');
+                    console.error("AJAX Error:", textStatus, errorThrown);
+                    $('#filter-make').removeClass('loading-filter');
                 }
             }
         });
     }
 
-    // New helper function to update filter counts
+    function calculateAndDisplayDistances(centerLat, centerLng) {
+        const pinLocation = turf.point([centerLng, centerLat]);
+
+        $('.car-listings-grid .car-listing-card').each(function() {
+            const $card = $(this);
+            const cardLat = $card.data('latitude');
+            const cardLng = $card.data('longitude');
+            const $locationEl = $card.find('.car-location');
+            const $locationTextSpan = $locationEl.find('span.location-text');
+
+            if (cardLat !== undefined && cardLng !== undefined && $locationTextSpan.length) {
+                const carLocationPoint = turf.point([parseFloat(cardLng), parseFloat(cardLat)]);
+                const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
+                const distanceText = ` (${distance.toFixed(1)} km away)`;
+                
+                let currentText = $locationTextSpan.text().replace(/\s*\([\d\.]+\s*km away\)/, '');
+                $locationTextSpan.text(currentText + distanceText);
+            }
+        });
+    }
+
     function updateFilterCounts(filterCounts) {
-        // Update make dropdown
+        if (!filterCounts) return;
+
+        // Update make dropdown with counts
         if (filterCounts.make) {
             const $makeSelect = $('#filter-make');
-            const currentValue = $makeSelect.val(); // Store current selection
-            
-            // Clear existing options except the first one (usually "All Makes")
-            $makeSelect.find('option:not(:first)').remove();
-            
-            // Sort makes alphabetically
-            const sortedMakes = Object.keys(filterCounts.make).sort();
-            
-            // Add options with counts
-            sortedMakes.forEach(make => {
-                const count = filterCounts.make[make];
-                const $option = $('<option>', {
-                    value: make,
-                    text: `${make} (${count})`,
-                    disabled: count === 0 && make !== currentValue
-                });
+            $makeSelect.find('option').each(function() {
+                const $option = $(this);
+                const makeValue = $option.val();
                 
-                // If this was the previously selected value, mark it as selected
-                if (make === currentValue) {
-                    $option.prop('selected', true);
+                if (makeValue !== '') {
+                    const count = filterCounts.make[makeValue] || 0;
+                    const baseText = $option.text().replace(/\s*\(\d+\)$/, '');
+                    
+                    $option.text(`${baseText} (${count})`);
+                    
+                    // Disable options with zero count unless currently selected
+                    if (count === 0 && !$option.prop('selected')) {
+                        $option.prop('disabled', true);
+                    } else {
+                        $option.prop('disabled', false);
+                    }
                 }
-                
-                $makeSelect.append($option);
             });
         }
 
         // Update model dropdown (if make is selected)
-        const selectedMake = $('select[name="make"]').val();
+        const selectedMake = $('#filter-make').val();
         if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
-            const $modelSelect = $('select[name="model"]');
+            const $modelSelect = $('#filter-model');
             $modelSelect.find('option').each(function() {
                 const $option = $(this);
                 const modelValue = $option.val();

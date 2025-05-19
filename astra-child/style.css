@@ -412,3 +412,62 @@ textarea.error {
 #block-8 {
   margin: 0;
 }
+
+/* Car Listings Filter Styles */
+.loading-filter {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading-filter::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: filter-loading 0.8s linear infinite;
+}
+
+@keyframes filter-loading {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* Disabled filter options */
+select option:disabled {
+    color: #999;
+    font-style: italic;
+}
+
+/* Loading spinner for listings grid */
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+}
+
+.loading-spinner::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 20px auto;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
