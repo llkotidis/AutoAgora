@@ -11,7 +11,7 @@ require_once __DIR__ . '/car-listings-data.php';
 require_once __DIR__ . '/car-listings-query.php'; // Added this line
 require_once __DIR__ . '/car-filter-form.php'; // Include the new filter form file
 require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
-// require_once __DIR__ . '/car-listings-render.php'; // Potential future file
+
 
 // Register the shortcode
 add_shortcode('car_listings', 'display_car_listings');
@@ -94,8 +94,6 @@ function display_car_listings($atts) {
     // Check if a location filter is active via GET parameters
     $has_location_filter_in_url = isset($_GET['lat']) && isset($_GET['lng']) && isset($_GET['radius']);
 
-    // Removed fetching of filter data (makes, models, variants, locations, prices, years, etc.)
-    // as the filter form content is being removed.
 
     // Build the query arguments using the helper function
     $args = array(
@@ -274,16 +272,12 @@ function display_car_listings($atts) {
                                     if (!empty($engine_capacity)) {
                                         $specs_array[] = esc_html($engine_capacity) . 'L';
                                     }
-
-                                    // $fuel_type = get_post_meta(get_the_ID(), 'fuel_type', true); // Removed
-                                    // if (!empty($fuel_type)) { // Removed
-                                    //     $specs_array[] = esc_html($fuel_type); // Removed
-                                    // } // Removed
-                                    
+                                    if (!empty($fuel_type)) {
+                                        $specs_array[] = esc_html($fuel_type);
+                                    }
                                     if (!empty($body_type)) {
                                         $specs_array[] = esc_html($body_type);
                                     }
-
                                     if (!empty($transmission)) {
                                         $specs_array[] = esc_html($transmission);
                                     }
@@ -342,32 +336,7 @@ function display_car_listings($atts) {
     return ob_get_clean();
 }
 
-// Helper function to calculate distance (Haversine formula)
-// MOVED to geo-utils.php
-/*
-if (!function_exists('autoagora_calculate_distance')) {
-    function autoagora_calculate_distance($lat1, $lon1, $lat2, $lon2, $unit = 'K') {
-        if (($lat1 == $lat2) && ($lon1 == $lon2)) {
-          return 0;
-        } else {
-          $theta = $lon1 - $lon2;
-          $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
-          $dist = acos($dist);
-          $dist = rad2deg($dist);
-          $miles = $dist * 60 * 1.1515;
-          $unit = strtoupper($unit);
-    
-          if ($unit == "K") {
-            return ($miles * 1.609344);
-          } else if ($unit == "N") {
-            return ($miles * 0.8684);
-          } else {
-            return $miles;
-          }
-        }
-    }
-}
-*/
+
 
 // AJAX handler for filtering listings
 add_action('wp_ajax_filter_listings_by_location', 'autoagora_filter_listings_by_location_ajax');
@@ -462,6 +431,7 @@ function autoagora_filter_listings_by_location_ajax() {
             }
 
             $engine_capacity = get_field('engine_capacity', $car_id);
+            $fuel_type = get_field('fuel_type', $car_id);
             $body_type = get_field('body_type', $car_id);
             $transmission = get_field('transmission', $car_id);
             $publication_date = get_field('publication_date', $car_id);
@@ -519,6 +489,7 @@ function autoagora_filter_listings_by_location_ajax() {
                             <?php 
                             $specs_array = array();
                             if (!empty($engine_capacity)) $specs_array[] = esc_html($engine_capacity) . 'L';
+                            if (!empty($fuel_type)) $specs_array[] = esc_html($fuel_type);
                             if (!empty($body_type)) $specs_array[] = esc_html($body_type);
                             if (!empty($transmission)) $specs_array[] = esc_html($transmission);
                             echo implode(' | ', $specs_array);

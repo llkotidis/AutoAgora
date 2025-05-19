@@ -12,19 +12,7 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
 
-// Ensure the distance calculation function is available
-// MOVED - now included above
-/*
-if (!function_exists('autoagora_calculate_distance')) {
-    // If it's in car-listings.php, and this file can't always assume car-listings.php has run,
-    // it might be better to move autoagora_calculate_distance to a common file or duplicate it here carefully.
-    // For now, assuming it might be available or we might need to include it from car-listings.php if that's where it lives.
-    // Ideally, autoagora_calculate_distance should be in a general utilities file included by both.
-    // Let's assume it might be in car-listings.php for now, or should be moved to a shared include.
-    // If car-listings.php includes this file, then it might be okay.
-    // Temporary: if it's not found, it will cause an error later.
-}
-*/
+
 
 /**
  * Builds the WP_Query arguments array for car listings based on shortcode attributes and GET parameters.
