@@ -404,7 +404,16 @@ function autoagora_filter_listings_by_location_ajax() {
         $active_filters_for_counts['radius'] = $filter_radius;
     }
 
-    $query_args = autoagora_build_car_query_args($paged, $per_page, 'date', 'DESC', $active_filters_for_query, $filter_lat, $filter_lng, $filter_radius);
+    $query_args = build_car_listings_query_args(
+        array(
+            'per_page' => $per_page,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ),
+        $paged, 
+        $active_filters_for_query
+    );
+
     $car_query = new WP_Query($query_args);
 
     ob_start();
@@ -582,7 +591,15 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
         $meta_filters_for_sub_query = $temp_filters;
         unset($meta_filters_for_sub_query['lat'], $meta_filters_for_sub_query['lng'], $meta_filters_for_sub_query['radius']);
 
-        $meta_query_parts = autoagora_build_meta_query($meta_filters_for_sub_query);
+        if (function_exists('build_meta_query')) {
+            $meta_query_parts = build_meta_query($meta_filters_for_sub_query);
+        } elseif (function_exists('autoagora_build_meta_query')) {
+             $meta_query_parts = autoagora_build_meta_query($meta_filters_for_sub_query);
+        } else {
+            $meta_query_parts = array(); // Initialize if no function found to avoid errors
+            error_log('[DEBUG] Neither build_meta_query nor autoagora_build_meta_query found in autoagora_get_dynamic_filter_counts');
+        }
+
         if (!empty($meta_query_parts)) {
             if (!isset($query_args_for_count['meta_query'])) { // Should always be set by now with is_sold
                  $query_args_for_count['meta_query'] = array('relation' => 'AND');
