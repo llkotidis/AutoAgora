@@ -560,13 +560,15 @@ jQuery(document).ready(function($) {
         }
 
         // Add other existing URL parameters to the AJAX request if they are not related to location/pagination/known spec filters
+        // This helps if other filters are also managed via URL and should persist
         const knownFilterKeys = ['lat', 'lng', 'radius', 'location_name', 'paged', 'action', 'nonce', 'per_page'].concat(Object.keys(specFilters));
         currentUrlParams.forEach((value, key) => {
             if (!knownFilterKeys.includes(key) && !(key.endsWith('_min') || key.endsWith('_max'))) {
+                 // Check for array format like fuel_type[] from URL that might not be in specFilters if empty
                 if (key.includes('[]')) { 
                     const plainKey = key.replace('[]', '');
                     if (!knownFilterKeys.includes(plainKey)) {
-                        data[key] = value;
+                        data[key] = value; // Or handle as array if needed: data[key] = currentUrlParams.getAll(key);
                     }
                 } else {
                     data[key] = value;
@@ -585,29 +587,6 @@ jQuery(document).ready(function($) {
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
-                    // Update make dropdown with counts
-                    if (response.data.filter_counts && response.data.filter_counts.make) {
-                        const $makeSelect = $('#filter-make');
-                        const currentMake = $makeSelect.val(); // Store current selection
-                        
-                        $makeSelect.find('option').each(function() {
-                            const $option = $(this);
-                            const makeValue = $option.val();
-                            if (makeValue !== '') { // Skip the "All Makes" option
-                                const count = response.data.filter_counts.make[makeValue] || 0;
-                                const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                                $option.text(`${optionText} (${count})`);
-                                
-                                // Disable options with zero count unless currently selected
-                                if (count === 0 && makeValue !== currentMake) {
-                                    $option.prop('disabled', true);
-                                } else {
-                                    $option.prop('disabled', false);
-                                }
-                            }
-                        });
-                    }
-
                     // Re-initialize features for the new content
                     if (typeof reinitializeCarousels === "function") {
                         console.log('[MapFilter AJAX] Calling reinitializeCarousels');
@@ -618,11 +597,20 @@ jQuery(document).ready(function($) {
                         reinitializeFavoriteButtons();
                     }
                     if (typeof updateResultsCounter === "function") {
-                        console.log('[MapFilter AJAX] Calling updateResultsCounter');
+                         console.log('[MapFilter AJAX] Calling updateResultsCounter');
+                        // Ensure data.query_vars.found_posts is available and a number
                         const totalResults = (response.data && typeof response.data.query_vars && typeof response.data.query_vars.found_posts !== 'undefined') 
-                                            ? parseInt(response.data.query_vars.found_posts, 10) 
-                                            : null;
+                                             ? parseInt(response.data.query_vars.found_posts, 10) 
+                                             : null;
                         updateResultsCounter(isNaN(totalResults) ? null : totalResults);
+                    }
+
+                    // Update filter counts - always do this on a successful AJAX response
+                    if (response.data.filter_counts) {
+                        console.log('[MapFilter AJAX] Updating filter counts with new data');
+                        updateFilterCounts(response.data.filter_counts);
+                    } else {
+                        console.warn('[MapFilter AJAX] No filter_counts in AJAX response');
                     }
 
                     // Calculate and display distances if location filter is active
@@ -656,6 +644,22 @@ jQuery(document).ready(function($) {
                             $span.text(currentText);
                         });
                     }
+
+                    updateCarListings(response.listings_html);
+                    updatePagination(response.pagination_html);
+                    updateUrlWithFilters(page, currentFilter.lat, currentFilter.lng, currentFilter.radius);
+
+                    // Removed: Update filter dropdowns with new counts as spec filters are removed from listings page
+                    /*
+                    if (response.filter_counts) {
+                        console.log('[FetchListings] Received filter counts:', response.filter_counts);
+                        // Assuming you have a function to update your filter dropdowns
+                        // This is a placeholder for where you'd call it
+                        // updateFilterDropdowns(response.filter_counts);
+                    } else {
+                        console.log('[FetchListings] No filter counts received in response.');
+                    }
+                    */
 
                     console.log("[FetchListings] Completed. Map should reflect new listings.");
                 } else {
