@@ -590,97 +590,6 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // New helper function to update filter counts
-    function updateFilterCounts(filterCounts) {
-        // Update make dropdown
-        if (filterCounts.make) {
-            const $makeSelect = $('select[name="make"]');
-            $makeSelect.find('option').each(function() {
-                const $option = $(this);
-                const makeValue = $option.val();
-                if (makeValue !== '') { // Skip the "All Makes" option
-                    const count = filterCounts.make[makeValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-
-        // Update model dropdown (if make is selected)
-        const selectedMake = $('select[name="make"]').val();
-        if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
-            const $modelSelect = $('select[name="model"]');
-            $modelSelect.find('option').each(function() {
-                const $option = $(this);
-                const modelValue = $option.val();
-                if (modelValue !== '') { // Skip the "Select Make First" option
-                    const count = filterCounts.model_by_make[selectedMake][modelValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-
-        // Update fuel type dropdown
-        if (filterCounts.fuel_type) {
-            updateMultiselectCounts('fuel_type', filterCounts.fuel_type);
-        }
-
-        // Update transmission dropdown
-        if (filterCounts.transmission) {
-            updateMultiselectCounts('transmission', filterCounts.transmission);
-        }
-
-        // Update body type dropdown
-        if (filterCounts.body_type) {
-            updateMultiselectCounts('body_type', filterCounts.body_type);
-        }
-
-        // Update drive type dropdown
-        if (filterCounts.drive_type) {
-            updateMultiselectCounts('drive_type', filterCounts.drive_type);
-        }
-
-        // Update exterior color dropdown
-        if (filterCounts.exterior_color) {
-            updateMultiselectCounts('exterior_color', filterCounts.exterior_color);
-        }
-
-        // Update interior color dropdown
-        if (filterCounts.interior_color) {
-            updateMultiselectCounts('interior_color', filterCounts.interior_color);
-        }
-
-        // Update year range selects
-        if (filterCounts.year) {
-            updateRangeSelectCounts('year', filterCounts.year);
-        }
-
-        // Update engine capacity range selects
-        if (filterCounts.engine_capacity) {
-            updateRangeSelectCounts('engine', filterCounts.engine_capacity);
-        }
-
-        // Update mileage range selects
-        if (filterCounts.mileage) {
-            updateRangeSelectCounts('mileage', filterCounts.mileage);
-        }
-    }
-
     // Helper function to update multiselect filter counts
     function updateMultiselectCounts(filterKey, counts) {
         const $container = $(`.multi-select-filter[data-filter-key="${filterKey}"]`);
@@ -695,7 +604,7 @@ jQuery(document).ready(function($) {
                     $countSpan.text(count);
                 }
                 
-                // Disable options with zero count unless currently checked
+                // Only disable if count is 0 AND not currently checked
                 if (count === 0 && !$checkbox.prop('checked')) {
                     $checkbox.prop('disabled', true);
                     $checkbox.closest('li').addClass('disabled-option');
@@ -716,7 +625,6 @@ jQuery(document).ready(function($) {
                 const $option = $(this);
                 const value = $option.val();
                 if (value !== '') { // Skip the "Min" option
-                    let displayValue = value;
                     const count = counts[value] || 0;
                     
                     // Extract existing display text without the count
@@ -725,8 +633,8 @@ jQuery(document).ready(function($) {
                     // Make sure we keep any suffix (km, L)
                     $option.text(`${baseText} (${count})`);
                     
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
+                    // Only disable if count is 0 AND not currently selected
+                    if (count === 0 && !$option.prop('selected')) {
                         $option.prop('disabled', true);
                     } else {
                         $option.prop('disabled', false);
@@ -742,7 +650,6 @@ jQuery(document).ready(function($) {
                 const $option = $(this);
                 const value = $option.val();
                 if (value !== '') { // Skip the "Max" option
-                    let displayValue = value;
                     const count = counts[value] || 0;
                     
                     // Extract existing display text without the count
@@ -751,14 +658,91 @@ jQuery(document).ready(function($) {
                     // Make sure we keep any suffix (km, L)
                     $option.text(`${baseText} (${count})`);
                     
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
+                    // Only disable if count is 0 AND not currently selected
+                    if (count === 0 && !$option.prop('selected')) {
                         $option.prop('disabled', true);
                     } else {
                         $option.prop('disabled', false);
                     }
                 }
             });
+        }
+    }
+
+    // New function to update filter counts
+    function updateFilterCounts(filterCounts) {
+        // Update make dropdown
+        if (filterCounts.make) {
+            const $makeSelect = $('select[name="make"]');
+            $makeSelect.find('option').each(function() {
+                const $option = $(this);
+                const makeValue = $option.val();
+                if (makeValue !== '') { // Skip the "All Makes" option
+                    const count = filterCounts.make[makeValue] || 0;
+                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
+                    $option.text(`${optionText} (${count})`);
+                    
+                    // Only disable if count is 0 AND not currently selected
+                    if (count === 0 && !$option.prop('selected')) {
+                        $option.prop('disabled', true);
+                    } else {
+                        $option.prop('disabled', false);
+                    }
+                }
+            });
+        }
+
+        // Update model dropdown (if make is selected)
+        const selectedMake = $('select[name="make"]').val();
+        if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
+            const $modelSelect = $('select[name="model"]');
+            $modelSelect.find('option').each(function() {
+                const $option = $(this);
+                const modelValue = $option.val();
+                if (modelValue !== '') { // Skip the "Select Make First" option
+                    const count = filterCounts.model_by_make[selectedMake][modelValue] || 0;
+                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
+                    $option.text(`${optionText} (${count})`);
+                    
+                    // Only disable if count is 0 AND not currently selected
+                    if (count === 0 && !$option.prop('selected')) {
+                        $option.prop('disabled', true);
+                    } else {
+                        $option.prop('disabled', false);
+                    }
+                }
+            });
+        }
+
+        // Update other dropdowns
+        if (filterCounts.fuel_type) {
+            updateMultiselectCounts('fuel_type', filterCounts.fuel_type);
+        }
+        if (filterCounts.transmission) {
+            updateMultiselectCounts('transmission', filterCounts.transmission);
+        }
+        if (filterCounts.body_type) {
+            updateMultiselectCounts('body_type', filterCounts.body_type);
+        }
+        if (filterCounts.drive_type) {
+            updateMultiselectCounts('drive_type', filterCounts.drive_type);
+        }
+        if (filterCounts.exterior_color) {
+            updateMultiselectCounts('exterior_color', filterCounts.exterior_color);
+        }
+        if (filterCounts.interior_color) {
+            updateMultiselectCounts('interior_color', filterCounts.interior_color);
+        }
+
+        // Update range selects
+        if (filterCounts.year) {
+            updateRangeSelectCounts('year', filterCounts.year);
+        }
+        if (filterCounts.engine_capacity) {
+            updateRangeSelectCounts('engine', filterCounts.engine_capacity);
+        }
+        if (filterCounts.mileage) {
+            updateRangeSelectCounts('mileage', filterCounts.mileage);
         }
     }
 
