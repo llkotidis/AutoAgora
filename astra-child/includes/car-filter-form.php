@@ -258,6 +258,17 @@ function display_car_filter_form( $context = 'default' ) {
          $initial_engine_counts[$formatted_key] = $count;
     }
 
+    // --- Generate Static Ranges ---
+    $current_year = date('Y');
+    $years = range($current_year, 1990); // Example range
+    // Use the specific list provided by the user
+    $engine_capacities = [0.0, 0.5, 0.7, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]; 
+    // Generate stepped mileage options
+    $mileages = [];
+    for ($i = 0; $i <= 50000; $i += 5000) { $mileages[] = $i; }
+    for ($i = 60000; $i <= 150000; $i += 10000) { $mileages[] = $i; }
+    for ($i = 200000; $i <= 300000; $i += 50000) { $mileages[] = $i; }
+
     // --- Get Initial Mileage Counts, now respecting location filter ---
     $initial_mileage_counts_raw = get_counts_for_meta_key($mileage_field_key, $location_filter);
     $initial_mileage_counts = [];
@@ -412,36 +423,12 @@ function display_car_filter_form( $context = 'default' ) {
              'driveType' => $drive_type_choices,
         ],
         'ranges' => [
-            // Remove: $years, $engine_capacities, $mileages, and any code that generates or uses them
-            // Only use dynamic options from the backend or query the DB for unique values for initial render
-            // (The frontend JS will update options dynamically after the first AJAX call)
+            'year' => $years,
+            'engineCapacity' => $engine_capacities,
+            'mileage' => $mileages,
         ],
         'locationFilter' => $location_filter
     ];
-
-    // --- Remove static/hardcoded filter option lists ---
-    // For year, engine, and mileage, dynamically query the DB for unique values for the current filtered set (including location)
-    // Get unique years
-    $year_values = array();
-    $year_counts = get_counts_for_meta_key($year_field_key, $location_filter);
-    if (!empty($year_counts)) {
-        $year_values = array_keys($year_counts);
-        rsort($year_values, SORT_NUMERIC); // Descending order
-    }
-    // Get unique engine capacities
-    $engine_values = array();
-    $engine_counts = get_counts_for_meta_key($engine_cap_field_key, $location_filter);
-    if (!empty($engine_counts)) {
-        $engine_values = array_unique(array_map(function($v){ return number_format(floatval($v), 1); }, array_keys($engine_counts)));
-        sort($engine_values, SORT_NUMERIC);
-    }
-    // Get unique mileages
-    $mileage_values = array();
-    $mileage_counts = get_counts_for_meta_key($mileage_field_key, $location_filter);
-    if (!empty($mileage_counts)) {
-        $mileage_values = array_unique(array_map('intval', array_keys($mileage_counts)));
-        sort($mileage_values, SORT_NUMERIC);
-    }
 
     // --- Start Form Output ---
     ob_start();
@@ -503,11 +490,11 @@ function display_car_filter_form( $context = 'default' ) {
                     <div class="filter-range-fields">
                         <select id="filter-year-min-<?php echo esc_attr($context); ?>" name="year_min" data-filter-key="year_min">
                             <option value="">Min Year</option>
-                            <?php render_range_options($year_values, '', '', $js_data['initialYearCounts'], true); ?>
+                            <?php render_range_options($years, '', '', $js_data['initialYearCounts'], true); ?>
                         </select>
                         <select id="filter-year-max-<?php echo esc_attr($context); ?>" name="year_max" data-filter-key="year_max">
                             <option value="">Max Year</option>
-                             <?php render_range_options($year_values, '', '', $js_data['initialYearCounts'], false); ?>
+                             <?php render_range_options($years, '', '', $js_data['initialYearCounts'], false); ?>
                        </select>
                     </div>
                 </div>
@@ -537,11 +524,11 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-engine-min-<?php echo esc_attr($context); ?>" name="engine_min" data-filter-key="engine_min">
                         <option value="">Min Size</option>
-                         <?php render_range_options($engine_values, '', 'L', $initial_engine_counts); ?>
+                         <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
                      <select id="filter-engine-max-<?php echo esc_attr($context); ?>" name="engine_max" data-filter-key="engine_max">
                         <option value="">Max Size</option>
-                        <?php render_range_options($engine_values, '', 'L', $initial_engine_counts); ?>
+                        <?php render_range_options($engine_capacities, '', 'L', $initial_engine_counts); ?>
                     </select>
                 </div>
             </div>
@@ -552,11 +539,11 @@ function display_car_filter_form( $context = 'default' ) {
                  <div class="filter-range-fields">
                     <select id="filter-mileage-min-<?php echo esc_attr($context); ?>" name="mileage_min" data-filter-key="mileage_min">
                         <option value="">Min KM</option>
-                         <?php render_range_options($mileage_values, '', ' km', $initial_mileage_counts); ?>
+                         <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                      <select id="filter-mileage-max-<?php echo esc_attr($context); ?>" name="mileage_max" data-filter-key="mileage_max">
                         <option value="">Max KM</option>
-                        <?php render_range_options($mileage_values, '', ' km', $initial_mileage_counts); ?>
+                        <?php render_range_options($mileages, '', ' km', $initial_mileage_counts); ?>
                     </select>
                 </div>
             </div>

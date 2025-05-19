@@ -373,15 +373,23 @@ add_action('wp_ajax_get_variant_counts', 'get_variant_counts_ajax_handler');
 // Hook for non-logged-in users (optional, if the filter is for everyone)
 add_action('wp_ajax_nopriv_get_variant_counts', 'get_variant_counts_ajax_handler');
 
-/**
- * AJAX handler to dynamically update counts for all filter fields.
- */
+// Helper: filter and order options by master list
+function filter_and_order_options($master_list, $counts) {
+    $result = [];
+    foreach ($master_list as $key => $label) {
+        $value = is_int($key) ? $label : $key;
+        if (isset($counts[$value]) && $counts[$value] > 0) {
+            $result[$value] = $label;
+        }
+    }
+    return $result;
+}
+
 function ajax_update_filter_counts_handler() {
     check_ajax_referer('car_filter_update_nonce', 'nonce'); 
     $debug_info = [];
-
     $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : array();
-    $debug_info['received_filters'] = $filters; // Log received filters
+    $debug_info['received_filters'] = $filters;
 
     // --- Extract location filter from POST (if present) ---
     $location_filter = null;
@@ -615,22 +623,22 @@ function ajax_update_filter_counts_handler() {
          $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
     }
     $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
-
+    
     global $wpdb;
     $post_id_placeholders_simple = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; 
     $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
 
-    foreach ($count_fields as $field_key) {
-        $config = $filter_keys[$field_key];
-        $is_multi = $config['multi'];
-        $field_counts = array();
-        $sql = '';
+        foreach ($count_fields as $field_key) {
+            $config = $filter_keys[$field_key];
+            $is_multi = $config['multi'];
+            $field_counts = array();
+            $sql = '';
         $contextual_meta_query = ['relation' => 'AND'];
         $relevant_filters = $filters; 
-        if ($is_multi) {
+            if ($is_multi) {
             unset($relevant_filters[$field_key]);
         } else {
-            switch ($field_key) {
+             switch ($field_key) {
                 case 'make':
                     unset($relevant_filters['model']);
                     unset($relevant_filters['variant']);
@@ -670,7 +678,7 @@ function ajax_update_filter_counts_handler() {
                  }
             }
         }
-        $query_args_context = array(
+         $query_args_context = array(
             'post_type' => 'car', 'post_status' => 'publish',
             'posts_per_page' => -1, 'fields' => 'ids',
             'meta_query' => $contextual_meta_query
@@ -685,63 +693,129 @@ function ajax_update_filter_counts_handler() {
             $contextual_placeholders = implode(',', array_fill(0, count($contextual_matching_ids), '%d'));
             $contextual_prepared_ids = $contextual_matching_ids;
         }
-        if (!empty($contextual_matching_ids)) {
-            $sql = $wpdb->prepare(
-                "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                 FROM {$wpdb->postmeta} 
-                 WHERE meta_key = %s 
-                 AND post_id IN ({$contextual_placeholders})
-                 AND meta_value IS NOT NULL AND meta_value != ''
-                 GROUP BY meta_value",
-                array_merge([$field_key], $contextual_prepared_ids)
-            );
-        } else {
-            $sql = ''; 
-            $field_counts = array();
-        }
+         if (!empty($contextual_matching_ids)) {
+                     $sql = $wpdb->prepare(
+                         "SELECT meta_value, COUNT(DISTINCT post_id) as count 
+                          FROM {$wpdb->postmeta} 
+                          WHERE meta_key = %s 
+                  AND post_id IN ({$contextual_placeholders})
+                          AND meta_value IS NOT NULL AND meta_value != ''
+                          GROUP BY meta_value",
+                 array_merge([$field_key], $contextual_prepared_ids)
+                     );
+                 } else {
+             $sql = ''; 
+             $field_counts = array();
+                 }
         if ($sql) {
-            $results = $wpdb->get_results($sql, OBJECT_K);
-            if ($results) {
-                foreach ($results as $value => $data) {
-                    $field_counts[$value] = (int)$data->count;
-                }
+                 $results = $wpdb->get_results($sql, OBJECT_K);
+                 if ($results) {
+                     foreach ($results as $value => $data) {
+                         $field_counts[$value] = (int)$data->count;
+                     }
+                 }
             }
+            $updated_counts[$field_key] = $field_counts;
         }
-        $updated_counts[$field_key] = $field_counts;
-    }
-    // Instead of using hardcoded lists for filter options, dynamically generate them from the filtered car IDs
-    // For each filter field, get the unique values present in the filtered set (matching_car_ids)
-    $dynamic_filter_options = array();
-    if (!empty($matching_car_ids) && is_array($matching_car_ids)) {
-        global $wpdb;
-        $fields_to_query = [
-            'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type', 'year', 'engine_capacity', 'mileage'
-        ];
-        foreach ($fields_to_query as $field_key) {
-            $placeholders = implode(',', array_fill(0, count($matching_car_ids), '%d'));
-            $sql = $wpdb->prepare(
-                "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value IS NOT NULL AND meta_value != ''",
-                array_merge([$field_key], $matching_car_ids)
-            );
-            $results = $wpdb->get_col($sql);
-            // For numeric fields, sort numerically
-            if (in_array($field_key, ['year', 'engine_capacity', 'mileage'])) {
-                $results = array_map('floatval', $results);
-                sort($results, SORT_NUMERIC);
-            } else {
-                sort($results, SORT_STRING);
-            }
-            $dynamic_filter_options[$field_key] = $results;
-        }
-    }
-    $updated_counts['dynamic_filter_options'] = $dynamic_filter_options;
     // ... (rest of the function remains unchanged, but for all other queries, add post__in or IN clause with $matching_car_ids if set)
-    // --- Calculate Counts for Engine Capacity --- 
+        // --- Calculate Counts for Engine Capacity --- 
     // ...
     // When building $query_args_mileage_ids, $query_args_year_ids, etc., also add post__in if $matching_car_ids !== null
     // ...
-    // At the end, send the response as before
-    wp_send_json_success($updated_counts);
+    // After $updated_counts is built, build master lists:
+    $master_fuel_types = [
+        'Petrol' => 'Petrol',
+        'Diesel' => 'Diesel',
+        'Electric' => 'Electric',
+        'Petrol hybrid' => 'Petrol hybrid',
+        'Diesel hybrid' => 'Diesel hybrid',
+        'Plug-in petrol' => 'Plug-in petrol',
+        'Plug-in diesel' => 'Plug-in diesel',
+        'Bi Fuel' => 'Bi Fuel',
+        'Hydrogen' => 'Hydrogen',
+        'Natural Gas' => 'Natural Gas',
+    ];
+    $master_transmissions = [
+        'Automatic' => 'Automatic',
+        'Manual' => 'Manual',
+    ];
+    $master_drive_types = [
+        'Front-Wheel Drive' => 'Front-Wheel Drive',
+        'Rear-Wheel Drive' => 'Rear-Wheel Drive',
+        'All-Wheel Drive' => 'All-Wheel Drive',
+        '4-Wheel Drive' => '4-Wheel Drive',
+    ];
+    $master_body_types = [
+        'Hatchback' => 'Hatchback',
+        'Saloon' => 'Saloon',
+        'Coupe' => 'Coupe',
+        'Convertible' => 'Convertible',
+        'Estate' => 'Estate',
+        'SUV' => 'SUV',
+        'MPV' => 'MPV',
+        'Pickup' => 'Pickup',
+        'Camper' => 'Camper',
+        'Minibus' => 'Minibus',
+        'Limousine' => 'Limousine',
+        'Car Derived Van' => 'Car Derived Van',
+        'Combi Van' => 'Combi Van',
+        'Panel Van' => 'Panel Van',
+        'Window Van' => 'Window Van',
+    ];
+    $master_exterior_colors = [
+        'Black' => 'Black', 'White' => 'White', 'Silver' => 'Silver', 'Gray' => 'Gray', 'Red' => 'Red',
+        'Blue' => 'Blue', 'Green' => 'Green', 'Yellow' => 'Yellow', 'Brown' => 'Brown', 'Beige' => 'Beige',
+        'Orange' => 'Orange', 'Purple' => 'Purple', 'Gold' => 'Gold', 'Bronze' => 'Bronze',
+    ];
+    $master_interior_colors = [
+        'Black' => 'Black', 'Gray' => 'Gray', 'Beige' => 'Beige', 'Brown' => 'Brown', 'White' => 'White',
+        'Red' => 'Red', 'Blue' => 'Blue', 'Tan' => 'Tan', 'Cream' => 'Cream',
+    ];
+    // Engine capacities: 0.4 to 12.0, step 0.1
+    $master_engine_capacities = [];
+    for ($cap = 0.4; $cap <= 12.0; $cap += 0.1) {
+        $master_engine_capacities[] = number_format($cap, 1);
+    }
+    // Years: 2025 to 1948
+    $master_years = [];
+    for ($y = date('Y'); $y >= 1948; $y--) {
+        $master_years[] = (string)$y;
+    }
+    // Make/model/variant: get from master makesData (should be localized to JS, but for backend, use DB or file)
+    // For now, use all makes present in the DB (from counts)
+    $master_makes = array_keys($updated_counts['make']);
+    // For models, use the model_by_make structure if available
+    $master_models_by_make = isset($updated_counts['model_by_make']) ? $updated_counts['model_by_make'] : [];
+
+    // Now, filter and order each filter's options
+    $filtered_options = [
+        'fuel_type' => filter_and_order_options($master_fuel_types, $updated_counts['fuel_type']),
+        'transmission' => filter_and_order_options($master_transmissions, $updated_counts['transmission']),
+        'drive_type' => filter_and_order_options($master_drive_types, $updated_counts['drive_type']),
+        'body_type' => filter_and_order_options($master_body_types, $updated_counts['body_type']),
+        'exterior_color' => filter_and_order_options($master_exterior_colors, $updated_counts['exterior_color']),
+        'interior_color' => filter_and_order_options($master_interior_colors, $updated_counts['interior_color']),
+        'engine_capacity' => array_values(array_filter($master_engine_capacities, function($cap) use ($updated_counts) {
+            return isset($updated_counts['engine_capacity'][$cap]) && $updated_counts['engine_capacity'][$cap] > 0;
+        })),
+        'year' => array_values(array_filter($master_years, function($year) use ($updated_counts) {
+            return isset($updated_counts['year'][$year]) && $updated_counts['year'][$year] > 0;
+        })),
+        // For make/model, use the counts as already filtered
+        'make' => $master_makes,
+        'model_by_make' => $master_models_by_make,
+    ];
+    // For numeric filters, also return min/max present in the result set
+    $filtered_options['engine_capacity_min'] = min(array_keys($updated_counts['engine_capacity']));
+    $filtered_options['engine_capacity_max'] = max(array_keys($updated_counts['engine_capacity']));
+    $filtered_options['year_min'] = min(array_keys($updated_counts['year']));
+    $filtered_options['year_max'] = max(array_keys($updated_counts['year']));
+    // Add to response
+    wp_send_json_success([
+        'counts' => $updated_counts,
+        'filtered_options' => $filtered_options,
+        '_debug_info' => $debug_info,
+    ]);
     wp_die();
 }
 

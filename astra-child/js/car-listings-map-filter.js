@@ -573,6 +573,9 @@ jQuery(document).ready(function($) {
                             $span.text(currentText);
                         });
                     }
+
+                    // Update all filters based on AJAX response
+                    updateAllFiltersFromAjax(response.data.filtered_options);
                 } else {
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data && response.data.message ? response.data.message : '') + '</p>');
                 }
@@ -755,6 +758,115 @@ jQuery(document).ready(function($) {
                         $option.prop('disabled', false);
                     }
                 }
+            });
+        }
+    }
+
+    // Helper to update a select dropdown with new options
+    function updateSelectOptions($select, options, placeholder) {
+        $select.empty();
+        if (placeholder) {
+            $select.append(`<option value="">${placeholder}</option>`);
+        }
+        for (const [value, label] of Object.entries(options)) {
+            $select.append(`<option value="${value}">${label}</option>`);
+        }
+    }
+
+    // Helper to update a numeric range dropdown
+    function updateRangeOptions($select, values, placeholder, suffix = '') {
+        $select.empty();
+        if (placeholder) {
+            $select.append(`<option value="">${placeholder}</option>`);
+        }
+        values.forEach(val => {
+            $select.append(`<option value="${val}">${val}${suffix}</option>`);
+        });
+    }
+
+    // Main function to update all filters based on AJAX response
+    function updateAllFiltersFromAjax(filteredOptions) {
+        // Make
+        if (filteredOptions.make) {
+            const makeOptions = {};
+            filteredOptions.make.forEach(make => { makeOptions[make] = make; });
+            updateSelectOptions($("select[name='make']"), makeOptions, 'All Makes');
+        }
+        // Model (by make)
+        const selectedMake = $("select[name='make']").val();
+        if (filteredOptions.model_by_make && selectedMake && filteredOptions.model_by_make[selectedMake]) {
+            const modelOptions = {};
+            Object.keys(filteredOptions.model_by_make[selectedMake]).forEach(model => {
+                modelOptions[model] = model;
+            });
+            updateSelectOptions($("select[name='model']"), modelOptions, 'All Models');
+            $("select[name='model']").prop('disabled', false);
+        } else {
+            updateSelectOptions($("select[name='model']"), {}, 'Select Make First');
+            $("select[name='model']").prop('disabled', true);
+        }
+        // Fuel Type
+        if (filteredOptions.fuel_type) {
+            const fuelTypeOptions = filteredOptions.fuel_type;
+            const $fuelType = $(".multi-select-filter[data-filter-key='fuel_type'] ul");
+            $fuelType.empty();
+            Object.entries(fuelTypeOptions).forEach(([val, label]) => {
+                $fuelType.append(`<li data-value="${val}">${label}</li>`);
+            });
+        }
+        // Transmission
+        if (filteredOptions.transmission) {
+            const transmissionOptions = filteredOptions.transmission;
+            const $transmission = $(".multi-select-filter[data-filter-key='transmission'] ul");
+            $transmission.empty();
+            Object.entries(transmissionOptions).forEach(([val, label]) => {
+                $transmission.append(`<li data-value="${val}">${label}</li>`);
+            });
+        }
+        // Engine Capacity (min/max)
+        if (filteredOptions.engine_capacity) {
+            updateRangeOptions($("select[name='engine_min']"), filteredOptions.engine_capacity, 'Min Size', 'L');
+            updateRangeOptions($("select[name='engine_max']"), filteredOptions.engine_capacity, 'Max Size', 'L');
+        }
+        // Year (min/max)
+        if (filteredOptions.year) {
+            updateRangeOptions($("select[name='year_min']"), filteredOptions.year, 'Min Year');
+            updateRangeOptions($("select[name='year_max']"), filteredOptions.year, 'Max Year');
+        }
+        // Body Type
+        if (filteredOptions.body_type) {
+            const bodyTypeOptions = filteredOptions.body_type;
+            const $bodyType = $(".multi-select-filter[data-filter-key='body_type'] ul");
+            $bodyType.empty();
+            Object.entries(bodyTypeOptions).forEach(([val, label]) => {
+                $bodyType.append(`<li data-value="${val}">${label}</li>`);
+            });
+        }
+        // Drive Type
+        if (filteredOptions.drive_type) {
+            const driveTypeOptions = filteredOptions.drive_type;
+            const $driveType = $(".multi-select-filter[data-filter-key='drive_type'] ul");
+            $driveType.empty();
+            Object.entries(driveTypeOptions).forEach(([val, label]) => {
+                $driveType.append(`<li data-value="${val}">${label}</li>`);
+            });
+        }
+        // Exterior Color
+        if (filteredOptions.exterior_color) {
+            const extColorOptions = filteredOptions.exterior_color;
+            const $extColor = $(".multi-select-filter[data-filter-key='exterior_color'] ul");
+            $extColor.empty();
+            Object.entries(extColorOptions).forEach(([val, label]) => {
+                $extColor.append(`<li data-value="${val}">${label}</li>`);
+            });
+        }
+        // Interior Color
+        if (filteredOptions.interior_color) {
+            const intColorOptions = filteredOptions.interior_color;
+            const $intColor = $(".multi-select-filter[data-filter-key='interior_color'] ul");
+            $intColor.empty();
+            Object.entries(intColorOptions).forEach(([val, label]) => {
+                $intColor.append(`<li data-value="${val}">${label}</li>`);
             });
         }
     }
