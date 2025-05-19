@@ -569,20 +569,26 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: data,
             success: function(response) {
+                console.log('[DEBUG] fetchFilteredListings AJAX Response:', response);
                 $('#filter-make').removeClass('loading-filter');
                 
                 if (response.success) {
+                    console.log('[DEBUG] fetchFilteredListings - response.data:', response.data);
                     // Update listings
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
                     // Update make filter options if provided
                     if (response.data.all_makes) {
+                        console.log('[DEBUG] fetchFilteredListings - response.data.all_makes:', response.data.all_makes);
                         updateMakeFilter(response.data.all_makes, selectedMake);
+                    } else {
+                        console.warn('[DEBUG] fetchFilteredListings - all_makes not found in response.data');
                     }
 
                     // Update other filter counts
                     if (response.data.filter_counts) {
+                        console.log('[DEBUG] fetchFilteredListings - response.data.filter_counts:', response.data.filter_counts);
                         updateFilterCounts(response.data.filter_counts);
                     }
 
@@ -606,6 +612,7 @@ jQuery(document).ready(function($) {
                     // Update URL
                     updateUrlWithFilters(page, lat, lng, radius);
                 } else {
+                    console.error('[DEBUG] fetchFilteredListings AJAX failed:', response.data?.message || 'No error message');
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data?.message || '') + '</p>');
                 }
             },
@@ -620,6 +627,8 @@ jQuery(document).ready(function($) {
     }
 
     function updateMakeFilter(makes, selectedMake = '') {
+        console.log('[DEBUG] updateMakeFilter - received makes:', makes);
+        console.log('[DEBUG] updateMakeFilter - selectedMake:', selectedMake);
         const $makeSelect = $('#filter-make');
         let options = '<option value="">All Makes</option>';
         
@@ -932,17 +941,33 @@ jQuery(document).ready(function($) {
         data: {
             action: 'filter_listings_by_location',
             nonce: nonce,
-            paged: 1,
-            per_page: 1,
-            get_all_makes: true
+            paged: 1, // Requesting page 1
+            per_page: 1, // Requesting minimal posts, just for counts/makes
+            get_all_makes: true,
+            get_filter_counts: true // Also request initial filter counts
         },
         success: function(response) {
-            if (response.success && response.data.all_makes) {
-                updateMakeFilter(response.data.all_makes, '');
+            console.log('[DEBUG] Initial AJAX Response:', response);
+            if (response.success) {
+                console.log('[DEBUG] Initial AJAX - response.data:', response.data);
+                if (response.data.all_makes) {
+                    console.log('[DEBUG] Initial AJAX - response.data.all_makes:', response.data.all_makes);
+                    updateMakeFilter(response.data.all_makes, '');
+                } else {
+                    console.warn('[DEBUG] Initial AJAX - all_makes not found in response.data');
+                }
+                // Optionally update other filters if counts are available
+                if (response.data.filter_counts) {
+                     console.log('[DEBUG] Initial AJAX - response.data.filter_counts:', response.data.filter_counts);
+                    updateFilterCounts(response.data.filter_counts);
+                }
+            } else {
+                console.error('[DEBUG] Initial AJAX failed:', response.data?.message || 'No error message');
             }
             $('#filter-make').removeClass('loading-filter');
         },
-        error: function() {
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error('[DEBUG] Initial AJAX Error:', textStatus, errorThrown);
             $('#filter-make').removeClass('loading-filter');
         }
     });

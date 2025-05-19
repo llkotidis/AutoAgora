@@ -369,17 +369,16 @@ function autoagora_filter_listings_by_location_ajax() {
 
     if ($makes_query->have_posts()) {
         foreach ($makes_query->posts as $car_id) {
-            $make_field_value = get_field('make', $car_id); // ACF's get_field
+            $make_field_value = get_field('make', $car_id); 
             $make_name = '';
 
-            if (is_object($make_field_value) && isset($make_field_value->name)) { // Handle ACF Taxonomy field returning Term Object
+            if (is_object($make_field_value) && isset($make_field_value->name)) { 
                 $make_name = $make_field_value->name;
-            } elseif (is_string($make_field_value)) { // Handle ACF Text field or Taxonomy returning Term Name
+            } elseif (is_string($make_field_value)) { 
                 $make_name = $make_field_value;
             }
-            // Add further conditions here if 'make' can be an array of terms or other complex types
 
-            if ($make_name && is_string($make_name) && trim($make_name) !== '') { // Ensure it's a non-empty string
+            if ($make_name && is_string($make_name) && trim($make_name) !== '') { 
                 if (!isset($all_makes[$make_name])) {
                     $all_makes[$make_name] = 0;
                 }
@@ -387,10 +386,10 @@ function autoagora_filter_listings_by_location_ajax() {
             }
         }
     }
-    // No wp_reset_postdata() needed here as the loop uses 'ids' and get_field($field_name, $post_id)
-    // which doesn't set up the global post.
+    // Debug: Log collected makes
+    error_log('[DEBUG] AJAX - All Makes Collected: ' . print_r($all_makes, true));
 
-    ksort($all_makes); // Sort makes alphabetically
+    ksort($all_makes);
 
     // Prepare all filters from POST data
     $all_filters_from_post = $_POST;
@@ -563,7 +562,7 @@ function autoagora_filter_listings_by_location_ajax() {
     endif;
     $listings_html = ob_get_clean();
 
-    ob_start();
+    ob_start(); // For pagination
     global $wp_query; 
     $original_wp_query = $wp_query; 
     $wp_query = $car_query; 
@@ -592,7 +591,12 @@ function autoagora_filter_listings_by_location_ajax() {
             $current_filters_for_counts['radius'] = $location_filter['radius'];
         }
         $filter_counts = autoagora_get_dynamic_filter_counts($current_filters_for_counts);
+         // Debug: Log filter counts
+        error_log('[DEBUG] AJAX - Filter Counts: ' . print_r($filter_counts, true));
     }
+
+    // Debug: Log makes before sending JSON
+    error_log('[DEBUG] AJAX - All Makes Before Sending JSON: ' . print_r($all_makes, true));
 
     wp_send_json_success(array(
         'listings_html' => $listings_html,
