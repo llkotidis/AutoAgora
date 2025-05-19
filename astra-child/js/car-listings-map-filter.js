@@ -512,7 +512,7 @@ jQuery(document).ready(function($) {
             currentUrl.searchParams.set('lat', lat.toFixed(7));
             currentUrl.searchParams.set('lng', lng.toFixed(7));
             currentUrl.searchParams.set('radius', radius.toString()); // parseFloat then toString is fine
-        } else {
+            } else {
             currentUrl.searchParams.delete('lat');
             currentUrl.searchParams.delete('lng');
             currentUrl.searchParams.delete('radius');
@@ -521,7 +521,7 @@ jQuery(document).ready(function($) {
         // Update page number
         if (page && page > 1) {
             currentUrl.searchParams.set('paged', page.toString());
-        } else {
+                } else {
             currentUrl.searchParams.delete('paged');
         }
 
@@ -645,7 +645,7 @@ jQuery(document).ready(function($) {
 
                     // Update URL
                     updateUrlWithFilters(page, lat, lng, radius);
-                } else {
+                    } else {
                     console.error('[DEBUG] fetchFilteredListings AJAX failed:', response.data?.message || 'No error message');
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data?.message || '') + '</p>');
                 }
@@ -679,8 +679,8 @@ jQuery(document).ready(function($) {
         if (Array.isArray(globalMakes)) {
             globalMakes.forEach(makeName => {
                 makesToDisplayWithCounts[makeName] = filterCounts?.make?.[makeName] || 0;
-            });
-        } else {
+                        });
+                    } else {
             console.warn('[DEBUG] updateMakeFilter: globalMakes is not an array. Attempting to use keys from filterCounts.make if available.');
             if (filterCounts && typeof filterCounts.make === 'object' && filterCounts.make !== null) {
                  Object.keys(filterCounts.make).forEach(makeName => {
@@ -729,7 +729,7 @@ jQuery(document).ready(function($) {
                 }
             });
         }
-        
+
         $modelSelect.html(optionsHtml).prop('disabled', false);
     }
 
@@ -815,39 +815,60 @@ jQuery(document).ready(function($) {
         // Ensure centerLat and centerLng are valid numbers
         const cLat = parseFloat(centerLat);
         const cLng = parseFloat(centerLng);
+        const locationFilterActive = !isNaN(cLat) && !isNaN(cLng);
 
-        if (isNaN(cLat) || isNaN(cLng)) {
-            console.error('[DEBUG] calculateAndDisplayDistances: Invalid centerLat or centerLng provided.', {centerLat, centerLng});
-            return; // Exit if center coordinates are not valid numbers
+        if (locationFilterActive) {
+            // console.log('[DEBUG] calculateAndDisplayDistances: Location filter active.', {centerLat, centerLng});
+        } else {
+            // console.log('[DEBUG] calculateAndDisplayDistances: No location filter active or invalid coords.', {centerLat, centerLng});
         }
-
-        const pinLocation = turf.point([cLng, cLat]);
 
         $('.car-listings-grid .car-listing-card').each(function() {
             const $card = $(this);
-            const cardLatData = $card.data('latitude');
-            const cardLngData = $card.data('longitude');
+            const cardCity = $card.data('city');
+            const cardDistrict = $card.data('district');
+            const cardLatData = $card.data('latitude'); // Already being fetched by PHP
+            const cardLngData = $card.data('longitude'); // Already being fetched by PHP
+
             const $locationEl = $card.find('.car-location');
             const $locationTextSpan = $locationEl.find('span.location-text');
+
+            let baseLocationText = '';
+            if (cardCity && cardDistrict) {
+                baseLocationText = cardCity + ' - ' + cardDistrict;
+            } else if (cardCity) {
+                baseLocationText = cardCity;
+            } else if (cardDistrict) {
+                baseLocationText = cardDistrict;
+            } else {
+                baseLocationText = 'Location not specified'; // Fallback
+            }
 
             // Ensure cardLatData and cardLngData are not undefined or null before parseFloat
             if (cardLatData === undefined || cardLatData === null || cardLngData === undefined || cardLngData === null) {
                 // console.warn('[DEBUG] calculateAndDisplayDistances: Card missing latitude or longitude data attribute.', { postId: $card.data('post-id') });
-                return; // Skip this card if data attributes are missing
+                if ($locationTextSpan.length) {
+                    $locationTextSpan.text(baseLocationText);
+                }
+                return; // Skip this card if data attributes are missing for distance calculation
             }
             
             const cardLat = parseFloat(cardLatData);
             const cardLng = parseFloat(cardLngData);
 
-            if (!isNaN(cardLat) && !isNaN(cardLng) && $locationTextSpan.length) {
-                const carLocationPoint = turf.point([cardLng, cardLat]);
-                const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
-                const distanceText = ` (${distance.toFixed(1)} km away)`;
-                
-                let currentText = $locationTextSpan.text().replace(/\s*\([\d\.]+\s*km away\)/, '');
-                $locationTextSpan.text(currentText + distanceText);
+            if ($locationTextSpan.length) {
+                if (locationFilterActive && !isNaN(cardLat) && !isNaN(cardLng)) {
+                    const pinLocation = turf.point([cLng, cLat]); // Pin from map filter
+                    const carLocationPoint = turf.point([cardLng, cardLat]); // Car's location
+                    const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
+                    const distanceText = ` (${distance.toFixed(1)} km away)`;
+                    $locationTextSpan.text(baseLocationText + distanceText);
+                } else {
+                    // If no location filter or card coordinates are invalid, just show city - district
+                    $locationTextSpan.text(baseLocationText);
+                }
             } else {
-                // console.warn('[DEBUG] calculateAndDisplayDistances: Parsed card latitude or longitude is NaN or location text span not found.', { cardLatData, cardLngData, cardLat, cardLng, hasTextSpan: $locationTextSpan.length });
+                // console.warn('[DEBUG] calculateAndDisplayDistances: Location text span not found for card.', { postId: $card.data('post-id') });
             }
         });
     }
@@ -988,7 +1009,7 @@ jQuery(document).ready(function($) {
             $('#filter-variant').removeClass('loading-filter');
         }
     });
-
+    
     // Fetch listings with location (if any) and any spec filters from URL
     fetchFilteredListings(pageToFetch, initialLoadLat, initialLoadLng, initialLoadRadius);
 

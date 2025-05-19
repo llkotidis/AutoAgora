@@ -376,7 +376,7 @@ function autoagora_filter_listings_by_location_ajax() {
 
     $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
     $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
-    
+
     $filter_lat = isset($_POST['filter_lat']) && $_POST['filter_lat'] !== 'null' ? floatval($_POST['filter_lat']) : null;
     $filter_lng = isset($_POST['filter_lng']) && $_POST['filter_lng'] !== 'null' ? floatval($_POST['filter_lng']) : null;
     $filter_radius = isset($_POST['filter_radius']) && $_POST['filter_radius'] !== 'null' ? floatval($_POST['filter_radius']) : null;
@@ -502,7 +502,7 @@ function autoagora_filter_listings_by_location_ajax() {
                     echo '<div class="car-listing-image-carousel" data-post-id="' . esc_attr($car_post_id) . '">';
                     
                     foreach ($all_images as $index => $image_id) {
-                        $image_url = wp_get_attachment_image_url($image_id, 'medium');
+                            $image_url = wp_get_attachment_image_url($image_id, 'medium');
                         if ($image_url) {
                             $clean_year = str_replace(',', '', $year); 
                             echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . esc_attr($index) . '">';
@@ -517,18 +517,18 @@ function autoagora_filter_listings_by_location_ajax() {
                     echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
                     echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
                     
-                    $user_id = get_current_user_id();
-                    $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
-                    $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
+                        $user_id = get_current_user_id();
+                        $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
+                        $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
                     $is_favorite = in_array($car_post_id, $favorite_cars);
-                    $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
-                    $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
+                        $button_class = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
+                        $heart_class = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
                     echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . esc_attr($car_post_id) . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
                     
                     echo '</div>'; // .car-listing-image-carousel
                     echo '</div>'; // .car-listing-image-container
                 }
-                ?>
+                        ?>
                 
                 <a href="<?php echo $car_detail_url; ?>" class="car-listing-link">
                     <div class="car-listing-details">
@@ -575,7 +575,7 @@ function autoagora_filter_listings_by_location_ajax() {
                     </div>
                 </a>
             </div>
-            <?php
+        <?php
             // --- End Inlined Car Card HTML ---
         }
     } else {
@@ -612,8 +612,8 @@ function autoagora_filter_listings_by_location_ajax() {
             'posts_per_page' => -1,
             'fields' => 'ids',
             'meta_query' => array(
-                'relation' => 'OR',
-                array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
+                    'relation' => 'OR',
+                    array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
                 array('key' => 'is_sold', 'value' => '1', 'compare' => '!=')
             )
         );

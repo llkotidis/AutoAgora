@@ -167,6 +167,8 @@ function ajax_filter_car_listings_handler() {
             $mileage = get_field('mileage', get_the_ID());
             $car_city_handler = get_field('car_city', get_the_ID());
             $car_district_handler = get_field('car_district', get_the_ID());
+            $latitude = get_field('latitude', get_the_ID());
+            $longitude = get_field('longitude', get_the_ID());
             $display_location_handler = '';
             if (!empty($car_city_handler) && !empty($car_district_handler)) {
                 $display_location_handler = $car_city_handler . ' - ' . $car_district_handler;
@@ -179,7 +181,12 @@ function ajax_filter_car_listings_handler() {
             $transmission = get_field('transmission', get_the_ID());
             $body_type = get_field('body_type', get_the_ID());
             ?>
-            <div class="car-listing-card">
+            <div class="car-listing-card" 
+                 data-city="<?php echo esc_attr($car_city_handler); ?>" 
+                 data-district="<?php echo esc_attr($car_district_handler); ?>"
+                 data-latitude="<?php echo esc_attr($latitude); ?>"
+                 data-longitude="<?php echo esc_attr($longitude); ?>"
+                 data-post-id="<?php echo get_the_ID(); ?>">
                 <?php 
                 // Get all car images
                 $featured_image = get_post_thumbnail_id(get_the_ID());
