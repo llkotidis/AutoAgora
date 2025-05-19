@@ -417,6 +417,7 @@ jQuery(document).ready(function($) {
 
     applyBtn.on('click', function() {
         if (selectedCoords && selectedCoords.length === 2) {
+            // Location is selected
             const lat = selectedCoords[1];
             const lng = selectedCoords[0];
             const radius = currentRadiusKm;
@@ -424,19 +425,9 @@ jQuery(document).ready(function($) {
 
             currentLocationText.text(locationName);
             modal.hide();
-            fetchFilteredListings(1, lat, lng, radius);
 
-            // Update URL
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('lat', lat.toFixed(7));
-            currentUrl.searchParams.set('lng', lng.toFixed(7));
-            currentUrl.searchParams.set('radius', radius.toString());
-            currentUrl.searchParams.set('location_name', locationName);
-            currentUrl.searchParams.delete('paged');
-            history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-            console.log('[ApplyFilter] URL updated to:', currentUrl.href);
-
-            // Save to localStorage
+            // Save to localStorage BEFORE calling handleFilterChange, 
+            // as getActiveFilters might use selectedLocationName which should be fresh.
             const preferredLocation = {
                 lat: lat,
                 lng: lng,
@@ -446,66 +437,77 @@ jQuery(document).ready(function($) {
             localStorage.setItem('autoAgoraUserLocation', JSON.stringify(preferredLocation));
             console.log('[ApplyFilter] Location saved to localStorage:', preferredLocation);
 
+            // Call handleFilterChange. It will pick up selectedCoords, currentRadiusKm, 
+            // selectedLocationName and update URL & fetch.
+            handleFilterChange(false);
+
         } else {
-            // If no specific coords (e.g., user clears map and applies "All of Cyprus")
-            currentLocationText.text('All of Cyprus');
+            // No specific coords - means "All of Cyprus" or location cleared
+            selectedCoords = null;
+            currentRadiusKm = initialFilter.radius || 10; // Reset to a default or initial if cleared
+            selectedLocationName = 'All of Cyprus'; // Explicitly set for getActiveFilters
+
+            currentLocationText.text(selectedLocationName);
             modal.hide();
-            fetchFilteredListings(1, null, null, null); // Fetch all
-
-            // Update URL to remove location parameters
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.delete('lat');
-            currentUrl.searchParams.delete('lng');
-            currentUrl.searchParams.delete('radius');
-            currentUrl.searchParams.delete('location_name');
-            currentUrl.searchParams.delete('paged');
-            history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-            console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
-
-            // Clear from localStorage
+            
             localStorage.removeItem('autoAgoraUserLocation');
             console.log('[ApplyFilter] Location cleared from localStorage.');
+
+            // Call handleFilterChange. It will see no selectedCoords and act accordingly.
+            handleFilterChange(false);
         }
     });
 
     function fetchFilteredListings(page = 1, lat = null, lng = null, radius = null) {
-        // First check explicit parameters, then URL parameters if not provided
-        const urlParams = new URLSearchParams(window.location.search);
+        console.log(`[FetchListings] Init. Page: ${page}, Explicit Lat: ${lat}, Lng: ${lng}, Radius: ${radius}`);
         
-        // Use explicit parameters first, fall back to URL parameters
-        let filterLat = lat !== null ? lat : urlParams.get('lat') || null;
-        let filterLng = lng !== null ? lng : urlParams.get('lng') || null;
-        let filterRadius = radius !== null ? radius : urlParams.get('radius') || null;
-        
-        console.log(`[FetchListings] Fetching page ${page}. Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}, Name: ${selectedLocationName}`);
-        
-        // Abort any existing listings request if it's still running
         if (currentListingsRequest && currentListingsRequest.readyState !== 4) {
             console.log('[FetchListings] Aborting previous listings request.');
             currentListingsRequest.abort();
         }
 
-        // Preserve other existing URL parameters when fetching
-        const currentUrlParams = new URLSearchParams(window.location.search);
+        // Get all other active filters from the form
+        const otherActiveFilters = getActiveFilters();
+        // console.log('[FetchListings] Other active filters from getActiveFilters():', JSON.parse(JSON.stringify(otherActiveFilters)));
+
         const data = {
             action: 'filter_listings_by_location',
             nonce: nonce,
             paged: page,
-            filter_lat: filterLat,
-            filter_lng: filterLng,
-            filter_radius: filterRadius,
-            per_page: carListingsMapFilterData.perPage || 12 // Use perPage from localized data or default
+            per_page: carListingsMapFilterData.perPage || 12
         };
 
-        // Add other existing URL parameters to the AJAX request if they are not related to location/pagination
-        // This helps if other filters (e.g. make, model) are also managed via URL and should persist
-        currentUrlParams.forEach((value, key) => {
-            if (key !== 'lat' && key !== 'lng' && key !== 'radius' && key !== 'location_name' && key !== 'paged' && key !== 'action' && key !== 'nonce') {
-                data[key] = value;
-            }
-        });
+        // 1. Add explicit location parameters if provided to the function call
+        // These take precedence and are typically from a direct map interaction.
+        if (lat !== null && lng !== null && radius !== null) {
+            data.filter_lat = lat;
+            data.filter_lng = lng;
+            data.filter_radius = radius;
+            // console.log('[FetchListings] Using explicit location params for AJAX data.');
+        } else if (otherActiveFilters.lat && otherActiveFilters.lng && otherActiveFilters.radius) {
+            // 2. If not explicit, use location from getActiveFilters (which reads from selectedCoords or URL)
+            data.filter_lat = otherActiveFilters.lat;
+            data.filter_lng = otherActiveFilters.lng;
+            data.filter_radius = otherActiveFilters.radius;
+            // console.log('[FetchListings] Using location from getActiveFilters() for AJAX data.');
+        } else {
+            // console.log('[FetchListings] No location filter active for AJAX data.');
+        }
 
-        $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>'); // Show loading indicator
+        // 3. Add all other non-location filters from getActiveFilters()
+        for (const key in otherActiveFilters) {
+            if (Object.prototype.hasOwnProperty.call(otherActiveFilters, key)) {
+                if (key !== 'lat' && key !== 'lng' && key !== 'radius' && key !== 'location_name') {
+                    // For array values (multi-select), pass them as is. jQuery/PHP will handle foo[]=bar&foo[]=baz
+                    data[key] = otherActiveFilters[key];
+                }
+            }
+        }
+        
+        // console.log('[FetchListings] Final AJAX data being sent:', JSON.parse(JSON.stringify(data)));
+
+        $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>');
+        $('.car-listings-pagination').empty(); // Clear pagination during load
 
         currentListingsRequest = $.ajax({
             url: ajaxurl,
@@ -543,8 +545,8 @@ jQuery(document).ready(function($) {
                     }
 
                     // Calculate and display distances if location filter is active
-                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
-                        const pinLocation = turf.point([filterLng, filterLat]);
+                    if (data.filter_lat !== null && data.filter_lng !== null && data.filter_radius !== null) {
+                        const pinLocation = turf.point([data.filter_lng, data.filter_lat]);
 
                         $('.car-listings-grid .car-listing-card').each(function() {
                             const $card = $(this);
@@ -573,9 +575,6 @@ jQuery(document).ready(function($) {
                             $span.text(currentText);
                         });
                     }
-
-                    // Update all filters based on AJAX response
-                    updateAllFiltersFromAjax(response.data.filtered_options);
                 } else {
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data && response.data.message ? response.data.message : '') + '</p>');
                 }
@@ -590,292 +589,502 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // Helper function to update multiselect filter counts
+    // Main function to update all filter counts based on AJAX response
+    function updateFilterCounts(filterCounts) {
+        if (!filterCounts) {
+            // console.warn('[updateFilterCounts] filterCounts is undefined or null. Skipping update.');
+            return;
+        }
+        // console.log('[updateFilterCounts] Received new counts:', JSON.parse(JSON.stringify(filterCounts)));
+
+        // --- 1. Update Make Filter First ---
+        const $makeSelect = $('#make-filter');
+        if ($makeSelect.length) {
+            const makeCounts = filterCounts.make || {};
+            // console.log('[updateFilterCounts] Updating MAKE with counts:', makeCounts);
+            updateSelectOptionsWithCounts($makeSelect, makeCounts, 'Any Make', false);
+        } else {
+            // console.warn('[updateFilterCounts] Make select (#make-filter) not found.');
+        }
+
+        // --- 2. Update Model Filter (dependent on Make) ---
+        const $modelSelect = $('#model-filter');
+        if ($modelSelect.length) {
+            const selectedMake = $makeSelect.val(); // Get current make value AFTER it might have been updated by updateSelectOptionsWithCounts
+            let modelCountsForSelectedMake = {};
+            let modelPlaceholder = 'Select Make First';
+            let disableModelPlaceholder = true;
+
+            if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
+                modelCountsForSelectedMake = filterCounts.model_by_make[selectedMake];
+                modelPlaceholder = 'Any Model';
+                disableModelPlaceholder = false;
+                if (Object.keys(modelCountsForSelectedMake).length === 0) {
+                    modelPlaceholder = 'No models for ' + selectedMake;
+                    disableModelPlaceholder = true; // No models, so disable placeholder
+                }
+            } else if (selectedMake) {
+                // Make is selected, but no specific model counts for it (e.g. model_by_make didn't include it or it's empty)
+                modelPlaceholder = 'No models for ' + selectedMake;
+                disableModelPlaceholder = true;
+            }
+            // If no make is selected, placeholder remains 'Select Make First' and is disabled.
+            
+            // console.log(`[updateFilterCounts] Updating MODEL for make "${selectedMake || 'N/A'}" with counts:`, modelCountsForSelectedMake, `Placeholder: "${modelPlaceholder}"`);
+            updateSelectOptionsWithCounts($modelSelect, modelCountsForSelectedMake, modelPlaceholder, disableModelPlaceholder);
+        } else {
+            // console.warn('[updateFilterCounts] Model select (#model-filter) not found.');
+        }
+
+        // --- 3. Update Multi-select Checkbox Filters ---
+        ['fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type'].forEach(filterKey => {
+            const countsForKey = filterCounts[filterKey] || {};
+            // console.log(`[updateFilterCounts] Updating MULTISELECT "${filterKey}" with counts:`, countsForKey);
+            updateMultiselectCounts(filterKey, countsForKey);
+        });
+
+        // --- 4. Update Range Filters (Year, Price, Mileage, Engine Capacity) ---
+        ['year', 'price', 'mileage', 'engine_capacity'].forEach(rangeType => {
+            const countsForRange = filterCounts[rangeType] || {};
+            // console.log(`[updateFilterCounts] Updating RANGE "${rangeType}" with counts:`, countsForRange);
+            updateRangeSelectCounts(rangeType, countsForRange); 
+        });
+        
+        // console.log('[updateFilterCounts] All filter counts dynamically processed.');
+    }
+
+    // Helper to populate a select dropdown with options and their counts
+    function updateSelectOptionsWithCounts($select, optionsWithCounts, placeholder, disabledPlaceholder = false) {
+        if (!$select || $select.length === 0) {
+            // console.warn('[updateSelectOptionsWithCounts] Select element not found or invalid.');
+            return;
+        }
+        const currentVal = $select.val();
+        $select.empty();
+
+        // Add placeholder option
+        const $placeholderOption = $('<option></option>').val('').text(placeholder);
+        if (disabledPlaceholder) {
+            $placeholderOption.prop('disabled', true);
+        }
+        $select.append($placeholderOption);
+        
+        let hasSelectedValueInNewOptions = false;
+        let hasAnyOptions = false; // To track if any actual options are added besides placeholder
+
+        if (optionsWithCounts && Object.keys(optionsWithCounts).length > 0) {
+            hasAnyOptions = true;
+            // Sort options by key (e.g., make name, model name) for consistent order
+            const sortedKeys = Object.keys(optionsWithCounts).sort((a, b) => {
+                // If keys are numeric (like years from range filters), sort numerically, otherwise alphabetically
+                if (!isNaN(parseFloat(a)) && !isNaN(parseFloat(b))) {
+                    return parseFloat(a) - parseFloat(b);
+                }
+                return String(a).localeCompare(String(b)); // Ensure string comparison for makes, models etc.
+            });
+
+            sortedKeys.forEach(key => {
+                const count = parseInt(optionsWithCounts[key], 10);
+                const $option = $('<option></option>')
+                    .val(key)
+                    .text(`${key} (${count})`);
+                
+                // Disable if count is 0, UNLESS it's the currently selected value
+                if (count === 0 && String(key) !== String(currentVal)) {
+                    $option.prop('disabled', true).addClass('disabled-option zero-count');
+                }
+                
+                if (String(key) === String(currentVal)) {
+                    $option.prop('selected', true);
+                    hasSelectedValueInNewOptions = true;
+                    // If the selected option now has 0 count, visually mark it but don't disable (user might want to unselect)
+                    if (count === 0) {
+                         $option.addClass('disabled-option zero-count'); 
+                         // $option.prop('disabled', true); // Keep it selectable to allow unselecting
+                    }
+                }
+                $select.append($option);
+            });
+        }
+
+        // If the previously selected value is no longer in the options (e.g., count became 0 or filter changed)
+        // Add it back as a selected, disabled option to show what was selected, but make it clear it's no longer valid/available.
+        if (currentVal && currentVal !== '' && !hasSelectedValueInNewOptions) {
+            // console.log(`[updateSelectOptionsWithCounts] Persisting old selection for ${$select.attr('id')}: ${currentVal}`);
+            const $previousSelectedOption = $('<option></option>')
+                .val(currentVal)
+                .text(`${currentVal} (0)`) // Show 0 count
+                .prop('selected', true)
+                .prop('disabled', true)
+                .addClass('disabled-option zero-count persisted-selection');
+            $select.append($previousSelectedOption);
+        } else if ((!currentVal || currentVal === '') && !disabledPlaceholder) {
+             // If no current value (placeholder was selected) and the placeholder is not a "disabled" one (like 'Select Make First')
+             // ensure the (default) placeholder is re-selected.
+             $select.val(''); 
+        } else if (hasSelectedValueInNewOptions) {
+            // If the current value is still valid, ensure it's re-selected (it should be already by the loop above)
+            $select.val(currentVal); 
+        }
+        
+        // If no options were actually added (other than placeholder) and placeholder is not disabled, ensure placeholder selected.
+        if (!hasAnyOptions && !disabledPlaceholder) {
+            $select.val('');
+        }
+    }
+
+    // Helper function to update multiselect filter counts and disabled state
     function updateMultiselectCounts(filterKey, counts) {
         const $container = $(`.multi-select-filter[data-filter-key="${filterKey}"]`);
         if ($container.length) {
             $container.find('li input[type="checkbox"]').each(function() {
                 const $checkbox = $(this);
                 const value = $checkbox.val();
-                const count = counts[value] || 0;
-                const $countSpan = $checkbox.closest('label').find('.option-count');
-                
-                if ($countSpan.length) {
-                    $countSpan.text(count);
+                // Ensure counts is treated as an object; default to 0 if value not in counts or counts is null
+                const count = (counts && typeof counts === 'object' && counts[value] !== undefined) ? parseInt(counts[value], 10) : 0;
+                const $label = $checkbox.closest('label');
+                let $countSpan = $label.find('.option-count');
+
+                // Add count span if it doesn't exist
+                if ($countSpan.length === 0) {
+                    $label.append(' <span class="option-count"></span>');
+                    $countSpan = $label.find('.option-count');
                 }
                 
-                // Only disable if count is 0 AND not currently checked
+                $countSpan.text(`(${count})`);
+
+                // Visually de-emphasize and disable if count is 0 AND not currently checked
+                // Re-enable if count > 0 or if it is checked (to allow unchecking)
                 if (count === 0 && !$checkbox.prop('checked')) {
                     $checkbox.prop('disabled', true);
-                    $checkbox.closest('li').addClass('disabled-option');
+                    $label.addClass('disabled-option zero-count');
                 } else {
                     $checkbox.prop('disabled', false);
-                    $checkbox.closest('li').removeClass('disabled-option');
+                    $label.removeClass('disabled-option zero-count');
                 }
             });
+        } else {
+            // console.warn(`[updateMultiselectCounts] Container not found for filterKey: ${filterKey}`);
         }
     }
 
-    // Helper function to update range select filter counts
+    // Main new function to handle updating both min and max selects for a given range type
     function updateRangeSelectCounts(rangeType, counts) {
-        // Handle min select
-        const $minSelect = $(`select[name="${rangeType}_min"]`);
-        if ($minSelect.length) {
-            $minSelect.find('option').each(function() {
-                const $option = $(this);
-                const value = $option.val();
-                if (value !== '') { // Skip the "Min" option
-                    const count = counts[value] || 0;
-                    
-                    // Extract existing display text without the count
-                    let baseText = $option.text().replace(/\s*\(\d+\)$/, '');
-                    
-                    // Make sure we keep any suffix (km, L)
-                    $option.text(`${baseText} (${count})`);
-                    
-                    // Only disable if count is 0 AND not currently selected
-                    if (count === 0 && !$option.prop('selected')) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
+        // console.log(`[updateRangeSelectCounts] For "${rangeType}" with counts:`, JSON.parse(JSON.stringify(counts)));
+        const $minSelect = $(`#${rangeType}_min`);
+        const $maxSelect = $(`#${rangeType}_max`);
+
+        if (!$minSelect.length || !$maxSelect.length) {
+            // console.warn(`[updateRangeSelectCounts] Min/max select elements not found for rangeType: ${rangeType}`);
+            return;
+        }
+
+        const currentMin = $minSelect.val();
+        const currentMax = $maxSelect.val();
+
+        let suffix = '';
+        if (rangeType === 'mileage') suffix = ' km';
+        else if (rangeType === 'engine_capacity') suffix = ' L';
+        // Price might need formatting if using decimals, but values are keys for now.
+
+        const placeholderMin = `Min ${rangeType.charAt(0).toUpperCase() + rangeType.slice(1).replace('_',' ')}`;
+        const placeholderMax = `Max ${rangeType.charAt(0).toUpperCase() + rangeType.slice(1).replace('_',' ')}`;
+        
+        // Update Min Dropdown
+        // Opposite value for min is currentMax. isMinSelect is true.
+        updateSingleRangeDropdown($minSelect, counts, placeholderMin, currentMax, true, currentMin, suffix);
+        
+        // Update Max Dropdown
+        // Opposite value for max is currentMin. isMinSelect is false.
+        updateSingleRangeDropdown($maxSelect, counts, placeholderMax, currentMin, false, currentMax, suffix);
+    }
+
+    // Helper to update a single range dropdown (either min or max)
+    function updateSingleRangeDropdown($select, valuesWithCounts, placeholder, oppositeValue, isMinSelect, currentValue, suffix = '') {
+        if (!$select || $select.length === 0) {
+            // console.warn('[updateSingleRangeDropdown] Select element not found.');
+            return;
+        }
+        $select.empty();
+        $select.append($('<option></option>').val('').text(placeholder));
+
+        let hasSelectedValueInNewOptions = false;
+        let hasAnyOptions = false;
+
+        if (valuesWithCounts && Object.keys(valuesWithCounts).length > 0) {
+            hasAnyOptions = true;
+            // Sort values numerically. Keys are strings, so parse them.
+            const sortedValues = Object.keys(valuesWithCounts).sort((a, b) => parseFloat(a) - parseFloat(b));
+
+            sortedValues.forEach(value => {
+                const count = parseInt(valuesWithCounts[value], 10);
+                const displayValue = value + suffix; // Add suffix for display like km or L
+                const $option = $('<option></option>')
+                    .val(value) // Store raw value
+                    .text(`${displayValue} (${count})`); 
+
+                let disableOption = false;
+                // Disable if count is 0, unless it's the current value
+                if (count === 0 && String(value) !== String(currentValue)) {
+                    disableOption = true;
+                }
+
+                // Disable based on opposite value if opposite is selected
+                if (oppositeValue && oppositeValue !== '') {
+                    const numValue = parseFloat(value);
+                    const numOppositeValue = parseFloat(oppositeValue);
+                    if (isMinSelect && numValue > numOppositeValue) { // Min option value > selected Max value
+                        disableOption = true;
+                    } else if (!isMinSelect && numValue < numOppositeValue) { // Max option value < selected Min value
+                        disableOption = true;
                     }
                 }
+                
+                if (disableOption && String(value) !== String(currentValue)) {
+                    $option.prop('disabled', true).addClass('disabled-option');
+                    if (count === 0) {
+                        $option.addClass('zero-count');
+                    }
+                }
+
+                if (String(value) === String(currentValue)) {
+                    $option.prop('selected', true);
+                    hasSelectedValueInNewOptions = true;
+                    if (count === 0) { // If selected value now has 0 count, mark it but keep selectable
+                        $option.addClass('disabled-option zero-count');
+                    }
+                }
+                $select.append($option);
             });
         }
         
-        // Handle max select
-        const $maxSelect = $(`select[name="${rangeType}_max"]`);
-        if ($maxSelect.length) {
-            $maxSelect.find('option').each(function() {
-                const $option = $(this);
-                const value = $option.val();
-                if (value !== '') { // Skip the "Max" option
-                    const count = counts[value] || 0;
-                    
-                    // Extract existing display text without the count
-                    let baseText = $option.text().replace(/\s*\(\d+\)$/, '');
-                    
-                    // Make sure we keep any suffix (km, L)
-                    $option.text(`${baseText} (${count})`);
-                    
-                    // Only disable if count is 0 AND not currently selected
-                    if (count === 0 && !$option.prop('selected')) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-    }
-
-    // New function to update filter counts
-    function updateFilterCounts(filterCounts) {
-        // Update make dropdown
-        if (filterCounts.make) {
-            const $makeSelect = $('select[name="make"]');
-            $makeSelect.find('option').each(function() {
-                const $option = $(this);
-                const makeValue = $option.val();
-                if (makeValue !== '') { // Skip the "All Makes" option
-                    const count = filterCounts.make[makeValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Only disable if count is 0 AND not currently selected
-                    if (count === 0 && !$option.prop('selected')) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
+        if (currentValue && currentValue !== '' && !hasSelectedValueInNewOptions) {
+            const $previousSelectedOption = $('<option></option>')
+                .val(currentValue)
+                .text(`${currentValue}${suffix} (0)`) 
+                .prop('selected', true)
+                .prop('disabled', true)
+                .addClass('disabled-option zero-count persisted-selection');
+            $select.append($previousSelectedOption);
+        } else if (!currentValue || currentValue === '') {
+            $select.val(''); 
+        } else if (hasSelectedValueInNewOptions) {
+            $select.val(currentValue);
         }
 
-        // Update model dropdown (if make is selected)
-        const selectedMake = $('select[name="make"]').val();
-        if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
-            const $modelSelect = $('select[name="model"]');
-            $modelSelect.find('option').each(function() {
-                const $option = $(this);
-                const modelValue = $option.val();
-                if (modelValue !== '') { // Skip the "Select Make First" option
-                    const count = filterCounts.model_by_make[selectedMake][modelValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Only disable if count is 0 AND not currently selected
-                    if (count === 0 && !$option.prop('selected')) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-
-        // Update other dropdowns
-        if (filterCounts.fuel_type) {
-            updateMultiselectCounts('fuel_type', filterCounts.fuel_type);
-        }
-        if (filterCounts.transmission) {
-            updateMultiselectCounts('transmission', filterCounts.transmission);
-        }
-        if (filterCounts.body_type) {
-            updateMultiselectCounts('body_type', filterCounts.body_type);
-        }
-        if (filterCounts.drive_type) {
-            updateMultiselectCounts('drive_type', filterCounts.drive_type);
-        }
-        if (filterCounts.exterior_color) {
-            updateMultiselectCounts('exterior_color', filterCounts.exterior_color);
-        }
-        if (filterCounts.interior_color) {
-            updateMultiselectCounts('interior_color', filterCounts.interior_color);
-        }
-
-        // Update range selects
-        if (filterCounts.year) {
-            updateRangeSelectCounts('year', filterCounts.year);
-        }
-        if (filterCounts.engine_capacity) {
-            updateRangeSelectCounts('engine', filterCounts.engine_capacity);
-        }
-        if (filterCounts.mileage) {
-            updateRangeSelectCounts('mileage', filterCounts.mileage);
-        }
-    }
-
-    // Helper to update a select dropdown with new options and counts
-    function updateSelectOptionsWithCounts($select, optionsWithCounts, placeholder) {
-        $select.empty();
-        if (placeholder) {
-            $select.append(`<option value="">${placeholder}</option>`);
-        }
-        for (const [value, count] of Object.entries(optionsWithCounts)) {
-            $select.append(`<option value="${value}">${value} (${count})</option>`);
-        }
-    }
-
-    // Helper to update a numeric range dropdown
-    function updateRangeOptions($select, values, placeholder, suffix = '') {
-        $select.empty();
-        if (placeholder) {
-            $select.append(`<option value="">${placeholder}</option>`);
-        }
-        values.forEach(val => {
-            $select.append(`<option value="${val}">${val}${suffix}</option>`);
-        });
-    }
-
-    // Main function to update all filters based on AJAX response
-    function updateAllFiltersFromAjax(filteredOptions) {
-        // Make
-        if (filteredOptions.make) {
-            const makeOptions = {};
-            filteredOptions.make.forEach(make => { makeOptions[make] = make; });
-            updateSelectOptionsWithCounts($("select[name='make']"), makeOptions, 'All Makes');
-        }
-        // Model (by make)
-        const selectedMake = $("select[name='make']").val();
-        if (filteredOptions.model_by_make && selectedMake && filteredOptions.model_by_make[selectedMake]) {
-            const modelOptions = {};
-            Object.keys(filteredOptions.model_by_make[selectedMake]).forEach(model => {
-                modelOptions[model] = model;
-            });
-            updateSelectOptionsWithCounts($("select[name='model']"), modelOptions, 'All Models');
-            $("select[name='model']").prop('disabled', false);
-        } else {
-            updateSelectOptionsWithCounts($("select[name='model']"), {}, 'Select Make First');
-            $("select[name='model']").prop('disabled', true);
-        }
-        // Fuel Type
-        if (filteredOptions.fuel_type) {
-            const fuelTypeOptions = filteredOptions.fuel_type;
-            const $fuelType = $(".multi-select-filter[data-filter-key='fuel_type'] ul");
-            $fuelType.empty();
-            Object.entries(fuelTypeOptions).forEach(([val, label]) => {
-                $fuelType.append(`<li data-value="${val}">${label}</li>`);
-            });
-        }
-        // Transmission
-        if (filteredOptions.transmission) {
-            const transmissionOptions = filteredOptions.transmission;
-            const $transmission = $(".multi-select-filter[data-filter-key='transmission'] ul");
-            $transmission.empty();
-            Object.entries(transmissionOptions).forEach(([val, label]) => {
-                $transmission.append(`<li data-value="${val}">${label}</li>`);
-            });
-        }
-        // Engine Capacity (min/max)
-        if (filteredOptions.engine_capacity) {
-            updateRangeOptions($("select[name='engine_min']"), filteredOptions.engine_capacity, 'Min Size', 'L');
-            updateRangeOptions($("select[name='engine_max']"), filteredOptions.engine_capacity, 'Max Size', 'L');
-        }
-        // Year (min/max)
-        if (filteredOptions.year) {
-            updateRangeOptions($("select[name='year_min']"), filteredOptions.year, 'Min Year');
-            updateRangeOptions($("select[name='year_max']"), filteredOptions.year, 'Max Year');
-        }
-        // Body Type
-        if (filteredOptions.body_type) {
-            const bodyTypeOptions = filteredOptions.body_type;
-            const $bodyType = $(".multi-select-filter[data-filter-key='body_type'] ul");
-            $bodyType.empty();
-            Object.entries(bodyTypeOptions).forEach(([val, label]) => {
-                $bodyType.append(`<li data-value="${val}">${label}</li>`);
-            });
-        }
-        // Drive Type
-        if (filteredOptions.drive_type) {
-            const driveTypeOptions = filteredOptions.drive_type;
-            const $driveType = $(".multi-select-filter[data-filter-key='drive_type'] ul");
-            $driveType.empty();
-            Object.entries(driveTypeOptions).forEach(([val, label]) => {
-                $driveType.append(`<li data-value="${val}">${label}</li>`);
-            });
-        }
-        // Exterior Color
-        if (filteredOptions.exterior_color) {
-            const extColorOptions = filteredOptions.exterior_color;
-            const $extColor = $(".multi-select-filter[data-filter-key='exterior_color'] ul");
-            $extColor.empty();
-            Object.entries(extColorOptions).forEach(([val, label]) => {
-                $extColor.append(`<li data-value="${val}">${label}</li>`);
-            });
-        }
-        // Interior Color
-        if (filteredOptions.interior_color) {
-            const intColorOptions = filteredOptions.interior_color;
-            const $intColor = $(".multi-select-filter[data-filter-key='interior_color'] ul");
-            $intColor.empty();
-            Object.entries(intColorOptions).forEach(([val, label]) => {
-                $intColor.append(`<li data-value="${val}">${label}</li>`);
-            });
+        if (!hasAnyOptions) {
+            $select.val('');
         }
     }
 
     // Initial fetch on page load, respecting URL and localStorage
     const pageToFetch = urlParams.get('paged') || 1;
-    // Ensure initialFilter is an object and has necessary properties before trying to access them
     if (initialFilter && typeof initialFilter === 'object' && 
         initialFilter.hasOwnProperty('lat') && initialFilter.hasOwnProperty('lng') && initialFilter.hasOwnProperty('radius') &&
         initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
         console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
-        // Set the current location text first so the UI is consistent
         currentLocationText.text(initialFilter.text || 'Selected location');
-        // Immediate AJAX call to load initial listings with location filter
-        fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
+        // Initial fetch using handleFilterChange to ensure URL and everything is consistent from the start
+        handleFilterChange(pageToFetch > 1); // Pass true if paged > 1, so it keeps 'paged'
     } else {
         console.log('[PageLoad] No specific location active or initialFilter is incomplete/invalid, fetching default listings.', initialFilter);
-        fetchFilteredListings(pageToFetch); // Fetch default (all or based on other filters)
+        // Initial fetch using handleFilterChange
+        handleFilterChange(pageToFetch > 1);
     }
 
+    // --- Centralized Event Handlers for Filter Changes ---
+    const filterContainer = $('.filters-popup-content'); // Assuming this is the main container for spec filters
+
+    // Select dropdowns for make, model, ranges, and sort
+    filterContainer.on('change', 
+        '#make-filter, #model-filter, #year_min, #year_max, #price_min, #price_max, #mileage_min, #mileage_max, #engine_capacity_min, #engine_capacity_max, #sort-by-select',
+        function() {
+            console.log(`[FilterChange] Event on: ${this.id}`);
+            handleFilterChange(false);
+        }
+    );
+
+    // Checkboxes within multi-select filters
+    filterContainer.on('change', '.multi-select-filter input[type="checkbox"]', function() {
+        const filterKey = $(this).closest('.multi-select-filter').data('filter-key');
+        console.log(`[FilterChange] Checkbox change in: ${filterKey}`);
+        handleFilterChange(false);
+    });
+
+    // Pagination Clicks
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {
         e.preventDefault();
         const href = $(this).attr('href');
-        const urlParams = new URLSearchParams(href.split('?')[1]);
-        const page = parseInt(urlParams.get('paged')) || 1;
-        fetchFilteredListings(page);
+        const PagedUrlParams = new URLSearchParams(href.split('?')[1]); // Renamed to avoid conflict
+        const page = parseInt(PagedUrlParams.get('paged')) || 1;
+        console.log(`[PaginationClick] Navigating to page: ${page}`);
+        
+        // Update URL's paged parameter directly before calling handleFilterChange with isPagination = true
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('paged', page.toString());
+        history.replaceState({ path: currentUrl.href }, '', currentUrl.href); // Use replaceState to avoid double history entry
+        
+        handleFilterChange(true); // True indicates it's a pagination change
+    });
+
+    // --- NEW HELPER: Get all active filter values from the form ---
+    function getActiveFilters() {
+        const filters = {};
+
+        // Location (if selected)
+        if (selectedCoords && selectedCoords.length === 2 && currentRadiusKm) {
+            filters.lat = selectedCoords[1].toFixed(7);
+            filters.lng = selectedCoords[0].toFixed(7);
+            filters.radius = currentRadiusKm.toString();
+            if (selectedLocationName && selectedLocationName !== 'All of Cyprus') {
+                filters.location_name = selectedLocationName;
+            }
+        }
+
+        // Single select filters
+        ['make', 'model'].forEach(key => {
+            const val = $(`#${key}-filter`).val();
+            if (val) filters[key] = val;
+        });
+
+        // Range filters (min/max for year, price, mileage, engine_capacity)
+        ['year', 'price', 'mileage', 'engine_capacity'].forEach(rangeType => {
+            const minVal = $(`#${rangeType}_min`).val();
+            const maxVal = $(`#${rangeType}_max`).val();
+            if (minVal) filters[`${rangeType}_min`] = minVal;
+            if (maxVal) filters[`${rangeType}_max`] = maxVal;
+        });
+
+        // Multi-select checkbox filters
+        ['fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type'].forEach(filterKey => {
+            const checkedValues = [];
+            $(`.multi-select-filter[data-filter-key="${filterKey}"] input[type="checkbox"]:checked`).each(function() {
+                checkedValues.push($(this).val());
+            });
+            if (checkedValues.length > 0) {
+                filters[filterKey] = checkedValues; // Store as an array
+            }
+        });
+        
+        // Sort order
+        const sortBy = $('#sort-by-select').val(); // Assuming a sort select with this ID
+        if (sortBy) {
+             const parts = sortBy.split('_');
+             if (parts.length === 2) {
+                 filters.orderby = parts[0];
+                 filters.order = parts[1].toUpperCase();
+             } else if (sortBy === 'default') { // Default might be relevance or date desc
+                 filters.orderby = 'date'; // Or whatever your default is
+                 filters.order = 'DESC';
+             }
+        }
+
+        // console.log('[getActiveFilters] Collected:', JSON.parse(JSON.stringify(filters)));
+        return filters;
+    }
+
+    // --- NEW ORCHESTRATOR: Handle any filter change ---
+    function handleFilterChange(isPagination = false) {
+        console.log('[handleFilterChange] Triggered.');
+        const activeFilters = getActiveFilters();
+        const currentUrl = new URL(window.location.href);
+
+        // Clear existing filter params from URL, except for 'paged' if it's not a pagination call
+        const paramsToKeep = isPagination ? ['paged'] : [];
+        const allKnownFilterKeys = [
+            'lat', 'lng', 'radius', 'location_name',
+            'make', 'model', 'year_min', 'year_max', 'price_min', 'price_max', 
+            'mileage_min', 'mileage_max', 'engine_capacity_min', 'engine_capacity_max',
+            'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type',
+            'orderby', 'order'
+        ];
+
+        allKnownFilterKeys.forEach(key => {
+            if (!paramsToKeep.includes(key)) {
+                currentUrl.searchParams.delete(key);
+            }
+        });
+        
+        // Add active filters to URL
+        for (const key in activeFilters) {
+            if (Object.prototype.hasOwnProperty.call(activeFilters, key)) {
+                const value = activeFilters[key];
+                if (Array.isArray(value)) { // For multi-select checkboxes
+                    value.forEach(v => currentUrl.searchParams.append(`${key}[]`, v)); // Use PHP array format for query params
+                } else {
+                    currentUrl.searchParams.set(key, value);
+                }
+            }
+        }
+
+        // Reset to page 1 if it's not a pagination triggered change
+        if (!isPagination) {
+            currentUrl.searchParams.delete('paged');
+        }
+        
+        history.pushState({ path: currentUrl.href }, '', currentUrl.href);
+        console.log('[handleFilterChange] URL updated to:', currentUrl.href);
+
+        // Fetch listings. If location filters are active, they are in activeFilters.
+        // fetchFilteredListings expects lat, lng, radius as separate args for its primary logic
+        // but will also use them if they are just in the URL (which they now are)
+        fetchFilteredListings(
+            isPagination ? parseInt(urlParams.get('paged'),10) || 1 : 1, 
+            activeFilters.lat || null, 
+            activeFilters.lng || null, 
+            activeFilters.radius || null
+        );
+    }
+
+    // --- Filter Reset Functionality ---
+    function resetAllFilters() {
+        console.log('[ResetAllFilters] Resetting all filters.');
+
+        // 1. Reset spec filter inputs
+        // Selects (make, model, ranges, sort)
+        $('#make-filter, #model-filter, #year_min, #year_max, #price_min, #price_max, #mileage_min, #mileage_max, #engine_capacity_min, #engine_capacity_max, #sort-by-select').val('');
+
+        // Checkboxes
+        $('.multi-select-filter input[type="checkbox"]').prop('checked', false);
+
+        // Trigger change on one of them to refresh dependent UI if any (though updateFilterCounts will do most of this)
+        // $('#make-filter').trigger('change'); // Not strictly necessary as handleFilterChange will call fetch which updates counts
+
+        // 2. Reset location filter variables and UI
+        selectedCoords = null;
+        currentRadiusKm = carListingsMapFilterData.initialFilter.radius || 10; // Reset to initial default
+        selectedLocationName = 'All of Cyprus';
+        
+        currentLocationText.text(selectedLocationName);
+        radiusSlider.val(currentRadiusKm);
+        radiusValueDisplay.text(currentRadiusKm);
+        localStorage.removeItem('autoAgoraUserLocation');
+
+        // Reset map view and geocoder if map is initialized
+        if (map) {
+            map.flyTo({ center: mapConfig.cyprusCenter, zoom: mapConfig.defaultZoom });
+            if (marker) {
+                marker.setLngLat(mapConfig.cyprusCenter); // Or remove marker
+            }
+            // Remove circle or reset it
+            if (map.getLayer(circleLayerId)) map.removeLayer(circleLayerId);
+            if (map.getSource(circleSourceId)) map.removeSource(circleSourceId);
+            // updateRadiusCircle(mapConfig.cyprusCenter, currentRadiusKm); // Re-add default circle if desired
+            
+            if (geocoder && geocoder._inputEl) {
+                geocoder._inputEl.value = ''; // Clear geocoder input
+                geocoder.clear(); // Clear geocoder results
+            }
+        }
+        
+        // 3. Call handleFilterChange to update URL and fetch results
+        handleFilterChange(false);
+    }
+
+    // Event listener for a "Reset All" button (assuming ID #reset-all-filters-btn)
+    // The button itself should be added to the HTML structure where desired.
+    $('body').on('click', '#reset-all-filters-btn', function(e) {
+        e.preventDefault();
+        resetAllFilters();
     });
 }); 
