@@ -250,6 +250,17 @@
         formData.append(`filters[${key}]`, currentFilters[key]);
       }
 
+      // Always include location filter if present in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const lat = urlParams.get('lat');
+      const lng = urlParams.get('lng');
+      const radius = urlParams.get('radius');
+      if (lat && lng && radius) {
+        formData.append('lat', lat);
+        formData.append('lng', lng);
+        formData.append('radius', radius);
+      }
+
       fetch(ajaxUrl, { method: "POST", body: formData })
         .then((response) => {
           if (!response.ok) {
