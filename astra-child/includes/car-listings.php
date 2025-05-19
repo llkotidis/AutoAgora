@@ -538,130 +538,94 @@ function autoagora_filter_listings_by_location_ajax() {
 
     wp_reset_postdata(); 
 
-    // Include the car-filter-form.php file for filter counts
-    require_once __DIR__ . '/car-filter-form.php';
-    
-    // Get filter counts for different fields, respecting the location filter
-    // This ensures that the filter counts reflect only the cars available within the selected location
-    $filter_counts = array();
-    if (function_exists('get_counts_for_meta_key')) {
-        $make_field_key = 'make';
-        $model_field_key = 'model';
-        $fuel_type_field_key = 'fuel_type';
-        $transmission_field_key = 'transmission';
-        $ext_color_field_key = 'exterior_color';
-        $int_color_field_key = 'interior_color';
-        $body_type_field_key = 'body_type';
-        $drive_type_field_key = 'drive_type';
-        $year_field_key = 'year';
-        $engine_cap_field_key = 'engine_capacity';
-        $mileage_field_key = 'mileage';
-        
-        $filter_counts = array(
-            'make' => get_counts_for_meta_key($make_field_key, $location_filter),
-            'fuel_type' => get_counts_for_meta_key($fuel_type_field_key, $location_filter),
-            'transmission' => get_counts_for_meta_key($transmission_field_key, $location_filter),
-            'exterior_color' => get_counts_for_meta_key($ext_color_field_key, $location_filter),
-            'interior_color' => get_counts_for_meta_key($int_color_field_key, $location_filter),
-            'body_type' => get_counts_for_meta_key($body_type_field_key, $location_filter),
-            'drive_type' => get_counts_for_meta_key($drive_type_field_key, $location_filter),
-            'year' => get_counts_for_meta_key($year_field_key, $location_filter),
-            'engine_capacity' => get_counts_for_meta_key($engine_cap_field_key, $location_filter),
-            'mileage' => get_counts_for_meta_key($mileage_field_key, $location_filter)
-        );
-        
-        // Get models grouped by make counts
-        $model_counts_by_make = array();
-        global $wpdb;
-        
-        // Get all makes first
-        $makes = array_keys($filter_counts['make']);
-        
-        if (!empty($makes) && $location_filter) {
-            // If location filter is active, we need to filter models by location
-            $all_car_ids_query = $wpdb->get_results(
-                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
-                 FROM {$wpdb->posts} p
-                 JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
-                 JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
-                 WHERE p.post_type = 'car'
-                 AND p.post_status = 'publish'",
-                ARRAY_A
-            );
-            
-            // Calculate which cars are within the radius
-            $matching_car_ids = array();
-            foreach ($all_car_ids_query as $car) {
-                if (!empty($car['latitude']) && !empty($car['longitude'])) {
-                    $distance = autoagora_calculate_distance(
-                        $location_filter['lat'],
-                        $location_filter['lng'],
-                        floatval($car['latitude']),
-                        floatval($car['longitude'])
-                    );
-                    if ($distance <= $location_filter['radius']) {
-                        $matching_car_ids[] = $car['ID'];
-                    }
-                }
-            }
+    // --- BEGIN NEW DYNAMIC FILTER COUNT CALCULATION (COMBINED) ---
+    $dynamic_filter_counts = [
+        'make' => [], 
+        'model' => [], // For flat list of model counts
+        'fuel_type' => [],
+        'transmission' => [],
+        'exterior_color' => [],
+        'interior_color' => [],
+        'body_type' => [],
+        'drive_type' => [],
+        'year' => [], // Expects string keys, e.g., "2020"
+        'engine_capacity' => [], // Expects string keys like "1.0", "2.5"
+        'mileage' => [] // Expects string keys, e.g., "10000"
+    ];
+    $dynamic_model_counts_by_make = [];
 
-            if (!empty($matching_car_ids)) {
-                $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
-                $car_id_placeholders = implode(', ', array_fill(0, count($matching_car_ids), '%d'));
-                
-                $sql = $wpdb->prepare(
-                    "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-                     FROM {$wpdb->posts} p
-                     JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-                     JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-                     WHERE p.post_type = 'car'
-                     AND p.post_status = 'publish'
-                     AND pm_make.meta_value IN ({$make_placeholders})
-                     AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-                     AND p.ID IN ({$car_id_placeholders})
-                     GROUP BY pm_make.meta_value, pm_model.meta_value",
-                    array_merge([$make_field_key, $model_field_key], $makes, $matching_car_ids)
-                );
-                
-                $model_counts_results = $wpdb->get_results($sql);
-                foreach ($model_counts_results as $row) {
-                    if (!isset($model_counts_by_make[$row->make])) {
-                        $model_counts_by_make[$row->make] = array();
-                    }
-                    $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
-                }
-            }
-        } else if (!empty($makes)) {
-            // No location filter, get all models by make
-            $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
-            $sql = $wpdb->prepare(
-                "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-                 FROM {$wpdb->posts} p
-                 JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-                 JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-                 WHERE p.post_type = 'car'
-                 AND p.post_status = 'publish'
-                 AND pm_make.meta_value IN ({$make_placeholders})
-                 AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-                 GROUP BY pm_make.meta_value, pm_model.meta_value",
-                array_merge([$make_field_key, $model_field_key], $makes)
-            );
-            $model_counts_results = $wpdb->get_results($sql);
-            foreach ($model_counts_results as $row) {
-                if (!isset($model_counts_by_make[$row->make])) {
-                    $model_counts_by_make[$row->make] = array();
-                }
-                $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
+    $all_matching_post_ids = [];
+    // Check if $car_query->posts is not null and is an array/countable
+    if (isset($car_query->posts) && is_array($car_query->posts) && !empty($car_query->posts)) {
+        foreach ($car_query->posts as $post_object) {
+            if (isset($post_object->ID)) { // Ensure ID property exists
+                $all_matching_post_ids[] = $post_object->ID;
             }
         }
-        
-        $filter_counts['model_by_make'] = $model_counts_by_make;
     }
+
+    if (!empty($all_matching_post_ids)) {
+        $acf_field_keys = [
+            'make' => 'make',
+            'model' => 'model',
+            'fuel_type' => 'fuel_type',
+            'transmission' => 'transmission',
+            'exterior_color' => 'exterior_color',
+            'interior_color' => 'interior_color',
+            'body_type' => 'body_type',
+            'drive_type' => 'drive_type',
+            'year' => 'year',
+            'engine_capacity' => 'engine_capacity',
+            'mileage' => 'mileage',
+        ];
+
+        foreach ($all_matching_post_ids as $car_id) {
+            $car_make_value = null; 
+
+            foreach ($acf_field_keys as $js_key => $acf_meta_key) {
+                $value = get_field($acf_meta_key, $car_id);
+
+                if ($value !== null && $value !== '') {
+                    if ($js_key === 'make') {
+                        $car_make_value = $value; // Store make for grouping models later
+                    }
+
+                    if (is_array($value)) { // For ACF fields returning arrays (checkbox, multi-select)
+                        foreach ($value as $single_val) {
+                            if ($single_val !== null && $single_val !== '') {
+                                $dynamic_filter_counts[$js_key][$single_val] = isset($dynamic_filter_counts[$js_key][$single_val]) ? $dynamic_filter_counts[$js_key][$single_val] + 1 : 1;
+                            }
+                        }
+                    } else { // For single value fields
+                        $processed_value = $value;
+                        if ($js_key === 'engine_capacity') {
+                            $processed_value = number_format(floatval($value), 1);
+                        } elseif ($js_key === 'year' || $js_key === 'mileage') {
+                            $processed_value = (string)$value;
+                        }
+                        // This populates the flat list for each $js_key, e.g., $dynamic_filter_counts['model']
+                        $dynamic_filter_counts[$js_key][$processed_value] = isset($dynamic_filter_counts[$js_key][$processed_value]) ? $dynamic_filter_counts[$js_key][$processed_value] + 1 : 1;
+                        
+                        // Specifically populate model_by_make if the current field is 'model' and we have a make
+                        if ($js_key === 'model' && $car_make_value) {
+                             if (!isset($dynamic_model_counts_by_make[$car_make_value])) {
+                                $dynamic_model_counts_by_make[$car_make_value] = [];
+                            }
+                            // $processed_value here is the model name
+                            $dynamic_model_counts_by_make[$car_make_value][$processed_value] = isset($dynamic_model_counts_by_make[$car_make_value][$processed_value]) ? $dynamic_model_counts_by_make[$car_make_value][$processed_value] + 1 : 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    $dynamic_filter_counts['model_by_make'] = $dynamic_model_counts_by_make;
+    // --- END NEW DYNAMIC FILTER COUNT CALCULATION (COMBINED) ---
 
     wp_send_json_success(array(
         'listings_html' => $listings_html,
         'pagination_html' => $pagination_html,
         'query_vars' => $car_query->query_vars,
-        'filter_counts' => $filter_counts // Add filter counts to the response
+        'filter_counts' => $dynamic_filter_counts // Use the new dynamic counts
     ));
 }
