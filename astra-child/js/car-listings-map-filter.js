@@ -625,58 +625,56 @@ jQuery(document).ready(function($) {
     }
 
     function updateMakeFilter(globalMakes, filterCounts, selectedMake = '') {
-        console.log('[DEBUG] updateMakeFilter - globalMakes:', globalMakes);
-        console.log('[DEBUG] updateMakeFilter - filterCounts:', filterCounts);
-        console.log('[DEBUG] updateMakeFilter - selectedMake:', selectedMake);
+        console.log('[DEBUG] updateMakeFilter - STEP 1: Received globalMakes:', JSON.parse(JSON.stringify(globalMakes)));
+        console.log('[DEBUG] updateMakeFilter - STEP 2: Received filterCounts:', JSON.parse(JSON.stringify(filterCounts)));
+        console.log('[DEBUG] updateMakeFilter - STEP 3: Received selectedMake:', selectedMake);
 
         const $makeSelect = $('#filter-make');
+        if (!$makeSelect.length) {
+            console.error('[DEBUG] CRITICAL: #filter-make select element NOT FOUND in DOM!');
+            return;
+        }
+        console.log('[DEBUG] updateMakeFilter - STEP 4: #filter-make element found:', $makeSelect);
+
         let optionsHtml = '<option value="">All Makes</option>';
         let makesToDisplay = {};
 
-        // Populate makesToDisplay with all makes from globalMakes, initializing counts to 0
         if (typeof globalMakes === 'object' && globalMakes !== null) {
             Object.keys(globalMakes).forEach(makeName => {
-                makesToDisplay[makeName] = 0; // Initialize with 0, will be updated by filterCounts
+                makesToDisplay[makeName] = 0; 
             });
         }
+        console.log('[DEBUG] updateMakeFilter - STEP 5: makesToDisplay after globalMakes init:', JSON.parse(JSON.stringify(makesToDisplay)));
 
-        // Update counts from filterCounts.make if available
         if (filterCounts && typeof filterCounts.make === 'object' && filterCounts.make !== null) {
             Object.keys(filterCounts.make).forEach(makeName => {
-                // If a make appears in filterCounts but not globalMakes (edge case), add it.
                 if (!makesToDisplay.hasOwnProperty(makeName)) {
                     console.warn(`[DEBUG] Make "${makeName}" found in filterCounts.make but not in globalMakes. Adding.`);
                 }
                 makesToDisplay[makeName] = parseInt(filterCounts.make[makeName], 10) || 0;
             });
-        } else {
-            // If filterCounts.make is not available, use global counts (less ideal, but a fallback)
-            // This might happen on initial load if filter_counts doesn't include makes explicitly
-            console.warn('[DEBUG] updateMakeFilter - filterCounts.make is not available. Consider using global counts as a fallback for display, though 0 is safer for filtering logic.');
-            // For this scenario, makesToDisplay will already have makes with count 0 from globalMakes loop, which is fine.
-            // Or, if you want to show global counts when specific are missing:
-            /*
-            if (typeof globalMakes === 'object' && globalMakes !== null) {
-                Object.keys(globalMakes).forEach(makeName => {
-                    makesToDisplay[makeName] = parseInt(globalMakes[makeName], 10) || 0;
-                });
-            }
-            */
         }
-
-        console.log('[DEBUG] updateMakeFilter - makesToDisplay (merged counts):', makesToDisplay);
+        console.log('[DEBUG] updateMakeFilter - STEP 6: makesToDisplay after merging filterCounts.make:', JSON.parse(JSON.stringify(makesToDisplay)));
 
         const sortedMakeNames = Object.keys(makesToDisplay).sort((a, b) => a.localeCompare(b));
+        console.log('[DEBUG] updateMakeFilter - STEP 7: sortedMakeNames for dropdown:', sortedMakeNames);
 
         sortedMakeNames.forEach(makeName => {
             const count = makesToDisplay[makeName];
             const isSelected = makeName === selectedMake ? 'selected' : '';
             const isDisabled = count === 0 && makeName !== selectedMake ? 'disabled' : '';
-            optionsHtml += `<option value="${makeName}" ${isSelected} ${isDisabled}>${makeName} (${count})</option>`;
+            let currentOptionHtml = `<option value="${makeName}" ${isSelected} ${isDisabled}>${makeName} (${count})</option>`;
+            console.log('[DEBUG] updateMakeFilter - STEP 8: Generating option HTML:', currentOptionHtml);
+            optionsHtml += currentOptionHtml;
         });
 
+        console.log('[DEBUG] updateMakeFilter - STEP 9: Final optionsHtml to be set:', optionsHtml);
         $makeSelect.html(optionsHtml);
-        $makeSelect.prop('disabled', false); 
+        console.log('[DEBUG] updateMakeFilter - STEP 10: HTML set. Current #filter-make outerHTML:', $makeSelect[0].outerHTML);
+
+        // Ensure the select is enabled (it might have been disabled during loading)
+        $makeSelect.prop('disabled', false);
+        console.log('[DEBUG] updateMakeFilter - STEP 11: #filter-make disabled property set to false.');
     }
 
     // Add event listener for make filter changes
