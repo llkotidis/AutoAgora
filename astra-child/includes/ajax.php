@@ -781,26 +781,28 @@ function ajax_update_filter_counts_handler() {
     for ($y = date('Y'); $y >= 1948; $y--) {
         $master_years[] = (string)$y;
     }
-    // Mileage: bucket to nearest 500 km
-    $master_mileages = [];
-    for ($m = 0; $m <= 300000; $m += 500) {
-        $master_mileages[] = (string)$m;
-    }
-    // Bucket mileage counts
-    $bucketed_mileage_counts = [];
-    if (isset($updated_counts['mileage'])) {
-        foreach ($updated_counts['mileage'] as $raw_mileage => $count) {
-            $bucket = ceil($raw_mileage / 500) * 500;
-            $bucketed_mileage_counts[$bucket] = ($bucketed_mileage_counts[$bucket] ?? 0) + $count;
+    // For makes, only include those present in the current location filter radius
+    $makes_in_radius = [];
+    if ($location_filter && !empty($matching_car_ids)) {
+        global $wpdb;
+        $placeholders = implode(',', array_fill(0, count($matching_car_ids), '%d'));
+        $sql = $wpdb->prepare(
+            "SELECT DISTINCT pm.meta_value as make
+             FROM {$wpdb->postmeta} pm
+             WHERE pm.meta_key = 'make'
+             AND pm.post_id IN ($placeholders)",
+            $matching_car_ids
+        );
+        $results = $wpdb->get_results($sql);
+        foreach ($results as $row) {
+            if (!empty($row->make)) {
+                $makes_in_radius[] = $row->make;
+            }
         }
+    } else {
+        // If no location filter, use all makes from counts
+        $makes_in_radius = array_keys($updated_counts['make']);
     }
-    // Only show mileage buckets that exist in the result set
-    $filtered_mileages = array_values(array_filter($master_mileages, function($mileage) use ($bucketed_mileage_counts) {
-        return isset($bucketed_mileage_counts[$mileage]) && $bucketed_mileage_counts[$mileage] > 0;
-    }));
-    // Make/model/variant: get from master makesData (should be localized to JS, but for backend, use DB or file)
-    // For now, use all makes present in the DB (from counts)
-    $master_makes = array_keys($updated_counts['make']);
     // For models, use the model_by_make structure if available
     $master_models_by_make = isset($updated_counts['model_by_make']) ? $updated_counts['model_by_make'] : [];
 
@@ -818,9 +820,8 @@ function ajax_update_filter_counts_handler() {
         'year' => array_values(array_filter($master_years, function($year) use ($updated_counts) {
             return isset($updated_counts['year'][$year]) && $updated_counts['year'][$year] > 0;
         })),
-        'mileage' => $filtered_mileages,
         // For make/model, use the counts as already filtered
-        'make' => $master_makes,
+        'make' => $makes_in_radius,
         'model_by_make' => $master_models_by_make,
     ];
     // For numeric filters, also return min/max present in the result set
@@ -828,10 +829,6 @@ function ajax_update_filter_counts_handler() {
     $filtered_options['engine_capacity_max'] = max(array_keys($updated_counts['engine_capacity']));
     $filtered_options['year_min'] = min(array_keys($updated_counts['year']));
     $filtered_options['year_max'] = max(array_keys($updated_counts['year']));
-    if (!empty($bucketed_mileage_counts)) {
-        $filtered_options['mileage_min'] = min(array_keys($bucketed_mileage_counts));
-        $filtered_options['mileage_max'] = max(array_keys($bucketed_mileage_counts));
-    }
     // Add to response
     wp_send_json_success([
         'counts' => $updated_counts,
