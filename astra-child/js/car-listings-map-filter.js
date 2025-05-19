@@ -433,8 +433,10 @@ jQuery(document).ready(function($) {
             currentLocationText.text(locationName);
             modal.hide();
 
-            // Clear any selected make before fetching new listings
+            // Clear any selected make, model, variant before fetching new listings
             $('#filter-make').val('').addClass('loading-filter');
+            $('#filter-model').val('').prop('disabled', true).html('<option value="">Select Make First</option>').addClass('loading-filter');
+            $('#filter-variant').val('').prop('disabled', true).html('<option value="">Select Model First</option>').addClass('loading-filter');
             
             // Fetch listings with new location
             fetchFilteredListings(1, lat, lng, radius);
@@ -447,6 +449,8 @@ jQuery(document).ready(function($) {
             currentUrl.searchParams.set('location_name', locationName);
             currentUrl.searchParams.delete('paged');
             currentUrl.searchParams.delete('make'); // Remove make filter from URL
+            currentUrl.searchParams.delete('model');
+            currentUrl.searchParams.delete('variant');
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
             console.log('[ApplyFilter] URL updated to:', currentUrl.href);
 
@@ -465,13 +469,15 @@ jQuery(document).ready(function($) {
             currentLocationText.text('All of Cyprus');
             modal.hide();
             
-            // Clear any selected make before fetching new listings
+            // Clear any selected make, model, variant before fetching new listings
             $('#filter-make').val('').addClass('loading-filter');
+            $('#filter-model').val('').prop('disabled', true).html('<option value="">Select Make First</option>').addClass('loading-filter');
+            $('#filter-variant').val('').prop('disabled', true).html('<option value="">Select Model First</option>').addClass('loading-filter');
             
             // Fetch all listings
             fetchFilteredListings(1, null, null, null);
 
-            // Update URL to remove location parameters
+            // Update URL to remove location and make/model/variant parameters
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('lat');
             currentUrl.searchParams.delete('lng');
@@ -479,6 +485,8 @@ jQuery(document).ready(function($) {
             currentUrl.searchParams.delete('location_name');
             currentUrl.searchParams.delete('paged');
             currentUrl.searchParams.delete('make'); // Remove make filter from URL
+            currentUrl.searchParams.delete('model');
+            currentUrl.searchParams.delete('variant');
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
             console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
 
@@ -539,6 +547,8 @@ jQuery(document).ready(function($) {
     function fetchFilteredListings(page = 1, lat = null, lng = null, radius = null) {
         // Show loading states
         $('#filter-make').addClass('loading-filter');
+        $('#filter-model').addClass('loading-filter');
+        $('#filter-variant').addClass('loading-filter');
         $('.car-listings-grid').html('<div class="loading-spinner">Loading listings...</div>');
 
         // Abort any existing request
@@ -560,9 +570,12 @@ jQuery(document).ready(function($) {
 
         // Add any selected filters
         const selectedMake = $('#filter-make').val();
-        if (selectedMake) {
-            data.make = selectedMake;
-        }
+        const selectedModel = $('#filter-model').val();
+        const selectedVariant = $('#filter-variant').val();
+
+        if (selectedMake) data.make = selectedMake;
+        if (selectedModel) data.model = selectedModel;
+        if (selectedVariant) data.variant = selectedVariant;
 
         currentListingsRequest = $.ajax({
             url: ajaxurl,
@@ -571,6 +584,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 console.log('[DEBUG] fetchFilteredListings AJAX Response:', response);
                 $('#filter-make').removeClass('loading-filter');
+                $('#filter-model').removeClass('loading-filter');
+                $('#filter-variant').removeClass('loading-filter');
                 
                 if (response.success) {
                     console.log('[DEBUG] fetchFilteredListings - response.data:', response.data);
@@ -578,15 +593,24 @@ jQuery(document).ready(function($) {
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
                     const globalMakes = response.data.all_makes;
+                    const allModelsByMake = response.data.all_models_by_make;
+                    const allVariantsByModel = response.data.all_variants_by_model;
                     const filterCounts = response.data.filter_counts;
+                    
                     const currentSelectedMake = $('#filter-make').val(); 
+                    const currentSelectedModel = $('#filter-model').val();
+                    const currentSelectedVariant = $('#filter-variant').val();
 
                     updateMakeFilter(globalMakes, filterCounts, currentSelectedMake);
+                    updateModelFilter(allModelsByMake, filterCounts, currentSelectedMake, currentSelectedModel);
+                    updateVariantFilter(allVariantsByModel, filterCounts, currentSelectedMake, currentSelectedModel, currentSelectedVariant);
                     
-                    // Update other spec filter counts (excluding make)
+                    // Update other spec filter counts (excluding make, model, variant as they are handled above)
                     if (filterCounts) {
                         let otherFilterCounts = {...filterCounts};
                         delete otherFilterCounts.make;
+                        delete otherFilterCounts.model_by_make;
+                        delete otherFilterCounts.variant_by_model;
                         updateFilterCounts(otherFilterCounts);
                     }
 
@@ -620,6 +644,8 @@ jQuery(document).ready(function($) {
                     console.error("AJAX Error:", textStatus, errorThrown);
                 }
                 $('#filter-make').removeClass('loading-filter');
+                $('#filter-model').removeClass('loading-filter');
+                $('#filter-variant').removeClass('loading-filter');
             }
         });
     }
@@ -634,47 +660,94 @@ jQuery(document).ready(function($) {
             console.error('[DEBUG] CRITICAL: #filter-make select element NOT FOUND in DOM!');
             return;
         }
-        console.log('[DEBUG] updateMakeFilter - STEP 4: #filter-make element found:', $makeSelect);
 
         let optionsHtml = '<option value="">All Makes</option>';
-        let makesToDisplay = {};
-
-        if (typeof globalMakes === 'object' && globalMakes !== null) {
-            Object.keys(globalMakes).forEach(makeName => {
-                makesToDisplay[makeName] = 0; 
+        
+        const makesToDisplayWithCounts = {};
+        if (Array.isArray(globalMakes)) {
+            globalMakes.forEach(makeName => {
+                makesToDisplayWithCounts[makeName] = filterCounts?.make?.[makeName] || 0;
             });
+        } else {
+            console.warn('[DEBUG] updateMakeFilter: globalMakes is not an array. Attempting to use keys from filterCounts.make if available.');
+            if (filterCounts && typeof filterCounts.make === 'object' && filterCounts.make !== null) {
+                 Object.keys(filterCounts.make).forEach(makeName => {
+                    makesToDisplayWithCounts[makeName] = filterCounts.make[makeName] || 0;
+                 });
+            }
         }
-        console.log('[DEBUG] updateMakeFilter - STEP 5: makesToDisplay after globalMakes init:', JSON.parse(JSON.stringify(makesToDisplay)));
-
-        if (filterCounts && typeof filterCounts.make === 'object' && filterCounts.make !== null) {
-            Object.keys(filterCounts.make).forEach(makeName => {
-                if (!makesToDisplay.hasOwnProperty(makeName)) {
-                    console.warn(`[DEBUG] Make "${makeName}" found in filterCounts.make but not in globalMakes. Adding.`);
-                }
-                makesToDisplay[makeName] = parseInt(filterCounts.make[makeName], 10) || 0;
-            });
-        }
-        console.log('[DEBUG] updateMakeFilter - STEP 6: makesToDisplay after merging filterCounts.make:', JSON.parse(JSON.stringify(makesToDisplay)));
-
-        const sortedMakeNames = Object.keys(makesToDisplay).sort((a, b) => a.localeCompare(b));
-        console.log('[DEBUG] updateMakeFilter - STEP 7: sortedMakeNames for dropdown:', sortedMakeNames);
+        
+        const sortedMakeNames = Object.keys(makesToDisplayWithCounts).sort((a, b) => a.localeCompare(b));
 
         sortedMakeNames.forEach(makeName => {
-            const count = makesToDisplay[makeName];
-            const isSelected = makeName === selectedMake ? 'selected' : '';
-            const isDisabled = count === 0 && makeName !== selectedMake ? 'disabled' : '';
-            let currentOptionHtml = `<option value="${makeName}" ${isSelected} ${isDisabled}>${makeName} (${count})</option>`;
-            console.log('[DEBUG] updateMakeFilter - STEP 8: Generating option HTML:', currentOptionHtml);
-            optionsHtml += currentOptionHtml;
+            const count = makesToDisplayWithCounts[makeName];
+            const isSelectedAttr = makeName === selectedMake ? 'selected' : '';
+            
+            if (count > 0 || makeName === selectedMake) {
+                optionsHtml += `<option value="${makeName}" ${isSelectedAttr}>${makeName} (${count})</option>`;
+            }
         });
 
-        console.log('[DEBUG] updateMakeFilter - STEP 9: Final optionsHtml to be set:', optionsHtml);
-        $makeSelect.html(optionsHtml);
-        console.log('[DEBUG] updateMakeFilter - STEP 10: HTML set. Current #filter-make outerHTML:', $makeSelect[0].outerHTML);
+        $makeSelect.html(optionsHtml).prop('disabled', false);
+    }
 
-        // Ensure the select is enabled (it might have been disabled during loading)
-        $makeSelect.prop('disabled', false);
-        console.log('[DEBUG] updateMakeFilter - STEP 11: #filter-make disabled property set to false.');
+    function updateModelFilter(allModelsByMake, filterCounts, currentMake, selectedModel = '') {
+        const $modelSelect = $('#filter-model');
+        if (!$modelSelect.length) {
+            console.error('[DEBUG] CRITICAL: #filter-model select element NOT FOUND in DOM!');
+            return;
+        }
+
+        if (!currentMake) {
+            $modelSelect.html('<option value="">Select Make First</option>').prop('disabled', true);
+            return;
+        }
+
+        let optionsHtml = '<option value="">All Models</option>';
+        const modelsForCurrentMake = allModelsByMake?.[currentMake] || [];
+        const modelCounts = filterCounts?.model_by_make?.[currentMake] || {};
+
+        if (Array.isArray(modelsForCurrentMake)) {
+            modelsForCurrentMake.sort((a, b) => a.localeCompare(b));
+            modelsForCurrentMake.forEach(modelName => {
+                const count = modelCounts[modelName] || 0;
+                const isSelectedAttr = modelName === selectedModel ? 'selected' : '';
+                if (count > 0 || modelName === selectedModel) {
+                    optionsHtml += `<option value="${modelName}" ${isSelectedAttr}>${modelName} (${count})</option>`;
+                }
+            });
+        }
+        
+        $modelSelect.html(optionsHtml).prop('disabled', false);
+    }
+
+    function updateVariantFilter(allVariantsByModel, filterCounts, currentMake, currentModel, selectedVariant = '') {
+        const $variantSelect = $('#filter-variant');
+        if (!$variantSelect.length) {
+            console.error('[DEBUG] CRITICAL: #filter-variant select element NOT FOUND in DOM!');
+            return;
+        }
+
+        if (!currentMake || !currentModel) {
+            $variantSelect.html('<option value="">Select Model First</option>').prop('disabled', true);
+            return;
+        }
+
+        let optionsHtml = '<option value="">All Variants</option>';
+        const variantsForCurrentModel = allVariantsByModel?.[currentMake]?.[currentModel] || [];
+        const variantCounts = filterCounts?.variant_by_model?.[currentMake]?.[currentModel] || {};
+
+        if (Array.isArray(variantsForCurrentModel)) {
+            variantsForCurrentModel.sort((a, b) => a.localeCompare(b));
+            variantsForCurrentModel.forEach(variantName => {
+                const count = variantCounts[variantName] || 0;
+                const isSelectedAttr = variantName === selectedVariant ? 'selected' : '';
+                if (count > 0 || variantName === selectedVariant) {
+                    optionsHtml += `<option value="${variantName}" ${isSelectedAttr}>${variantName} (${count})</option>`;
+                }
+            });
+        }
+        $variantSelect.html(optionsHtml).prop('disabled', false);
     }
 
     // Add event listener for make filter changes
@@ -682,13 +755,47 @@ jQuery(document).ready(function($) {
         const selectedMake = $(this).val();
         console.log('[MakeFilter] Selected make:', selectedMake);
         
-        // Get current location parameters
+        // Clear model and variant selections
+        $('#filter-model').val('').trigger('change.internal');
+        $('#filter-variant').val(''); 
+        
+        // Update URL to remove model and variant if make is changed/cleared
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = urlParams.get('lat');
+        const lng = urlParams.get('lng');
+        const radius = urlParams.get('radius');
+
+        // Call fetchFilteredListings, which will handle repopulating all dropdowns in its success callback
+        fetchFilteredListings(1, lat, lng, radius); 
+    });
+
+    // Add event listener for model filter changes
+    $('#filter-model').on('change', function(event, isInternalCall) {
+        if (isInternalCall) return;
+
+        const selectedModel = $(this).val();
+        console.log('[ModelFilter] Selected model:', selectedModel);
+
+        $('#filter-variant').val('');
+
         const urlParams = new URLSearchParams(window.location.search);
         const lat = urlParams.get('lat');
         const lng = urlParams.get('lng');
         const radius = urlParams.get('radius');
         
-        // Fetch filtered listings with the new make selection
+        fetchFilteredListings(1, lat, lng, radius);
+    });
+    
+    // Add event listener for variant filter changes
+    $('#filter-variant').on('change', function() {
+        const selectedVariant = $(this).val();
+        console.log('[VariantFilter] Selected variant:', selectedVariant);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = urlParams.get('lat');
+        const lng = urlParams.get('lng');
+        const radius = urlParams.get('radius');
+
         fetchFilteredListings(1, lat, lng, radius);
     });
 
@@ -715,51 +822,6 @@ jQuery(document).ready(function($) {
 
     function updateFilterCounts(filterCounts) {
         if (!filterCounts) return;
-
-        // Update make dropdown with counts
-        if (filterCounts.make) {
-            const $makeSelect = $('#filter-make');
-            $makeSelect.find('option').each(function() {
-                const $option = $(this);
-                const makeValue = $option.val();
-                
-                if (makeValue !== '') {
-                    const count = filterCounts.make[makeValue] || 0;
-                    const baseText = $option.text().replace(/\s*\(\d+\)$/, '');
-                    
-                    $option.text(`${baseText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && !$option.prop('selected')) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-
-        // Update model dropdown (if make is selected)
-        const selectedMake = $('#filter-make').val();
-        if (selectedMake && filterCounts.model_by_make && filterCounts.model_by_make[selectedMake]) {
-            const $modelSelect = $('#filter-model');
-            $modelSelect.find('option').each(function() {
-                const $option = $(this);
-                const modelValue = $option.val();
-                if (modelValue !== '') { // Skip the "Select Make First" option
-                    const count = filterCounts.model_by_make[selectedMake][modelValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
 
         // Update fuel type dropdown
         if (filterCounts.fuel_type) {
@@ -940,13 +1002,16 @@ jQuery(document).ready(function($) {
     });
 
     // Initial fetch on page load, respecting URL and localStorage
-    const pageToFetch = urlParams.get('paged') || 1;
+    const urlParamsGlobal = new URLSearchParams(window.location.search);
+    const pageToFetch = urlParamsGlobal.get('paged') || 1;
     let initialLoadLat = null;
     let initialLoadLng = null;
     let initialLoadRadius = null;
 
-    // Initialize makes filter
+    // Initialize makes, models, variants filters
     $('#filter-make').addClass('loading-filter');
+    $('#filter-model').addClass('loading-filter').prop('disabled', true).html('<option value="">Select Make First</option>');
+    $('#filter-variant').addClass('loading-filter').prop('disabled', true).html('<option value="">Select Model First</option>');
 
     if (initialFilter && typeof initialFilter === 'object') {
         if (initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
@@ -962,46 +1027,63 @@ jQuery(document).ready(function($) {
         console.log('[PageLoad] initialFilter is not an object or is null.');
     }
 
-    // Fetch initial makes data
+    // Fetch initial makes, models, variants data
     $.ajax({
         url: ajaxurl,
         type: 'POST',
         data: {
             action: 'filter_listings_by_location',
             nonce: nonce,
-            paged: 1, // Requesting page 1
-            per_page: 1, // Requesting minimal posts, just for counts/makes
+            paged: 1, 
+            per_page: 1, 
             get_all_makes: true,
-            get_filter_counts: true // Also request initial filter counts
+            get_filter_counts: true,
+            make: urlParamsGlobal.get('make') || '',
+            model: urlParamsGlobal.get('model') || '',
+            variant: urlParamsGlobal.get('variant') || '',
+            filter_lat: urlParamsGlobal.get('lat') || null,
+            filter_lng: urlParamsGlobal.get('lng') || null,
+            filter_radius: urlParamsGlobal.get('radius') || null
         },
         success: function(response) {
-            console.log('[DEBUG] Initial AJAX Response:', response);
             if (response.success) {
                 console.log('[DEBUG] Initial AJAX - response.data:', response.data);
-                const globalMakes = response.data.all_makes;
-                const filterCounts = response.data.filter_counts; 
-                // On initial load, selectedMake is empty, use filterCounts for initial display
-                updateMakeFilter(globalMakes, filterCounts, ''); 
+                const allMakesList = response.data.all_makes;
+                const allModelsByMake = response.data.all_models_by_make;
+                const allVariantsByModel = response.data.all_variants_by_model;
+                const filterCountsInitial = response.data.filter_counts; 
                 
-                // Update other spec filter counts if needed (excluding make, as it's handled by updateMakeFilter)
-                if (filterCounts) {
-                    let otherFilterCounts = {...filterCounts};
-                    delete otherFilterCounts.make; // Avoid double-handling
+                const initialSelectedMake = urlParamsGlobal.get('make') || '';
+                const initialSelectedModel = urlParamsGlobal.get('model') || '';
+                const initialSelectedVariant = urlParamsGlobal.get('variant') || '';
+
+                updateMakeFilter(allMakesList, filterCountsInitial, initialSelectedMake); 
+                updateModelFilter(allModelsByMake, filterCountsInitial, initialSelectedMake, initialSelectedModel);
+                updateVariantFilter(allVariantsByModel, filterCountsInitial, initialSelectedMake, initialSelectedModel, initialSelectedVariant);
+                
+                if (filterCountsInitial) {
+                    let otherFilterCounts = {...filterCountsInitial};
+                    delete otherFilterCounts.make;
+                    delete otherFilterCounts.model_by_make; 
+                    delete otherFilterCounts.variant_by_model;
                     updateFilterCounts(otherFilterCounts);
                 }
             } else {
-                console.error('[DEBUG] Initial AJAX failed:', response.data?.message || 'No error message');
+                console.error('[DEBUG] Initial AJAX for options failed:', response.data?.message || 'No error message');
             }
             $('#filter-make').removeClass('loading-filter');
+            $('#filter-model').removeClass('loading-filter');
+            $('#filter-variant').removeClass('loading-filter');
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            console.error('[DEBUG] Initial AJAX Error:', textStatus, errorThrown);
+            console.error('[DEBUG] Initial AJAX for options Error:', textStatus, errorThrown);
             $('#filter-make').removeClass('loading-filter');
+            $('#filter-model').removeClass('loading-filter');
+            $('#filter-variant').removeClass('loading-filter');
         }
     });
 
     // Fetch listings with location (if any) and any spec filters from URL
-    console.log('[PageLoad] Triggering initial fetchFilteredListings.');
     fetchFilteredListings(pageToFetch, initialLoadLat, initialLoadLng, initialLoadRadius);
 
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {

@@ -39,7 +39,10 @@ function autoagora_display_spec_filters() {
 
         <div class="filter-group">
             <label for="filter-variant">Variant:</label>
-            <input type="text" name="variant" id="filter-variant" class="filter-input" placeholder="e.g. Sport, Limited Edition">
+            <select name="variant" id="filter-variant" class="filter-select" disabled>
+                <option value="">Select Model First</option>
+                <!-- JS will populate variants based on model, with counts -->
+            </select>
         </div>
 
         <div class="filter-group filter-group-range">
