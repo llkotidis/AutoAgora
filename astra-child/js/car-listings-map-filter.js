@@ -812,22 +812,42 @@ jQuery(document).ready(function($) {
     });
 
     function calculateAndDisplayDistances(centerLat, centerLng) {
-        const pinLocation = turf.point([centerLng, centerLat]);
+        // Ensure centerLat and centerLng are valid numbers
+        const cLat = parseFloat(centerLat);
+        const cLng = parseFloat(centerLng);
+
+        if (isNaN(cLat) || isNaN(cLng)) {
+            console.error('[DEBUG] calculateAndDisplayDistances: Invalid centerLat or centerLng provided.', {centerLat, centerLng});
+            return; // Exit if center coordinates are not valid numbers
+        }
+
+        const pinLocation = turf.point([cLng, cLat]);
 
         $('.car-listings-grid .car-listing-card').each(function() {
             const $card = $(this);
-            const cardLat = $card.data('latitude');
-            const cardLng = $card.data('longitude');
+            const cardLatData = $card.data('latitude');
+            const cardLngData = $card.data('longitude');
             const $locationEl = $card.find('.car-location');
             const $locationTextSpan = $locationEl.find('span.location-text');
 
-            if (cardLat !== undefined && cardLng !== undefined && $locationTextSpan.length) {
-                const carLocationPoint = turf.point([parseFloat(cardLng), parseFloat(cardLat)]);
+            // Ensure cardLatData and cardLngData are not undefined or null before parseFloat
+            if (cardLatData === undefined || cardLatData === null || cardLngData === undefined || cardLngData === null) {
+                // console.warn('[DEBUG] calculateAndDisplayDistances: Card missing latitude or longitude data attribute.', { postId: $card.data('post-id') });
+                return; // Skip this card if data attributes are missing
+            }
+            
+            const cardLat = parseFloat(cardLatData);
+            const cardLng = parseFloat(cardLngData);
+
+            if (!isNaN(cardLat) && !isNaN(cardLng) && $locationTextSpan.length) {
+                const carLocationPoint = turf.point([cardLng, cardLat]);
                 const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
                 const distanceText = ` (${distance.toFixed(1)} km away)`;
                 
                 let currentText = $locationTextSpan.text().replace(/\s*\([\d\.]+\s*km away\)/, '');
                 $locationTextSpan.text(currentText + distanceText);
+            } else {
+                // console.warn('[DEBUG] calculateAndDisplayDistances: Parsed card latitude or longitude is NaN or location text span not found.', { cardLatData, cardLngData, cardLat, cardLng, hasTextSpan: $locationTextSpan.length });
             }
         });
     }
