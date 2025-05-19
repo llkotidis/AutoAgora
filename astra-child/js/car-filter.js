@@ -20,9 +20,6 @@
     const makeModelVariantStructure = filterData.makeModelVariantStructure;
     const allChoices = filterData.choices; // All possible static choices (ACF)
 
-    // --- NEW: Store current location filter state ---
-    let currentMapLocationFilter = { lat: null, lng: null, radius: null };
-
     console.log("[CarFilter] Initializing filters for context:", context);
 
     const form = document.getElementById("car-filter-form-" + context);
@@ -252,15 +249,6 @@
       for (const key in currentFilters) {
         formData.append(`filters[${key}]`, currentFilters[key]);
       }
-
-      // --- NEW: Add location filter to AJAX request if available ---
-      if (currentMapLocationFilter.lat !== null && currentMapLocationFilter.lng !== null && currentMapLocationFilter.radius !== null) {
-        formData.append('filters[lat]', currentMapLocationFilter.lat);
-        formData.append('filters[lng]', currentMapLocationFilter.lng);
-        formData.append('filters[radius]', currentMapLocationFilter.radius);
-        console.log("[CarFilter] Adding location to count update:", currentMapLocationFilter);
-      }
-      // --- END NEW ---
 
       fetch(ajaxUrl, { method: "POST", body: formData })
         .then((response) => {
@@ -956,26 +944,6 @@
       "DOM ready. Running initial handleFilterChange to get base counts."
     );
     handleFilterChange();
-
-    // --- NEW: Listen for location changes from the map filter ---
-    document.addEventListener('locationFilterApplied', function(event) {
-        if (event.detail) {
-            currentMapLocationFilter.lat = event.detail.lat;
-            currentMapLocationFilter.lng = event.detail.lng;
-            currentMapLocationFilter.radius = event.detail.radius;
-            console.log('[CarFilter] Location filter updated from map:', currentMapLocationFilter);
-            
-            // When location changes, we MUST re-fetch the counts for the spec filters
-            // respecting the new location.
-            handleFilterChange(); 
-        } else {
-            // Location cleared or detail missing
-            currentMapLocationFilter = { lat: null, lng: null, radius: null };
-            console.log('[CarFilter] Location filter cleared or detail missing.');
-            handleFilterChange();
-        }
-    });
-    // --- END NEW ---
 
     const toggleButton = document.getElementById("toggle-more-options");
     const toggleButtonTextSpan = toggleButton

@@ -187,17 +187,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Helper Functions ---
   function filterCars(cars, filters) {
     return cars.filter(car => {
-      // --- Location Filter (New) ---
-      if (filters.lat && filters.lng && filters.radius && car.car_latitude && car.car_longitude) {
-        const carPoint = turf.point([parseFloat(car.car_longitude), parseFloat(car.car_latitude)]);
-        const filterPoint = turf.point([parseFloat(filters.lng), parseFloat(filters.lat)]);
-        const distance = turf.distance(filterPoint, carPoint, { units: 'kilometers' });
-        if (distance > parseFloat(filters.radius)) {
-          return false; // Car is outside the radius
-        }
-      }
-      // --- End Location Filter ---
-
       // Check each filter
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue; // Skip empty filters
@@ -235,14 +224,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const filtersPopup = document.getElementById("filtersPopup");
   const closeFilters = document.querySelector(".close-filters");
   const filterForm = document.getElementById("car-filter-form-listings_page");
-
-  // --- Define Selectors after filterForm is confirmed to exist ---
-  let makeSelect, modelSelect, variantSelect;
-  if (filterForm) {
-      makeSelect = filterForm.querySelector('select[name="make"]');
-      modelSelect = filterForm.querySelector('select[name="model"]');
-      variantSelect = filterForm.querySelector('select[name="variant"]');
-  }
 
   // Check if essential elements exist
   if (!filtersButton || !filtersPopup || !closeFilters || !filterForm) {
