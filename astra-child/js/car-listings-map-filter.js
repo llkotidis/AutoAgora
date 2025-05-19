@@ -583,6 +583,7 @@ jQuery(document).ready(function($) {
             data: data,
             success: function(response) {
                 if (response.success) {
+                    // Update listings grid and pagination
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
@@ -596,15 +597,14 @@ jQuery(document).ready(function($) {
                         reinitializeFavoriteButtons();
                     }
                     if (typeof updateResultsCounter === "function") {
-                         console.log('[MapFilter AJAX] Calling updateResultsCounter');
-                        // Ensure data.query_vars.found_posts is available and a number
+                        console.log('[MapFilter AJAX] Calling updateResultsCounter');
                         const totalResults = (response.data && typeof response.data.query_vars && typeof response.data.query_vars.found_posts !== 'undefined') 
-                                             ? parseInt(response.data.query_vars.found_posts, 10) 
-                                             : null;
+                                            ? parseInt(response.data.query_vars.found_posts, 10) 
+                                            : null;
                         updateResultsCounter(isNaN(totalResults) ? null : totalResults);
                     }
 
-                    // Update filter counts - always do this on a successful AJAX response
+                    // Update filter counts
                     if (response.data.filter_counts) {
                         console.log('[MapFilter AJAX] Updating filter counts with new data');
                         updateFilterCounts(response.data.filter_counts);
@@ -644,21 +644,18 @@ jQuery(document).ready(function($) {
                         });
                     }
 
-                    updateCarListings(response.listings_html);
-                    updatePagination(response.pagination_html);
-                    updateUrlWithFilters(page, currentFilter.lat, currentFilter.lng, currentFilter.radius);
-
-                    // Removed: Update filter dropdowns with new counts as spec filters are removed from listings page
-                    /*
-                    if (response.filter_counts) {
-                        console.log('[FetchListings] Received filter counts:', response.filter_counts);
-                        // Assuming you have a function to update your filter dropdowns
-                        // This is a placeholder for where you'd call it
-                        // updateFilterDropdowns(response.filter_counts);
-                    } else {
-                        console.log('[FetchListings] No filter counts received in response.');
+                    // Update URL with current filters
+                    const currentUrl = new URL(window.location.href);
+                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
+                        currentUrl.searchParams.set('lat', filterLat.toFixed(7));
+                        currentUrl.searchParams.set('lng', filterLng.toFixed(7));
+                        currentUrl.searchParams.set('radius', filterRadius.toString());
+                        if (selectedLocationName) {
+                            currentUrl.searchParams.set('location_name', selectedLocationName);
+                        }
                     }
-                    */
+                    currentUrl.searchParams.set('paged', page.toString());
+                    history.pushState({ path: currentUrl.href }, '', currentUrl.href);
 
                     console.log("[FetchListings] Completed. Map should reflect new listings.");
                 } else {
