@@ -913,32 +913,36 @@
       updateMultiSelectDisplay(msFilter);
     });
 
-    // --- Override Form Submission ---
-    if (form && context !== "listings_page") {
-      form.addEventListener("submit", function (event) {
-        event.preventDefault(); // Stop the default GET submission
-        console.log("Form submission intercepted.");
-
-        const currentFilters = getCurrentFilters(); // Use existing helper
-        const params = new URLSearchParams();
-
-        // Add only non-empty filters to the URL parameters
-        for (const key in currentFilters) {
-          if (currentFilters[key] && currentFilters[key] !== "") {
-            params.append(key, currentFilters[key]);
-          }
+    // --- Form Submit Event Handler ---
+    form.addEventListener("submit", function (event) {
+      // Don't prevent default, allow natural form submission, but add location params
+      
+      // Check if URL has location parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const lat = urlParams.get('lat');
+      const lng = urlParams.get('lng');
+      const radius = urlParams.get('radius');
+      const location_name = urlParams.get('location_name');
+      
+      // If location parameters exist, add them to the form
+      if (lat && lng && radius) {
+        // Create hidden inputs for the location parameters
+        const addHiddenInput = (name, value) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        };
+        
+        addHiddenInput('lat', lat);
+        addHiddenInput('lng', lng);
+        addHiddenInput('radius', radius);
+        if (location_name) {
+          addHiddenInput('location_name', location_name);
         }
-
-        // Construct the final URL
-        const baseUrl = form.action; // Get the action URL from the form (/car_listings/)
-        const queryString = params.toString();
-        const finalUrl = baseUrl + (queryString ? "?" + queryString : ""); // Add query string only if not empty
-
-        console.log("Redirecting to:", finalUrl);
-        window.location.href = finalUrl; // Redirect the browser
-      });
-    }
-    // --- End Override Form Submission ---
+      }
+    });
 
     console.log(
       "DOM ready. Running initial handleFilterChange to get base counts."

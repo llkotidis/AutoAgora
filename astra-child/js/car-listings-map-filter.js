@@ -469,7 +469,15 @@ jQuery(document).ready(function($) {
     });
 
     function fetchFilteredListings(page = 1, lat = null, lng = null, radius = null) {
-        console.log(`[FetchListings] Fetching page ${page}. Lat: ${lat}, Lng: ${lng}, Radius: ${radius}, Name: ${selectedLocationName}`);
+        // First check explicit parameters, then URL parameters if not provided
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Use explicit parameters first, fall back to URL parameters
+        let filterLat = lat !== null ? lat : urlParams.get('lat') || null;
+        let filterLng = lng !== null ? lng : urlParams.get('lng') || null;
+        let filterRadius = radius !== null ? radius : urlParams.get('radius') || null;
+        
+        console.log(`[FetchListings] Fetching page ${page}. Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}, Name: ${selectedLocationName}`);
         
         // Abort any existing listings request if it's still running
         if (currentListingsRequest && currentListingsRequest.readyState !== 4) {
@@ -483,9 +491,9 @@ jQuery(document).ready(function($) {
             action: 'filter_listings_by_location',
             nonce: nonce,
             paged: page,
-            filter_lat: lat,
-            filter_lng: lng,
-            filter_radius: radius,
+            filter_lat: filterLat,
+            filter_lng: filterLng,
+            filter_radius: filterRadius,
             per_page: carListingsMapFilterData.perPage || 12 // Use perPage from localized data or default
         };
 
@@ -526,15 +534,17 @@ jQuery(document).ready(function($) {
                         updateResultsCounter(isNaN(totalResults) ? null : totalResults);
                     }
 
-                    // Update filter counts 
+                    // Update filter counts - always do this on a successful AJAX response
                     if (response.data.filter_counts) {
                         console.log('[MapFilter AJAX] Updating filter counts with new data');
                         updateFilterCounts(response.data.filter_counts);
+                    } else {
+                        console.warn('[MapFilter AJAX] No filter_counts in AJAX response');
                     }
 
                     // Calculate and display distances if location filter is active
-                    if (lat !== null && lng !== null && radius !== null) {
-                        const pinLocation = turf.point([lng, lat]);
+                    if (filterLat !== null && filterLng !== null && filterRadius !== null) {
+                        const pinLocation = turf.point([filterLng, filterLat]);
 
                         $('.car-listings-grid .car-listing-card').each(function() {
                             const $card = $(this);
@@ -756,6 +766,9 @@ jQuery(document).ready(function($) {
         initialFilter.hasOwnProperty('lat') && initialFilter.hasOwnProperty('lng') && initialFilter.hasOwnProperty('radius') &&
         initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
         console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
+        // Set the current location text first so the UI is consistent
+        currentLocationText.text(initialFilter.text || 'Selected location');
+        // Immediate AJAX call to load initial listings with location filter
         fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
     } else {
         console.log('[PageLoad] No specific location active or initialFilter is incomplete/invalid, fetching default listings.', initialFilter);

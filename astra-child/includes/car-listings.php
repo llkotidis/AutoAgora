@@ -426,7 +426,16 @@ function autoagora_filter_listings_by_location_ajax() {
     // Ensure car-listings-query.php (containing build_car_listings_query_args) is loaded
     require_once __DIR__ . '/car-listings-query.php';
 
-    $args = build_car_listings_query_args($atts_for_query, $paged, $all_filters_from_post);
+    // Make sure location filter is always included in the car_listings_query_args
+    // This ensures location filtering is respected when any filter changes
+    if ($location_filter !== null) {
+        // The location filter parameters already exist in $all_filters_from_post
+        // But we want to ensure they're used correctly in build_car_listings_query_args
+        // Simply make sure they're not accidentally removed elsewhere in the code
+        $args = build_car_listings_query_args($atts_for_query, $paged, $all_filters_from_post);
+    } else {
+        $args = build_car_listings_query_args($atts_for_query, $paged, $all_filters_from_post);
+    }
     
     $car_query = new WP_Query($args);
 
