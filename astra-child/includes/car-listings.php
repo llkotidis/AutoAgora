@@ -6,11 +6,15 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 // Include helper files
-require_once __DIR__ . '/car-listings-data.php';
-require_once __DIR__ . '/car-listings-query.php'; // Added this line
-require_once __DIR__ . '/car-filter-form.php'; // Include the new filter form file
-require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
+require_once get_stylesheet_directory() . '/includes/car-listings-data.php';
+require_once get_stylesheet_directory() . '/includes/car-listings-query.php';
+require_once get_stylesheet_directory() . '/includes/car-filter-form.php';
+require_once get_stylesheet_directory() . '/includes/geo-utils.php';
 
 
 // Register the shortcode
@@ -53,10 +57,20 @@ function display_car_listings($atts) {
             array('mapbox-gl-css', 'mapbox-geocoder-css'),
             filemtime(get_stylesheet_directory() . '/css/car-listings-map-filter.css')
         );
+        
+        // Enqueue script for spec filters (new)
+        wp_enqueue_script(
+            'car-specs-filter-js',
+            get_stylesheet_directory_uri() . '/js/car-specs-filter.js',
+            array('jquery'), // Depends on jQuery
+            filemtime(get_stylesheet_directory() . '/js/car-specs-filter.js'),
+            true
+        );
+        
         wp_enqueue_script(
             'car-listings-map-filter-js',
             get_stylesheet_directory_uri() . '/js/car-listings-map-filter.js',
-            array('jquery', 'mapbox-gl-js', 'mapbox-geocoder-js', 'turf-js'),
+            array('jquery', 'mapbox-gl-js', 'mapbox-geocoder-js', 'turf-js', 'car-specs-filter-js'), // Added 'car-specs-filter-js' as a dependency
             filemtime(get_stylesheet_directory() . '/js/car-listings-map-filter.js'),
             true
         );

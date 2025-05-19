@@ -611,7 +611,11 @@ jQuery(document).ready(function($) {
                         delete otherFilterCounts.make;
                         delete otherFilterCounts.model_by_make;
                         delete otherFilterCounts.variant_by_model;
-                        updateFilterCounts(otherFilterCounts);
+                        if (window.AutoAgoraSpecFilters && typeof window.AutoAgoraSpecFilters.updateFilterCounts === 'function') {
+                            window.AutoAgoraSpecFilters.updateFilterCounts(otherFilterCounts);
+                        } else {
+                            console.error('[DEBUG] AutoAgoraSpecFilters.updateFilterCounts is not available.');
+                        }
                     }
 
                     // Calculate distances if location is set
@@ -820,136 +824,6 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function updateFilterCounts(filterCounts) {
-        if (!filterCounts) return;
-
-        // Update fuel type dropdown
-        if (filterCounts.fuel_type) {
-            updateMultiselectCounts('fuel_type', filterCounts.fuel_type);
-        }
-
-        // Update transmission dropdown
-        if (filterCounts.transmission) {
-            updateMultiselectCounts('transmission', filterCounts.transmission);
-        }
-
-        // Update body type dropdown
-        if (filterCounts.body_type) {
-            updateMultiselectCounts('body_type', filterCounts.body_type);
-        }
-
-        // Update drive type dropdown
-        if (filterCounts.drive_type) {
-            updateMultiselectCounts('drive_type', filterCounts.drive_type);
-        }
-
-        // Update exterior color dropdown
-        if (filterCounts.exterior_color) {
-            updateMultiselectCounts('exterior_color', filterCounts.exterior_color);
-        }
-
-        // Update interior color dropdown
-        if (filterCounts.interior_color) {
-            updateMultiselectCounts('interior_color', filterCounts.interior_color);
-        }
-
-        // Update year range selects
-        if (filterCounts.year) {
-            updateRangeSelectCounts('year', filterCounts.year);
-        }
-
-        // Update engine capacity range selects
-        if (filterCounts.engine_capacity) {
-            updateRangeSelectCounts('engine', filterCounts.engine_capacity);
-        }
-
-        // Update mileage range selects
-        if (filterCounts.mileage) {
-            updateRangeSelectCounts('mileage', filterCounts.mileage);
-        }
-    }
-
-    // Helper function to update multiselect filter counts
-    function updateMultiselectCounts(filterKey, counts) {
-        const $container = $(`.multi-select-filter[data-filter-key="${filterKey}"]`);
-        if ($container.length) {
-            $container.find('li input[type="checkbox"]').each(function() {
-                const $checkbox = $(this);
-                const value = $checkbox.val();
-                const count = counts[value] || 0;
-                const $countSpan = $checkbox.closest('label').find('.option-count');
-                
-                if ($countSpan.length) {
-                    $countSpan.text(count);
-                }
-                
-                // Disable options with zero count unless currently checked
-                if (count === 0 && !$checkbox.prop('checked')) {
-                    $checkbox.prop('disabled', true);
-                    $checkbox.closest('li').addClass('disabled-option');
-                } else {
-                    $checkbox.prop('disabled', false);
-                    $checkbox.closest('li').removeClass('disabled-option');
-                }
-            });
-        }
-    }
-
-    // Helper function to update range select filter counts
-    function updateRangeSelectCounts(rangeType, counts) {
-        // Handle min select
-        const $minSelect = $(`select[name="${rangeType}_min"]`);
-        if ($minSelect.length) {
-            $minSelect.find('option').each(function() {
-                const $option = $(this);
-                const value = $option.val();
-                if (value !== '') { // Skip the "Min" option
-                    let displayValue = value;
-                    const count = counts[value] || 0;
-                    
-                    // Extract existing display text without the count
-                    let baseText = $option.text().replace(/\s*\(\d+\)$/, '');
-                    
-                    // Make sure we keep any suffix (km, L)
-                    $option.text(`${baseText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-        
-        // Handle max select
-        const $maxSelect = $(`select[name="${rangeType}_max"]`);
-        if ($maxSelect.length) {
-            $maxSelect.find('option').each(function() {
-                const $option = $(this);
-                const value = $option.val();
-                if (value !== '') { // Skip the "Max" option
-                    let displayValue = value;
-                    const count = counts[value] || 0;
-                    
-                    // Extract existing display text without the count
-                    let baseText = $option.text().replace(/\s*\(\d+\)$/, '');
-                    
-                    // Make sure we keep any suffix (km, L)
-                    $option.text(`${baseText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
-                }
-            });
-        }
-    }
-
     // --- Popup Handling for Spec Filters ---
     openSpecFiltersBtn.on('click', function() {
         specFiltersPopup.show();
@@ -1066,7 +940,11 @@ jQuery(document).ready(function($) {
                     delete otherFilterCounts.make;
                     delete otherFilterCounts.model_by_make; 
                     delete otherFilterCounts.variant_by_model;
-                    updateFilterCounts(otherFilterCounts);
+                    if (window.AutoAgoraSpecFilters && typeof window.AutoAgoraSpecFilters.updateFilterCounts === 'function') {
+                        window.AutoAgoraSpecFilters.updateFilterCounts(otherFilterCounts);
+                    } else {
+                        console.error('[DEBUG] AutoAgoraSpecFilters.updateFilterCounts is not available for initial load.');
+                    }
                 }
             } else {
                 console.error('[DEBUG] Initial AJAX for options failed:', response.data?.message || 'No error message');
