@@ -416,17 +416,24 @@ function autoagora_filter_listings_by_location_ajax() {
         $active_filters_for_counts['radius'] = $filter_radius;
     }
 
+    error_log('[DEBUG] AJAX Handler - Filters for Query: ' . print_r($active_filters_for_query, true));
+
     $query_args = build_car_listings_query_args(
-        array(
-            'per_page' => $per_page,
-            'orderby' => 'date',
-            'order' => 'DESC'
+        array( 
+        'per_page' => $per_page,
+            'orderby' => 'date', // Or manage these via AJAX params if needed
+            'order' => 'DESC'   // Or manage these via AJAX params if needed
         ),
         $paged, 
-        $active_filters_for_query
+        $active_filters_for_query // Pass all filters including location if set
     );
 
+    error_log('[DEBUG] AJAX Handler - Built Query Args for Listings: ' . print_r($query_args, true));
+
     $car_query = new WP_Query($query_args);
+
+    error_log('[DEBUG] AJAX Handler - Listing Query SQL: ' . $car_query->request);
+    error_log('[DEBUG] AJAX Handler - Listing Query Found Posts: ' . $car_query->found_posts);
 
     ob_start();
     if ($car_query->have_posts()) {
