@@ -563,7 +563,8 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
                 continue;
             }
             // Ensure 'make' is set for context, even if it's the primary filter for model_by_make
-            $temp_filters['make'] = $current_filters_from_ajax['make'];
+            // No, build_car_listings_query_args will take 'make' from $temp_filters if it exists.
+            // $temp_filters['make'] = $current_filters_from_ajax['make']; 
         } elseif ($field_key_to_count === 'variant_by_model') {
             unset($temp_filters['variant']);
             if (empty($current_filters_from_ajax['make']) || empty($current_filters_from_ajax['model'])) {
@@ -571,9 +572,9 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
                 // error_log("[DEBUG] get_dynamic_filter_counts - Skipping 'variant_by_model' as no 'make' or 'model' is in current_filters_from_ajax.");
                 continue;
             }
-            // Ensure 'make' and 'model' are set for context
-            $temp_filters['make'] = $current_filters_from_ajax['make'];
-            $temp_filters['model'] = $current_filters_from_ajax['model'];
+            // Ensure 'make' and 'model' are set for context in $temp_filters
+            // $temp_filters['make'] = $current_filters_from_ajax['make'];
+            // $temp_filters['model'] = $current_filters_from_ajax['model'];
         } else {
             unset($temp_filters[$field_key_to_count]);
             if (in_array($field_key_to_count, ['year', 'price', 'mileage', 'engine_capacity', 'hp', 'number_of_owners'])) {
@@ -582,53 +583,34 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
             }
         }
         
-        $query_args_for_count = array(
-            'post_type' => 'car',
-            'posts_per_page' => -1,
-            'fields' => 'ids',
-            'meta_query' => array( 
-                 'relation' => 'OR',
-                array( 'key' => 'is_sold', 'compare' => 'NOT EXISTS'),
-                array( 'key' => 'is_sold', 'value' => '1', 'compare' => '!=')
-            )
+        // Use build_car_listings_query_args to get arguments that respect ALL $temp_filters (including location)
+        // We only need IDs, so 'posts_per_page' can be -1 and 'fields' => 'ids'.
+        // $atts for build_car_listings_query_args needs 'per_page', 'orderby', 'order'.
+        // For counting, orderby and order don't strictly matter but provide sensible defaults.
+        $counting_query_atts = array(
+            'per_page' => -1, // Get all matching posts
+            'orderby' => 'ID', // Order doesn't matter for counts
+            'order' => 'ASC'
         );
-
-        $location_filter_for_sub_query = null;
-        if (isset($temp_filters['lat']) && isset($temp_filters['lng']) && isset($temp_filters['radius'])) {
-            $location_filter_for_sub_query = array(
-                'lat'    => $temp_filters['lat'],
-                'lng'    => $temp_filters['lng'],
-                'radius' => $temp_filters['radius'],
-            );
-        }
+        // Pass $temp_filters directly. build_car_listings_query_args will use these.
+        // Location filters (lat, lng, radius) if present in $temp_filters will be handled by build_car_listings_query_args.
+        $query_args_for_count = build_car_listings_query_args($counting_query_atts, 1, $temp_filters);
         
-        $meta_filters_for_sub_query = $temp_filters;
-        unset($meta_filters_for_sub_query['lat'], $meta_filters_for_sub_query['lng'], $meta_filters_for_sub_query['radius']);
-
-        if (function_exists('build_meta_query')) {
-            $meta_query_parts = build_meta_query($meta_filters_for_sub_query);
-        } elseif (function_exists('autoagora_build_meta_query')) {
-             $meta_query_parts = autoagora_build_meta_query($meta_filters_for_sub_query);
-        } else {
-            $meta_query_parts = array(); // Initialize if no function found to avoid errors
-            error_log('[DEBUG] Neither build_meta_query nor autoagora_build_meta_query found in autoagora_get_dynamic_filter_counts');
-        }
-
-        if (!empty($meta_query_parts)) {
-            if (!isset($query_args_for_count['meta_query'])) { // Should always be set by now with is_sold
-                 $query_args_for_count['meta_query'] = array('relation' => 'AND');
-            } elseif (isset($query_args_for_count['meta_query']['relation']) && $query_args_for_count['meta_query']['relation'] === 'OR'){
-                // If base is OR (is_sold), wrap it and add AND for other filters
-                $existing_meta_query = $query_args_for_count['meta_query'];
-                $query_args_for_count['meta_query'] = array('relation' => 'AND', $existing_meta_query);
-            }
-            $query_args_for_count['meta_query'] = array_merge($query_args_for_count['meta_query'], $meta_query_parts);
-        }
+        // Ensure we are only fetching IDs
+        $query_args_for_count['fields'] = 'ids';
+        // Ensure is_sold check is present if not already handled by build_car_listings_query_args in a conflicting way
+        // build_car_listings_query_args already adds the is_sold check with AND relation to other meta queries.
+        // If $query_args_for_count['meta_query'] is not set, or if 'relation' is not AND, we might need to adjust.
+        // However, build_car_listings_query_args structure seems robust enough.
         
         $query_instance_for_counting = new WP_Query();
-        $filtered_ids = $query_instance_for_counting->query( $query_args_for_count );
+        $filtered_ids = $query_instance_for_counting->query( $query_args_for_count ); // $query_instance_for_counting->posts will contain the IDs
 
-        if ($location_filter_for_sub_query) {
+        // The $filtered_ids are now already filtered by location if location params were in $temp_filters,
+        // because build_car_listings_query_args handles it.
+        // So, the call to filter_posts_by_distance is no longer needed here.
+        /*
+        if ($location_filter_for_sub_query) { // This whole block should be removed
             $filtered_ids = filter_posts_by_distance(
                 $filtered_ids,
                 $location_filter_for_sub_query['lat'],
@@ -636,6 +618,7 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
                 $location_filter_for_sub_query['radius']
             );
         }
+        */
         
         if (empty($filtered_ids)) {
             // Ensure structure exists even if empty
