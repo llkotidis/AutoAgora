@@ -359,6 +359,19 @@ add_action('wp_ajax_filter_listings_by_location', 'autoagora_filter_listings_by_
 add_action('wp_ajax_nopriv_filter_listings_by_location', 'autoagora_filter_listings_by_location_ajax');
 
 function autoagora_filter_listings_by_location_ajax() {
+    // Diagnostic log: Check if WordPress core functions are available
+    if (function_exists('get_stylesheet_directory_uri')) {
+        error_log('[DEBUG] AJAX Handler: get_stylesheet_directory_uri() is available.');
+    } else {
+        error_log('[DEBUG] AJAX Handler: CRITICAL - get_stylesheet_directory_uri() IS NOT AVAILABLE.');
+    }
+    if (function_exists('get_field')) {
+        error_log('[DEBUG] AJAX Handler: get_field() is available.');
+    } else {
+        error_log('[DEBUG] AJAX Handler: CRITICAL - get_field() IS NOT AVAILABLE.');
+    }
+    error_log('[DEBUG] AJAX Handler: autoagora_filter_listings_by_location_ajax reached.');
+
     check_ajax_referer('filter_listings_by_location_nonce', 'nonce');
 
     $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
