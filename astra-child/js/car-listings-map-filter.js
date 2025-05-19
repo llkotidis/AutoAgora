@@ -431,19 +431,23 @@ jQuery(document).ready(function($) {
 
             currentLocationText.text(locationName);
             modal.hide();
+            
+            // Clear the make filter when location changes
+            $('#filter-make').val('');
+            
+            // Fetch listings with new location
             fetchFilteredListings(1, lat, lng, radius);
 
-            // Update URL
+            // Update URL and localStorage as before
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('lat', lat.toFixed(7));
             currentUrl.searchParams.set('lng', lng.toFixed(7));
             currentUrl.searchParams.set('radius', radius.toString());
             currentUrl.searchParams.set('location_name', locationName);
             currentUrl.searchParams.delete('paged');
+            currentUrl.searchParams.delete('make'); // Remove make filter from URL
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-            console.log('[ApplyFilter] URL updated to:', currentUrl.href);
 
-            // Save to localStorage
             const preferredLocation = {
                 lat: lat,
                 lng: lng,
@@ -451,27 +455,22 @@ jQuery(document).ready(function($) {
                 name: locationName
             };
             localStorage.setItem('autoAgoraUserLocation', JSON.stringify(preferredLocation));
-            console.log('[ApplyFilter] Location saved to localStorage:', preferredLocation);
-
         } else {
-            // If no specific coords (e.g., user clears map and applies "All of Cyprus")
             currentLocationText.text('All of Cyprus');
             modal.hide();
-            fetchFilteredListings(1, null, null, null); // Fetch all
-
-            // Update URL to remove location parameters
+            fetchFilteredListings(1, null, null, null);
+            
+            // Clear location parameters from URL
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('lat');
             currentUrl.searchParams.delete('lng');
             currentUrl.searchParams.delete('radius');
             currentUrl.searchParams.delete('location_name');
             currentUrl.searchParams.delete('paged');
+            currentUrl.searchParams.delete('make'); // Remove make filter from URL
             history.pushState({ path: currentUrl.href }, '', currentUrl.href);
-            console.log('[ApplyFilter] URL updated for "All of Cyprus":', currentUrl.href);
-
-            // Clear from localStorage
+            
             localStorage.removeItem('autoAgoraUserLocation');
-            console.log('[ApplyFilter] Location cleared from localStorage.');
         }
     });
 
@@ -680,22 +679,30 @@ jQuery(document).ready(function($) {
     function updateFilterCounts(filterCounts) {
         // Update make dropdown
         if (filterCounts.make) {
-            const $makeSelect = $('select[name="make"]');
-            $makeSelect.find('option').each(function() {
-                const $option = $(this);
-                const makeValue = $option.val();
-                if (makeValue !== '') { // Skip the "All Makes" option
-                    const count = filterCounts.make[makeValue] || 0;
-                    const optionText = $option.text().replace(/\s*\(\d+\)$/, ''); // Remove existing count
-                    $option.text(`${optionText} (${count})`);
-                    
-                    // Disable options with zero count unless currently selected
-                    if (count === 0 && $option.prop('selected') === false) {
-                        $option.prop('disabled', true);
-                    } else {
-                        $option.prop('disabled', false);
-                    }
+            const $makeSelect = $('#filter-make');
+            const currentValue = $makeSelect.val(); // Store current selection
+            
+            // Clear existing options except the first one (usually "All Makes")
+            $makeSelect.find('option:not(:first)').remove();
+            
+            // Sort makes alphabetically
+            const sortedMakes = Object.keys(filterCounts.make).sort();
+            
+            // Add options with counts
+            sortedMakes.forEach(make => {
+                const count = filterCounts.make[make];
+                const $option = $('<option>', {
+                    value: make,
+                    text: `${make} (${count})`,
+                    disabled: count === 0 && make !== currentValue
+                });
+                
+                // If this was the previously selected value, mark it as selected
+                if (make === currentValue) {
+                    $option.prop('selected', true);
                 }
+                
+                $makeSelect.append($option);
             });
         }
 
