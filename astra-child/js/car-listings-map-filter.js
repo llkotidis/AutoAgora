@@ -762,14 +762,14 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Helper to update a select dropdown with new options
-    function updateSelectOptions($select, options, placeholder) {
+    // Helper to update a select dropdown with new options and counts
+    function updateSelectOptionsWithCounts($select, optionsWithCounts, placeholder) {
         $select.empty();
         if (placeholder) {
             $select.append(`<option value="">${placeholder}</option>`);
         }
-        for (const [value, label] of Object.entries(options)) {
-            $select.append(`<option value="${value}">${label}</option>`);
+        for (const [value, count] of Object.entries(optionsWithCounts)) {
+            $select.append(`<option value="${value}">${value} (${count})</option>`);
         }
     }
 
@@ -790,7 +790,7 @@ jQuery(document).ready(function($) {
         if (filteredOptions.make) {
             const makeOptions = {};
             filteredOptions.make.forEach(make => { makeOptions[make] = make; });
-            updateSelectOptions($("select[name='make']"), makeOptions, 'All Makes');
+            updateSelectOptionsWithCounts($("select[name='make']"), makeOptions, 'All Makes');
         }
         // Model (by make)
         const selectedMake = $("select[name='make']").val();
@@ -799,10 +799,10 @@ jQuery(document).ready(function($) {
             Object.keys(filteredOptions.model_by_make[selectedMake]).forEach(model => {
                 modelOptions[model] = model;
             });
-            updateSelectOptions($("select[name='model']"), modelOptions, 'All Models');
+            updateSelectOptionsWithCounts($("select[name='model']"), modelOptions, 'All Models');
             $("select[name='model']").prop('disabled', false);
         } else {
-            updateSelectOptions($("select[name='model']"), {}, 'Select Make First');
+            updateSelectOptionsWithCounts($("select[name='model']"), {}, 'Select Make First');
             $("select[name='model']").prop('disabled', true);
         }
         // Fuel Type

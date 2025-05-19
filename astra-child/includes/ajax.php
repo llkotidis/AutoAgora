@@ -526,293 +526,66 @@ function ajax_update_filter_counts_handler() {
     $matching_post_ids = get_posts($query_args);
     $debug_info['initial_matching_post_ids'] = $matching_post_ids; // Log initial results
 
-    // 4. Calculate Counts for Each Filter Based on Matching IDs
-    $updated_counts = array();
-    $filter_keys = array(
-        'location'       => ['type' => 'simple', 'multi' => false],
-        'make'           => ['type' => 'simple', 'multi' => false],
-        'model'          => ['type' => 'simple', 'multi' => false],
-        'variant'        => ['type' => 'simple', 'multi' => false],
-        'fuel_type'      => ['type' => 'simple', 'multi' => true],
-        'transmission'   => ['type' => 'simple', 'multi' => true],
-        'exterior_color' => ['type' => 'simple', 'multi' => true],
-        'interior_color' => ['type' => 'simple', 'multi' => true],
-        'body_type'      => ['type' => 'simple', 'multi' => true],
-        'drive_type'     => ['type' => 'simple', 'multi' => true],
-        'year_min'       => ['type' => 'range_min', 'multi' => false],
-        'year_max'       => ['type' => 'range_max', 'multi' => false],
-        'engine_min'     => ['type' => 'range_min', 'multi' => false],
-        'engine_max'     => ['type' => 'range_max', 'multi' => false],
-        'mileage_min'    => ['type' => 'range_min', 'multi' => false],
-        'mileage_max'    => ['type' => 'range_max', 'multi' => false],
-    );
-    $all_field_keys_to_count = array_keys($filter_keys); // Get all keys including ranges initially
-    $count_fields = array_filter($all_field_keys_to_count, function($key) use ($filter_keys) {
-        return $filter_keys[$key]['type'] === 'simple' && $key !== 'location';
-    });
-
-    $temp_meta_query_engine = array('relation' => 'AND'); 
-    foreach ($filter_keys as $key => $config) {
-        if (in_array($key, ['engine_min', 'engine_max'])) {
-            continue;
+    // --- Efficient: Collect unique values and counts for all filters from the filtered cars ---
+    $counts = [
+        'make' => [], 'model' => [], 'variant' => [], 'transmission' => [], 'engine_capacity' => [],
+        'fuel_type' => [], 'body_type' => [], 'exterior_color' => [], 'interior_color' => [],
+        'drive_type' => [], 'year' => [], 'mileage' => []
+    ];
+    $models_by_make = [];
+    $variants_by_make_model = [];
+    foreach ($matching_post_ids as $car_id) {
+        $make = get_post_meta($car_id, 'make', true);
+        $model = get_post_meta($car_id, 'model', true);
+        $variant = get_post_meta($car_id, 'variant', true);
+        $transmission = get_post_meta($car_id, 'transmission', true);
+        $engine_capacity = get_post_meta($car_id, 'engine_capacity', true);
+        $fuel_type = get_post_meta($car_id, 'fuel_type', true);
+        $body_type = get_post_meta($car_id, 'body_type', true);
+        $exterior_color = get_post_meta($car_id, 'exterior_color', true);
+        $interior_color = get_post_meta($car_id, 'interior_color', true);
+        $drive_type = get_post_meta($car_id, 'drive_type', true);
+        $year = get_post_meta($car_id, 'year', true);
+        $mileage = get_post_meta($car_id, 'mileage', true);
+        if ($make) $counts['make'][$make] = isset($counts['make'][$make]) ? $counts['make'][$make] + 1 : 1;
+        if ($model) $counts['model'][$model] = isset($counts['model'][$model]) ? $counts['model'][$model] + 1 : 1;
+        if ($variant) $counts['variant'][$variant] = isset($counts['variant'][$variant]) ? $counts['variant'][$variant] + 1 : 1;
+        if ($transmission) $counts['transmission'][$transmission] = isset($counts['transmission'][$transmission]) ? $counts['transmission'][$transmission] + 1 : 1;
+        if ($engine_capacity) $counts['engine_capacity'][$engine_capacity] = isset($counts['engine_capacity'][$engine_capacity]) ? $counts['engine_capacity'][$engine_capacity] + 1 : 1;
+        if ($fuel_type) $counts['fuel_type'][$fuel_type] = isset($counts['fuel_type'][$fuel_type]) ? $counts['fuel_type'][$fuel_type] + 1 : 1;
+        if ($body_type) $counts['body_type'][$body_type] = isset($counts['body_type'][$body_type]) ? $counts['body_type'][$body_type] + 1 : 1;
+        if ($exterior_color) $counts['exterior_color'][$exterior_color] = isset($counts['exterior_color'][$exterior_color]) ? $counts['exterior_color'][$exterior_color] + 1 : 1;
+        if ($interior_color) $counts['interior_color'][$interior_color] = isset($counts['interior_color'][$interior_color]) ? $counts['interior_color'][$interior_color] + 1 : 1;
+        if ($drive_type) $counts['drive_type'][$drive_type] = isset($counts['drive_type'][$drive_type]) ? $counts['drive_type'][$drive_type] + 1 : 1;
+        if ($year) $counts['year'][$year] = isset($counts['year'][$year]) ? $counts['year'][$year] + 1 : 1;
+        if ($mileage) $counts['mileage'][$mileage] = isset($counts['mileage'][$mileage]) ? $counts['mileage'][$mileage] + 1 : 1;
+        // Grouped structures
+        if ($make && $model) {
+            if (!isset($models_by_make[$make])) $models_by_make[$make] = [];
+            $models_by_make[$make][$model] = isset($models_by_make[$make][$model]) ? $models_by_make[$make][$model] + 1 : 1;
         }
-        $type = $config['type'];
-        $is_multi = $config['multi'];
-        $base_key = str_replace(array('_min', '_max'), '', $key);
-        $value = isset($filters[$key]) ? $filters[$key] : '';
-        if (!empty($value)) {
-             if ($is_multi) {
-                 $value_array = explode(',', $value);
-                 $sanitized_value = array_map('sanitize_text_field', $value_array);
-                 $sanitized_value = array_filter($sanitized_value); 
-                 if (empty($sanitized_value)) continue;
-             } else {
-                 if ($type === 'range_min' || $type === 'range_max') {
-                     $sanitized_value = floatval($value);
-                 } else {
-                     $sanitized_value = sanitize_text_field($value);
-                 }
-             }
-             if ($type === 'simple') {
-                 if ($is_multi && is_array($sanitized_value)) {
-                     $temp_meta_query_engine[] = array(
-                         'key'     => $base_key,
-                         'value'   => $sanitized_value,
-                         'compare' => 'IN', 
-                    );
-                 } elseif (!$is_multi) {
-                     $temp_meta_query_engine[] = array(
-                         'key'     => $base_key,
-                         'value'   => $sanitized_value,
-                         'compare' => '=',
-                     );
-                 }
-            } elseif ($type === 'range_min') {
-                 $temp_meta_query_engine[] = array(
-                    'key'     => $base_key,
-                    'value'   => $sanitized_value,
-                    'compare' => '>=',
-                    'type'    => 'NUMERIC',
-                 );
-            } elseif ($type === 'range_max') {
-                 $temp_meta_query_engine[] = array(
-                    'key'     => $base_key,
-                    'value'   => $sanitized_value,
-                    'compare' => '<=',
-                    'type'    => 'NUMERIC',
-                 );
-            }
+        if ($make && $model && $variant) {
+            if (!isset($variants_by_make_model[$make])) $variants_by_make_model[$make] = [];
+            if (!isset($variants_by_make_model[$make][$model])) $variants_by_make_model[$make][$model] = [];
+            $variants_by_make_model[$make][$model][$variant] = isset($variants_by_make_model[$make][$model][$variant]) ? $variants_by_make_model[$make][$model][$variant] + 1 : 1;
         }
     }
-    $query_args_for_ids = array(
-        'post_type'      => 'car',
-        'post_status'    => 'publish',
-        'posts_per_page' => -1, // Get all matching posts
-        'fields'         => 'ids', // Only get post IDs for efficiency
-        'meta_query'     => $temp_meta_query_engine, // Use the query *without* engine filters
-    );
-    if ($matching_car_ids !== null) {
-        $query_args_for_ids['post__in'] = $matching_car_ids;
-    }
-    $matching_engine_pool_query = new WP_Query($query_args_for_ids);
-    $matching_post_ids_for_engine = $matching_engine_pool_query->get_posts();
-    $post_id_placeholders_engine = '0'; // Default if no IDs match
-    $prepared_post_ids_for_engine = [0]; 
-    if (!empty($matching_post_ids_for_engine)) {
-         $post_id_placeholders_engine = implode(',', array_fill(0, count($matching_post_ids_for_engine), '%d'));
-         $prepared_post_ids_for_engine = $matching_post_ids_for_engine;
-    }
-    $debug_info['matching_ids_for_engine'] = $prepared_post_ids_for_engine;
-    
-    global $wpdb;
-    $post_id_placeholders_simple = !empty($matching_post_ids) ? implode(',', array_fill(0, count($matching_post_ids), '%d')) : '0'; 
-    $prepared_post_ids_simple = !empty($matching_post_ids) ? $matching_post_ids : [0];
-
-        foreach ($count_fields as $field_key) {
-            $config = $filter_keys[$field_key];
-            $is_multi = $config['multi'];
-            $field_counts = array();
-            $sql = '';
-        $contextual_meta_query = ['relation' => 'AND'];
-        $relevant_filters = $filters; 
-            if ($is_multi) {
-            unset($relevant_filters[$field_key]);
-        } else {
-             switch ($field_key) {
-                case 'make':
-                    unset($relevant_filters['model']);
-                    unset($relevant_filters['variant']);
-                    break;
-                case 'model':
-                    unset($relevant_filters['variant']);
-                    break;
-            }
-        }
-        foreach ($filter_keys as $context_key => $context_config) {
-             if ($context_key === $field_key) continue;
-             if (isset($relevant_filters[$context_key]) && !empty($relevant_filters[$context_key])) {
-                  $context_value = $relevant_filters[$context_key];
-                  $context_base_key = str_replace(array('_min', '_max'), '', $context_key);
-                  $context_type = $context_config['type'];
-                  $context_is_multi = $context_config['multi'];
-                 if ($context_is_multi) {
-                     $context_value_array = explode(',', $context_value);
-                     $context_sanitized_value = array_map('sanitize_text_field', $context_value_array);
-                     $context_sanitized_value = array_filter($context_sanitized_value);
-                     if (empty($context_sanitized_value)) continue;
-                 } elseif ($context_type === 'range_min' || $context_type === 'range_max') {
-                     $context_sanitized_value = floatval($context_value);
-                 } else {
-                     $context_sanitized_value = sanitize_text_field($context_value);
-                 }
-                 if ($context_type === 'simple') {
-                     if ($context_is_multi && is_array($context_sanitized_value)) {
-                         $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => 'IN');
-                     } elseif (!$context_is_multi) {
-                         $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '=');
-                     }
-                 } elseif ($context_type === 'range_min') { 
-                     $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '>=', 'type' => 'NUMERIC');
-                 } elseif ($context_type === 'range_max') {
-                     $contextual_meta_query[] = array('key' => $context_base_key, 'value' => $context_sanitized_value, 'compare' => '<=', 'type' => 'NUMERIC');
-                 }
-            }
-        }
-         $query_args_context = array(
-            'post_type' => 'car', 'post_status' => 'publish',
-            'posts_per_page' => -1, 'fields' => 'ids',
-            'meta_query' => $contextual_meta_query
-        );
-        if ($matching_car_ids !== null) {
-            $query_args_context['post__in'] = $matching_car_ids;
-        }
-        $contextual_matching_ids = get_posts($query_args_context);
-        $contextual_placeholders = '0';
-        $contextual_prepared_ids = [0];
-        if (!empty($contextual_matching_ids)) {
-            $contextual_placeholders = implode(',', array_fill(0, count($contextual_matching_ids), '%d'));
-            $contextual_prepared_ids = $contextual_matching_ids;
-        }
-         if (!empty($contextual_matching_ids)) {
-                     $sql = $wpdb->prepare(
-                         "SELECT meta_value, COUNT(DISTINCT post_id) as count 
-                          FROM {$wpdb->postmeta} 
-                          WHERE meta_key = %s 
-                  AND post_id IN ({$contextual_placeholders})
-                          AND meta_value IS NOT NULL AND meta_value != ''
-                          GROUP BY meta_value",
-                 array_merge([$field_key], $contextual_prepared_ids)
-                     );
-                 } else {
-             $sql = ''; 
-             $field_counts = array();
-                 }
-        if ($sql) {
-                 $results = $wpdb->get_results($sql, OBJECT_K);
-                 if ($results) {
-                     foreach ($results as $value => $data) {
-                         $field_counts[$value] = (int)$data->count;
-                     }
-                 }
-            }
-            $updated_counts[$field_key] = $field_counts;
-        }
-    // ... (rest of the function remains unchanged, but for all other queries, add post__in or IN clause with $matching_car_ids if set)
-        // --- Calculate Counts for Engine Capacity --- 
-    // ...
-    // When building $query_args_mileage_ids, $query_args_year_ids, etc., also add post__in if $matching_car_ids !== null
-    // ...
-    // After $updated_counts is built, build master lists:
-    $master_fuel_types = [
-        'Petrol' => 'Petrol',
-        'Diesel' => 'Diesel',
-        'Electric' => 'Electric',
-        'Petrol hybrid' => 'Petrol hybrid',
-        'Diesel hybrid' => 'Diesel hybrid',
-        'Plug-in petrol' => 'Plug-in petrol',
-        'Plug-in diesel' => 'Plug-in diesel',
-        'Bi Fuel' => 'Bi Fuel',
-        'Hydrogen' => 'Hydrogen',
-        'Natural Gas' => 'Natural Gas',
-    ];
-    $master_transmissions = [
-        'Automatic' => 'Automatic',
-        'Manual' => 'Manual',
-    ];
-    $master_drive_types = [
-        'Front-Wheel Drive' => 'Front-Wheel Drive',
-        'Rear-Wheel Drive' => 'Rear-Wheel Drive',
-        'All-Wheel Drive' => 'All-Wheel Drive',
-        '4-Wheel Drive' => '4-Wheel Drive',
-    ];
-    $master_body_types = [
-        'Hatchback' => 'Hatchback',
-        'Saloon' => 'Saloon',
-        'Coupe' => 'Coupe',
-        'Convertible' => 'Convertible',
-        'Estate' => 'Estate',
-        'SUV' => 'SUV',
-        'MPV' => 'MPV',
-        'Pickup' => 'Pickup',
-        'Camper' => 'Camper',
-        'Minibus' => 'Minibus',
-        'Limousine' => 'Limousine',
-        'Car Derived Van' => 'Car Derived Van',
-        'Combi Van' => 'Combi Van',
-        'Panel Van' => 'Panel Van',
-        'Window Van' => 'Window Van',
-    ];
-    $master_exterior_colors = [
-        'Black' => 'Black', 'White' => 'White', 'Silver' => 'Silver', 'Gray' => 'Gray', 'Red' => 'Red',
-        'Blue' => 'Blue', 'Green' => 'Green', 'Yellow' => 'Yellow', 'Brown' => 'Brown', 'Beige' => 'Beige',
-        'Orange' => 'Orange', 'Purple' => 'Purple', 'Gold' => 'Gold', 'Bronze' => 'Bronze',
-    ];
-    $master_interior_colors = [
-        'Black' => 'Black', 'Gray' => 'Gray', 'Beige' => 'Beige', 'Brown' => 'Brown', 'White' => 'White',
-        'Red' => 'Red', 'Blue' => 'Blue', 'Tan' => 'Tan', 'Cream' => 'Cream',
-    ];
-    // Engine capacities: 0.4 to 12.0, step 0.1
-    $master_engine_capacities = [];
-    for ($cap = 0.4; $cap <= 12.0; $cap += 0.1) {
-        $master_engine_capacities[] = number_format($cap, 1);
-    }
-    // Years: 2025 to 1948
-    $master_years = [];
-    for ($y = date('Y'); $y >= 1948; $y--) {
-        $master_years[] = (string)$y;
-    }
-    // Make/model/variant: get from master makesData (should be localized to JS, but for backend, use DB or file)
-    // For now, use all makes present in the DB (from counts)
-    $master_makes = array_keys($updated_counts['make']);
-    // For models, use the model_by_make structure if available
-    $master_models_by_make = isset($updated_counts['model_by_make']) ? $updated_counts['model_by_make'] : [];
-
-    // Now, filter and order each filter's options
+    // Build filtered_options for frontend (with counts)
     $filtered_options = [
-        'fuel_type' => filter_and_order_options($master_fuel_types, $updated_counts['fuel_type']),
-        'transmission' => filter_and_order_options($master_transmissions, $updated_counts['transmission']),
-        'drive_type' => filter_and_order_options($master_drive_types, $updated_counts['drive_type']),
-        'body_type' => filter_and_order_options($master_body_types, $updated_counts['body_type']),
-        'exterior_color' => filter_and_order_options($master_exterior_colors, $updated_counts['exterior_color']),
-        'interior_color' => filter_and_order_options($master_interior_colors, $updated_counts['interior_color']),
-        'engine_capacity' => array_values(array_filter($master_engine_capacities, function($cap) use ($updated_counts) {
-            return isset($updated_counts['engine_capacity'][$cap]) && $updated_counts['engine_capacity'][$cap] > 0;
-        })),
-        'year' => array_values(array_filter($master_years, function($year) use ($updated_counts) {
-            return isset($updated_counts['year'][$year]) && $updated_counts['year'][$year] > 0;
-        })),
-        // For make/model, use the counts as already filtered
-        'make' => $master_makes,
-        'model_by_make' => $master_models_by_make,
+        'make' => $counts['make'],
+        'model_by_make' => $models_by_make,
+        'variant_by_make_model' => $variants_by_make_model,
+        'transmission' => $counts['transmission'],
+        'engine_capacity' => $counts['engine_capacity'],
+        'fuel_type' => $counts['fuel_type'],
+        'body_type' => $counts['body_type'],
+        'exterior_color' => $counts['exterior_color'],
+        'interior_color' => $counts['interior_color'],
+        'drive_type' => $counts['drive_type'],
+        'year' => $counts['year'],
+        'mileage' => $counts['mileage'],
     ];
-    // For numeric filters, also return min/max present in the result set
-    $filtered_options['engine_capacity_min'] = min(array_keys($updated_counts['engine_capacity']));
-    $filtered_options['engine_capacity_max'] = max(array_keys($updated_counts['engine_capacity']));
-    $filtered_options['year_min'] = min(array_keys($updated_counts['year']));
-    $filtered_options['year_max'] = max(array_keys($updated_counts['year']));
-    // Add to response
     wp_send_json_success([
-        'counts' => $updated_counts,
         'filtered_options' => $filtered_options,
         '_debug_info' => $debug_info,
     ]);
