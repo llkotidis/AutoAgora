@@ -427,7 +427,21 @@ function autoagora_filter_listings_by_location_ajax() {
     }
     $listings_html = ob_get_clean();
 
-    $pagination_html = autoagora_custom_pagination($car_query->max_num_pages, $paged);
+    // $pagination_html = autoagora_custom_pagination($car_query->max_num_pages, $paged);
+    $pagination_html = paginate_links(array(
+        // 'base' and 'format' are tricky with AJAX. 
+        // The hrefs might need to be handled by JS to prevent full page reloads 
+        // and instead trigger a new fetchFilteredListings call.
+        // For now, this will generate links that would work on a non-AJAX page.
+        'total' => $car_query->max_num_pages,
+        'current' => $paged,
+        'prev_text' => __('&laquo; Previous'),
+        'next_text' => __('Next &raquo;'),
+        'type' => 'list' // Returns an HTML <ul>. Use 'plain' for just link tags.
+    ));
+    if (!$pagination_html) { // paginate_links returns false if only one page.
+        $pagination_html = ''; // Ensure it's an empty string for the JSON response.
+    }
 
     $filter_counts = array();
     $all_makes_list = array(); // Renamed for clarity
