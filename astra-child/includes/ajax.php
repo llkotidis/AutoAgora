@@ -709,6 +709,32 @@ function ajax_update_filter_counts_handler() {
         }
         $updated_counts[$field_key] = $field_counts;
     }
+    // Instead of using hardcoded lists for filter options, dynamically generate them from the filtered car IDs
+    // For each filter field, get the unique values present in the filtered set (matching_car_ids)
+    $dynamic_filter_options = array();
+    if (!empty($matching_car_ids) && is_array($matching_car_ids)) {
+        global $wpdb;
+        $fields_to_query = [
+            'make', 'model', 'variant', 'fuel_type', 'transmission', 'exterior_color', 'interior_color', 'body_type', 'drive_type', 'year', 'engine_capacity', 'mileage'
+        ];
+        foreach ($fields_to_query as $field_key) {
+            $placeholders = implode(',', array_fill(0, count($matching_car_ids), '%d'));
+            $sql = $wpdb->prepare(
+                "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value IS NOT NULL AND meta_value != ''",
+                array_merge([$field_key], $matching_car_ids)
+            );
+            $results = $wpdb->get_col($sql);
+            // For numeric fields, sort numerically
+            if (in_array($field_key, ['year', 'engine_capacity', 'mileage'])) {
+                $results = array_map('floatval', $results);
+                sort($results, SORT_NUMERIC);
+            } else {
+                sort($results, SORT_STRING);
+            }
+            $dynamic_filter_options[$field_key] = $results;
+        }
+    }
+    $updated_counts['dynamic_filter_options'] = $dynamic_filter_options;
     // ... (rest of the function remains unchanged, but for all other queries, add post__in or IN clause with $matching_car_ids if set)
     // --- Calculate Counts for Engine Capacity --- 
     // ...
@@ -804,3 +830,7 @@ function handle_toggle_car_status() {
         wp_send_json_error('Failed to update car status');
     }
 } 
+
+// Define the years list again (needs centralization)
+$current_year_php = date('Y');
+$years_list = range($current_year_php, 1948); // Descending order from current year to 1948 
