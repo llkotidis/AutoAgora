@@ -202,11 +202,7 @@
       // Special handling for model/variant enablement
       if (filterKey === "model") {
         const makeSelect = form.querySelector("#filter-make-" + context);
-        if (makeSelect && makeSelect.value && Object.keys(choices).length > 0) {
-          selectElement.disabled = false;
-        } else {
-          selectElement.disabled = true;
-        }
+        selectElement.disabled = !makeSelect || !makeSelect.value; // Check if makeSelect exists
       }
       if (filterKey === "variant") {
         const modelSelect = form.querySelector("#filter-model-" + context);

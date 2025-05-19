@@ -538,257 +538,130 @@ function autoagora_filter_listings_by_location_ajax() {
 
     wp_reset_postdata(); 
 
-    // --- BEGIN REPLACEMENT: SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 1 - SETUP) ---
-    global $wpdb;
-    $dynamic_filter_counts = [];
-
-    // 1. Consolidate and sanitize all active filters from $_POST
-    $active_filters_input = $all_filters_from_post; // $all_filters_from_post was derived earlier from $_POST
-
-    $structured_active_filters = [];
-    $filterable_attributes_config = [
-        'make' =>           ['type' => 'single', 'db_key' => 'make', 'param_key' => 'make'],
-        'model' =>          ['type' => 'single', 'db_key' => 'model', 'param_key' => 'model'],
-        'fuel_type' =>      ['type' => 'multi',  'db_key' => 'fuel_type', 'param_key' => 'fuel_type'],
-        'transmission' =>   ['type' => 'multi',  'db_key' => 'transmission', 'param_key' => 'transmission'],
-        'exterior_color' => ['type' => 'multi',  'db_key' => 'exterior_color', 'param_key' => 'exterior_color'],
-        'interior_color' => ['type' => 'multi',  'db_key' => 'interior_color', 'param_key' => 'interior_color'],
-        'body_type' =>      ['type' => 'multi',  'db_key' => 'body_type', 'param_key' => 'body_type'],
-        'drive_type' =>     ['type' => 'multi',  'db_key' => 'drive_type', 'param_key' => 'drive_type'],
-        'year' =>           ['type' => 'range',  'db_key' => 'year', 'param_key_min' => 'year_min', 'param_key_max' => 'year_max', 'numeric_cast' => 'SIGNED'],
-        'engine_capacity'=> ['type' => 'range',  'db_key' => 'engine_capacity', 'param_key_min' => 'engine_min', 'param_key_max' => 'engine_max', 'numeric_cast' => 'DECIMAL(10,1)', 'output_format_precision' => 1],
-        'mileage' =>        ['type' => 'range',  'db_key' => 'mileage', 'param_key_min' => 'mileage_min', 'param_key_max' => 'mileage_max', 'numeric_cast' => 'SIGNED'],
-        'price' =>          ['type' => 'range', 'db_key' => 'price', 'param_key_min' => 'price_min', 'param_key_max' => 'price_max', 'numeric_cast' => 'DECIMAL(10,2)'],
-    ];
-
-    foreach ($filterable_attributes_config as $filter_name => $config) {
-        if ($config['type'] === 'single') {
-            if (isset($active_filters_input[$config['param_key']]) && $active_filters_input[$config['param_key']] !== '') {
-                $structured_active_filters[$filter_name] = sanitize_text_field($active_filters_input[$config['param_key']]);
-            }
-        } elseif ($config['type'] === 'multi') {
-            $param_val = $active_filters_input[$config['param_key']] ?? null;
-            if ($param_val) {
-                if (is_array($param_val)) {
-                    $structured_active_filters[$filter_name] = array_map('sanitize_text_field', $param_val);
-                } else {
-                    $structured_active_filters[$filter_name] = [sanitize_text_field($param_val)];
-                }
-                if (empty(array_filter($structured_active_filters[$filter_name]))) {
-                    unset($structured_active_filters[$filter_name]);
-                }
-            }
-        } elseif ($config['type'] === 'range') {
-            $min_val = $active_filters_input[$config['param_key_min']] ?? '';
-            $max_val = $active_filters_input[$config['param_key_max']] ?? '';
-            $min_sanitized = ($min_val !== '') ? sanitize_text_field($min_val) : '';
-            $max_sanitized = ($max_val !== '') ? sanitize_text_field($max_val) : '';
-            if ($min_sanitized !== '' || $max_sanitized !== '') {
-                $structured_active_filters[$filter_name] = [];
-                if ($min_sanitized !== '') $structured_active_filters[$filter_name]['min'] = $min_sanitized;
-                if ($max_sanitized !== '') $structured_active_filters[$filter_name]['max'] = $max_sanitized;
-            }
-        }
-    }
+    // Include the car-filter-form.php file for filter counts
+    require_once __DIR__ . '/car-filter-form.php';
     
-    $location_constrained_car_ids = null;
-    if ($location_filter && isset($location_filter['lat'], $location_filter['lng'], $location_filter['radius'])) {
-        $location_constrained_car_ids = [];
-        $all_cars_for_location_query = $wpdb->get_results(
-            "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
-             FROM {$wpdb->posts} p
-             JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
-             JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
-             WHERE p.post_type = 'car' AND p.post_status = 'publish'",
-            ARRAY_A
+    // Get filter counts for different fields, respecting the location filter
+    // This ensures that the filter counts reflect only the cars available within the selected location
+    $filter_counts = array();
+    if (function_exists('get_counts_for_meta_key')) {
+        $make_field_key = 'make';
+        $model_field_key = 'model';
+        $fuel_type_field_key = 'fuel_type';
+        $transmission_field_key = 'transmission';
+        $ext_color_field_key = 'exterior_color';
+        $int_color_field_key = 'interior_color';
+        $body_type_field_key = 'body_type';
+        $drive_type_field_key = 'drive_type';
+        $year_field_key = 'year';
+        $engine_cap_field_key = 'engine_capacity';
+        $mileage_field_key = 'mileage';
+        
+        $filter_counts = array(
+            'make' => get_counts_for_meta_key($make_field_key, $location_filter),
+            'fuel_type' => get_counts_for_meta_key($fuel_type_field_key, $location_filter),
+            'transmission' => get_counts_for_meta_key($transmission_field_key, $location_filter),
+            'exterior_color' => get_counts_for_meta_key($ext_color_field_key, $location_filter),
+            'interior_color' => get_counts_for_meta_key($int_color_field_key, $location_filter),
+            'body_type' => get_counts_for_meta_key($body_type_field_key, $location_filter),
+            'drive_type' => get_counts_for_meta_key($drive_type_field_key, $location_filter),
+            'year' => get_counts_for_meta_key($year_field_key, $location_filter),
+            'engine_capacity' => get_counts_for_meta_key($engine_cap_field_key, $location_filter),
+            'mileage' => get_counts_for_meta_key($mileage_field_key, $location_filter)
         );
-        if ($all_cars_for_location_query) {
-            foreach ($all_cars_for_location_query as $car_loc_data) {
-                if (!empty($car_loc_data['latitude']) && !empty($car_loc_data['longitude'])) {
+        
+        // Get models grouped by make counts
+        $model_counts_by_make = array();
+        global $wpdb;
+        
+        // Get all makes first
+        $makes = array_keys($filter_counts['make']);
+        
+        if (!empty($makes) && $location_filter) {
+            // If location filter is active, we need to filter models by location
+            $all_car_ids_query = $wpdb->get_results(
+                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
+                 FROM {$wpdb->posts} p
+                 JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
+                 JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
+                 WHERE p.post_type = 'car'
+                 AND p.post_status = 'publish'",
+                ARRAY_A
+            );
+            
+            // Calculate which cars are within the radius
+            $matching_car_ids = array();
+            foreach ($all_car_ids_query as $car) {
+                if (!empty($car['latitude']) && !empty($car['longitude'])) {
                     $distance = autoagora_calculate_distance(
-                        $location_filter['lat'], $location_filter['lng'],
-                        floatval($car_loc_data['latitude']), floatval($car_loc_data['longitude'])
+                        $location_filter['lat'],
+                        $location_filter['lng'],
+                        floatval($car['latitude']),
+                        floatval($car['longitude'])
                     );
                     if ($distance <= $location_filter['radius']) {
-                        $location_constrained_car_ids[] = $car_loc_data['ID'];
+                        $matching_car_ids[] = $car['ID'];
                     }
                 }
             }
-        }
-        if (empty($location_constrained_car_ids)) {
-            $location_constrained_car_ids = [0]; 
-        }
-    }
-    // --- END REPLACEMENT: SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 1 - SETUP) ---
 
-    // --- BEGIN SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 2 - MAIN FACET LOOP) ---
-    $facets_to_calculate = ['make', 'fuel_type', 'transmission', 'body_type', 'drive_type', 'exterior_color', 'interior_color', 'year', 'engine_capacity', 'mileage', 'price'];
-
-    foreach ($facets_to_calculate as $facet_being_counted) {
-        if (!isset($filterable_attributes_config[$facet_being_counted])) continue;
-        $facet_config = $filterable_attributes_config[$facet_being_counted];
-        $db_facet_meta_key = $facet_config['db_key'];
-
-        $sql_params = [];
-        $sql_joins_for_filters = "";
-        $sql_wheres_for_filters = "";
-        $join_alias_idx = 0;
-
-        foreach ($structured_active_filters as $active_filter_name => $active_filter_values) {
-            if ($active_filter_name === $facet_being_counted) continue;
-            if (!isset($filterable_attributes_config[$active_filter_name])) continue;
-
-            $current_filter_config = $filterable_attributes_config[$active_filter_name];
-            $db_active_meta_key = $current_filter_config['db_key'];
-            $alias = "pm_filter_" . $join_alias_idx++;
-            
-            $sql_joins_for_filters .= $wpdb->prepare(" JOIN {$wpdb->postmeta} {$alias} ON p.ID = {$alias}.post_id AND {$alias}.meta_key = %s ", $db_active_meta_key);
-
-            if ($current_filter_config['type'] === 'single') {
-                $sql_wheres_for_filters .= " AND {$alias}.meta_value = %s ";
-                $sql_params[] = $active_filter_values; // Value is already sanitized and directly usable
-            } elseif ($current_filter_config['type'] === 'multi' && is_array($active_filter_values) && !empty($active_filter_values)) {
-                $placeholders = implode(', ', array_fill(0, count($active_filter_values), '%s'));
-                $sql_wheres_for_filters .= " AND {$alias}.meta_value IN ({$placeholders}) ";
-                foreach ($active_filter_values as $val) $sql_params[] = $val; // Values are sanitized
-            } elseif ($current_filter_config['type'] === 'range') {
-                $cast_type = $current_filter_config['numeric_cast'] ?? 'SIGNED';
-                if (isset($active_filter_values['min']) && $active_filter_values['min'] !== '') {
-                    $sql_wheres_for_filters .= " AND CAST({$alias}.meta_value AS {$cast_type}) >= %s ";
-                    $sql_params[] = $active_filter_values['min']; // Sanitized value
-                }
-                if (isset($active_filter_values['max']) && $active_filter_values['max'] !== '') {
-                    $sql_wheres_for_filters .= " AND CAST({$alias}.meta_value AS {$cast_type}) <= %s ";
-                    $sql_params[] = $active_filter_values['max']; // Sanitized value
-                }
-            }
-        }
-
-        $sql_base = "SELECT pm_facet.meta_value, COUNT(DISTINCT p.ID) as count FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm_facet ON p.ID = pm_facet.post_id";
-        $sql_where_facet_key = $wpdb->prepare(" WHERE p.post_type = 'car' AND p.post_status = 'publish' AND pm_facet.meta_key = %s AND pm_facet.meta_value IS NOT NULL AND pm_facet.meta_value != '' ", $db_facet_meta_key);
-        $sql_location_constraint = "";
-        $location_params_for_query = [];
-
-        if ($location_constrained_car_ids !== null) {
-            if (!empty($location_constrained_car_ids)) {
-                $id_placeholders = implode(', ', array_fill(0, count($location_constrained_car_ids), '%d'));
-                $sql_location_constraint = " AND p.ID IN ({$id_placeholders}) ";
-                $location_params_for_query = $location_constrained_car_ids;
-            } else {
-                 // If location filter is active but yields no IDs, this facet should have 0 counts for all options.
-                 // So, we can effectively short-circuit by ensuring the query returns no rows for this facet.
-                 $sql_location_constraint = " AND 1=0 "; 
-            }
-        }
-        
-        $final_sql_for_facet = $sql_base . $sql_joins_for_filters . $sql_where_facet_key . $sql_wheres_for_filters . $sql_location_constraint . " GROUP BY pm_facet.meta_value ORDER BY pm_facet.meta_value ASC";
-        $final_params = array_merge($sql_params, $location_params_for_query);
-        
-        $facet_results = $wpdb->get_results($wpdb->prepare($final_sql_for_facet, $final_params));
-        
-        $counts = [];
-        if ($facet_results) {
-            foreach ($facet_results as $row) {
-                $key = $row->meta_value;
-                if ($facet_being_counted === 'engine_capacity' && isset($facet_config['output_format_precision'])) {
-                    $key = number_format(floatval($row->meta_value), $facet_config['output_format_precision']);
-                } elseif (($facet_config['type'] === 'range' || !empty($facet_config['numeric_cast'])) && is_numeric($key)) {
-                    $key = (string)$key;
-                }
-                $counts[$key] = (int)$row->count;
-            }
-        }
-        $dynamic_filter_counts[$facet_being_counted] = $counts;
-    }
-    // --- END SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 2 - MAIN FACET LOOP) ---
-
-    // --- BEGIN SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 3 - MODEL_BY_MAKE) ---
-    $dynamic_filter_counts['model_by_make'] = [];
-    if (isset($dynamic_filter_counts['make']) && !empty($dynamic_filter_counts['make']) && isset($filterable_attributes_config['model'], $filterable_attributes_config['make'])) {
-        $model_config = $filterable_attributes_config['model'];
-        $db_model_meta_key = $model_config['db_key'];
-        $db_make_meta_key = $filterable_attributes_config['make']['db_key'];
-
-        foreach (array_keys($dynamic_filter_counts['make']) as $make_name) {
-            if (empty($make_name)) continue;
-
-            $sql_params_model = [];
-            $sql_joins_for_model_filters = "";
-            $sql_wheres_for_model_filters = "";
-            $join_alias_idx_model = 0;
-
-            // Apply all OTHER active filters (excluding 'make' and 'model' themselves)
-            foreach ($structured_active_filters as $active_filter_name => $active_filter_values) {
-                if ($active_filter_name === 'make' || $active_filter_name === 'model') continue;
-                if (!isset($filterable_attributes_config[$active_filter_name])) continue;
-
-                $current_filter_config = $filterable_attributes_config[$active_filter_name];
-                $db_active_meta_key = $current_filter_config['db_key'];
-                $alias = "pm_filter_m_" . $join_alias_idx_model++;
+            if (!empty($matching_car_ids)) {
+                $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
+                $car_id_placeholders = implode(', ', array_fill(0, count($matching_car_ids), '%d'));
                 
-                $sql_joins_for_model_filters .= $wpdb->prepare(" JOIN {$wpdb->postmeta} {$alias} ON p.ID = {$alias}.post_id AND {$alias}.meta_key = %s ", $db_active_meta_key);
+                $sql = $wpdb->prepare(
+                    "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
+                     FROM {$wpdb->posts} p
+                     JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+                     JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+                     WHERE p.post_type = 'car'
+                     AND p.post_status = 'publish'
+                     AND pm_make.meta_value IN ({$make_placeholders})
+                     AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
+                     AND p.ID IN ({$car_id_placeholders})
+                     GROUP BY pm_make.meta_value, pm_model.meta_value",
+                    array_merge([$make_field_key, $model_field_key], $makes, $matching_car_ids)
+                );
                 
-                if ($current_filter_config['type'] === 'single') {
-                    $sql_wheres_for_model_filters .= " AND {$alias}.meta_value = %s ";
-                    $sql_params_model[] = $active_filter_values;
-                } elseif ($current_filter_config['type'] === 'multi' && is_array($active_filter_values) && !empty($active_filter_values)) {
-                    $placeholders = implode(', ', array_fill(0, count($active_filter_values), '%s'));
-                    $sql_wheres_for_model_filters .= " AND {$alias}.meta_value IN ({$placeholders}) ";
-                    foreach ($active_filter_values as $val) $sql_params_model[] = $val;
-                } elseif ($current_filter_config['type'] === 'range') {
-                    $cast_type = $current_filter_config['numeric_cast'] ?? 'SIGNED';
-                    if (isset($active_filter_values['min']) && $active_filter_values['min'] !== '') {
-                        $sql_wheres_for_model_filters .= " AND CAST({$alias}.meta_value AS {$cast_type}) >= %s ";
-                        $sql_params_model[] = $active_filter_values['min'];
+                $model_counts_results = $wpdb->get_results($sql);
+                foreach ($model_counts_results as $row) {
+                    if (!isset($model_counts_by_make[$row->make])) {
+                        $model_counts_by_make[$row->make] = array();
                     }
-                    if (isset($active_filter_values['max']) && $active_filter_values['max'] !== '') {
-                        $sql_wheres_for_model_filters .= " AND CAST({$alias}.meta_value AS {$cast_type}) <= %s ";
-                        $sql_params_model[] = $active_filter_values['max'];
-                    }
+                    $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
                 }
             }
-            
-            $sql_model_base = "SELECT pm_model_facet.meta_value, COUNT(DISTINCT p.ID) as count 
-                               FROM {$wpdb->posts} p 
-                               JOIN {$wpdb->postmeta} pm_model_facet ON p.ID = pm_model_facet.post_id 
-                               JOIN {$wpdb->postmeta} pm_actual_make ON p.ID = pm_actual_make.post_id";
-            
-            $sql_model_where_keys = $wpdb->prepare(" WHERE p.post_type = 'car' AND p.post_status = 'publish' AND pm_model_facet.meta_key = %s AND pm_model_facet.meta_value IS NOT NULL AND pm_model_facet.meta_value != '' AND pm_actual_make.meta_key = %s AND pm_actual_make.meta_value = %s ", $db_model_meta_key, $db_make_meta_key, $make_name);
-
-            $sql_model_location_constraint = "";
-            $location_params_for_model_query = [];
-            if ($location_constrained_car_ids !== null) {
-                if (!empty($location_constrained_car_ids)){
-                    $id_placeholders = implode(', ', array_fill(0, count($location_constrained_car_ids), '%d'));
-                    $sql_model_location_constraint = " AND p.ID IN ({$id_placeholders}) ";
-                    $location_params_for_model_query = $location_constrained_car_ids;
-                } else {
-                    $sql_model_location_constraint = " AND 1=0 "; // No cars in location
+        } else if (!empty($makes)) {
+            // No location filter, get all models by make
+            $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
+            $sql = $wpdb->prepare(
+                "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
+                 FROM {$wpdb->posts} p
+                 JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
+                 JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
+                 WHERE p.post_type = 'car'
+                 AND p.post_status = 'publish'
+                 AND pm_make.meta_value IN ({$make_placeholders})
+                 AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
+                 GROUP BY pm_make.meta_value, pm_model.meta_value",
+                array_merge([$make_field_key, $model_field_key], $makes)
+            );
+            $model_counts_results = $wpdb->get_results($sql);
+            foreach ($model_counts_results as $row) {
+                if (!isset($model_counts_by_make[$row->make])) {
+                    $model_counts_by_make[$row->make] = array();
                 }
-            }
-
-            $final_sql_for_models = $sql_model_base . $sql_joins_for_model_filters . $sql_model_where_keys . $sql_wheres_for_model_filters . $sql_model_location_constraint . " GROUP BY pm_model_facet.meta_value ORDER BY pm_model_facet.meta_value ASC";
-            $final_model_params = array_merge($sql_params_model, $location_params_for_model_query);
-
-            $model_results_for_make = $wpdb->get_results($wpdb->prepare($final_sql_for_models, $final_model_params));
-
-            $model_counts = [];
-            if ($model_results_for_make) {
-                foreach ($model_results_for_make as $row) {
-                    $model_counts[$row->meta_value] = (int)$row->count;
-                }
-            }
-            if (!empty($model_counts)) {
-                 $dynamic_filter_counts['model_by_make'][$make_name] = $model_counts;
+                $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
             }
         }
+        
+        $filter_counts['model_by_make'] = $model_counts_by_make;
     }
-    // --- END SQL-BASED DYNAMIC FILTER COUNT CALCULATION (PART 3 - MODEL_BY_MAKE) ---
 
     wp_send_json_success(array(
         'listings_html' => $listings_html,
         'pagination_html' => $pagination_html,
         'query_vars' => $car_query->query_vars,
-        'filter_counts' => $dynamic_filter_counts // Now includes model_by_make
+        'filter_counts' => $filter_counts // Add filter counts to the response
     ));
 }
