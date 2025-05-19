@@ -19,11 +19,22 @@ function car_search_form_shortcode() {
     ob_start();
 
     // Display the new filter form with 'homepage' context
-    echo display_car_filter_form('homepage');
+    // echo display_car_filter_form('homepage');
 
     // Removed the old empty form container and script tag
 
     ?>
+    <div class="car-search-form">
+        <form action="<?php echo esc_url( home_url( '/' ) ); ?>" method="get">
+            <div class="search-fields">
+                <input type="text" name="s" placeholder="Search for a car..." value="<?php echo get_search_query(); ?>">
+                <input type="hidden" name="post_type" value="car">
+            </div>
+            <!-- Removed car spec filters -->
+            <?php // echo display_car_filter_form('homepage'); ?>
+            <button type="submit" class="search-submit">Search Cars</button>
+        </form>
+    </div>
     <?php
     return ob_get_clean();
 }

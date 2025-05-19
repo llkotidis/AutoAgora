@@ -573,6 +573,24 @@ jQuery(document).ready(function($) {
                             $span.text(currentText);
                         });
                     }
+
+                    updateCarListings(response.listings_html);
+                    updatePagination(response.pagination_html);
+                    updateUrlWithFilters(page, currentFilter.lat, currentFilter.lng, currentFilter.radius);
+
+                    // Removed: Update filter dropdowns with new counts as spec filters are removed from listings page
+                    /*
+                    if (response.filter_counts) {
+                        console.log('[FetchListings] Received filter counts:', response.filter_counts);
+                        // Assuming you have a function to update your filter dropdowns
+                        // This is a placeholder for where you'd call it
+                        // updateFilterDropdowns(response.filter_counts);
+                    } else {
+                        console.log('[FetchListings] No filter counts received in response.');
+                    }
+                    */
+
+                    console.log("[FetchListings] Completed. Map should reflect new listings.");
                 } else {
                     $('.car-listings-grid').html('<p>Error loading listings. ' + (response.data && response.data.message ? response.data.message : '') + '</p>');
                 }
