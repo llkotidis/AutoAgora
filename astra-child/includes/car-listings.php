@@ -350,12 +350,42 @@ function autoagora_filter_listings_by_location_ajax() {
     $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
     $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
 
-    // Prepare all filters from POST data for build_car_listings_query_args
-    // car-listings-map-filter.js sends filter_lat, filter_lng, filter_radius directly
-    // and forwards other URL parameters as direct keys.
-    $all_filters_from_post = $_POST; // Start with all POST data
+    // Get all makes and their counts
+    $all_makes = array();
+    $makes_query = new WP_Query(array(
+        'post_type' => 'car',
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'post_status' => 'publish',
+        'meta_query' => array(
+            array(
+                'relation' => 'OR',
+                array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
+                array('key' => 'is_sold', 'value' => '1', 'compare' => '!='),
+            )
+        )
+    ));
 
-    // Rename filter_lat, filter_lng, filter_radius to lat, lng, radius for build_car_listings_query_args
+    if ($makes_query->have_posts()) {
+        foreach ($makes_query->posts as $car_id) {
+            $make = get_field('make', $car_id);
+            if ($make) {
+                if (!isset($all_makes[$make])) {
+                    $all_makes[$make] = 0;
+                }
+                $all_makes[$make]++;
+            }
+        }
+    }
+    wp_reset_postdata();
+
+    // Sort makes alphabetically
+    ksort($all_makes);
+
+    // Prepare all filters from POST data
+    $all_filters_from_post = $_POST;
+
+    // Rename filter parameters
     if (isset($all_filters_from_post['filter_lat'])) {
         $all_filters_from_post['lat'] = $all_filters_from_post['filter_lat'];
         unset($all_filters_from_post['filter_lat']);
@@ -558,7 +588,8 @@ function autoagora_filter_listings_by_location_ajax() {
         'listings_html' => $listings_html,
         'pagination_html' => $pagination_html,
         'query_vars' => $car_query->query_vars,
-        'filter_counts' => $filter_counts 
+        'filter_counts' => $filter_counts,
+        'all_makes' => $all_makes // Add all makes to the response
     ));
 }
 
