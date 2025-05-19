@@ -623,6 +623,11 @@ jQuery(document).ready(function($) {
         const $makeSelect = $('#filter-make');
         let options = '<option value="">All Makes</option>';
         
+        // If makes is undefined, null, or not an object, treat as empty
+        if (typeof makes !== 'object' || makes === null) {
+            makes = {};
+        }
+
         // Sort makes alphabetically
         const sortedMakes = Object.entries(makes).sort((a, b) => a[0].localeCompare(b[0]));
         

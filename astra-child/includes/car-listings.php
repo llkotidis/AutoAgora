@@ -352,7 +352,7 @@ function autoagora_filter_listings_by_location_ajax() {
 
     // Get all makes and their counts
     $all_makes = array();
-    $makes_query = new WP_Query(array(
+    $makes_query_args = array(
         'post_type' => 'car',
         'posts_per_page' => -1,
         'fields' => 'ids',
@@ -364,23 +364,33 @@ function autoagora_filter_listings_by_location_ajax() {
                 array('key' => 'is_sold', 'value' => '1', 'compare' => '!='),
             )
         )
-    ));
+    );
+    $makes_query = new WP_Query($makes_query_args);
 
     if ($makes_query->have_posts()) {
         foreach ($makes_query->posts as $car_id) {
-            $make = get_field('make', $car_id);
-            if ($make) {
-                if (!isset($all_makes[$make])) {
-                    $all_makes[$make] = 0;
+            $make_field_value = get_field('make', $car_id); // ACF's get_field
+            $make_name = '';
+
+            if (is_object($make_field_value) && isset($make_field_value->name)) { // Handle ACF Taxonomy field returning Term Object
+                $make_name = $make_field_value->name;
+            } elseif (is_string($make_field_value)) { // Handle ACF Text field or Taxonomy returning Term Name
+                $make_name = $make_field_value;
+            }
+            // Add further conditions here if 'make' can be an array of terms or other complex types
+
+            if ($make_name && is_string($make_name) && trim($make_name) !== '') { // Ensure it's a non-empty string
+                if (!isset($all_makes[$make_name])) {
+                    $all_makes[$make_name] = 0;
                 }
-                $all_makes[$make]++;
+                $all_makes[$make_name]++;
             }
         }
     }
-    wp_reset_postdata();
+    // No wp_reset_postdata() needed here as the loop uses 'ids' and get_field($field_name, $post_id)
+    // which doesn't set up the global post.
 
-    // Sort makes alphabetically
-    ksort($all_makes);
+    ksort($all_makes); // Sort makes alphabetically
 
     // Prepare all filters from POST data
     $all_filters_from_post = $_POST;
@@ -589,7 +599,7 @@ function autoagora_filter_listings_by_location_ajax() {
         'pagination_html' => $pagination_html,
         'query_vars' => $car_query->query_vars,
         'filter_counts' => $filter_counts,
-        'all_makes' => $all_makes // Add all makes to the response
+        'all_makes' => $all_makes
     ));
 }
 
@@ -812,13 +822,31 @@ function autoagora_get_dynamic_filter_counts($current_filters) {
             } else { // Text, select, number_range, boolean
                 while ($relevant_posts_query->have_posts()) {
                     $relevant_posts_query->the_post();
-                    $value = get_post_meta(get_the_ID(), $meta_key_to_count, true);
-                     if ($field_config['type'] === 'boolean') {
-                        $value = $value ? '1' : '0'; // Normalize for counting (e.g. "Yes (5)", "No (10)")
+                    $post_id = get_the_ID();
+                    $current_value = null;
+
+                    if ($field_name_key === 'make') { // Specific handling for 'make' to use get_field
+                        $make_field_val = get_field($meta_key_to_count, $post_id);
+                        if (is_object($make_field_val) && isset($make_field_val->name)) {
+                            $current_value = $make_field_val->name;
+                        } elseif (is_string($make_field_val)) {
+                            $current_value = $make_field_val;
+                        }
+                    } else if ($field_config['type'] === 'boolean') {
+                        $raw_value = get_post_meta($post_id, $meta_key_to_count, true);
+                        $current_value = $raw_value ? '1' : '0';
+                    } else {
+                        // For other simple fields, get_post_meta might be fine if they are not complex ACF fields
+                        // or if their raw stored value is what's needed.
+                        // If these also need get_field for consistency, this can be expanded.
+                        $current_value = get_post_meta($post_id, $meta_key_to_count, true);
                     }
-                    if ($value !== '' && $value !== null) {
-                        if (!isset($field_value_counts[$value])) $field_value_counts[$value] = 0;
-                        $field_value_counts[$value]++;
+                    
+                    if ($current_value !== '' && $current_value !== null) {
+                        if (!isset($field_value_counts[$current_value])) {
+                            $field_value_counts[$current_value] = 0;
+                        }
+                        $field_value_counts[$current_value]++;
                     }
                 }
                 if ($field_config['type'] === 'number_range' || $field_config['meta_key'] === 'year') {
