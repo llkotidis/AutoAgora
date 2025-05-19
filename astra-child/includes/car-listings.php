@@ -131,29 +131,29 @@ function display_car_listings($atts) {
             <button id="change-location-filter-btn" class="button">Change Location</button>
         </div>
 
-        <!-- Active Filters Bar (structure kept, but no filters to display) -->
-        <?php /*
+        <!-- Active Filters Bar -->
         <div class="active-filters-bar">
             <div class="active-filters-container">
-                <!-- Active filters area - will be empty -->
+                <!-- JS will populate this with active spec filters -->
             </div>
-            <button class="filters-button">Filters</button> <!-- Button kept, though popup is empty -->
+            <button class="filters-button" id="open-spec-filters-popup-btn">Filters</button>
         </div>
 
         <!-- Filters Popup -->
-        <div class="filters-popup-overlay" id="filtersPopup">
+        <div class="filters-popup-overlay" id="spec-filters-popup" style="display:none;">
             <div class="filters-popup-content">
                 <div class="filters-popup-header">
                     <h2>Filter Cars</h2>
-                    <button class="close-filters">&times;</button>
+                    <button class="close-filters" id="close-spec-filters-popup-btn">&times;</button>
                 </div>
                 <?php 
-                // Display the new filter form with 'listings_page' context
-                // echo display_car_filter_form('listings_page'); 
+                // Display the new spec filter form
+                if (function_exists('autoagora_display_spec_filters')) {
+                    echo autoagora_display_spec_filters();
+                }
                 ?>
             </div>
         </div>
-        */ ?>
 
         <!-- Location Filter Modal -->
         <div id="location-filter-modal" class="location-picker-modal" style="display:none;">
@@ -540,132 +540,265 @@ function autoagora_filter_listings_by_location_ajax() {
 
     wp_reset_postdata(); 
 
-    // Include the car-filter-form.php file for filter counts
-    // require_once __DIR__ . '/car-filter-form.php'; // Removed as spec filter form is removed from this page
-    
-    // Get filter counts for different fields, respecting the location filter
-    // This ensures that the filter counts reflect only the cars available within the selected location
-    /* // Removed filter_counts generation
+    // Get filter counts for different fields, respecting all active filters
     $filter_counts = array();
-    if (function_exists('get_counts_for_meta_key')) {
-        $make_field_key = 'make';
-        $model_field_key = 'model';
-        $fuel_type_field_key = 'fuel_type';
-        $transmission_field_key = 'transmission';
-        $ext_color_field_key = 'exterior_color';
-        $int_color_field_key = 'interior_color';
-        $body_type_field_key = 'body_type';
-        $drive_type_field_key = 'drive_type';
-        $year_field_key = 'year';
-        $engine_cap_field_key = 'engine_capacity';
-        $mileage_field_key = 'mileage';
-        
-        $filter_counts = array(
-            'make' => get_counts_for_meta_key($make_field_key, $location_filter),
-            'fuel_type' => get_counts_for_meta_key($fuel_type_field_key, $location_filter),
-            'transmission' => get_counts_for_meta_key($transmission_field_key, $location_filter),
-            'exterior_color' => get_counts_for_meta_key($ext_color_field_key, $location_filter),
-            'interior_color' => get_counts_for_meta_key($int_color_field_key, $location_filter),
-            'body_type' => get_counts_for_meta_key($body_type_field_key, $location_filter),
-            'drive_type' => get_counts_for_meta_key($drive_type_field_key, $location_filter),
-            'year' => get_counts_for_meta_key($year_field_key, $location_filter),
-            'engine_capacity' => get_counts_for_meta_key($engine_cap_field_key, $location_filter),
-            'mileage' => get_counts_for_meta_key($mileage_field_key, $location_filter)
-        );
-        
-        // Get models grouped by make counts
-        $model_counts_by_make = array();
-        global $wpdb;
-        
-        // Get all makes first
-        $makes = array_keys($filter_counts['make']);
-        
-        if (!empty($makes) && $location_filter) {
-            // If location filter is active, we need to filter models by location
-            $all_car_ids_query = $wpdb->get_results(
-                "SELECT p.ID, pm_lat.meta_value as latitude, pm_lng.meta_value as longitude
-                 FROM {$wpdb->posts} p
-                 JOIN {$wpdb->postmeta} pm_lat ON p.ID = pm_lat.post_id AND pm_lat.meta_key = 'car_latitude'
-                 JOIN {$wpdb->postmeta} pm_lng ON p.ID = pm_lng.post_id AND pm_lng.meta_key = 'car_longitude'
-                 WHERE p.post_type = 'car'
-                 AND p.post_status = 'publish'",
-                ARRAY_A
-            );
-            
-            // Calculate which cars are within the radius
-            $matching_car_ids = array();
-            foreach ($all_car_ids_query as $car) {
-                if (!empty($car['latitude']) && !empty($car['longitude'])) {
-                    $distance = autoagora_calculate_distance(
-                        $location_filter['lat'],
-                        $location_filter['lng'],
-                        floatval($car['latitude']),
-                        floatval($car['longitude'])
-                    );
-                    if ($distance <= $location_filter['radius']) {
-                        $matching_car_ids[] = $car['ID'];
-                    }
-                }
-            }
-
-            if (!empty($matching_car_ids)) {
-                $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
-                $car_id_placeholders = implode(', ', array_fill(0, count($matching_car_ids), '%d'));
-                
-                $sql = $wpdb->prepare(
-                    "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-                     FROM {$wpdb->posts} p
-                     JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-                     JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-                     WHERE p.post_type = 'car'
-                     AND p.post_status = 'publish'
-                     AND pm_make.meta_value IN ({$make_placeholders})
-                     AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-                     AND p.ID IN ({$car_id_placeholders})
-                     GROUP BY pm_make.meta_value, pm_model.meta_value",
-                    array_merge([$make_field_key, $model_field_key], $makes, $matching_car_ids)
-                );
-                
-                $model_counts_results = $wpdb->get_results($sql);
-                foreach ($model_counts_results as $row) {
-                    if (!isset($model_counts_by_make[$row->make])) {
-                        $model_counts_by_make[$row->make] = array();
-                    }
-                    $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
-                }
-            }
-        } else if (!empty($makes)) {
-            // No location filter, get all models by make
-            $make_placeholders = implode(', ', array_fill(0, count($makes), '%s'));
-            $sql = $wpdb->prepare(
-                "SELECT pm_make.meta_value as make, pm_model.meta_value as model, COUNT(p.ID) as count
-                 FROM {$wpdb->posts} p
-                 JOIN {$wpdb->postmeta} pm_make ON p.ID = pm_make.post_id AND pm_make.meta_key = %s
-                 JOIN {$wpdb->postmeta} pm_model ON p.ID = pm_model.post_id AND pm_model.meta_key = %s
-                 WHERE p.post_type = 'car'
-                 AND p.post_status = 'publish'
-                 AND pm_make.meta_value IN ({$make_placeholders})
-                 AND pm_model.meta_value IS NOT NULL AND pm_model.meta_value != ''
-                 GROUP BY pm_make.meta_value, pm_model.meta_value",
-                array_merge([$make_field_key, $model_field_key], $makes)
-            );
-            $model_counts_results = $wpdb->get_results($sql);
-            foreach ($model_counts_results as $row) {
-                if (!isset($model_counts_by_make[$row->make])) {
-                    $model_counts_by_make[$row->make] = array();
-                }
-                $model_counts_by_make[$row->make][$row->model] = (int)$row->count;
-            }
+    if (function_exists('autoagora_get_dynamic_filter_counts')) {
+        // Pass all active filters (location and specifications) to the counting function
+        // $all_filters_from_post already contains spec filters and location under lat, lng, radius keys
+        $current_filters_for_counts = $all_filters_from_post; // Contains spec filters
+        if ($location_filter) { // Add explicit location if available
+            $current_filters_for_counts['lat'] = $location_filter['lat'];
+            $current_filters_for_counts['lng'] = $location_filter['lng'];
+            $current_filters_for_counts['radius'] = $location_filter['radius'];
         }
-        
-        $filter_counts['model_by_make'] = $model_counts_by_make;
+        $filter_counts = autoagora_get_dynamic_filter_counts($current_filters_for_counts);
     }
-    */ // End of removed filter_counts generation
 
     wp_send_json_success(array(
         'listings_html' => $listings_html,
         'pagination_html' => $pagination_html,
-        'query_vars' => $car_query->query_vars
-        // Removed 'filter_counts' => $filter_counts 
+        'query_vars' => $car_query->query_vars,
+        'filter_counts' => $filter_counts 
     ));
+}
+
+function autoagora_get_dynamic_filter_counts($current_filters) {
+    $all_counts = array();
+
+    // Define all your filterable ACF fields and their properties
+    $filterable_fields = array(
+        'make' => array('type' => 'text', 'meta_key' => 'make'),
+        'model' => array('type' => 'text', 'meta_key' => 'model', 'dependent_on' => 'make'),
+        'variant' => array('type' => 'text', 'meta_key' => 'variant', 'dependent_on' => 'model'),
+        'engine_capacity' => array('type' => 'number_range', 'meta_key' => 'engine_capacity'),
+        'transmission' => array('type' => 'select', 'meta_key' => 'transmission'),
+        'hp' => array('type' => 'number_range', 'meta_key' => 'hp'),
+        'fuel_type' => array('type' => 'select_multiple', 'meta_key' => 'fuel_type'),
+        'exterior_color' => array('type' => 'select_multiple', 'meta_key' => 'exterior_color'),
+        'interior_color' => array('type' => 'select_multiple', 'meta_key' => 'interior_color'),
+        'body_type' => array('type' => 'select_multiple', 'meta_key' => 'body_type'),
+        'drive_type' => array('type' => 'select_multiple', 'meta_key' => 'drive_type'),
+        'number_of_doors' => array('type' => 'select', 'meta_key' => 'number_of_doors'),
+        'number_of_seats' => array('type' => 'select', 'meta_key' => 'number_of_seats'),
+        'extras' => array('type' => 'checkbox', 'meta_key' => 'extras'),
+        'mileage' => array('type' => 'number_range', 'meta_key' => 'mileage'),
+        'year' => array('type' => 'number_range', 'meta_key' => 'year'),
+        'price' => array('type' => 'number_range', 'meta_key' => 'price'),
+        'availability' => array('type' => 'select', 'meta_key' => 'availability'),
+        'mot_until' => array('type' => 'text_date', 'meta_key' => 'motuntil'), // Assuming text or date
+        'number_of_owners' => array('type' => 'number_range', 'meta_key' => 'numowners'),
+        'is_antique' => array('type' => 'boolean', 'meta_key' => 'isantique'),
+        'vehicle_history' => array('type' => 'checkbox', 'meta_key' => 'vehiclehistory')
+    );
+
+    // Mapping from ACF field keys to keys expected by JS functions
+    $js_to_acf_map = array(
+        'make' => 'make',
+        'model_by_make' => 'model', // This will be handled specially
+        'fuel_type' => 'fuel_type',
+        'transmission' => 'transmission',
+        'body_type' => 'body_type',
+        'drive_type' => 'drive_type',
+        'exterior_color' => 'exterior_color',
+        'interior_color' => 'interior_color',
+        'year' => 'year',
+        'engine' => 'engine_capacity', // JS uses 'engine' for form field name 'engine_capacity_min/max'
+        'mileage' => 'mileage',
+        'price' => 'price',
+        'extras' => 'extras',
+        'vehicle_history' => 'vehicle_history',
+        'number_of_doors' => 'number_of_doors',
+        'number_of_seats' => 'number_of_seats',
+        'hp' => 'hp',
+        'availability' => 'availability',
+        'is_antique' => 'is_antique'
+        // 'variant', 'mot_until', 'number_of_owners' might need their own UI/JS handling if not covered by generic types
+    );
+
+
+    foreach ($filterable_fields as $field_name_key => $field_config) {
+        $meta_key_to_count = $field_config['meta_key'];
+        
+        // Determine the key to use in the $all_counts array for JS
+        $js_target_key = $field_name_key; // Default to field name
+        foreach($js_to_acf_map as $js_k => $acf_k) {
+            if ($acf_k === $field_name_key) {
+                $js_target_key = $js_k;
+                break;
+            }
+        }
+        if ($field_name_key === 'model') { // Special case for model
+            $js_target_key = 'model_by_make';
+        }
+
+
+        $counting_query_args = array(
+            'post_type' => 'car',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'post_status' => 'publish',
+            'meta_query' => array(
+                'relation' => 'AND',
+                array(
+                    'relation' => 'OR',
+                    array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
+                    array('key' => 'is_sold', 'value' => '1', 'compare' => '!='),
+                )
+            )
+        );
+
+        $active_location_post_ids = null;
+        if (isset($current_filters['lat']) && $current_filters['lat'] !== '' && $current_filters['lat'] !== 'null' &&
+            isset($current_filters['lng']) && $current_filters['lng'] !== '' && $current_filters['lng'] !== 'null' &&
+            isset($current_filters['radius']) && $current_filters['radius'] !== '' && $current_filters['radius'] !== 'null') {
+
+            $all_car_ids_for_loc_query = new WP_Query(array(
+                'post_type' => 'car',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+                'post_status' => 'publish',
+                'meta_query' => array(
+                    'relation' => 'OR',
+                    array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
+                    array('key' => 'is_sold', 'value' => '1', 'compare' => '!='),
+                )
+            ));
+            $matching_location_car_ids = array();
+            if ($all_car_ids_for_loc_query->have_posts()) {
+                foreach ($all_car_ids_for_loc_query->posts as $car_id_for_loc) {
+                    $car_lat = get_post_meta($car_id_for_loc, 'car_latitude', true);
+                    $car_lng = get_post_meta($car_id_for_loc, 'car_longitude', true);
+                    if ($car_lat && $car_lng && function_exists('autoagora_calculate_distance')) {
+                        $distance = autoagora_calculate_distance(
+                            floatval($current_filters['lat']), floatval($current_filters['lng']),
+                            floatval($car_lat), floatval($car_lng)
+                        );
+                        if ($distance <= floatval($current_filters['radius'])) {
+                            $matching_location_car_ids[] = $car_id_for_loc;
+                        }
+                    }
+                }
+            }
+            wp_reset_postdata(); // After custom WP_Query
+
+            if (empty($matching_location_car_ids)) {
+                $counting_query_args['post__in'] = array(0); // Effectively no posts
+            } else {
+                $counting_query_args['post__in'] = $matching_location_car_ids;
+            }
+            $active_location_post_ids = $counting_query_args['post__in'];
+        }
+        
+        $current_meta_query = $counting_query_args['meta_query'];
+
+        foreach ($filterable_fields as $other_field_key => $other_config) {
+            if ($other_config['meta_key'] === $meta_key_to_count) continue; // Skip self
+
+            $filter_val_key = $other_config['meta_key']; // e.g. make, model, fuel_type etc.
+            
+            // For range filters, check _min and _max
+            if ($other_config['type'] === 'number_range') {
+                if (isset($current_filters[$filter_val_key . '_min']) && $current_filters[$filter_val_key . '_min'] !== '') {
+                    $current_meta_query[] = array(
+                        'key' => $other_config['meta_key'],
+                        'value' => $current_filters[$filter_val_key . '_min'],
+                        'type' => 'NUMERIC',
+                        'compare' => '>='
+                    );
+                }
+                if (isset($current_filters[$filter_val_key . '_max']) && $current_filters[$filter_val_key . '_max'] !== '') {
+                    $current_meta_query[] = array(
+                        'key' => $other_config['meta_key'],
+                        'value' => $current_filters[$filter_val_key . '_max'],
+                        'type' => 'NUMERIC',
+                        'compare' => '<='
+                    );
+                }
+            } elseif (isset($current_filters[$filter_val_key]) && !empty($current_filters[$filter_val_key])) {
+                $value = $current_filters[$filter_val_key];
+                if ($other_config['type'] === 'checkbox' || $other_config['type'] === 'select_multiple') {
+                    $value_array = is_array($value) ? $value : array($value);
+                    foreach($value_array as $single_value) {
+                        if($single_value !== '') {
+                             $current_meta_query[] = array(
+                                'key' => $other_config['meta_key'],
+                                'value' => '"' . sanitize_text_field($single_value) . '"', // ACF stores checkbox values serialized like "value"
+                                'compare' => 'LIKE'
+                            );
+                        }
+                    }
+                } else if ($other_config['type'] === 'boolean') {
+                     $current_meta_query[] = array(
+                        'key' => $other_config['meta_key'],
+                        'value' => $value == '1' || $value === 'true' ? 1 : 0, // ACF boolean stores 1 or 0
+                        'type' => 'NUMERIC',
+                        'compare' => '='
+                    );
+                }
+                else { // Text, select
+                    $current_meta_query[] = array(
+                        'key' => $other_config['meta_key'],
+                        'value' => sanitize_text_field($value),
+                        'compare' => '='
+                    );
+                }
+            }
+        }
+        $counting_query_args['meta_query'] = $current_meta_query;
+
+        $relevant_posts_query = new WP_Query($counting_query_args);
+        $field_value_counts = array();
+
+        if ($relevant_posts_query->have_posts()) {
+            if ($field_name_key === 'model') { // model_by_make
+                $make_meta_key = $filterable_fields['make']['meta_key'];
+                while ($relevant_posts_query->have_posts()) {
+                    $relevant_posts_query->the_post();
+                    $make_value = get_post_meta(get_the_ID(), $make_meta_key, true);
+                    $model_value = get_post_meta(get_the_ID(), $meta_key_to_count, true);
+                    if ($make_value && $model_value) {
+                        if (!isset($field_value_counts[$make_value])) $field_value_counts[$make_value] = array();
+                        if (!isset($field_value_counts[$make_value][$model_value])) $field_value_counts[$make_value][$model_value] = 0;
+                        $field_value_counts[$make_value][$model_value]++;
+                    }
+                }
+            } elseif ($field_config['type'] === 'checkbox' || $field_config['type'] === 'select_multiple') {
+                while ($relevant_posts_query->have_posts()) {
+                    $relevant_posts_query->the_post();
+                    $values = get_post_meta(get_the_ID(), $meta_key_to_count, true);
+                    if (is_array($values)) {
+                        foreach ($values as $value_item) {
+                             if ($value_item !== '' && $value_item !== null) {
+                                if (!isset($field_value_counts[$value_item])) $field_value_counts[$value_item] = 0;
+                                $field_value_counts[$value_item]++;
+                             }
+                        }
+                    } elseif ($values !== '' && $values !== null) {
+                        if (!isset($field_value_counts[$values])) $field_value_counts[$values] = 0;
+                        $field_value_counts[$values]++;
+                    }
+                }
+            } else { // Text, select, number_range, boolean
+                while ($relevant_posts_query->have_posts()) {
+                    $relevant_posts_query->the_post();
+                    $value = get_post_meta(get_the_ID(), $meta_key_to_count, true);
+                     if ($field_config['type'] === 'boolean') {
+                        $value = $value ? '1' : '0'; // Normalize for counting (e.g. "Yes (5)", "No (10)")
+                    }
+                    if ($value !== '' && $value !== null) {
+                        if (!isset($field_value_counts[$value])) $field_value_counts[$value] = 0;
+                        $field_value_counts[$value]++;
+                    }
+                }
+                if ($field_config['type'] === 'number_range' || $field_config['meta_key'] === 'year') {
+                    ksort($field_value_counts, SORT_NUMERIC);
+                } else if ($field_config['type'] !== 'boolean'){ // Don't sort booleans, keep 1 then 0 or vice-versa
+                    ksort($field_value_counts); // Sort string keys alphabetically
+                }
+            }
+        }
+        wp_reset_postdata();
+        $all_counts[$js_target_key] = $field_value_counts;
+    }
+    return $all_counts;
 }

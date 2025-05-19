@@ -25,6 +25,13 @@ jQuery(document).ready(function($) {
     const radiusValueDisplay = $('#radius-value');
     const currentLocationText = $('#current-location-filter-text');
 
+    const specFiltersPopup = $('#spec-filters-popup');
+    const openSpecFiltersBtn = $('#open-spec-filters-popup-btn');
+    const closeSpecFiltersBtn = $('#close-spec-filters-popup-btn');
+    const applySpecFiltersBtn = $('#apply-spec-filters-btn'); // From car-filter-form.php
+    const resetSpecFiltersBtn = $('#reset-spec-filters-btn'); // From car-filter-form.php
+    const specFiltersContainer = $('#car-spec-filters-container'); // Container of all spec filters
+
     // Initialize UI elements
     radiusSlider.val(currentRadiusKm);
     radiusValueDisplay.text(currentRadiusKm);
@@ -472,12 +479,56 @@ jQuery(document).ready(function($) {
         // First check explicit parameters, then URL parameters if not provided
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Use explicit parameters first, fall back to URL parameters
+        // Use explicit parameters first, fall back to URL parameters for location
         let filterLat = lat !== null ? lat : urlParams.get('lat') || null;
         let filterLng = lng !== null ? lng : urlParams.get('lng') || null;
         let filterRadius = radius !== null ? radius : urlParams.get('radius') || null;
         
-        console.log(`[FetchListings] Fetching page ${page}. Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}, Name: ${selectedLocationName}`);
+        // Collect Specification Filters
+        const specFilters = {};
+        specFilters.make = $('#filter-make').val() || urlParams.get('make') || '';
+        specFilters.model = $('#filter-model').val() || urlParams.get('model') || '';
+        specFilters.variant = $('#filter-variant').val() || urlParams.get('variant') || '';
+        specFilters.year_min = $('#filter-year-min').val() || urlParams.get('year_min') || '';
+        specFilters.year_max = $('#filter-year-max').val() || urlParams.get('year_max') || '';
+        specFilters.price_min = $('#filter-price-min').val() || urlParams.get('price_min') || '';
+        specFilters.price_max = $('#filter-price-max').val() || urlParams.get('price_max') || '';
+        specFilters.mileage_min = $('#filter-mileage-min').val() || urlParams.get('mileage_min') || '';
+        specFilters.mileage_max = $('#filter-mileage-max').val() || urlParams.get('mileage_max') || '';
+        specFilters.engine_capacity_min = $('#filter-engine-capacity-min').val() || urlParams.get('engine_capacity_min') || '';
+        specFilters.engine_capacity_max = $('#filter-engine-capacity-max').val() || urlParams.get('engine_capacity_max') || '';
+        specFilters.hp_min = $('#filter-hp-min').val() || urlParams.get('hp_min') || '';
+        specFilters.hp_max = $('#filter-hp-max').val() || urlParams.get('hp_max') || '';
+        specFilters.transmission = $('#filter-transmission').val() || urlParams.get('transmission') || '';
+        specFilters.number_of_doors = $('#filter-number-of-doors').val() || urlParams.get('number_of_doors') || '';
+        specFilters.number_of_seats = $('#filter-number-of-seats').val() || urlParams.get('number_of_seats') || '';
+        specFilters.availability = $('#filter-availability').val() || urlParams.get('availability') || '';
+        specFilters.numowners_min = $('#filter-numowners-min').val() || urlParams.get('numowners_min') || '';
+        specFilters.numowners_max = $('#filter-numowners-max').val() || urlParams.get('numowners_max') || '';
+        specFilters.isantique = $('#filter-isantique').val() || urlParams.get('isantique') || '';
+
+        // Collect checkbox (multi-select) filters
+        $('.multi-select-filter').each(function() {
+            const filterKey = $(this).data('filter-key');
+            const checkedValues = $(this).find('input[type="checkbox"]:checked').map(function() {
+                return $(this).val();
+            }).get();
+            if (checkedValues.length > 0) {
+                specFilters[filterKey] = checkedValues;
+            } else {
+                // If nothing is checked, check URL params for this filter key
+                const urlValues = urlParams.getAll(filterKey + '[]'); // Check for array format like fuel_type[]
+                if (urlValues.length > 0) {
+                    specFilters[filterKey] = urlValues;
+                } else {
+                    const singleUrlValue = urlParams.get(filterKey);
+                    if (singleUrlValue) specFilters[filterKey] = [singleUrlValue]; // Handle single value from URL if present
+                }
+            }
+        });
+
+        console.log(`[FetchListings] Fetching page ${page}. Lat: ${filterLat}, Lng: ${filterLng}, Radius: ${filterRadius}`);
+        console.log('[FetchListings] Spec Filters:', specFilters);
         
         // Abort any existing listings request if it's still running
         if (currentListingsRequest && currentListingsRequest.readyState !== 4) {
@@ -494,14 +545,34 @@ jQuery(document).ready(function($) {
             filter_lat: filterLat,
             filter_lng: filterLng,
             filter_radius: filterRadius,
-            per_page: carListingsMapFilterData.perPage || 12 // Use perPage from localized data or default
+            per_page: carListingsMapFilterData.perPage || 12
         };
 
-        // Add other existing URL parameters to the AJAX request if they are not related to location/pagination
-        // This helps if other filters (e.g. make, model) are also managed via URL and should persist
+        // Add collected specification filters to the data object
+        for (const key in specFilters) {
+            if (specFilters.hasOwnProperty(key) && specFilters[key] !== '' && specFilters[key] !== null) {
+                if (Array.isArray(specFilters[key]) && specFilters[key].length === 0) {
+                    // Skip empty arrays for checkbox filters if nothing selected and not in URL
+                    continue; 
+                }
+                data[key] = specFilters[key];
+            }
+        }
+
+        // Add other existing URL parameters to the AJAX request if they are not related to location/pagination/known spec filters
+        // This helps if other filters are also managed via URL and should persist
+        const knownFilterKeys = ['lat', 'lng', 'radius', 'location_name', 'paged', 'action', 'nonce', 'per_page'].concat(Object.keys(specFilters));
         currentUrlParams.forEach((value, key) => {
-            if (key !== 'lat' && key !== 'lng' && key !== 'radius' && key !== 'location_name' && key !== 'paged' && key !== 'action' && key !== 'nonce') {
-                data[key] = value;
+            if (!knownFilterKeys.includes(key) && !(key.endsWith('_min') || key.endsWith('_max'))) {
+                 // Check for array format like fuel_type[] from URL that might not be in specFilters if empty
+                if (key.includes('[]')) { 
+                    const plainKey = key.replace('[]', '');
+                    if (!knownFilterKeys.includes(plainKey)) {
+                        data[key] = value; // Or handle as array if needed: data[key] = currentUrlParams.getAll(key);
+                    }
+                } else {
+                    data[key] = value;
+                }
             }
         });
 
@@ -777,21 +848,81 @@ jQuery(document).ready(function($) {
         }
     }
 
+    // --- Popup Handling for Spec Filters ---
+    openSpecFiltersBtn.on('click', function() {
+        specFiltersPopup.show();
+    });
+
+    closeSpecFiltersBtn.on('click', function() {
+        specFiltersPopup.hide();
+    });
+
+    specFiltersPopup.on('click', function(e) {
+        if ($(e.target).is(specFiltersPopup)) {
+            specFiltersPopup.hide();
+        }
+    });
+
+    // --- Apply Spec Filters Button ---
+    applySpecFiltersBtn.on('click', function() {
+        console.log('[ApplySpecFilters] Apply button clicked.');
+        // Collect current location from URL (or stored state if preferred)
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = urlParams.get('lat') || (initialFilter.lat || null);
+        const lng = urlParams.get('lng') || (initialFilter.lng || null);
+        const radius = urlParams.get('radius') || (initialFilter.radius || null);
+        
+        fetchFilteredListings(1, lat, lng, radius); // Page 1, with current location and newly applied spec filters
+        specFiltersPopup.hide();
+        // updateActiveFiltersDisplay(); // Call function to update the display of active filters
+    });
+
+    // --- Reset Spec Filters Button ---
+    resetSpecFiltersBtn.on('click', function() {
+        console.log('[ResetSpecFilters] Reset button clicked.');
+        // Clear all filter inputs within the specFiltersContainer
+        specFiltersContainer.find('select').val('');
+        specFiltersContainer.find('input[type="text"]').val('');
+        specFiltersContainer.find('input[type="checkbox"]').prop('checked', false);
+
+        // Special handling for model dropdown (disable and reset)
+        $('#filter-model').prop('disabled', true).html('<option value="">Select Make First</option>');
+
+        // After resetting, fetch listings. Pass current location filters.
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = urlParams.get('lat') || (initialFilter.lat || null);
+        const lng = urlParams.get('lng') || (initialFilter.lng || null);
+        const radius = urlParams.get('radius') || (initialFilter.radius || null);
+
+        fetchFilteredListings(1, lat, lng, radius);
+        specFiltersPopup.hide(); // Optionally hide popup after reset
+        // updateActiveFiltersDisplay(); // Update display of active filters (should be empty now)
+    });
+
     // Initial fetch on page load, respecting URL and localStorage
     const pageToFetch = urlParams.get('paged') || 1;
-    // Ensure initialFilter is an object and has necessary properties before trying to access them
-    if (initialFilter && typeof initialFilter === 'object' && 
-        initialFilter.hasOwnProperty('lat') && initialFilter.hasOwnProperty('lng') && initialFilter.hasOwnProperty('radius') &&
-        initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
-        console.log('[PageLoad] Fetching initial listings based on active filter (URL or localStorage).', initialFilter);
-        // Set the current location text first so the UI is consistent
-        currentLocationText.text(initialFilter.text || 'Selected location');
-        // Immediate AJAX call to load initial listings with location filter
-        fetchFilteredListings(pageToFetch, initialFilter.lat, initialFilter.lng, initialFilter.radius);
+    let initialLoadLat = null;
+    let initialLoadLng = null;
+    let initialLoadRadius = null;
+
+    if (initialFilter && typeof initialFilter === 'object') {
+        if (initialFilter.lat !== null && initialFilter.lng !== null && initialFilter.radius !== null) {
+            console.log('[PageLoad] Using location from initialFilter (URL or localStorage).', initialFilter);
+            initialLoadLat = initialFilter.lat;
+            initialLoadLng = initialFilter.lng;
+            initialLoadRadius = initialFilter.radius;
+            currentLocationText.text(initialFilter.text || 'Selected location');
+        } else {
+            console.log('[PageLoad] initialFilter present but location data is null/incomplete.');
+        }
     } else {
-        console.log('[PageLoad] No specific location active or initialFilter is incomplete/invalid, fetching default listings.', initialFilter);
-        fetchFilteredListings(pageToFetch); // Fetch default (all or based on other filters)
+        console.log('[PageLoad] initialFilter is not an object or is null.');
     }
+    
+    // Fetch listings with location (if any) and any spec filters from URL
+    // The collection of spec filters inside fetchFilteredListings will pick them up from URL if present.
+    console.log('[PageLoad] Triggering initial fetchFilteredListings.');
+    fetchFilteredListings(pageToFetch, initialLoadLat, initialLoadLng, initialLoadRadius);
 
     $('body').on('click', '.car-listings-pagination a.page-numbers', function(e) {
         e.preventDefault();

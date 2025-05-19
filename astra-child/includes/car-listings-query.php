@@ -107,72 +107,108 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         'make' => 'make',
         'model' => 'model',
         'variant' => 'variant',
-        // 'location' => 'location' // This was for text-based location, map handled above
+        'transmission' => 'transmission',
+        'number_of_doors' => 'number_of_doors',
+        'number_of_seats' => 'number_of_seats',
+        'availability' => 'availability',
+        'isantique' => 'isantique' // For true/false, ACF stores 1 or 0. Comparison should be '='.
     );
 
     foreach ($filter_params as $filter_key => $meta_key) {
-        if (isset($filter_source[$filter_key]) && !empty($filter_source[$filter_key])) {
+        if (isset($filter_source[$filter_key]) && $filter_source[$filter_key] !== '') { // Check for not empty string
+            $value = sanitize_text_field($filter_source[$filter_key]);
+            $compare_operator = '=';
+
+            if ($meta_key === 'isantique') {
+                 // Ensure value is 1 or 0 for boolean ACF fields
+                $value = ($value == '1' || strtolower($value) === 'true') ? '1' : '0';
+            }
+
             $args['meta_query'][] = array(
                 'key' => $meta_key,
-                'value' => sanitize_text_field($filter_source[$filter_key]),
-                'compare' => '='
+                'value' => $value,
+                'compare' => $compare_operator
             );
         }
     }
 
+    // --- Range Filters (min/max) ---
+    // JS is expected to send parameters like year_min, year_max, price_min, price_max etc.
     $range_filters = array(
-        'price' => 'price',
-        'year' => 'year',
-        'km' => 'mileage', // Assuming URL/filter key is 'km_min', 'km_max'
-        'engine' => 'engine_capacity' // Assuming URL/filter key is 'engine_min', 'engine_max'
+        'year' => 'year', // meta_key 'year'
+        'price' => 'price', // meta_key 'price'
+        'mileage' => 'mileage', // meta_key 'mileage'
+        'engine_capacity' => 'engine_capacity', // meta_key 'engine_capacity'
+        'hp' => 'hp', // meta_key 'hp'
+        'numowners' => 'numowners', // meta_key 'numowners'
     );
 
-    foreach ($range_filters as $filter_prefix => $meta_key) {
-        $min_key = $filter_prefix . '_min';
-        $max_key = $filter_prefix . '_max';
+    foreach ($range_filters as $filter_key => $meta_key) {
+        $min_val = isset($filter_source[$filter_key . '_min']) ? $filter_source[$filter_key . '_min'] : null;
+        $max_val = isset($filter_source[$filter_key . '_max']) ? $filter_source[$filter_key . '_max'] : null;
 
-        if (isset($filter_source[$min_key]) && $filter_source[$min_key] !== '') {
+        if ($min_val !== null && $min_val !== '') {
             $args['meta_query'][] = array(
                 'key' => $meta_key,
-                'value' => ($meta_key === 'engine_capacity') ? floatval($filter_source[$min_key]) : intval($filter_source[$min_key]),
-                'type' => 'NUMERIC',
+                'value' => sanitize_text_field($min_val),
+                'type'    => 'NUMERIC',
                 'compare' => '>='
             );
         }
-        if (isset($filter_source[$max_key]) && $filter_source[$max_key] !== '') {
+        if ($max_val !== null && $max_val !== '') {
             $args['meta_query'][] = array(
                 'key' => $meta_key,
-                'value' => ($meta_key === 'engine_capacity') ? floatval($filter_source[$max_key]) : intval($filter_source[$max_key]),
-                'type' => 'NUMERIC',
+                'value' => sanitize_text_field($max_val),
+                'type'    => 'NUMERIC',
                 'compare' => '<='
             );
         }
     }
 
+    // --- Checkbox / Multi-Select Filters ---
+    // JS is expected to send parameters like fuel_type[]=Petrol&fuel_type[]=Diesel
     $checkbox_filters = array(
         'fuel_type' => 'fuel_type',
-        'body_type' => 'body_type',
-        'transmission' => 'transmission', // Added transmission
         'exterior_color' => 'exterior_color',
         'interior_color' => 'interior_color',
-        'drive_type' => 'drive_type'
+        'body_type' => 'body_type',
+        'drive_type' => 'drive_type',
+        'extras' => 'extras',
+        'vehiclehistory' => 'vehiclehistory'
     );
 
     foreach ($checkbox_filters as $filter_key => $meta_key) {
-        $actual_key = $filter_key; // Simpler if JS sends plain keys
-        if (isset($filter_source[$filter_key . '[]'])) { // Check for PHP array style keys
-            $actual_key = $filter_key . '[]';
+        $actual_key = $filter_key; // Simpler if JS sends plain keys e.g. fuel_type: ['Petrol', 'Diesel']
+        // Check if JS sent it as fuel_type[] which PHP converts to an array under the key 'fuel_type'
+        if (isset($filter_source[$filter_key]) && is_array($filter_source[$filter_key])) {
+            $values_raw = $filter_source[$filter_key];
+        } 
+        // Legacy check if JS sent it as filter_key[] which gets converted to filter_key by some JS methods or manual construction
+        // else if (isset($filter_source[$filter_key . '[]']) && is_array($filter_source[$filter_key . '[]'])) { 
+        //    $values_raw = $filter_source[$filter_key . '[]'];
+        // }
+        else {
+            $values_raw = null;
         }
         
-        if (isset($filter_source[$actual_key]) && !empty($filter_source[$actual_key])) {
-            $values_raw = (array)$filter_source[$actual_key];
+        if ($values_raw && !empty($values_raw)) {
             $values = array_filter(array_map('sanitize_text_field', $values_raw)); 
             if (!empty($values)) {
-                 $args['meta_query'][] = array(
-                     'key' => $meta_key,
-                     'value' => $values,
-                     'compare' => 'IN'
-                 );
+                // For ACF checkboxes/multi-select, values are often stored serialized (e.g., a:1:{i:0;s:6:"Petrol";})
+                // or as a simple array. If it is a serialized array of choices, a LIKE query for each is needed.
+                $group_relation = ($meta_key === 'extras' || $meta_key === 'vehiclehistory') ? 'AND' : 'OR'; // For extras, all selected must match. For others, any match.
+                $individual_meta_queries = array('relation' => $group_relation);
+
+                foreach ($values as $single_value) {
+                    $individual_meta_queries[] = array(
+                        'key' => $meta_key, 
+                        'value' => '"' . $single_value . '"', // searching for "value" within serialized string
+                        'compare' => 'LIKE'
+                    );
+                }
+                if (count($individual_meta_queries) > 1) { // only add if there are actual conditions
+                    $args['meta_query'][] = $individual_meta_queries;
+                }
             }
         }
     }
