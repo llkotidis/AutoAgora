@@ -819,7 +819,7 @@ jQuery(document).ready(function($) {
 
         if (locationFilterActive) {
             // console.log('[DEBUG] calculateAndDisplayDistances: Location filter active.', {centerLat, centerLng});
-        } else {
+                    } else {
             // console.log('[DEBUG] calculateAndDisplayDistances: No location filter active or invalid coords.', {centerLat, centerLng});
         }
 
@@ -863,14 +863,14 @@ jQuery(document).ready(function($) {
                     const distance = turf.distance(pinLocation, carLocationPoint, { units: 'kilometers' });
                     const distanceText = ` (${distance.toFixed(1)} km away)`;
                     $locationTextSpan.text(baseLocationText + distanceText);
-                } else {
+                    } else {
                     // If no location filter or card coordinates are invalid, just show city - district
                     $locationTextSpan.text(baseLocationText);
-                }
+                    }
             } else {
                 // console.warn('[DEBUG] calculateAndDisplayDistances: Location text span not found for card.', { postId: $card.data('post-id') });
-            }
-        });
+                }
+            });
     }
 
     // --- Popup Handling for Spec Filters ---

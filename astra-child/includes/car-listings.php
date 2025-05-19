@@ -479,11 +479,16 @@ function autoagora_filter_listings_by_location_ajax() {
             // $extras = get_field('extras', $car_post_id); // Not used in card
             // $vehiclehistory = get_field('vehiclehistory', $car_post_id); // Not used in card
             $publication_date = get_field('publication_date', $car_post_id);
-            $latitude = get_field('latitude', $car_post_id);
-            $longitude = get_field('longitude', $car_post_id);
+            $latitude = get_field('car_latitude', $car_post_id);
+            $longitude = get_field('car_longitude', $car_post_id);
 
             ?>
-            <div class="car-listing-card" data-latitude="<?php echo esc_attr($latitude); ?>" data-longitude="<?php echo esc_attr($longitude); ?>">
+            <div class="car-listing-card" 
+                 data-city="<?php echo esc_attr($car_city); ?>" 
+                 data-district="<?php echo esc_attr($car_district); ?>"
+                 data-latitude="<?php echo esc_attr($latitude); ?>" 
+                 data-longitude="<?php echo esc_attr($longitude); ?>"
+                 data-post-id="<?php echo esc_attr($car_post_id); ?>">
                 <?php 
                 $featured_image = get_post_thumbnail_id($car_post_id);
                 $additional_images = get_field('car_images', $car_post_id);
