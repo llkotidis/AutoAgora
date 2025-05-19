@@ -574,22 +574,20 @@ jQuery(document).ready(function($) {
                 
                 if (response.success) {
                     console.log('[DEBUG] fetchFilteredListings - response.data:', response.data);
-                    // Update listings
                     $('.car-listings-grid').html(response.data.listings_html);
                     $('.car-listings-pagination').html(response.data.pagination_html);
 
-                    // Update make filter options if provided
-                    if (response.data.all_makes) {
-                        console.log('[DEBUG] fetchFilteredListings - response.data.all_makes:', response.data.all_makes);
-                        updateMakeFilter(response.data.all_makes, selectedMake);
-                    } else {
-                        console.warn('[DEBUG] fetchFilteredListings - all_makes not found in response.data');
-                    }
+                    const globalMakes = response.data.all_makes;
+                    const filterCounts = response.data.filter_counts;
+                    const currentSelectedMake = $('#filter-make').val(); 
 
-                    // Update other filter counts
-                    if (response.data.filter_counts) {
-                        console.log('[DEBUG] fetchFilteredListings - response.data.filter_counts:', response.data.filter_counts);
-                        updateFilterCounts(response.data.filter_counts);
+                    updateMakeFilter(globalMakes, filterCounts, currentSelectedMake);
+                    
+                    // Update other spec filter counts (excluding make)
+                    if (filterCounts) {
+                        let otherFilterCounts = {...filterCounts};
+                        delete otherFilterCounts.make;
+                        updateFilterCounts(otherFilterCounts);
                     }
 
                     // Calculate distances if location is set
@@ -626,27 +624,59 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function updateMakeFilter(makes, selectedMake = '') {
-        console.log('[DEBUG] updateMakeFilter - received makes:', makes);
+    function updateMakeFilter(globalMakes, filterCounts, selectedMake = '') {
+        console.log('[DEBUG] updateMakeFilter - globalMakes:', globalMakes);
+        console.log('[DEBUG] updateMakeFilter - filterCounts:', filterCounts);
         console.log('[DEBUG] updateMakeFilter - selectedMake:', selectedMake);
+
         const $makeSelect = $('#filter-make');
-        let options = '<option value="">All Makes</option>';
-        
-        // If makes is undefined, null, or not an object, treat as empty
-        if (typeof makes !== 'object' || makes === null) {
-            makes = {};
+        let optionsHtml = '<option value="">All Makes</option>';
+        let makesToDisplay = {};
+
+        // Populate makesToDisplay with all makes from globalMakes, initializing counts to 0
+        if (typeof globalMakes === 'object' && globalMakes !== null) {
+            Object.keys(globalMakes).forEach(makeName => {
+                makesToDisplay[makeName] = 0; // Initialize with 0, will be updated by filterCounts
+            });
         }
 
-        // Sort makes alphabetically
-        const sortedMakes = Object.entries(makes).sort((a, b) => a[0].localeCompare(b[0]));
-        
-        sortedMakes.forEach(([make, count]) => {
-            const isSelected = make === selectedMake ? 'selected' : '';
-            const isDisabled = count === 0 && make !== selectedMake ? 'disabled' : '';
-            options += `<option value="${make}" ${isSelected} ${isDisabled}>${make} (${count})</option>`;
+        // Update counts from filterCounts.make if available
+        if (filterCounts && typeof filterCounts.make === 'object' && filterCounts.make !== null) {
+            Object.keys(filterCounts.make).forEach(makeName => {
+                // If a make appears in filterCounts but not globalMakes (edge case), add it.
+                if (!makesToDisplay.hasOwnProperty(makeName)) {
+                    console.warn(`[DEBUG] Make "${makeName}" found in filterCounts.make but not in globalMakes. Adding.`);
+                }
+                makesToDisplay[makeName] = parseInt(filterCounts.make[makeName], 10) || 0;
+            });
+        } else {
+            // If filterCounts.make is not available, use global counts (less ideal, but a fallback)
+            // This might happen on initial load if filter_counts doesn't include makes explicitly
+            console.warn('[DEBUG] updateMakeFilter - filterCounts.make is not available. Consider using global counts as a fallback for display, though 0 is safer for filtering logic.');
+            // For this scenario, makesToDisplay will already have makes with count 0 from globalMakes loop, which is fine.
+            // Or, if you want to show global counts when specific are missing:
+            /*
+            if (typeof globalMakes === 'object' && globalMakes !== null) {
+                Object.keys(globalMakes).forEach(makeName => {
+                    makesToDisplay[makeName] = parseInt(globalMakes[makeName], 10) || 0;
+                });
+            }
+            */
+        }
+
+        console.log('[DEBUG] updateMakeFilter - makesToDisplay (merged counts):', makesToDisplay);
+
+        const sortedMakeNames = Object.keys(makesToDisplay).sort((a, b) => a.localeCompare(b));
+
+        sortedMakeNames.forEach(makeName => {
+            const count = makesToDisplay[makeName];
+            const isSelected = makeName === selectedMake ? 'selected' : '';
+            const isDisabled = count === 0 && makeName !== selectedMake ? 'disabled' : '';
+            optionsHtml += `<option value="${makeName}" ${isSelected} ${isDisabled}>${makeName} (${count})</option>`;
         });
-        
-        $makeSelect.html(options);
+
+        $makeSelect.html(optionsHtml);
+        $makeSelect.prop('disabled', false); 
     }
 
     // Add event listener for make filter changes
@@ -950,16 +980,16 @@ jQuery(document).ready(function($) {
             console.log('[DEBUG] Initial AJAX Response:', response);
             if (response.success) {
                 console.log('[DEBUG] Initial AJAX - response.data:', response.data);
-                if (response.data.all_makes) {
-                    console.log('[DEBUG] Initial AJAX - response.data.all_makes:', response.data.all_makes);
-                    updateMakeFilter(response.data.all_makes, '');
-                } else {
-                    console.warn('[DEBUG] Initial AJAX - all_makes not found in response.data');
-                }
-                // Optionally update other filters if counts are available
-                if (response.data.filter_counts) {
-                     console.log('[DEBUG] Initial AJAX - response.data.filter_counts:', response.data.filter_counts);
-                    updateFilterCounts(response.data.filter_counts);
+                const globalMakes = response.data.all_makes;
+                const filterCounts = response.data.filter_counts; 
+                // On initial load, selectedMake is empty, use filterCounts for initial display
+                updateMakeFilter(globalMakes, filterCounts, ''); 
+                
+                // Update other spec filter counts if needed (excluding make, as it's handled by updateMakeFilter)
+                if (filterCounts) {
+                    let otherFilterCounts = {...filterCounts};
+                    delete otherFilterCounts.make; // Avoid double-handling
+                    updateFilterCounts(otherFilterCounts);
                 }
             } else {
                 console.error('[DEBUG] Initial AJAX failed:', response.data?.message || 'No error message');
