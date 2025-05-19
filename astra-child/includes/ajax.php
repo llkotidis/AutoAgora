@@ -781,6 +781,23 @@ function ajax_update_filter_counts_handler() {
     for ($y = date('Y'); $y >= 1948; $y--) {
         $master_years[] = (string)$y;
     }
+    // Mileage: bucket to nearest 500 km
+    $master_mileages = [];
+    for ($m = 0; $m <= 300000; $m += 500) {
+        $master_mileages[] = (string)$m;
+    }
+    // Bucket mileage counts
+    $bucketed_mileage_counts = [];
+    if (isset($updated_counts['mileage'])) {
+        foreach ($updated_counts['mileage'] as $raw_mileage => $count) {
+            $bucket = ceil($raw_mileage / 500) * 500;
+            $bucketed_mileage_counts[$bucket] = ($bucketed_mileage_counts[$bucket] ?? 0) + $count;
+        }
+    }
+    // Only show mileage buckets that exist in the result set
+    $filtered_mileages = array_values(array_filter($master_mileages, function($mileage) use ($bucketed_mileage_counts) {
+        return isset($bucketed_mileage_counts[$mileage]) && $bucketed_mileage_counts[$mileage] > 0;
+    }));
     // Make/model/variant: get from master makesData (should be localized to JS, but for backend, use DB or file)
     // For now, use all makes present in the DB (from counts)
     $master_makes = array_keys($updated_counts['make']);
@@ -801,6 +818,7 @@ function ajax_update_filter_counts_handler() {
         'year' => array_values(array_filter($master_years, function($year) use ($updated_counts) {
             return isset($updated_counts['year'][$year]) && $updated_counts['year'][$year] > 0;
         })),
+        'mileage' => $filtered_mileages,
         // For make/model, use the counts as already filtered
         'make' => $master_makes,
         'model_by_make' => $master_models_by_make,
@@ -810,6 +828,10 @@ function ajax_update_filter_counts_handler() {
     $filtered_options['engine_capacity_max'] = max(array_keys($updated_counts['engine_capacity']));
     $filtered_options['year_min'] = min(array_keys($updated_counts['year']));
     $filtered_options['year_max'] = max(array_keys($updated_counts['year']));
+    if (!empty($bucketed_mileage_counts)) {
+        $filtered_options['mileage_min'] = min(array_keys($bucketed_mileage_counts));
+        $filtered_options['mileage_max'] = max(array_keys($bucketed_mileage_counts));
+    }
     // Add to response
     wp_send_json_success([
         'counts' => $updated_counts,

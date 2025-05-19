@@ -869,6 +869,11 @@ jQuery(document).ready(function($) {
                 $intColor.append(`<li data-value="${val}">${label}</li>`);
             });
         }
+        // Mileage (min/max)
+        if (filteredOptions.mileage) {
+            updateRangeOptions($("select[name='mileage_min']"), filteredOptions.mileage, 'Min KM', ' km');
+            updateRangeOptions($("select[name='mileage_max']"), filteredOptions.mileage, 'Max KM', ' km');
+        }
     }
 
     // Initial fetch on page load, respecting URL and localStorage
