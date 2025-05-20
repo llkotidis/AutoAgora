@@ -6,15 +6,6 @@
  * @since 1.0.0
  */
 
-// --- TEMPORARY DIAGNOSTIC AJAX ACTION ---
-add_action('wp_ajax_test_non_admin_ajax', 'my_test_non_admin_ajax_handler');
-function my_test_non_admin_ajax_handler() {
-    error_log('[DIAGNOSTIC] my_test_non_admin_ajax_handler reached for User ID: ' . get_current_user_id() . ', Role: ' . (is_user_logged_in() && !empty(wp_get_current_user()->roles) ? wp_get_current_user()->roles[0] : 'Guest/N/A'));
-    wp_send_json_success(array('message' => 'Test AJAX successful for user ' . get_current_user_id()));
-    wp_die();
-}
-// --- END TEMPORARY DIAGNOSTIC AJAX ACTION ---
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
