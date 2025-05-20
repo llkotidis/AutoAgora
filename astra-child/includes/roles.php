@@ -18,7 +18,29 @@ function add_custom_user_roles() {
             __( 'Dealership', 'astra-child' ),
             array(
                 'read' => true,
-                // Add other capabilities specific to dealerships here
+                'edit_posts' => true,
+                'edit_published_posts' => true,
+                'delete_posts' => true,
+                'delete_published_posts' => true,
+                'publish_posts' => true,
+                'upload_files' => true
+            )
+        );
+    }
+
+    // Add the 'client' role if it doesn't exist
+    if ( ! get_role( 'client' ) ) {
+        add_role(
+            'client',
+            __( 'Client', 'astra-child' ),
+            array(
+                'read' => true,
+                'edit_posts' => true,
+                'edit_published_posts' => true,
+                'delete_posts' => true,
+                'delete_published_posts' => true,
+                'publish_posts' => true,
+                'upload_files' => true
             )
         );
     }
