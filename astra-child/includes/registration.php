@@ -91,7 +91,7 @@ function custom_handle_registration() {
         }
 
         // --- Create the User ---
-        $user_type = 'subscriber'; // Assign all new users as subscriber
+        $user_type = 'client'; // Assign all new users as client
         $username = sanitize_user( $phone );
         if ( username_exists( $username ) ) {
             $username = sanitize_user( 'user_' . $phone . '_' . wp_rand( 100, 999 ) );
