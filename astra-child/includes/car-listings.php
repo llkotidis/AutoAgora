@@ -45,63 +45,6 @@ function display_car_listings($atts) {
         filemtime(get_stylesheet_directory() . '/css/car-listings.css')
     );
 
-    // Enqueue assets for the map location filter
-    if (!is_admin()) {
-        // Enqueue Mapbox GL JS
-        wp_enqueue_style('mapbox-gl-css', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css', array(), '2.15.0');
-        wp_enqueue_script('mapbox-gl-js', 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js', array(), '2.15.0', true);
-
-        // Enqueue Mapbox Geocoder
-        wp_enqueue_style('mapbox-geocoder-css', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css', array('mapbox-gl-css'), '5.0.0');
-        wp_enqueue_script('mapbox-geocoder-js', 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js', array('mapbox-gl-js'), '5.0.0', true);
-        
-        // Enqueue Turf.js for geo calculations (like drawing circles)
-        wp_enqueue_script('turf-js', 'https://npmcdn.com/@turf/turf/turf.min.js', array(), '6.5.0', true);
-
-
-        // Enqueue custom CSS & JS for the map filter
-        wp_enqueue_style(
-            'car-listings-map-filter-style',
-            get_stylesheet_directory_uri() . '/css/car-listings-map-filter.css',
-            array('mapbox-gl-css', 'mapbox-geocoder-css'),
-            filemtime(get_stylesheet_directory() . '/css/car-listings-map-filter.css')
-        );
-        
-        // Enqueue script for spec filters (new)
-        wp_enqueue_script(
-            'car-specs-filter-js',
-            get_stylesheet_directory_uri() . '/js/car-specs-filter.js',
-            array('jquery'), // Depends on jQuery
-            filemtime(get_stylesheet_directory() . '/js/car-specs-filter.js'),
-            true
-        );
-        
-        wp_enqueue_script(
-            'car-listings-map-filter-js',
-            get_stylesheet_directory_uri() . '/js/car-listings-map-filter.js',
-            array('jquery', 'mapbox-gl-js', 'mapbox-geocoder-js', 'turf-js', 'car-specs-filter-js'), // Added 'car-specs-filter-js' as a dependency
-            filemtime(get_stylesheet_directory() . '/js/car-listings-map-filter.js'),
-            true
-        );
-        
-        wp_localize_script('car-listings-map-filter-js', 'carListingsMapFilterData', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('filter_listings_by_location_nonce'),
-            'mapboxConfig' => array( 
-                'accessToken' => defined('MAPBOX_ACCESS_TOKEN') ? MAPBOX_ACCESS_TOKEN : '',
-                'style' => 'mapbox://styles/mapbox/streets-v12',
-                'defaultZoom' => 8,
-                'cyprusCenter' => [33.3823, 35.1856] 
-            ),
-            'initialFilter' => array(
-                'lat' => null,
-                'lng' => null,
-                'radius' => null, 
-                'text' => 'All of Cyprus'
-            )
-        ));
-    }
-
     // Localize script for AJAX functionality (favorites)
     wp_localize_script('jquery', 'carListingsData', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
