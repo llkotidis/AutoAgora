@@ -373,7 +373,16 @@ function autoagora_filter_listings_by_location_ajax() {
     error_log('[DEBUG] AJAX Handler: autoagora_filter_listings_by_location_ajax reached for user ID: ' . get_current_user_id() . ', Role: ' . (is_user_logged_in() && !empty(wp_get_current_user()->roles) ? wp_get_current_user()->roles[0] : 'Guest/N/A'));
 
     try {
-        check_ajax_referer('filter_listings_by_location_nonce', 'nonce');
+        // check_ajax_referer('filter_listings_by_location_nonce', 'nonce');
+        $nonce_check = check_ajax_referer('filter_listings_by_location_nonce', 'nonce', false); // false = do not die on failure
+        if (!$nonce_check) {
+            error_log('[ERROR] AJAX Nonce check failed for User ID: ' . get_current_user_id() . ', Role: ' . (is_user_logged_in() && !empty(wp_get_current_user()->roles) ? wp_get_current_user()->roles[0] : 'Guest/N/A'));
+            wp_send_json_error(array(
+                'message' => 'Security check failed. Please refresh the page and try again.',
+                'exception_type' => 'NonceVerificationError'
+            ));
+            return; // Exit the function early
+        }
 
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
