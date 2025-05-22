@@ -696,9 +696,9 @@ jQuery(document).ready(function ($) {
       action: "filter_listings_by_location",
       nonce: nonce,
       paged: page,
-      lat: lat,
-      lng: lng,
-      radius: radius,
+      filter_lat: lat,
+      filter_lng: lng,
+      filter_radius: radius,
       per_page: carListingsMapFilterData.perPage || 12,
       get_filter_counts: true,
       get_all_makes: true, // Add this to explicitly request all makes
@@ -1187,9 +1187,9 @@ jQuery(document).ready(function ($) {
       make: urlParamsGlobal.get("make") || "",
       model: urlParamsGlobal.get("model") || "",
       variant: urlParamsGlobal.get("variant") || "",
-      lat: urlParamsGlobal.get("lat") || null,
-      lng: urlParamsGlobal.get("lng") || null,
-      radius: urlParamsGlobal.get("radius") || null,
+      filter_lat: urlParamsGlobal.get("lat") || null,
+      filter_lng: urlParamsGlobal.get("lng") || null,
+      filter_radius: urlParamsGlobal.get("radius") || null,
     },
     success: function (response) {
       if (response.success) {
