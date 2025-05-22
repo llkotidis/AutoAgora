@@ -58,24 +58,33 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
     $filter_lng = isset($filter_source['lng']) && $filter_source['lng'] !== 'null' && $filter_source['lng'] !== '' ? floatval($filter_source['lng']) : null;
     $filter_radius = isset($filter_source['radius']) && $filter_source['radius'] !== 'null' && $filter_source['radius'] !== '' ? floatval($filter_source['radius']) : null;
 
+    error_log('[DEBUG Query Args] Received Location Filters: lat=' . print_r($filter_lat, true) . ', lng=' . print_r($filter_lng, true) . ', radius=' . print_r($filter_radius, true));
+
     if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null && function_exists('autoagora_get_bounding_box')) {
         $bounding_box = autoagora_get_bounding_box($filter_lat, $filter_lng, $filter_radius);
+        error_log('[DEBUG Query Args] Calculated Bounding Box: ' . print_r($bounding_box, true));
 
         if ($bounding_box) {
             // Add meta query for latitude range
-            $args['meta_query'][] = array(
+            $lat_meta_query = array(
                 'key' => 'car_latitude',
                 'value' => array($bounding_box['min_lat'], $bounding_box['max_lat']),
                 'type' => 'DECIMAL(10,6)', // Assuming coordinates are stored with precision
                 'compare' => 'BETWEEN'
             );
+            $args['meta_query'][] = $lat_meta_query;
+            error_log('[DEBUG Query Args] Added Latitude Meta Query: ' . print_r($lat_meta_query, true));
+
             // Add meta query for longitude range
-            $args['meta_query'][] = array(
+            $lng_meta_query = array(
                 'key' => 'car_longitude',
                 'value' => array($bounding_box['min_lng'], $bounding_box['max_lng']),
                 'type' => 'DECIMAL(10,6)', // Assuming coordinates are stored with precision
                 'compare' => 'BETWEEN'
             );
+            $args['meta_query'][] = $lng_meta_query;
+            error_log('[DEBUG Query Args] Added Longitude Meta Query: ' . print_r($lng_meta_query, true));
+
             // Note: This bounding box filter is now part of the main query.
             // The old logic of querying all IDs first and then manually filtering in PHP is removed.
             // If precise circular filtering is still needed, it must be done *after* this query executes,
@@ -83,9 +92,11 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
         } else {
             // Invalid bounding box (e.g., radius was 0 or negative), effectively means no location results
             $args['post__in'] = [0]; 
+            error_log('[DEBUG Query Args] Invalid bounding box or radius. Setting post__in to [0].');
         }
     } 
     // --- End Location Filter ---
+    error_log('[DEBUG Query Args] Final Query Args before return: ' . print_r($args, true));
 
     // Add other spec filter arguments from the determined source
     $filter_params = array(
