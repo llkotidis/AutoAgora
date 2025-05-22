@@ -594,11 +594,11 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
     $cached_counts = get_transient($cache_key);
 
     if (false !== $cached_counts) {
-        // error_log('[DEBUG] get_dynamic_filter_counts - Returning cached counts for key: ' . $cache_key);
+        error_log('[DEBUG] get_dynamic_filter_counts - Returning cached counts for key: ' . $cache_key);
         return $cached_counts;
     }
 
-    // error_log('[DEBUG] get_dynamic_filter_counts - Cache miss for key: ' . $cache_key . '. Calculating fresh counts.');
+    error_log('[DEBUG] get_dynamic_filter_counts - Cache miss for key: ' . $cache_key . '. Calculating fresh counts.');
 
     $counts = array();
 
@@ -773,7 +773,7 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
     
     // Store the fresh counts in cache for 15 minutes.
     set_transient($cache_key, $counts, 15 * MINUTE_IN_SECONDS);
-    // error_log('[DEBUG] get_dynamic_filter_counts - Stored fresh counts in cache for key: ' . $cache_key);
+    error_log('[DEBUG] get_dynamic_filter_counts - Stored fresh counts in cache for key: ' . $cache_key);
 
     return $counts;
 }
