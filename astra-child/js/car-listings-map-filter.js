@@ -491,6 +491,9 @@ jQuery(document).ready(function ($) {
   });
 
   applyBtn.on("click", function () {
+    console.log("[ApplyFilterClicked] Current selectedCoords:", JSON.stringify(selectedCoords));
+    console.log("[ApplyFilterClicked] Current currentRadiusKm:", currentRadiusKm);
+
     if (selectedCoords && selectedCoords.length === 2) {
       const lat = selectedCoords[1];
       const lng = selectedCoords[0];
@@ -515,6 +518,7 @@ jQuery(document).ready(function ($) {
         .addClass("loading-filter");
 
       // Fetch listings with new location
+      console.log("[ApplyFilterClicked] Calling fetchFilteredListings with LAT:", lat, "LNG:", lng, "RADIUS:", radius);
       fetchFilteredListings(1, lat, lng, radius);
 
       // Update URL
@@ -547,6 +551,7 @@ jQuery(document).ready(function ($) {
       );
     } else {
       // If no specific coords (e.g., user clears map and applies "All of Cyprus")
+      console.log("[ApplyFilterClicked] No valid selectedCoords. Calling fetchFilteredListings with NULLs for location.");
       currentLocationText.text("All of Cyprus");
       modal.hide();
 
