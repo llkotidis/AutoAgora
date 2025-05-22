@@ -58,49 +58,34 @@ function build_car_listings_query_args($atts, $paged, $filters = null) {
     $filter_lng = isset($filter_source['lng']) && $filter_source['lng'] !== 'null' && $filter_source['lng'] !== '' ? floatval($filter_source['lng']) : null;
     $filter_radius = isset($filter_source['radius']) && $filter_source['radius'] !== 'null' && $filter_source['radius'] !== '' ? floatval($filter_source['radius']) : null;
 
-    if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) {
-        // Query all car IDs first (this is the part we might optimize further with direct SQL Haversine)
-        $all_car_ids_args = array(
-            'post_type' => 'car',
-            'posts_per_page' => -1,
-            'fields' => 'ids',
-            'meta_query' => array(
-                 array(
-                    'relation' => 'OR',
-                    array('key' => 'is_sold', 'compare' => 'NOT EXISTS'),
-                    array('key' => 'is_sold', 'value' => '1', 'compare' => '!=')
-                )
-            )
-            // We don't apply other spec filters here yet, to get a broad list for location filtering.
-            // This could be refined if spec filters should pre-filter before location distance calc.
-        );
-        $all_car_ids_query = new WP_Query($all_car_ids_args);
-        $matching_location_car_ids = array();
+    if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null && function_exists('autoagora_get_bounding_box')) {
+        $bounding_box = autoagora_get_bounding_box($filter_lat, $filter_lng, $filter_radius);
 
-        if ($all_car_ids_query->have_posts()) {
-            if (function_exists('autoagora_calculate_distance')) {
-                foreach ($all_car_ids_query->posts as $car_id) {
-                    $car_latitude = get_field('car_latitude', $car_id);
-                    $car_longitude = get_field('car_longitude', $car_id);
-                    if ($car_latitude && $car_longitude) {
-                        $distance = autoagora_calculate_distance($filter_lat, $filter_lng, $car_latitude, $car_longitude);
-                        if ($distance <= $filter_radius) {
-                            $matching_location_car_ids[] = $car_id;
-                        }
-                    }
-                }
-            } else {
-                // Log error or handle missing distance function
-                error_log('autoagora_calculate_distance function not found in build_car_listings_query_args.');
-            }
-        }
-
-        if (empty($matching_location_car_ids)) {
-            $args['post__in'] = [0]; // No cars match location, so query for no posts
+        if ($bounding_box) {
+            // Add meta query for latitude range
+            $args['meta_query'][] = array(
+                'key' => 'car_latitude',
+                'value' => array($bounding_box['min_lat'], $bounding_box['max_lat']),
+                'type' => 'DECIMAL(10,6)', // Assuming coordinates are stored with precision
+                'compare' => 'BETWEEN'
+            );
+            // Add meta query for longitude range
+            $args['meta_query'][] = array(
+                'key' => 'car_longitude',
+                'value' => array($bounding_box['min_lng'], $bounding_box['max_lng']),
+                'type' => 'DECIMAL(10,6)', // Assuming coordinates are stored with precision
+                'compare' => 'BETWEEN'
+            );
+            // Note: This bounding box filter is now part of the main query.
+            // The old logic of querying all IDs first and then manually filtering in PHP is removed.
+            // If precise circular filtering is still needed, it must be done *after* this query executes,
+            // by looping through its results and applying autoagora_calculate_distance.
         } else {
-            $args['post__in'] = $matching_location_car_ids;
+            // Invalid bounding box (e.g., radius was 0 or negative), effectively means no location results
+            $args['post__in'] = [0]; 
         }
-    } // End Location Filter
+    } 
+    // --- End Location Filter ---
 
     // Add other spec filter arguments from the determined source
     $filter_params = array(

@@ -41,4 +41,47 @@ if (!function_exists('autoagora_calculate_distance')) {
           }
         }
     }
+}
+
+if (!function_exists('autoagora_get_bounding_box')) {
+    /**
+     * Calculate the bounding box for a given center point and radius.
+     *
+     * @param float $latitude Latitude of the center point.
+     * @param float $longitude Longitude of the center point.
+     * @param float $radius_km Radius in kilometers.
+     * @return array Associative array with min_lat, max_lat, min_lng, max_lng.
+     */
+    function autoagora_get_bounding_box($latitude, $longitude, $radius_km) {
+        if ($radius_km <= 0) {
+            return false; // Or handle as an error
+        }
+
+        // Earth's radius in kilometers (mean radius)
+        $earth_radius_km = 6371.0;
+
+        // Angular radius in radians
+        $angular_radius = $radius_km / $earth_radius_km;
+
+        // Convert center latitude and longitude to radians
+        $lat_rad = deg2rad($latitude);
+        $lng_rad = deg2rad($longitude);
+
+        // Calculate min/max latitudes
+        $min_lat = $lat_rad - $angular_radius;
+        $max_lat = $lat_rad + $angular_radius;
+
+        // Calculate min/max longitudes (more complex due to convergence at poles)
+        $delta_lng = asin(sin($angular_radius) / cos($lat_rad));
+        $min_lng = $lng_rad - $delta_lng;
+        $max_lng = $lng_rad + $delta_lng;
+
+        // Convert back to degrees
+        return array(
+            'min_lat' => rad2deg($min_lat),
+            'max_lat' => rad2deg($max_lat),
+            'min_lng' => rad2deg($min_lng),
+            'max_lng' => rad2deg($max_lng),
+        );
+    }
 } 

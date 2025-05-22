@@ -387,28 +387,89 @@ function autoagora_filter_listings_by_location_ajax() {
         $car_query = new WP_Query($query_args);
 
         error_log('[DEBUG] AJAX Handler - Listing Query SQL: ' . $car_query->request);
-        error_log('[DEBUG] AJAX Handler - Listing Query Found Posts: ' . $car_query->found_posts);
+        error_log('[DEBUG] AJAX Handler - Listing Query Found Posts (Bounding Box): ' . $car_query->found_posts);
 
-        ob_start();
-        if ($car_query->have_posts()) {
-            error_log('[DEBUG] AJAX Handler - Car query has posts. Entering loop...');
-            while ($car_query->have_posts()) {
-                $car_query->the_post();
-                get_template_part('template-parts/car-listing-card', null, array('post_id' => get_the_ID()));
+        $posts_in_bounding_box = $car_query->posts; // Get all posts found by the bounding box query
+        $precisely_filtered_posts = array();
+
+        if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null && function_exists('autoagora_calculate_distance')) {
+            if (!empty($posts_in_bounding_box)) {
+                foreach ($posts_in_bounding_box as $post_object) {
+                    $car_latitude = get_field('car_latitude', $post_object->ID);
+                    $car_longitude = get_field('car_longitude', $post_object->ID);
+
+                    if ($car_latitude && $car_longitude) {
+                        $distance = autoagora_calculate_distance($filter_lat, $filter_lng, $car_latitude, $car_longitude);
+                        if ($distance <= $filter_radius) {
+                            $precisely_filtered_posts[] = $post_object;
+                        }
+                    }
+                }
+                error_log('[DEBUG] AJAX Handler - Posts after precise circular filter: ' . count($precisely_filtered_posts));
             }
         } else {
-            error_log('[DEBUG] AJAX Handler - Car query returned no posts.');
+            // If no location filter was applied initially, or distance function missing, all posts from query are considered final (for now)
+            // Or, if a location filter *was* applied (bounding box) but something is wrong with precise filter params, this path is taken.
+            // This might need refinement based on whether location filter was active in $query_args.
+            if (isset($query_args['meta_query'])) { // A rough check if location filter was intended
+                $is_location_filter_active = false;
+                foreach($query_args['meta_query'] as $mq_item) {
+                    if (is_array($mq_item) && isset($mq_item['key']) && ($mq_item['key'] === 'car_latitude' || $mq_item['key'] === 'car_longitude')) {
+                        $is_location_filter_active = true;
+                        break;
+                    }
+                }
+                if ($is_location_filter_active) {
+                     // Bounding box was applied, but precise filter could not run. 
+                     // For now, we take bounding box results. This might include corners.
+                     $precisely_filtered_posts = $posts_in_bounding_box; 
+                     error_log('[DEBUG] AJAX Handler - Precise filter skipped, using bounding box results. Count: ' . count($precisely_filtered_posts));
+                } else {
+                    // No location filter was applied at all in the query_args
+                    $precisely_filtered_posts = $posts_in_bounding_box;
+                }
+            } else {
+                 $precisely_filtered_posts = $posts_in_bounding_box;
+            }
+        }
+
+        ob_start();
+        if (!empty($precisely_filtered_posts)) {
+            error_log('[DEBUG] AJAX Handler - Precisely filtered query has posts. Entering loop...');
+            global $post; // Required to make setup_postdata work correctly
+            foreach ($precisely_filtered_posts as $post_object) {
+                $post = $post_object; // Set the global $post object
+                setup_postdata($post); // Setup post data for template tags and get_template_part
+                
+                get_template_part('template-parts/car-listing-card', null, array('post_id' => $post->ID));
+            }
+            wp_reset_postdata(); // Clean up global $post
+        } else {
+            error_log('[DEBUG] AJAX Handler - No posts after precise filtering (or initial query returned none).');
             echo '<p>No cars found matching your criteria.</p>';
         }
         $listings_html = ob_get_clean();
 
-        // $pagination_html = autoagora_custom_pagination($car_query->max_num_pages, $paged);
+        // For now, this will generate links that would work on a non-AJAX page.
+        // We need to adjust total pages based on the precisely_filtered_posts count if location filter is active.
+        $total_pages = $car_query->max_num_pages; // Default
+
+        // If a location filter was active and resulted in precise filtering, recalculate total pages.
+        // This simplistic approach assumes all results fit on one page after precise filtering if count < per_page.
+        // Proper pagination for the precisely filtered set is more complex if it spans multiple pages itself.
+        if (($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) && !empty($posts_in_bounding_box) ) {
+             // If precise filtering was done, the total number of posts is count($precisely_filtered_posts)
+             // $per_page comes from the original AJAX request or defaults.
+             $per_page_for_pagination = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
+             if ($per_page_for_pagination > 0 && count($precisely_filtered_posts) > 0) {
+                $total_pages = ceil(count($precisely_filtered_posts) / $per_page_for_pagination);
+             } elseif (count($precisely_filtered_posts) === 0) {
+                $total_pages = 0;
+             }
+        }
+
         $pagination_html = paginate_links(array(
-            // 'base' and 'format' are tricky with AJAX. 
-            // The hrefs might need to be handled by JS to prevent full page reloads 
-            // and instead trigger a new fetchFilteredListings call.
-            // For now, this will generate links that would work on a non-AJAX page.
-            'total' => $car_query->max_num_pages,
+            'total' => $total_pages,
             'current' => $paged,
             'prev_text' => __('&laquo; Previous'),
             'next_text' => __('Next &raquo;'),
