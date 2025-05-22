@@ -584,22 +584,6 @@ function autoagora_filter_listings_by_location_ajax() {
 }
 
 function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
-    // Generate a cache key based on the current filters.
-    // Sort the filters to ensure consistent key regardless of order.
-    $sorted_filters = $current_filters_from_ajax;
-    ksort($sorted_filters);
-    $cache_key = 'autoagora_filter_counts_' . md5(json_encode($sorted_filters));
-
-    // Try to get the counts from cache.
-    $cached_counts = get_transient($cache_key);
-
-    if (false !== $cached_counts) {
-        error_log('[DEBUG] get_dynamic_filter_counts - Returning cached counts for key: ' . $cache_key);
-        return $cached_counts;
-    }
-
-    error_log('[DEBUG] get_dynamic_filter_counts - Cache miss for key: ' . $cache_key . '. Calculating fresh counts.');
-
     $counts = array();
 
     $fields_to_count = [
@@ -610,6 +594,8 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
         'number_of_owners', 'is_antique', 'vehicle_history',
         'model_by_make', 'variant_by_model' // Added new complex types
     ];
+
+    // error_log('[DEBUG] get_dynamic_filter_counts - Received Filters for Counting: ' . print_r($current_filters_from_ajax, true));
 
     foreach ($fields_to_count as $field_key_to_count) {
         $temp_filters = $current_filters_from_ajax;
@@ -770,10 +756,5 @@ function autoagora_get_dynamic_filter_counts($current_filters_from_ajax) {
         }
     }
     // error_log("[DEBUG] get_dynamic_filter_counts - Final dynamic counts: " . print_r($counts, true));
-    
-    // Store the fresh counts in cache for 15 minutes.
-    set_transient($cache_key, $counts, 15 * MINUTE_IN_SECONDS);
-    error_log('[DEBUG] get_dynamic_filter_counts - Stored fresh counts in cache for key: ' . $cache_key);
-
     return $counts;
 }
