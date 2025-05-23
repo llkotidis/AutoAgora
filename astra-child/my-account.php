@@ -194,16 +194,9 @@ function display_my_account($atts) {
             console.log('Edit button clicked');
             e.preventDefault();
             
-            // Instead of splitting the display name, use the actual values from PHP
+            // Don't overwrite the original values here - we need them for comparison later
             // The input fields already have the correct values from the PHP variables
-            var firstName = document.getElementById('first-name').value;
-            var lastName = document.getElementById('last-name').value;
-            
-            console.log('Current values from inputs:', {firstName, lastName});
-            
-            // Store original values for cancel functionality
-            originalFirstName = firstName;
-            originalLastName = lastName;
+            console.log('Original values for comparison:', {originalFirstName, originalLastName});
             
             // Show edit fields
             document.querySelector('.name-row').style.display = 'none';
