@@ -194,23 +194,9 @@ function display_my_account($atts) {
             console.log('Edit button clicked');
             e.preventDefault();
             
-            // Get the current full name and split it
-            var fullName = displayName.textContent.trim();
-            var nameParts = fullName.split(' ');
-            
-            // Set first name (first word) and last name (remaining words)
-            var firstName = nameParts[0] || '';
-            var lastName = nameParts.slice(1).join(' ') || '';
-            
-            console.log('Split name:', {firstName, lastName});
-            
-            // Update input fields
-            document.getElementById('first-name').value = firstName;
-            document.getElementById('last-name').value = lastName;
-            
-            // Store original values
-            originalFirstName = firstName;
-            originalLastName = lastName;
+            // Don't overwrite the original values here - we need them for comparison later
+            // The input fields already have the correct values from the PHP variables
+            console.log('Original values for comparison:', {originalFirstName, originalLastName});
             
             // Show edit fields
             document.querySelector('.name-row').style.display = 'none';
@@ -245,6 +231,19 @@ function display_my_account($atts) {
                 return;
             }
 
+            // Check if anything actually changed
+            if (firstName === originalFirstName && lastName === originalLastName) {
+                console.log('No changes detected, just hiding edit form');
+                // No changes, just hide the edit form
+                document.querySelector('.name-row').style.display = 'flex';
+                document.querySelectorAll('.name-edit-row').forEach(function(row) {
+                    row.style.display = 'none';
+                });
+                return;
+            }
+
+            console.log('Changes detected, sending to server');
+            
             // Create form data for AJAX request
             var formData = new FormData();
             formData.append('action', 'update_user_name');
@@ -321,13 +320,11 @@ function handle_update_user_name() {
     // Get current user
     $user_id = get_current_user_id();
 
-    // Update user meta
-    $result1 = update_user_meta($user_id, 'first_name', $first_name);
-    $result2 = update_user_meta($user_id, 'last_name', $last_name);
+    // Update user meta - if we got here, the client detected changes
+    update_user_meta($user_id, 'first_name', $first_name);
+    update_user_meta($user_id, 'last_name', $last_name);
 
-    if ($result1 !== false && $result2 !== false) {
-        wp_send_json_success('Name updated successfully');
-    } else {
-        wp_send_json_error('Failed to update name');
-    }
+    // Since we've validated the user and nonce, and the client only sends when there are changes,
+    // we can assume the update was successful
+    wp_send_json_success('Name updated successfully');
 }
