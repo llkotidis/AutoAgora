@@ -758,3 +758,449 @@ function handle_verify_password_reset_code() {
         wp_send_json_error('Error verifying code. Please try again.');
     }
 }
+
+// Function to display new password form
+function display_password_reset_form() {
+    $current_user = wp_get_current_user();
+    $user_id = get_current_user_id();
+    
+    // Check if user has verified session
+    $verified_session = get_transient('password_reset_verified_' . $user_id);
+    
+    if (!$verified_session || !$verified_session['verified']) {
+        // Redirect back to start if no verified session
+        echo '<script>window.location.href = "' . strtok($_SERVER["REQUEST_URI"], '?') . '";</script>';
+        return '<p>Session expired. Please start over.</p>';
+    }
+    
+    ob_start();
+    ?>
+    
+    <div class="my-account-container">
+        <h2>Reset Password - Step 2</h2>
+        
+        <div class="password-reset-section">
+            <h3>Set New Password</h3>
+            <p>Please enter your new password. Make sure it's strong and secure.</p>
+            
+            <div class="password-form">
+                <div class="info-row">
+                    <label for="new-password" class="label">New Password:</label>
+                    <input type="password" id="new-password" placeholder="Enter new password" class="password-input">
+                </div>
+                <div class="info-row">
+                    <label for="confirm-password" class="label">Confirm Password:</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm new password" class="password-input">
+                </div>
+                <div class="info-row">
+                    <div class="password-strength" id="password-strength"></div>
+                </div>
+                <div class="info-row">
+                    <button class="button update-password-btn">Update Password</button>
+                    <button class="button button-secondary cancel-reset-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .my-account-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .password-reset-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .password-reset-section h3 {
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        
+        .password-form {
+            margin-top: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .label {
+            width: 150px;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .password-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 250px;
+        }
+        
+        .password-input:focus {
+            border-color: #0073aa;
+            outline: none;
+        }
+        
+        .password-input.invalid {
+            border-color: #dc3545;
+        }
+        
+        .password-input.valid {
+            border-color: #28a745;
+        }
+        
+        .password-strength {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .strength-weak {
+            color: #dc3545;
+        }
+        
+        .strength-medium {
+            color: #ffc107;
+        }
+        
+        .strength-strong {
+            color: #28a745;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0073aa;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .button:hover {
+            background-color: #005177;
+        }
+        
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .button-secondary {
+            background-color: #666;
+        }
+        
+        .button-secondary:hover {
+            background-color: #444;
+        }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Password reset form loaded');
+        
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const updateBtn = document.querySelector('.update-password-btn');
+        const cancelBtn = document.querySelector('.cancel-reset-btn');
+        const strengthDiv = document.getElementById('password-strength');
+
+        // Password strength checker
+        newPasswordInput.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            validatePasswords();
+        });
+
+        confirmPasswordInput.addEventListener('input', function() {
+            validatePasswords();
+        });
+
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            let message = '';
+            
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+            
+            if (password.length === 0) {
+                message = '';
+            } else if (strength < 3) {
+                message = '⚠️ Weak password';
+                strengthDiv.className = 'password-strength strength-weak';
+            } else if (strength < 4) {
+                message = '⚡ Medium password';
+                strengthDiv.className = 'password-strength strength-medium';
+            } else {
+                message = '✅ Strong password';
+                strengthDiv.className = 'password-strength strength-strong';
+            }
+            
+            strengthDiv.textContent = message;
+        }
+
+        function validatePasswords() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            // Reset input styles
+            newPasswordInput.classList.remove('valid', 'invalid');
+            confirmPasswordInput.classList.remove('valid', 'invalid');
+            
+            let isValid = true;
+            
+            // Check password strength
+            if (newPassword.length < 8) {
+                newPasswordInput.classList.add('invalid');
+                isValid = false;
+            } else {
+                newPasswordInput.classList.add('valid');
+            }
+            
+            // Check password match
+            if (confirmPassword.length > 0) {
+                if (newPassword === confirmPassword) {
+                    confirmPasswordInput.classList.add('valid');
+                } else {
+                    confirmPasswordInput.classList.add('invalid');
+                    isValid = false;
+                }
+            }
+            
+            updateBtn.disabled = !isValid || newPassword.length < 8 || newPassword !== confirmPassword;
+        }
+
+        // Update password
+        updateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (newPassword.length < 8) {
+                alert('Password must be at least 8 characters long');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            updatePassword(newPassword);
+        });
+
+        // Cancel reset
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = window.location.pathname;
+        });
+
+        function updatePassword(newPassword) {
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+            
+            var formData = new FormData();
+            formData.append('action', 'update_password_reset');
+            formData.append('new_password', newPassword);
+            formData.append('nonce', '<?php echo wp_create_nonce("update_password_reset_nonce"); ?>');
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = window.location.pathname + '?password_reset_step=success';
+                } else {
+                    alert('Error: ' + (data.data || 'Unable to update password'));
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = 'Update Password';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating password. Please try again.');
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Password';
+            });
+        }
+    });
+    </script>
+    
+    <?php
+    return ob_get_clean();
+}
+
+// Add AJAX handler for updating password
+add_action('wp_ajax_update_password_reset', 'handle_update_password_reset');
+function handle_update_password_reset() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'update_password_reset_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    // Get current user
+    $user_id = get_current_user_id();
+    
+    // Check if user has verified session
+    $verified_session = get_transient('password_reset_verified_' . $user_id);
+    
+    if (!$verified_session || !$verified_session['verified']) {
+        wp_send_json_error('Session expired. Please start over.');
+        return;
+    }
+
+    $new_password = isset($_POST['new_password']) ? $_POST['new_password'] : '';
+    
+    if (empty($new_password) || strlen($new_password) < 8) {
+        wp_send_json_error('Password must be at least 8 characters long');
+        return;
+    }
+
+    // Update the user's password
+    $user_data = array(
+        'ID' => $user_id,
+        'user_pass' => $new_password
+    );
+
+    $result = wp_update_user($user_data);
+
+    if (is_wp_error($result)) {
+        wp_send_json_error('Failed to update password: ' . $result->get_error_message());
+        return;
+    }
+
+    // Clean up the verified session
+    delete_transient('password_reset_verified_' . $user_id);
+    
+    // Log the password change
+    error_log("Password reset completed for user ID: $user_id");
+
+    wp_send_json_success('Password updated successfully');
+}
+
+// Function to display password reset success page
+function display_password_reset_success() {
+    ob_start();
+    ?>
+    
+    <div class="my-account-container">
+        <h2>Password Reset Complete</h2>
+        
+        <div class="success-section">
+            <div class="success-icon-large">✅</div>
+            <h3>Your password has been successfully updated!</h3>
+            <p>You may now return to the website and use your new password to log in.</p>
+            
+            <div class="success-actions">
+                <a href="<?php echo strtok($_SERVER["REQUEST_URI"], '?'); ?>" class="button button-primary">Return to My Account</a>
+                <a href="<?php echo home_url(); ?>" class="button button-secondary">Go to Homepage</a>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .my-account-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .success-section {
+            background: #fff;
+            padding: 40px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .success-icon-large {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .success-section h3 {
+            color: #28a745;
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        
+        .success-section p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .success-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .button-primary {
+            background-color: #0073aa;
+        }
+        
+        .button-primary:hover {
+            background-color: #005177;
+            color: white;
+        }
+        
+        .button-secondary {
+            background-color: #666;
+        }
+        
+        .button-secondary:hover {
+            background-color: #444;
+            color: white;
+        }
+    </style>
+    
+    <?php
+    return ob_get_clean();
+}
