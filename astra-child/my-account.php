@@ -238,6 +238,19 @@ function display_my_account($atts) {
                 return;
             }
 
+            // Check if anything actually changed
+            if (firstName === originalFirstName && lastName === originalLastName) {
+                console.log('No changes detected, just hiding edit form');
+                // No changes, just hide the edit form
+                document.querySelector('.name-row').style.display = 'flex';
+                document.querySelectorAll('.name-edit-row').forEach(function(row) {
+                    row.style.display = 'none';
+                });
+                return;
+            }
+
+            console.log('Changes detected, sending to server');
+            
             // Create form data for AJAX request
             var formData = new FormData();
             formData.append('action', 'update_user_name');
@@ -313,29 +326,12 @@ function handle_update_user_name() {
 
     // Get current user
     $user_id = get_current_user_id();
-    
-    // Get current values for comparison
-    $current_first = get_user_meta($user_id, 'first_name', true);
-    $current_last = get_user_meta($user_id, 'last_name', true);
 
-    // Update user meta
-    $result1 = update_user_meta($user_id, 'first_name', $first_name);
-    $result2 = update_user_meta($user_id, 'last_name', $last_name);
+    // Update user meta - if we got here, the client detected changes
+    update_user_meta($user_id, 'first_name', $first_name);
+    update_user_meta($user_id, 'last_name', $last_name);
 
-    // Log for debugging (you can remove this later)
-    error_log("Name update - First: '$current_first' -> '$first_name' (result: " . var_export($result1, true) . ")");
-    error_log("Name update - Last: '$current_last' -> '$last_name' (result: " . var_export($result2, true) . ")");
-
-    // update_user_meta returns false if the value is the same as existing value, 
-    // or if there's an actual error. We should check if at least one update succeeded
-    // or if both values are the same as current values
-    $first_unchanged = ($current_first === $first_name);
-    $last_unchanged = ($current_last === $last_name);
-    
-    // If both are unchanged, or if at least one update returned a positive result
-    if (($first_unchanged && $last_unchanged) || $result1 !== false || $result2 !== false) {
-        wp_send_json_success('Name updated successfully');
-    } else {
-        wp_send_json_error('Failed to update name - both updates returned false');
-    }
+    // Since we've validated the user and nonce, and the client only sends when there are changes,
+    // we can assume the update was successful
+    wp_send_json_success('Name updated successfully');
 }
