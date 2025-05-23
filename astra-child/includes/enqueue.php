@@ -273,11 +273,12 @@ function autoagora_enqueue_car_listings_map_filter_assets() {
                 'cyprusCenter' => [33.3823, 35.1856]
             ),
             'initialFilter' => array(
-                'lat' => null,
-                'lng' => null,
-                'radius' => null,
+                'lat' => 35.1856,  // Cyprus center latitude
+                'lng' => 33.3823,  // Cyprus center longitude  
+                'radius' => 150,   // 150km radius to cover all of Cyprus
                 'text' => 'All of Cyprus'
-            )
+            ),
+            'perPage' => 12
         ));
     }
 }

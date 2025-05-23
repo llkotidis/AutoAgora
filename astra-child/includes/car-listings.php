@@ -16,6 +16,10 @@ require_once get_stylesheet_directory() . '/includes/car-listings-query.php';
 require_once get_stylesheet_directory() . '/includes/car-filter-form.php';
 require_once get_stylesheet_directory() . '/includes/geo-utils.php';
 
+// Define Cyprus center coordinates and default radius
+define('CYPRUS_CENTER_LAT', 35.1856);
+define('CYPRUS_CENTER_LNG', 33.3823);
+define('CYPRUS_DEFAULT_RADIUS', 150); // 150km to cover all of Cyprus
 
 // Register the shortcode
 add_shortcode('car_listings', 'display_car_listings');
@@ -37,137 +41,96 @@ function display_car_listings($atts) {
     );
 
 
-    // Get the current page number
-    $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-
-    // Refined check if a location filter is active and valid via GET parameters
-    $is_lat_set = isset($_GET['lat']) && trim((string)$_GET['lat']) !== '';
-    $is_lng_set = isset($_GET['lng']) && trim((string)$_GET['lng']) !== '';
-    $is_radius_set = isset($_GET['radius']) && trim((string)$_GET['radius']) !== '';
-    $has_location_filter_in_url = $is_lat_set && $is_lng_set && $is_radius_set;
-
-    $initial_location_info = array();
-
-    if ($has_location_filter_in_url) {
-        $location_text = __('Custom Location', 'astra-child'); // Default text, JS ideally reverse geocodes
-        if (isset($_GET['location_name']) && trim((string)$_GET['location_name']) !== '') {
-            $location_text = sanitize_text_field(wp_unslash($_GET['location_name']));
-        }
-        $initial_location_info = array(
-            'type' => 'custom',
-            'lat' => floatval($_GET['lat']),
-            'lng' => floatval($_GET['lng']),
-            'radius' => floatval($_GET['radius']),
-            'text' => $location_text,
-            'load_via_js' => true // Indicate JS should fetch these
-        );
-    } else {
-        // Default to "All of Cyprus"
-        $initial_location_info = array(
-            'type' => 'all_cyprus',
-            'lat' => 35.1264,    // Approximate center latitude of Cyprus
-            'lng' => 33.4299,    // Approximate center longitude of Cyprus
-            'radius' => 150,     // Radius in km to cover Cyprus
-            'text' => __('All of Cyprus', 'astra-child'), // Translatable string for display
-            'load_via_js' => false // Indicate PHP will load these
-        );
-    }
-
-    // Localize script for AJAX functionality (favorites and filters)
+    // Localize script for AJAX functionality (favorites)
     wp_localize_script('jquery', 'carListingsData', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('toggle_favorite_car'), // Nonce for favorite toggle
-        'filterNonce' => wp_create_nonce('filter_listings_by_location_nonce'), // Nonce for location/spec filters
-        'initialLocation' => $initial_location_info, // Data for JS to set initial map/filter state
-        'perPage' => intval($atts['per_page'])       // Pass per_page to JS for consistency
+        'nonce' => wp_create_nonce('toggle_favorite_car')
     ));
 
     // Start output buffering
     ob_start();
 
-    // Build the query arguments
-    $query_filters_for_php_load = array();
-    if ($initial_location_info['type'] === 'all_cyprus') {
-        $query_filters_for_php_load['lat'] = $initial_location_info['lat'];
-        $query_filters_for_php_load['lng'] = $initial_location_info['lng'];
-        $query_filters_for_php_load['radius'] = $initial_location_info['radius'];
+    // Get the current page number
+    $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+
+    // Check if a location filter is active via GET parameters
+    $has_location_filter_in_url = isset($_GET['lat']) && isset($_GET['lng']) && isset($_GET['radius']);
+
+    // Determine location filter values - use Cyprus defaults if no custom location is set
+    $filter_lat = CYPRUS_CENTER_LAT;
+    $filter_lng = CYPRUS_CENTER_LNG;
+    $filter_radius = CYPRUS_DEFAULT_RADIUS;
+    $is_default_cyprus_filter = true;
+
+    // Override with URL parameters if they exist
+    if ($has_location_filter_in_url) {
+        $filter_lat = floatval($_GET['lat']);
+        $filter_lng = floatval($_GET['lng']);
+        $filter_radius = floatval($_GET['radius']);
+        $is_default_cyprus_filter = false;
     }
-    
-    // Shortcode attributes like orderby, order are passed as $atts to build_car_listings_query_args
-    // $paged is also passed.
-    // $query_filters_for_php_load contains location if 'all_cyprus'
-    $args = build_car_listings_query_args(
-        array(
-            'per_page' => $initial_location_info['load_via_js'] ? 0 : $atts['per_page'],
-            'orderby' => $atts['orderby'],
-            'order' => $atts['order']
-        ),
-        $paged,
-        $query_filters_for_php_load // This will be empty if 'custom' location, so no geo-filter by build_car_listings_query_args
+
+    // Build the query arguments using the helper function with location filter
+    $args = array(
+        'post_type' => 'car',
+        'posts_per_page' => $atts['per_page'], 
+        'paged' => $paged,
+        'orderby' => $atts['orderby'],       // Use shortcode attribute
+        'order'   => $atts['order'],         // Use shortcode attribute
+        'meta_query' => array(
+            'relation' => 'OR',
+            array(
+                'key' => 'is_sold',
+                'compare' => 'NOT EXISTS'
+            ),
+            array(
+                'key' => 'is_sold',
+                'value' => '1',
+                'compare' => '!='
+            )
+        )
     );
 
-    // Get car listings based on bounding box (if location provided)
+    // Apply location filter using the build_car_listings_query_args function
+    $location_filters = array(
+        'lat' => $filter_lat,
+        'lng' => $filter_lng,
+        'radius' => $filter_radius
+    );
+    
+    $args = build_car_listings_query_args($atts, $paged, $location_filters);
+
+    // Get car listings
     $car_query = new WP_Query($args);
 
-    $display_posts = array();
-    $total_posts_for_pagination = $car_query->found_posts; // Initial count from bounding box for pagination
+    // Since we're using the bounding box approach, we need to do precise circular filtering
+    $posts_in_bounding_box = $car_query->posts;
+    $precisely_filtered_posts = array();
 
-    if ($initial_location_info['type'] === 'all_cyprus' && $car_query->have_posts()) {
-        // If "All of Cyprus", perform precise filtering on the server side for initial load
-        $posts_from_bounding_box = $car_query->posts;
-        if (function_exists('autoagora_calculate_distance')) {
-            foreach ($posts_from_bounding_box as $post_object) {
+    if (function_exists('autoagora_calculate_distance')) {
+        if (!empty($posts_in_bounding_box)) {
+            foreach ($posts_in_bounding_box as $post_object) {
                 $car_latitude = get_field('car_latitude', $post_object->ID);
                 $car_longitude = get_field('car_longitude', $post_object->ID);
 
                 if ($car_latitude && $car_longitude) {
-                    $distance = autoagora_calculate_distance(
-                        $initial_location_info['lat'],
-                        $initial_location_info['lng'],
-                        $car_latitude,
-                        $car_longitude
-                    );
-                    if ($distance <= $initial_location_info['radius']) {
-                        $display_posts[] = $post_object;
+                    $distance = autoagora_calculate_distance($filter_lat, $filter_lng, $car_latitude, $car_longitude);
+                    if ($distance <= $filter_radius) {
+                        $precisely_filtered_posts[] = $post_object;
                     }
-                } else {
-                    // If a car has no lat/lng, include it if no location filter is active (which is 'all_cyprus' case)
-                    // This behavior might need adjustment based on stricter requirements.
-                    // For "All of Cyprus" we assume all cars should be candidates if they lack specific coordinates.
-                    // However, build_car_listings_query_args already filters by lat/lng meta fields if present.
-                    // So, posts without lat/lng wouldn't be in $posts_from_bounding_box if 'all_cyprus' filter was applied.
-                    // This 'else' might be less relevant than initially thought due to how build_car_listings_query_args works.
-                    // If build_car_listings_query_args *doesn't* exclude posts missing lat/lng when a location filter is active,
-                    // then this logic is okay. If it *does* exclude them, this else won't be hit for this case.
-                    // For 'all_cyprus' this means we want those matching bounding box and then precise.
-                    // This can be simplified: if it's in bounding box and precise, it's in.
                 }
             }
-        } else {
-            // Fallback if distance function isn't available: use bounding box results
-            $display_posts = $posts_from_bounding_box;
         }
-        // Note: Pagination will still be based on $car_query->max_num_pages from the bounding box.
-        // A more complex pagination would require re-calculating total pages based on count($display_posts).
-        // For simplicity and consistency with AJAX, we use the original max_num_pages.
-        // The number of posts shown on the page will be correct, but "Next" might appear even if all precise posts fit.
-    } elseif ($initial_location_info['type'] === 'custom' || !$car_query->have_posts()) {
-        // If custom (JS will load) or no posts from query, $display_posts remains empty or uses car_query results (which would be none)
-        // If custom, JS will fetch. If no posts at all, loop below won't run.
-        $display_posts = $car_query->posts; // Will be empty if posts_per_page was 0 or no results
     } else {
-        // Fallback for any other unexpected case, use original query posts
-        $display_posts = $car_query->posts;
+        // Fallback to bounding box results if distance function is not available
+        $precisely_filtered_posts = $posts_in_bounding_box;
     }
-
-
-    // Removed Debugging
 
     // Start the output
     ?>
     <div class="car-listings-container">
         <div class="car-listings-location-filter-bar">
-            <span id="current-location-filter-text">All of Cyprus</span>
+            <span id="current-location-filter-text"><?php echo $is_default_cyprus_filter ? 'All of Cyprus' : 'Custom Location'; ?></span>
             <button id="change-location-filter-btn" class="button">Change Location</button>
         </div>
 
@@ -220,12 +183,11 @@ function display_car_listings($atts) {
         <!-- Listings Grid -->
         <div class="car-listings-grid">
             <?php
-            if (!empty($display_posts)) : // Use the precisely filtered posts for display
-                global $post; // Make $post global for setup_postdata and template tags
-                foreach ($display_posts as $current_post_object) :
-                    $post = $current_post_object; // Set the global $post object
-                    setup_postdata($post); // Setup post data for template tags
-
+            if (!empty($precisely_filtered_posts)) :
+                global $post; // Required for setup_postdata
+                foreach ($precisely_filtered_posts as $post_object) :
+                    $post = $post_object; // Set the global $post
+                    setup_postdata($post);
                     // Generate the detail page URL once
                     $car_detail_url = esc_url(get_permalink(get_the_ID()));
 
@@ -356,18 +318,9 @@ function display_car_listings($atts) {
                     </div>
                 <?php
                 endforeach;
-                wp_reset_postdata(); // Reset global $post object
+                wp_reset_postdata();
             else :
-                // Message when $display_posts is empty.
-                // If initial_location_info['load_via_js'] is true, JS will populate or show its own "no results".
-                // So, only show this PHP message if PHP was supposed to load them.
-                if (!$initial_location_info['load_via_js']) {
-                    echo '<p class="no-listings">No car listings found matching your criteria.</p>';
-                } else {
-                    // Placeholder for JS to fill, or could be an empty grid initially.
-                    // Or a loading spinner could be here if preferred.
-                     echo '<p class="no-listings">Loading listings...</p>'; // Temp message
-                }
+                echo '<p class="no-listings">No car listings found.</p>';
             endif;
             ?>
         </div>
@@ -375,15 +328,20 @@ function display_car_listings($atts) {
         <!-- Pagination -->
         <div class="car-listings-pagination">
             <?php
-            // Pagination is based on the original $car_query (bounding box)
-            // This might mean pagination shows more pages than strictly necessary if precise filtering removed many items.
-            echo paginate_links(array(
-                'total' => $car_query->max_num_pages, // Use max_num_pages from the broader query
-                'current' => $paged,
-                'prev_text' => '&laquo; Previous',
-                'next_text' => 'Next &raquo;',
-                'format'  => '?paged=%#%',
-            ));
+            // Calculate pagination based on precisely filtered posts
+            if (!empty($precisely_filtered_posts)) {
+                $total_posts = count($precisely_filtered_posts);
+                $posts_per_page = $atts['per_page'];
+                $max_num_pages = ceil($total_posts / $posts_per_page);
+                
+                echo paginate_links(array(
+                    'total' => $max_num_pages,
+                    'current' => $paged,
+                    'prev_text' => '&laquo; Previous',
+                    'next_text' => 'Next &raquo;',
+                    'format'  => '?paged=%#%',
+                ));
+            }
             ?>
         </div>
     </div>
@@ -392,8 +350,6 @@ function display_car_listings($atts) {
     // Return the buffered content
     return ob_get_clean();
 }
-
-
 
 // AJAX handler for filtering listings
 add_action('wp_ajax_filter_listings_by_location', 'autoagora_filter_listings_by_location_ajax');
@@ -428,9 +384,19 @@ function autoagora_filter_listings_by_location_ajax() {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
 
-        $filter_lat = isset($_POST['filter_lat']) && $_POST['filter_lat'] !== 'null' ? floatval($_POST['filter_lat']) : null;
-        $filter_lng = isset($_POST['filter_lng']) && $_POST['filter_lng'] !== 'null' ? floatval($_POST['filter_lng']) : null;
-        $filter_radius = isset($_POST['filter_radius']) && $_POST['filter_radius'] !== 'null' ? floatval($_POST['filter_radius']) : null;
+        $filter_lat = isset($_POST['filter_lat']) && $_POST['filter_lat'] !== 'null' && $_POST['filter_lat'] !== '' ? floatval($_POST['filter_lat']) : null;
+        $filter_lng = isset($_POST['filter_lng']) && $_POST['filter_lng'] !== 'null' && $_POST['filter_lng'] !== '' ? floatval($_POST['filter_lng']) : null;
+        $filter_radius = isset($_POST['filter_radius']) && $_POST['filter_radius'] !== 'null' && $_POST['filter_radius'] !== '' ? floatval($_POST['filter_radius']) : null;
+
+        // Use Cyprus defaults if no location filter is provided
+        if ($filter_lat === null || $filter_lng === null || $filter_radius === null) {
+            $filter_lat = CYPRUS_CENTER_LAT;
+            $filter_lng = CYPRUS_CENTER_LNG;
+            $filter_radius = CYPRUS_DEFAULT_RADIUS;
+            error_log('[DEBUG] AJAX Handler: Using Cyprus default location filter (lat: ' . $filter_lat . ', lng: ' . $filter_lng . ', radius: ' . $filter_radius . 'km)');
+        } else {
+            error_log('[DEBUG] AJAX Handler: Using custom location filter (lat: ' . $filter_lat . ', lng: ' . $filter_lng . ', radius: ' . $filter_radius . 'km)');
+        }
 
         $active_filters_for_query = array();
         $active_filters_for_counts = array();
@@ -449,23 +415,14 @@ function autoagora_filter_listings_by_location_ajax() {
             }
         }
         
-        // Add location filters to $active_filters_for_query for the main listings query
-        if ($filter_lat !== null) {
-            $active_filters_for_query['lat'] = $filter_lat;
-        }
-        if ($filter_lng !== null) {
-            $active_filters_for_query['lng'] = $filter_lng;
-        }
-        if ($filter_radius !== null) {
-            $active_filters_for_query['radius'] = $filter_radius;
-        }
+        // Add location filters to both query and counts (always set now due to defaults)
+        $active_filters_for_query['lat'] = $filter_lat;
+        $active_filters_for_query['lng'] = $filter_lng;
+        $active_filters_for_query['radius'] = $filter_radius;
         
-        // Add location filters to $active_filters_for_counts for the counts query (already done, but ensure consistency)
-        if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) { // This structure is for $active_filters_for_counts
-            $active_filters_for_counts['lat'] = $filter_lat;
-            $active_filters_for_counts['lng'] = $filter_lng;
-            $active_filters_for_counts['radius'] = $filter_radius;
-        }
+        $active_filters_for_counts['lat'] = $filter_lat;
+        $active_filters_for_counts['lng'] = $filter_lng;
+        $active_filters_for_counts['radius'] = $filter_radius;
 
         error_log('[DEBUG] AJAX Handler - Filters for Query: ' . print_r($active_filters_for_query, true));
 
@@ -476,7 +433,7 @@ function autoagora_filter_listings_by_location_ajax() {
                 'order' => 'DESC'   // Or manage these via AJAX params if needed
             ),
             $paged, 
-            $active_filters_for_query // Pass all filters including location if set
+            $active_filters_for_query // Pass all filters including location
         );
 
         error_log('[DEBUG] AJAX Handler - Built Query Args for Listings: ' . print_r($query_args, true));
@@ -489,7 +446,7 @@ function autoagora_filter_listings_by_location_ajax() {
         $posts_in_bounding_box = $car_query->posts; // Get all posts found by the bounding box query
         $precisely_filtered_posts = array();
 
-        if ($filter_lat !== null && $filter_lng !== null && $filter_radius !== null && function_exists('autoagora_calculate_distance')) {
+        if (function_exists('autoagora_calculate_distance')) {
             if (!empty($posts_in_bounding_box)) {
                 foreach ($posts_in_bounding_box as $post_object) {
                     $car_latitude = get_field('car_latitude', $post_object->ID);
@@ -505,29 +462,9 @@ function autoagora_filter_listings_by_location_ajax() {
                 error_log('[DEBUG] AJAX Handler - Posts after precise circular filter: ' . count($precisely_filtered_posts));
             }
         } else {
-            // If no location filter was applied initially, or distance function missing, all posts from query are considered final (for now)
-            // Or, if a location filter *was* applied (bounding box) but something is wrong with precise filter params, this path is taken.
-            // This might need refinement based on whether location filter was active in $query_args.
-            if (isset($query_args['meta_query'])) { // A rough check if location filter was intended
-                $is_location_filter_active = false;
-                foreach($query_args['meta_query'] as $mq_item) {
-                    if (is_array($mq_item) && isset($mq_item['key']) && ($mq_item['key'] === 'car_latitude' || $mq_item['key'] === 'car_longitude')) {
-                        $is_location_filter_active = true;
-                        break;
-                    }
-                }
-                if ($is_location_filter_active) {
-                     // Bounding box was applied, but precise filter could not run. 
-                     // For now, we take bounding box results. This might include corners.
-                     $precisely_filtered_posts = $posts_in_bounding_box; 
-                     error_log('[DEBUG] AJAX Handler - Precise filter skipped, using bounding box results. Count: ' . count($precisely_filtered_posts));
-                } else {
-                    // No location filter was applied at all in the query_args
-                    $precisely_filtered_posts = $posts_in_bounding_box;
-                }
-            } else {
-                 $precisely_filtered_posts = $posts_in_bounding_box;
-            }
+            // Fallback to bounding box results if distance function is not available
+            $precisely_filtered_posts = $posts_in_bounding_box;
+            error_log('[DEBUG] AJAX Handler - Distance function not available, using bounding box results. Count: ' . count($precisely_filtered_posts));
         }
 
         ob_start();
@@ -547,22 +484,13 @@ function autoagora_filter_listings_by_location_ajax() {
         }
         $listings_html = ob_get_clean();
 
-        // For now, this will generate links that would work on a non-AJAX page.
-        // We need to adjust total pages based on the precisely_filtered_posts count if location filter is active.
-        $total_pages = $car_query->max_num_pages; // Default
-
-        // If a location filter was active and resulted in precise filtering, recalculate total pages.
-        // This simplistic approach assumes all results fit on one page after precise filtering if count < per_page.
-        // Proper pagination for the precisely filtered set is more complex if it spans multiple pages itself.
-        if (($filter_lat !== null && $filter_lng !== null && $filter_radius !== null) && !empty($posts_in_bounding_box) ) {
-             // If precise filtering was done, the total number of posts is count($precisely_filtered_posts)
-             // $per_page comes from the original AJAX request or defaults.
-             $per_page_for_pagination = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
-             if ($per_page_for_pagination > 0 && count($precisely_filtered_posts) > 0) {
+        // Calculate total pages based on precisely filtered posts
+        $total_pages = 1; // Default
+        if (!empty($precisely_filtered_posts)) {
+            $per_page_for_pagination = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
+            if ($per_page_for_pagination > 0) {
                 $total_pages = ceil(count($precisely_filtered_posts) / $per_page_for_pagination);
-             } elseif (count($precisely_filtered_posts) === 0) {
-                $total_pages = 0;
-             }
+            }
         }
 
         $pagination_html = paginate_links(array(

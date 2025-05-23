@@ -9,7 +9,7 @@ jQuery(document).ready(function ($) {
   let geocoder = null;
   let selectedCoords = null; // LngLat array [lng, lat]
   let selectedLocationName = initialFilter.text || "All of Cyprus"; // For display
-  let currentRadiusKm = initialFilter.radius || 10; // Default radius in km
+  let currentRadiusKm = initialFilter.radius || 150; // Default radius from server config
   const circleSourceId = "radius-circle-source";
   const circleLayerId = "radius-circle-layer";
   let moveTimeout; // For debouncing map moveend
@@ -32,7 +32,7 @@ jQuery(document).ready(function ($) {
   const resetSpecFiltersBtn = $("#reset-spec-filters-btn"); // From car-filter-form.php
   const specFiltersContainer = $("#car-spec-filters-container"); // Container of all spec filters
 
-  // Initialize UI elements
+  // Initialize UI elements with defaults
   radiusSlider.val(currentRadiusKm);
   radiusValueDisplay.text(currentRadiusKm);
   currentLocationText.text(selectedLocationName);
@@ -45,17 +45,34 @@ jQuery(document).ready(function ($) {
   const urlLocationName = urlParams.get("location_name");
 
   let loadedFromStorage = false;
+  let isUsingCustomLocation = false; // Track if we're using a custom location vs Cyprus default
 
   if (urlLat && urlLng && urlRadius) {
+    // Check if this is the Cyprus default location or a custom location
+    const urlLatFloat = parseFloat(urlLat);
+    const urlLngFloat = parseFloat(urlLng);
+    const urlRadiusInt = parseInt(urlRadius, 10);
+    
+    if (Math.abs(urlLatFloat - initialFilter.lat) < 0.001 && 
+        Math.abs(urlLngFloat - initialFilter.lng) < 0.001 && 
+        urlRadiusInt === initialFilter.radius) {
+      // This is the Cyprus default location
+      isUsingCustomLocation = false;
+      selectedLocationName = "All of Cyprus";
+    } else {
+      // This is a custom location
+      isUsingCustomLocation = true;
+      selectedLocationName = urlLocationName || "Selected on map";
+    }
+    
     initialFilter = {
-      lat: parseFloat(urlLat),
-      lng: parseFloat(urlLng),
-      radius: parseInt(urlRadius, 10),
-      text: urlLocationName || "Selected on map",
+      lat: urlLatFloat,
+      lng: urlLngFloat,
+      radius: urlRadiusInt,
+      text: selectedLocationName,
     };
     selectedCoords = [initialFilter.lng, initialFilter.lat];
     currentRadiusKm = initialFilter.radius;
-    selectedLocationName = initialFilter.text;
     console.log("[Init] Loaded filter from URL:", initialFilter);
   } else {
     // --- Try to load from localStorage if not in URL ---
@@ -64,15 +81,27 @@ jQuery(document).ready(function ($) {
       try {
         const parsedLocation = JSON.parse(savedLocation);
         if (parsedLocation.lat && parsedLocation.lng && parsedLocation.radius) {
+          // Check if the saved location is Cyprus default or custom
+          if (Math.abs(parsedLocation.lat - initialFilter.lat) < 0.001 && 
+              Math.abs(parsedLocation.lng - initialFilter.lng) < 0.001 && 
+              parsedLocation.radius === initialFilter.radius) {
+            // This is Cyprus default
+            isUsingCustomLocation = false;
+            selectedLocationName = "All of Cyprus";
+          } else {
+            // This is a custom location
+            isUsingCustomLocation = true;
+            selectedLocationName = parsedLocation.name || "Saved location";
+          }
+          
           initialFilter = {
             lat: parseFloat(parsedLocation.lat),
             lng: parseFloat(parsedLocation.lng),
             radius: parseInt(parsedLocation.radius, 10),
-            text: parsedLocation.name || "Saved location",
+            text: selectedLocationName,
           };
           selectedCoords = [initialFilter.lng, initialFilter.lat];
           currentRadiusKm = initialFilter.radius;
-          selectedLocationName = initialFilter.text;
           loadedFromStorage = true;
           console.log("[Init] Loaded filter from localStorage:", initialFilter);
         }
@@ -81,20 +110,28 @@ jQuery(document).ready(function ($) {
         localStorage.removeItem("autoAgoraUserLocation"); // Clear corrupted data
       }
     }
+    
+    // If no localStorage data or it was invalid, ensure we have Cyprus defaults set
+    if (!loadedFromStorage) {
+      selectedCoords = [initialFilter.lng, initialFilter.lat];
+      currentRadiusKm = initialFilter.radius;
+      selectedLocationName = initialFilter.text;
+      isUsingCustomLocation = false;
+      console.log("[Init] Using Cyprus default location filter:", initialFilter);
+    }
   }
 
-  // Update UI elements (either from URL, localStorage, or defaults via wp_localize_script)
+  // Update UI elements with final values
   radiusSlider.val(currentRadiusKm);
   radiusValueDisplay.text(currentRadiusKm);
   currentLocationText.text(selectedLocationName);
+  
   if (loadedFromStorage) {
     console.log("[Init] UI updated with localStorage data.");
   } else if (urlLat && urlLng && urlRadius) {
     console.log("[Init] UI updated with URL data.");
   } else {
-    console.log(
-      "[Init] No location filter in URL or localStorage, UI reflects defaults."
-    );
+    console.log("[Init] UI updated with Cyprus defaults.");
   }
 
   // Update URL if filter was loaded from localStorage and not from URL parameters
@@ -1097,11 +1134,11 @@ jQuery(document).ready(function ($) {
   // --- Apply Spec Filters Button ---
   applySpecFiltersBtn.on("click", function () {
     console.log("[ApplySpecFilters] Apply button clicked.");
-    // Collect current location from URL (or stored state if preferred)
+    // Always use the current filter state (either URL params or defaults)
     const urlParams = new URLSearchParams(window.location.search);
-    const lat = urlParams.get("lat") || initialFilter.lat || null;
-    const lng = urlParams.get("lng") || initialFilter.lng || null;
-    const radius = urlParams.get("radius") || initialFilter.radius || null;
+    const lat = urlParams.get("lat") || initialFilter.lat;
+    const lng = urlParams.get("lng") || initialFilter.lng;
+    const radius = urlParams.get("radius") || initialFilter.radius;
 
     fetchFilteredListings(1, lat, lng, radius); // Page 1, with current location and newly applied spec filters
     specFiltersPopup.hide();
@@ -1123,9 +1160,9 @@ jQuery(document).ready(function ($) {
 
     // After resetting, fetch listings. Pass current location filters.
     const urlParams = new URLSearchParams(window.location.search);
-    const lat = urlParams.get("lat") || initialFilter.lat || null;
-    const lng = urlParams.get("lng") || initialFilter.lng || null;
-    const radius = urlParams.get("radius") || initialFilter.radius || null;
+    const lat = urlParams.get("lat") || initialFilter.lat;
+    const lng = urlParams.get("lng") || initialFilter.lng;
+    const radius = urlParams.get("radius") || initialFilter.radius;
 
     fetchFilteredListings(1, lat, lng, radius);
     specFiltersPopup.hide(); // Optionally hide popup after reset
@@ -1135,9 +1172,11 @@ jQuery(document).ready(function ($) {
   // Initial fetch on page load, respecting URL and localStorage
   const urlParamsGlobal = new URLSearchParams(window.location.search);
   const pageToFetch = urlParamsGlobal.get("paged") || 1;
-  let initialLoadLat = null;
-  let initialLoadLng = null;
-  let initialLoadRadius = null;
+  
+  // Since we now always have location data (either custom or Cyprus defaults), use it
+  let initialLoadLat = initialFilter.lat;
+  let initialLoadLng = initialFilter.lng;
+  let initialLoadRadius = initialFilter.radius;
 
   // Initialize makes, models, variants filters
   $("#filter-make").addClass("loading-filter");
@@ -1150,30 +1189,14 @@ jQuery(document).ready(function ($) {
     .prop("disabled", true)
     .html('<option value="">Select Model First</option>');
 
-  if (initialFilter && typeof initialFilter === "object") {
-    if (
-      initialFilter.lat !== null &&
-      initialFilter.lng !== null &&
-      initialFilter.radius !== null
-    ) {
-      console.log(
-        "[PageLoad] Using location from initialFilter (URL or localStorage).",
-        initialFilter
-      );
-      initialLoadLat = initialFilter.lat;
-      initialLoadLng = initialFilter.lng;
-      initialLoadRadius = initialFilter.radius;
-      currentLocationText.text(initialFilter.text || "Selected location");
-    } else {
-      console.log(
-        "[PageLoad] initialFilter present but location data is null/incomplete."
-      );
-    }
-  } else {
-    console.log("[PageLoad] initialFilter is not an object or is null.");
-  }
+  console.log("[PageLoad] Using location filter:", {
+    lat: initialLoadLat,
+    lng: initialLoadLng,
+    radius: initialLoadRadius,
+    text: selectedLocationName
+  });
 
-  // Fetch initial makes, models, variants data
+  // Fetch initial makes, models, variants data with location filter
   $.ajax({
     url: ajaxurl,
     type: "POST",
@@ -1187,9 +1210,9 @@ jQuery(document).ready(function ($) {
       make: urlParamsGlobal.get("make") || "",
       model: urlParamsGlobal.get("model") || "",
       variant: urlParamsGlobal.get("variant") || "",
-      filter_lat: urlParamsGlobal.get("lat") || null,
-      filter_lng: urlParamsGlobal.get("lng") || null,
-      filter_radius: urlParamsGlobal.get("radius") || null,
+      filter_lat: initialLoadLat,
+      filter_lng: initialLoadLng,
+      filter_radius: initialLoadRadius,
     },
     success: function (response) {
       if (response.success) {
@@ -1260,7 +1283,7 @@ jQuery(document).ready(function ($) {
     },
   });
 
-  // Fetch listings with location (if any) and any spec filters from URL
+  // Fetch listings with location and any spec filters from URL
   fetchFilteredListings(
     pageToFetch,
     initialLoadLat,
@@ -1276,7 +1299,13 @@ jQuery(document).ready(function ($) {
       const href = $(this).attr("href");
       const urlParams = new URLSearchParams(href.split("?")[1]);
       const page = parseInt(urlParams.get("paged")) || 1;
-      fetchFilteredListings(page);
+      
+      // Always pass current location for pagination
+      const currentLat = urlParams.get("lat") || initialFilter.lat;
+      const currentLng = urlParams.get("lng") || initialFilter.lng;
+      const currentRadius = urlParams.get("radius") || initialFilter.radius;
+      
+      fetchFilteredListings(page, currentLat, currentLng, currentRadius);
     }
   );
 });
