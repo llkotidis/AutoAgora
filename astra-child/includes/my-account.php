@@ -17,7 +17,18 @@ function display_my_account($atts) {
         return '<p>Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to view your account information.</p>';
     }
 
-    // Get current user
+    // Check if we're in password reset flow
+    $password_reset_step = isset($_GET['password_reset_step']) ? sanitize_text_field($_GET['password_reset_step']) : '';
+    
+    if ($password_reset_step === 'verify') {
+        return display_password_reset_verify();
+    } elseif ($password_reset_step === 'new_password') {
+        return display_password_reset_form();
+    } elseif ($password_reset_step === 'success') {
+        return display_password_reset_success();
+    }
+
+    // Normal account display
     $current_user = wp_get_current_user();
     
     // Start output buffering
@@ -449,5 +460,301 @@ function handle_initiate_password_reset() {
     } catch (Exception $e) {
         error_log('Twilio Verify error: ' . $e->getMessage());
         wp_send_json_error('Failed to send verification code. Please try again later.');
+    }
+}
+
+// Function to display password reset verification step
+function display_password_reset_verify() {
+    $current_user = wp_get_current_user();
+    
+    ob_start();
+    ?>
+    
+    <div class="my-account-container">
+        <h2>Reset Password - Step 1</h2>
+        
+        <div class="password-reset-section">
+            <h3>Enter Verification Code</h3>
+            <p>We've sent a verification code to your phone number. Please enter the 6-digit code below:</p>
+            
+            <div class="verification-form">
+                <div class="info-row">
+                    <label for="verification-code" class="label">Verification Code:</label>
+                    <input type="text" id="verification-code" maxlength="6" placeholder="000000" class="verification-input">
+                </div>
+                <div class="info-row">
+                    <button class="button verify-code-btn">Verify Code</button>
+                    <button class="button button-secondary cancel-reset-btn">Cancel</button>
+                </div>
+                <div class="info-row">
+                    <button class="button button-link resend-code-btn">Resend Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .my-account-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .password-reset-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .password-reset-section h3 {
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        
+        .verification-form {
+            margin-top: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            align-items: center;
+        }
+        
+        .label {
+            width: 150px;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .verification-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 2px;
+            max-width: 200px;
+        }
+        
+        .verification-input:focus {
+            border-color: #0073aa;
+            outline: none;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0073aa;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .button:hover {
+            background-color: #005177;
+        }
+        
+        .button-secondary {
+            background-color: #666;
+        }
+        
+        .button-secondary:hover {
+            background-color: #444;
+        }
+        
+        .button-link {
+            background-color: transparent;
+            color: #0073aa;
+            text-decoration: underline;
+            padding: 4px 8px;
+        }
+        
+        .button-link:hover {
+            background-color: transparent;
+            color: #005177;
+        }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Password reset verification page loaded');
+        
+        const verificationInput = document.getElementById('verification-code');
+        const verifyBtn = document.querySelector('.verify-code-btn');
+        const cancelBtn = document.querySelector('.cancel-reset-btn');
+        const resendBtn = document.querySelector('.resend-code-btn');
+
+        // Auto-format verification code input
+        verificationInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Verify code
+        verifyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const code = verificationInput.value.trim();
+            
+            if (code.length !== 6) {
+                alert('Please enter a 6-digit verification code');
+                return;
+            }
+            
+            verifyPasswordResetCode(code);
+        });
+
+        // Cancel reset
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = window.location.pathname;
+        });
+
+        // Resend code
+        resendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            resendPasswordResetCode();
+        });
+
+        // Handle Enter key
+        verificationInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verifyBtn.click();
+            }
+        });
+
+        function verifyPasswordResetCode(code) {
+            var formData = new FormData();
+            formData.append('action', 'verify_password_reset_code');
+            formData.append('code', code);
+            formData.append('nonce', '<?php echo wp_create_nonce("verify_password_reset_nonce"); ?>');
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = window.location.pathname + '?password_reset_step=new_password';
+                } else {
+                    alert('Error: ' + (data.data || 'Invalid verification code'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error verifying code. Please try again.');
+            });
+        }
+
+        function resendPasswordResetCode() {
+            var formData = new FormData();
+            formData.append('action', 'initiate_password_reset');
+            formData.append('nonce', '<?php echo wp_create_nonce("password_reset_nonce"); ?>');
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Verification code sent again to your phone number.');
+                } else {
+                    alert('Error: ' + (data.data || 'Unable to resend code'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error resending code. Please try again.');
+            });
+        }
+    });
+    </script>
+    
+    <?php
+    return ob_get_clean();
+}
+
+// Add AJAX handler for verifying password reset code
+add_action('wp_ajax_verify_password_reset_code', 'handle_verify_password_reset_code');
+function handle_verify_password_reset_code() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'verify_password_reset_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    $code = isset($_POST['code']) ? sanitize_text_field($_POST['code']) : '';
+    if (empty($code) || strlen($code) !== 6) {
+        wp_send_json_error('Invalid verification code format');
+        return;
+    }
+
+    // Get current user and verification session
+    $user_id = get_current_user_id();
+    $reset_session = get_transient('password_reset_' . $user_id);
+
+    if (!$reset_session) {
+        wp_send_json_error('Verification session expired. Please start over.');
+        return;
+    }
+
+    // Use Twilio to verify the code
+    $twilio_sid = defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '';
+    $twilio_token = defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '';
+    $twilio_verify_sid = defined('TWILIO_VERIFY_SID') ? TWILIO_VERIFY_SID : '';
+
+    if (empty($twilio_sid) || empty($twilio_token) || empty($twilio_verify_sid)) {
+        wp_send_json_error('SMS configuration error. Please contact admin.');
+        return;
+    }
+
+    $twilio = new \Twilio\Rest\Client($twilio_sid, $twilio_token);
+
+    try {
+        $verification_check = $twilio->verify->v2->services($twilio_verify_sid)
+            ->verificationChecks
+            ->create([
+                'to' => $reset_session['phone'],
+                'code' => $code
+            ]);
+
+        if ($verification_check->status === 'approved') {
+            // Store verified session for password update
+            set_transient('password_reset_verified_' . $user_id, array(
+                'verified' => true,
+                'timestamp' => time()
+            ), 600); // 10 minutes to complete password reset
+            
+            // Clean up the verification session
+            delete_transient('password_reset_' . $user_id);
+            
+            wp_send_json_success('Code verified successfully');
+        } else {
+            wp_send_json_error('Invalid verification code');
+        }
+    } catch (Exception $e) {
+        error_log('Twilio verification check error: ' . $e->getMessage());
+        wp_send_json_error('Error verifying code. Please try again.');
     }
 }
