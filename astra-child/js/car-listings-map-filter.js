@@ -677,11 +677,7 @@ jQuery(document).ready(function ($) {
     page = 1,
     lat = null,
     lng = null,
-    radius = null,
-    getAllMakes = false,
-    getFilterCounts = false,
-    specFilters = null,
-    fetchListings = true
+    radius = null
   ) {
     // Show loading states
     $("#filter-make").addClass("loading-filter");
@@ -704,9 +700,8 @@ jQuery(document).ready(function ($) {
       filter_lng: lng,
       filter_radius: radius,
       per_page: carListingsMapFilterData.perPage || 12,
-      get_all_makes: getAllMakes,
-      get_filter_counts: getFilterCounts,
-      get_listings_html: fetchListings,
+      get_filter_counts: true,
+      get_all_makes: true, // Add this to explicitly request all makes
     };
 
     // Add any selected filters
@@ -1137,67 +1132,141 @@ jQuery(document).ready(function ($) {
     // updateActiveFiltersDisplay(); // Update display of active filters (should be empty now)
   });
 
-  // Initial fetch on page load
-  $(document).ready(function () {
-    const initialFilters = getFiltersFromURLAndStorage();
-    console.log("[PageLoad] initialFilters from URL/Storage:", initialFilters);
+  // Initial fetch on page load, respecting URL and localStorage
+  const urlParamsGlobal = new URLSearchParams(window.location.search);
+  const pageToFetch = urlParamsGlobal.get("paged") || 1;
+  let initialLoadLat = null;
+  let initialLoadLng = null;
+  let initialLoadRadius = null;
 
-    let initialLat = initialFilters.location ? initialFilters.location.lat : null;
-    let initialLng = initialFilters.location ? initialFilters.location.lng : null;
-    let initialRadius = initialFilters.location ? initialFilters.location.radius : null;
-    let initialPage = initialFilters.page || 1;
-    let initialSpecFilters = initialFilters.specFilters || {};
+  // Initialize makes, models, variants filters
+  $("#filter-make").addClass("loading-filter");
+  $("#filter-model")
+    .addClass("loading-filter")
+    .prop("disabled", true)
+    .html('<option value="">Select Make First</option>');
+  $("#filter-variant")
+    .addClass("loading-filter")
+    .prop("disabled", true)
+    .html('<option value="">Select Model First</option>');
 
-    // Determine if we should fetch listings or just filter data
-    let shouldFetchListingsInitially = true;
-    if (initialPage === 1 && initialLat === null && initialLng === null && Object.keys(initialSpecFilters).length === 0) {
-        // If it's page 1, "All of Cyprus" (no lat/lng), and no spec filters are active from storage,
-        // PHP has already rendered the listings. We only need filter counts and make/model data.
-        shouldFetchListingsInitially = false;
-        console.log("[PageLoad] PHP should have rendered listings. Fetching only filter data.");
-    }
-
-    // If location is set, update the UI elements related to location
-    if (initialLat !== null && initialLng !== null && initialRadius !== null && initialFilters.location.text) {
-        selectedCoords = [initialLng, initialLat];
-        currentRadiusKm = initialRadius;
-        currentLocationText.text(initialFilters.location.text);
-        $('#radius-slider').val(initialRadius);
-        $('#radius-value').text(initialRadius);
-        console.log("[PageLoad] Using location from initialFilter (URL or localStorage).", initialFilters.location);
+  if (initialFilter && typeof initialFilter === "object") {
+    if (
+      initialFilter.lat !== null &&
+      initialFilter.lng !== null &&
+      initialFilter.radius !== null
+    ) {
+      console.log(
+        "[PageLoad] Using location from initialFilter (URL or localStorage).",
+        initialFilter
+      );
+      initialLoadLat = initialFilter.lat;
+      initialLoadLng = initialFilter.lng;
+      initialLoadRadius = initialFilter.radius;
+      currentLocationText.text(initialFilter.text || "Selected location");
     } else {
-        console.log("[PageLoad] No specific location in initialFilter. Defaulting to 'All of Cyprus'.");
-        currentLocationText.text("All of Cyprus");
+      console.log(
+        "[PageLoad] initialFilter present but location data is null/incomplete."
+      );
     }
+  } else {
+    console.log("[PageLoad] initialFilter is not an object or is null.");
+  }
 
-    // Update spec filter UI from stored/URL values
-    window.AutoAgoraSpecFilters.setSelectedFilters(initialSpecFilters);
-    updateActiveFiltersDisplay();
+  // Fetch initial makes, models, variants data
+  $.ajax({
+    url: ajaxurl,
+    type: "POST",
+    data: {
+      action: "filter_listings_by_location",
+      nonce: nonce,
+      paged: 1,
+      per_page: 1,
+      get_all_makes: true,
+      get_filter_counts: true,
+      make: urlParamsGlobal.get("make") || "",
+      model: urlParamsGlobal.get("model") || "",
+      variant: urlParamsGlobal.get("variant") || "",
+      filter_lat: urlParamsGlobal.get("lat") || null,
+      filter_lng: urlParamsGlobal.get("lng") || null,
+      filter_radius: urlParamsGlobal.get("radius") || null,
+    },
+    success: function (response) {
+      if (response.success) {
+        console.log("[DEBUG] Initial AJAX - response.data:", response.data);
+        const allMakesList = response.data.all_makes;
+        const allModelsByMake = response.data.all_models_by_make;
+        const allVariantsByModel = response.data.all_variants_by_model;
+        const filterCountsInitial = response.data.filter_counts;
 
-    console.log("[PageLoad] Calling fetchFilteredListings initially with:", {
-        page: initialPage,
-        lat: initialLat,
-        lng: initialLng,
-        radius: initialRadius,
-        getAllMakes: true, // Always get all makes on first load
-        getFilterCounts: true, // Always get filter counts on first load
-        specFilters: initialSpecFilters,
-        fetchListings: shouldFetchListingsInitially
-    });
+        const initialSelectedMake = urlParamsGlobal.get("make") || "";
+        const initialSelectedModel = urlParamsGlobal.get("model") || "";
+        const initialSelectedVariant = urlParamsGlobal.get("variant") || "";
 
-    fetchFilteredListings(
-        initialPage,
-        initialLat,
-        initialLng,
-        initialRadius,
-        true, // getAllMakes
-        true, // getFilterCounts
-        initialSpecFilters,
-        shouldFetchListingsInitially // fetchListings
-    );
+        updateMakeFilter(
+          allMakesList,
+          filterCountsInitial,
+          initialSelectedMake
+        );
+        updateModelFilter(
+          allModelsByMake,
+          filterCountsInitial,
+          initialSelectedMake,
+          initialSelectedModel
+        );
+        updateVariantFilter(
+          allVariantsByModel,
+          filterCountsInitial,
+          initialSelectedMake,
+          initialSelectedModel,
+          initialSelectedVariant
+        );
 
-    // ... rest of the document ready ...
+        if (filterCountsInitial) {
+          let otherFilterCounts = { ...filterCountsInitial };
+          delete otherFilterCounts.make;
+          delete otherFilterCounts.model_by_make;
+          delete otherFilterCounts.variant_by_model;
+          if (
+            window.AutoAgoraSpecFilters &&
+            typeof window.AutoAgoraSpecFilters.updateFilterCounts === "function"
+          ) {
+            window.AutoAgoraSpecFilters.updateFilterCounts(otherFilterCounts);
+          } else {
+            console.error(
+              "[DEBUG] AutoAgoraSpecFilters.updateFilterCounts is not available for initial load."
+            );
+          }
+        }
+      } else {
+        console.error(
+          "[DEBUG] Initial AJAX for options failed:",
+          response.data?.message || "No error message"
+        );
+      }
+      $("#filter-make").removeClass("loading-filter");
+      $("#filter-model").removeClass("loading-filter");
+      $("#filter-variant").removeClass("loading-filter");
+    },
+    error: function (jqXHR, textStatus, errorThrown) {
+      console.error(
+        "[DEBUG] Initial AJAX for options Error:",
+        textStatus,
+        errorThrown
+      );
+      $("#filter-make").removeClass("loading-filter");
+      $("#filter-model").removeClass("loading-filter");
+      $("#filter-variant").removeClass("loading-filter");
+    },
   });
+
+  // Fetch listings with location (if any) and any spec filters from URL
+  fetchFilteredListings(
+    pageToFetch,
+    initialLoadLat,
+    initialLoadLng,
+    initialLoadRadius
+  );
 
   $("body").on(
     "click",
