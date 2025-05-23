@@ -27,6 +27,13 @@ function display_my_account($atts) {
     <div class="my-account-container">
         <h2>Personal Details</h2>
         
+        <?php if (isset($_GET['name_updated']) && $_GET['name_updated'] == '1'): ?>
+            <div class="success-message">
+                <span class="success-icon">✓</span>
+                Name successfully updated
+            </div>
+        <?php endif; ?>
+        
         <div class="account-sections">
             <div class="account-section">
                 <h3>Sign In Details</h3>
@@ -176,6 +183,36 @@ function display_my_account($atts) {
         .name-edit-row .button-small:last-child {
             margin-right: 0;
         }
+        
+        /* Success message styling */
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            color: #155724;
+            padding: 12px 16px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .success-icon {
+            background-color: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
     </style>
 
     <script>
@@ -260,17 +297,8 @@ function display_my_account($atts) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    var fullName = (firstName + ' ' + lastName).trim();
-                    displayName.textContent = fullName;
-                    
-                    // Update original values
-                    originalFirstName = firstName;
-                    originalLastName = lastName;
-                    
-                    document.querySelector('.name-row').style.display = 'flex';
-                    document.querySelectorAll('.name-edit-row').forEach(function(row) {
-                        row.style.display = 'none';
-                    });
+                    // Refresh the page with success parameter
+                    window.location.href = window.location.pathname + '?name_updated=1';
                 } else {
                     alert('Error updating name: ' + (data.data || 'Unknown error'));
                 }
