@@ -319,7 +319,7 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 12px;
-    justify-content: flex-start;
+    justify-content: space-between; /* Distribute buttons evenly */
 }
 
 .radius-preset-btn {
@@ -332,11 +332,12 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 60px;
+    flex-grow: 1; /* Allow buttons to grow equally */
     text-align: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 0; /* Allow buttons to shrink if needed */
 }
 
 .radius-preset-btn:hover {
@@ -346,8 +347,8 @@
 }
 
 .radius-preset-btn.active {
-    background-color: #fd7e14;
-    border-color: #fd7e14;
+    background-color: #007bff;
+    border-color: #007bff;
     color: white;
     box-shadow: 0 2px 4px rgba(253, 126, 20, 0.2);
 }
