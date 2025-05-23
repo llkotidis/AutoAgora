@@ -37,28 +37,61 @@ function display_car_listings($atts) {
     );
 
 
-    // Localize script for AJAX functionality (favorites)
+    // Get the current page number
+    $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+
+    // Refined check if a location filter is active and valid via GET parameters
+    $is_lat_set = isset($_GET['lat']) && trim((string)$_GET['lat']) !== '';
+    $is_lng_set = isset($_GET['lng']) && trim((string)$_GET['lng']) !== '';
+    $is_radius_set = isset($_GET['radius']) && trim((string)$_GET['radius']) !== '';
+    $has_location_filter_in_url = $is_lat_set && $is_lng_set && $is_radius_set;
+
+    $initial_location_info = array();
+
+    if ($has_location_filter_in_url) {
+        $location_text = __('Custom Location', 'astra-child'); // Default text, JS ideally reverse geocodes
+        if (isset($_GET['location_name']) && trim((string)$_GET['location_name']) !== '') {
+            // Ensure any user-provided text is properly sanitized before potential use.
+            // JS should handle display safely (e.g., using .text() not .html()).
+            $location_text = sanitize_text_field(wp_unslash($_GET['location_name']));
+        }
+
+        $initial_location_info = array(
+            'type' => 'custom',
+            'lat' => floatval($_GET['lat']),
+            'lng' => floatval($_GET['lng']),
+            'radius' => floatval($_GET['radius']),
+            'text' => $location_text
+        );
+    } else {
+        // Default to "All of Cyprus"
+        $initial_location_info = array(
+            'type' => 'all_cyprus',
+            'lat' => 35.1264,    // Approximate center latitude of Cyprus
+            'lng' => 33.4299,    // Approximate center longitude of Cyprus
+            'radius' => 150,     // Radius in km to cover Cyprus
+            'text' => __('All of Cyprus', 'astra-child') // Translatable string for display
+        );
+    }
+
+    // Localize script for AJAX functionality (favorites and filters)
     wp_localize_script('jquery', 'carListingsData', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('toggle_favorite_car')
+        'nonce' => wp_create_nonce('toggle_favorite_car'), // Nonce for favorite toggle
+        'filterNonce' => wp_create_nonce('filter_listings_by_location_nonce'), // Nonce for location/spec filters
+        'initialLocation' => $initial_location_info, // Data for JS to set initial map/filter state
+        'perPage' => intval($atts['per_page'])       // Pass per_page to JS for consistency
     ));
 
     // Start output buffering
     ob_start();
 
-    // Get the current page number
-    $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-
-    // Check if a location filter is active via GET parameters
-    $has_location_filter_in_url = isset($_GET['lat']) && isset($_GET['lng']) && isset($_GET['radius']);
-
-
     // Build the query arguments using the helper function
     $args = array(
         'post_type' => 'car',
-        // If a location filter is in the URL, load 0 posts initially, JS will fetch correctly.
-        // Otherwise, load the default number of posts per page.
-        'posts_per_page' => $has_location_filter_in_url ? 0 : $atts['per_page'], 
+        // If a *custom* location filter is in the URL, load 0 posts initially, JS will fetch correctly.
+        // Otherwise (including "All of Cyprus" default), load the default number of posts per page.
+        'posts_per_page' => ($initial_location_info['type'] === 'custom') ? 0 : $atts['per_page'], 
         'paged' => $paged,
         'orderby' => $atts['orderby'],       // Use shortcode attribute
         'order'   => $atts['order'],         // Use shortcode attribute
