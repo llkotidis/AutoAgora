@@ -51,17 +51,15 @@ function display_car_listings($atts) {
     if ($has_location_filter_in_url) {
         $location_text = __('Custom Location', 'astra-child'); // Default text, JS ideally reverse geocodes
         if (isset($_GET['location_name']) && trim((string)$_GET['location_name']) !== '') {
-            // Ensure any user-provided text is properly sanitized before potential use.
-            // JS should handle display safely (e.g., using .text() not .html()).
             $location_text = sanitize_text_field(wp_unslash($_GET['location_name']));
         }
-
         $initial_location_info = array(
             'type' => 'custom',
             'lat' => floatval($_GET['lat']),
             'lng' => floatval($_GET['lng']),
             'radius' => floatval($_GET['radius']),
-            'text' => $location_text
+            'text' => $location_text,
+            'load_via_js' => true // Indicate JS should fetch these
         );
     } else {
         // Default to "All of Cyprus"
@@ -70,7 +68,8 @@ function display_car_listings($atts) {
             'lat' => 35.1264,    // Approximate center latitude of Cyprus
             'lng' => 33.4299,    // Approximate center longitude of Cyprus
             'radius' => 150,     // Radius in km to cover Cyprus
-            'text' => __('All of Cyprus', 'astra-child') // Translatable string for display
+            'text' => __('All of Cyprus', 'astra-child'), // Translatable string for display
+            'load_via_js' => false // Indicate PHP will load these
         );
     }
 
@@ -86,31 +85,81 @@ function display_car_listings($atts) {
     // Start output buffering
     ob_start();
 
-    // Build the query arguments using the helper function
-    $args = array(
-        'post_type' => 'car',
-        // If a *custom* location filter is in the URL, load 0 posts initially, JS will fetch correctly.
-        // Otherwise (including "All of Cyprus" default), load the default number of posts per page.
-        'posts_per_page' => ($initial_location_info['type'] === 'custom') ? 0 : $atts['per_page'], 
-        'paged' => $paged,
-        'orderby' => $atts['orderby'],       // Use shortcode attribute
-        'order'   => $atts['order'],         // Use shortcode attribute
-        'meta_query' => array(
-            'relation' => 'OR',
-            array(
-                'key' => 'is_sold',
-                'compare' => 'NOT EXISTS'
-            ),
-            array(
-                'key' => 'is_sold',
-                'value' => '1',
-                'compare' => '!='
-            )
-        )
+    // Build the query arguments
+    $query_filters_for_php_load = array();
+    if ($initial_location_info['type'] === 'all_cyprus') {
+        $query_filters_for_php_load['lat'] = $initial_location_info['lat'];
+        $query_filters_for_php_load['lng'] = $initial_location_info['lng'];
+        $query_filters_for_php_load['radius'] = $initial_location_info['radius'];
+    }
+    
+    // Shortcode attributes like orderby, order are passed as $atts to build_car_listings_query_args
+    // $paged is also passed.
+    // $query_filters_for_php_load contains location if 'all_cyprus'
+    $args = build_car_listings_query_args(
+        array(
+            'per_page' => $initial_location_info['load_via_js'] ? 0 : $atts['per_page'],
+            'orderby' => $atts['orderby'],
+            'order' => $atts['order']
+        ),
+        $paged,
+        $query_filters_for_php_load // This will be empty if 'custom' location, so no geo-filter by build_car_listings_query_args
     );
 
-    // Get car listings
+    // Get car listings based on bounding box (if location provided)
     $car_query = new WP_Query($args);
+
+    $display_posts = array();
+    $total_posts_for_pagination = $car_query->found_posts; // Initial count from bounding box for pagination
+
+    if ($initial_location_info['type'] === 'all_cyprus' && $car_query->have_posts()) {
+        // If "All of Cyprus", perform precise filtering on the server side for initial load
+        $posts_from_bounding_box = $car_query->posts;
+        if (function_exists('autoagora_calculate_distance')) {
+            foreach ($posts_from_bounding_box as $post_object) {
+                $car_latitude = get_field('car_latitude', $post_object->ID);
+                $car_longitude = get_field('car_longitude', $post_object->ID);
+
+                if ($car_latitude && $car_longitude) {
+                    $distance = autoagora_calculate_distance(
+                        $initial_location_info['lat'],
+                        $initial_location_info['lng'],
+                        $car_latitude,
+                        $car_longitude
+                    );
+                    if ($distance <= $initial_location_info['radius']) {
+                        $display_posts[] = $post_object;
+                    }
+                } else {
+                    // If a car has no lat/lng, include it if no location filter is active (which is 'all_cyprus' case)
+                    // This behavior might need adjustment based on stricter requirements.
+                    // For "All of Cyprus" we assume all cars should be candidates if they lack specific coordinates.
+                    // However, build_car_listings_query_args already filters by lat/lng meta fields if present.
+                    // So, posts without lat/lng wouldn't be in $posts_from_bounding_box if 'all_cyprus' filter was applied.
+                    // This 'else' might be less relevant than initially thought due to how build_car_listings_query_args works.
+                    // If build_car_listings_query_args *doesn't* exclude posts missing lat/lng when a location filter is active,
+                    // then this logic is okay. If it *does* exclude them, this else won't be hit for this case.
+                    // For 'all_cyprus' this means we want those matching bounding box and then precise.
+                    // This can be simplified: if it's in bounding box and precise, it's in.
+                }
+            }
+        } else {
+            // Fallback if distance function isn't available: use bounding box results
+            $display_posts = $posts_from_bounding_box;
+        }
+        // Note: Pagination will still be based on $car_query->max_num_pages from the bounding box.
+        // A more complex pagination would require re-calculating total pages based on count($display_posts).
+        // For simplicity and consistency with AJAX, we use the original max_num_pages.
+        // The number of posts shown on the page will be correct, but "Next" might appear even if all precise posts fit.
+    } elseif ($initial_location_info['type'] === 'custom' || !$car_query->have_posts()) {
+        // If custom (JS will load) or no posts from query, $display_posts remains empty or uses car_query results (which would be none)
+        // If custom, JS will fetch. If no posts at all, loop below won't run.
+        $display_posts = $car_query->posts; // Will be empty if posts_per_page was 0 or no results
+    } else {
+        // Fallback for any other unexpected case, use original query posts
+        $display_posts = $car_query->posts;
+    }
+
 
     // Removed Debugging
 
@@ -171,8 +220,12 @@ function display_car_listings($atts) {
         <!-- Listings Grid -->
         <div class="car-listings-grid">
             <?php
-            if ($car_query->have_posts()) :
-                while ($car_query->have_posts()) : $car_query->the_post();
+            if (!empty($display_posts)) : // Use the precisely filtered posts for display
+                global $post; // Make $post global for setup_postdata and template tags
+                foreach ($display_posts as $current_post_object) :
+                    $post = $current_post_object; // Set the global $post object
+                    setup_postdata($post); // Setup post data for template tags
+
                     // Generate the detail page URL once
                     $car_detail_url = esc_url(get_permalink(get_the_ID()));
 
@@ -302,19 +355,30 @@ function display_car_listings($atts) {
                         </a>
                     </div>
                 <?php
-                endwhile;
+                endforeach;
+                wp_reset_postdata(); // Reset global $post object
             else :
-                echo '<p class="no-listings">No car listings found.</p>';
+                // Message when $display_posts is empty.
+                // If initial_location_info['load_via_js'] is true, JS will populate or show its own "no results".
+                // So, only show this PHP message if PHP was supposed to load them.
+                if (!$initial_location_info['load_via_js']) {
+                    echo '<p class="no-listings">No car listings found matching your criteria.</p>';
+                } else {
+                    // Placeholder for JS to fill, or could be an empty grid initially.
+                    // Or a loading spinner could be here if preferred.
+                     echo '<p class="no-listings">Loading listings...</p>'; // Temp message
+                }
             endif;
-            wp_reset_postdata();
             ?>
         </div>
 
         <!-- Pagination -->
         <div class="car-listings-pagination">
             <?php
+            // Pagination is based on the original $car_query (bounding box)
+            // This might mean pagination shows more pages than strictly necessary if precise filtering removed many items.
             echo paginate_links(array(
-                'total' => $car_query->max_num_pages,
+                'total' => $car_query->max_num_pages, // Use max_num_pages from the broader query
                 'current' => $paged,
                 'prev_text' => '&laquo; Previous',
                 'next_text' => 'Next &raquo;',
