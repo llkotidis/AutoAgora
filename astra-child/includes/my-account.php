@@ -44,7 +44,7 @@ function display_my_account($atts) {
                 <div class="info-row">
                     <span class="label">Password:</span>
                     <span class="value">******</span>
-                    <a href="#" class="button button-small">Reset Password</a>
+                    <button class="button button-small reset-password-btn">Reset Password</button>
                 </div>
             </div>
 
@@ -83,7 +83,6 @@ function display_my_account($atts) {
         </div>
 
         <div class="account-actions">
-            <a href="<?php echo esc_url(admin_url('profile.php')); ?>" class="button">Edit Profile</a>
             <a href="<?php echo esc_url(wp_logout_url(home_url())); ?>" class="button">Logout</a>
         </div>
     </div>
@@ -318,6 +317,44 @@ function display_my_account($atts) {
                 }
             });
         });
+
+        // Password reset functionality
+        document.querySelector('.reset-password-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Reset password clicked');
+            
+            if (confirm('Are you sure you want to reset your password? A verification code will be sent to your phone number.')) {
+                initiatePasswordReset();
+            }
+        });
+
+        function initiatePasswordReset() {
+            // Get the user's phone number from the page (we'll need to add this)
+            // For now, let's send a request to get user's phone and then send OTP
+            var formData = new FormData();
+            formData.append('action', 'initiate_password_reset');
+            formData.append('nonce', '<?php echo wp_create_nonce("password_reset_nonce"); ?>');
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Verification code sent to your phone number. Please check your messages.');
+                    // Here we would redirect to a password reset page or show a form
+                    window.location.href = window.location.pathname + '?password_reset_step=verify';
+                } else {
+                    alert('Error: ' + (data.data || 'Unable to send verification code'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error sending verification code. Please try again.');
+            });
+        }
     });
     </script>
     
@@ -355,4 +392,62 @@ function handle_update_user_name() {
     // Since we've validated the user and nonce, and the client only sends when there are changes,
     // we can assume the update was successful
     wp_send_json_success('Name updated successfully');
+}
+
+// Add AJAX handler for initiating password reset
+add_action('wp_ajax_initiate_password_reset', 'handle_initiate_password_reset');
+function handle_initiate_password_reset() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'password_reset_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    // Get current user
+    $user_id = get_current_user_id();
+    $phone_number = get_user_meta($user_id, 'phone_number', true);
+
+    if (empty($phone_number)) {
+        wp_send_json_error('No phone number found for your account');
+        return;
+    }
+
+    // Use the existing Twilio configuration and logic
+    $twilio_sid = defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '';
+    $twilio_token = defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '';
+    $twilio_verify_sid = defined('TWILIO_VERIFY_SID') ? TWILIO_VERIFY_SID : '';
+
+    if (empty($twilio_sid) || empty($twilio_token) || empty($twilio_verify_sid)) {
+        error_log('Twilio Verify configuration is missing.');
+        wp_send_json_error('SMS configuration error. Please contact admin.');
+        return;
+    }
+
+    $twilio = new \Twilio\Rest\Client($twilio_sid, $twilio_token);
+
+    try {
+        $verification = $twilio->verify->v2->services($twilio_verify_sid)
+            ->verifications
+            ->create($phone_number, "sms");
+
+        error_log("Password reset verification started: SID " . $verification->sid);
+        
+        // Store the verification session for this user
+        set_transient('password_reset_' . $user_id, array(
+            'phone' => $phone_number,
+            'verification_sid' => $verification->sid,
+            'timestamp' => time()
+        ), 300); // 5 minutes expiry
+
+        wp_send_json_success('Verification code sent successfully');
+    } catch (Exception $e) {
+        error_log('Twilio Verify error: ' . $e->getMessage());
+        wp_send_json_error('Failed to send verification code. Please try again later.');
+    }
 }
