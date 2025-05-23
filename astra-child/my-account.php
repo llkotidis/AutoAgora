@@ -194,21 +194,14 @@ function display_my_account($atts) {
             console.log('Edit button clicked');
             e.preventDefault();
             
-            // Get the current full name and split it
-            var fullName = displayName.textContent.trim();
-            var nameParts = fullName.split(' ');
+            // Instead of splitting the display name, use the actual values from PHP
+            // The input fields already have the correct values from the PHP variables
+            var firstName = document.getElementById('first-name').value;
+            var lastName = document.getElementById('last-name').value;
             
-            // Set first name (first word) and last name (remaining words)
-            var firstName = nameParts[0] || '';
-            var lastName = nameParts.slice(1).join(' ') || '';
+            console.log('Current values from inputs:', {firstName, lastName});
             
-            console.log('Split name:', {firstName, lastName});
-            
-            // Update input fields
-            document.getElementById('first-name').value = firstName;
-            document.getElementById('last-name').value = lastName;
-            
-            // Store original values
+            // Store original values for cancel functionality
             originalFirstName = firstName;
             originalLastName = lastName;
             
@@ -320,14 +313,29 @@ function handle_update_user_name() {
 
     // Get current user
     $user_id = get_current_user_id();
+    
+    // Get current values for comparison
+    $current_first = get_user_meta($user_id, 'first_name', true);
+    $current_last = get_user_meta($user_id, 'last_name', true);
 
     // Update user meta
     $result1 = update_user_meta($user_id, 'first_name', $first_name);
     $result2 = update_user_meta($user_id, 'last_name', $last_name);
 
-    // update_user_meta returns false if the value is the same as existing value
-    // We should only consider it an error if we actually can't update due to permissions or other issues
-    // Since we've already validated the user is logged in and nonce is valid, 
-    // we can assume the update was successful
-    wp_send_json_success('Name updated successfully');
+    // Log for debugging (you can remove this later)
+    error_log("Name update - First: '$current_first' -> '$first_name' (result: " . var_export($result1, true) . ")");
+    error_log("Name update - Last: '$current_last' -> '$last_name' (result: " . var_export($result2, true) . ")");
+
+    // update_user_meta returns false if the value is the same as existing value, 
+    // or if there's an actual error. We should check if at least one update succeeded
+    // or if both values are the same as current values
+    $first_unchanged = ($current_first === $first_name);
+    $last_unchanged = ($current_last === $last_name);
+    
+    // If both are unchanged, or if at least one update returned a positive result
+    if (($first_unchanged && $last_unchanged) || $result1 !== false || $result2 !== false) {
+        wp_send_json_success('Name updated successfully');
+    } else {
+        wp_send_json_error('Failed to update name - both updates returned false');
+    }
 }
