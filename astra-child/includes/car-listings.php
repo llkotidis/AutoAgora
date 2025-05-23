@@ -173,7 +173,17 @@ function display_car_listings($atts) {
                     <div id="filter-map-container" class="location-map">
                         <div class="radius-slider-container">
                             <label for="radius-slider">Radius: <span id="radius-value">10</span> km</label>
-                            <input type="range" min="1" max="100" value="10" class="slider" id="radius-slider">
+                            <input type="range" min="1" max="200" value="10" class="slider" id="radius-slider">
+                            <div class="radius-presets">
+                                <button class="radius-preset-btn" data-radius="1">+ 1 km</button>
+                                <button class="radius-preset-btn" data-radius="2">+ 2 km</button>
+                                <button class="radius-preset-btn" data-radius="3">+ 3 km</button>
+                                <button class="radius-preset-btn" data-radius="5">+ 5 km</button>
+                                <button class="radius-preset-btn" data-radius="10">+ 10 km</button>
+                                <button class="radius-preset-btn" data-radius="30">+ 30 km</button>
+                                <button class="radius-preset-btn" data-radius="100">+ 100 km</button>
+                                <button class="radius-preset-btn" data-radius="200">+ 200 km</button>
+                            </div>
                         </div>
                     </div>
                 </div>

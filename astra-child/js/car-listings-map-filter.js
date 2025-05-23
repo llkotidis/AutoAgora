@@ -126,6 +126,11 @@ jQuery(document).ready(function ($) {
   radiusValueDisplay.text(currentRadiusKm);
   currentLocationText.text(selectedLocationName);
   
+  // Update radius preset buttons to reflect initial state
+  setTimeout(() => {
+    updateRadiusPresetButtons(currentRadiusKm);
+  }, 100);
+  
   if (loadedFromStorage) {
     console.log("[Init] UI updated with localStorage data.");
   } else if (urlLat && urlLng && urlRadius) {
@@ -184,6 +189,11 @@ jQuery(document).ready(function ($) {
         updateRadiusCircle(centerArray, currentRadiusKm);
       }
     }
+    
+    // Ensure radius preset buttons are updated when modal opens
+    setTimeout(() => {
+      updateRadiusPresetButtons(currentRadiusKm);
+    }, 100);
   });
 
   closeBtn.on("click", function () {
@@ -300,6 +310,9 @@ jQuery(document).ready(function ($) {
         updateRadiusCircle(currentCenterArray, currentRadiusKm);
         selectedCoords = currentCenterArray;
       }
+      
+      // Initialize radius preset buttons
+      updateRadiusPresetButtons(currentRadiusKm);
 
       geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
@@ -454,6 +467,9 @@ jQuery(document).ready(function ($) {
     radiusValueDisplay.text(currentRadiusKm);
     console.log("[Radius Slider] New Radius (km):", currentRadiusKm);
 
+    // Update active state of preset buttons
+    updateRadiusPresetButtons(currentRadiusKm);
+
     const centerForCircle =
       selectedCoords ||
       (map ? map.getCenter().toArray() : mapConfig.cyprusCenter);
@@ -517,6 +533,94 @@ jQuery(document).ready(function ($) {
     } else {
       console.warn(
         "[Radius Slider] Skipped fitBounds logic. Conditions not met.",
+        {
+          map: !!map,
+          turf: typeof turf !== "undefined" ? !!turf : "Turf IS UNDEFINED",
+          centerForCircle,
+          centerLength: centerForCircle ? centerForCircle.length : "N/A",
+        }
+      );
+    }
+  });
+
+  // Function to update the active state of radius preset buttons
+  function updateRadiusPresetButtons(currentRadius) {
+    $(".radius-preset-btn").removeClass("active");
+    $(`.radius-preset-btn[data-radius="${currentRadius}"]`).addClass("active");
+  }
+
+  // Event listener for radius preset buttons
+  $(document).on("click", ".radius-preset-btn", function() {
+    const newRadius = parseFloat($(this).data("radius"));
+    
+    // Update the slider value and display
+    radiusSlider.val(newRadius);
+    radiusValueDisplay.text(newRadius);
+    currentRadiusKm = newRadius;
+    
+    // Update active state of buttons
+    updateRadiusPresetButtons(newRadius);
+    
+    console.log("[Radius Preset] New Radius (km):", newRadius);
+
+    const centerForCircle =
+      selectedCoords ||
+      (map ? map.getCenter().toArray() : mapConfig.cyprusCenter);
+    console.log("[Radius Preset] Center for circle:", centerForCircle);
+
+    updateRadiusCircle(centerForCircle, newRadius);
+
+    // Apply the same zoom logic as the slider
+    if (
+      map &&
+      typeof turf !== "undefined" &&
+      turf &&
+      centerForCircle &&
+      centerForCircle.length === 2
+    ) {
+      console.log("[Radius Preset] Proceeding with fitBounds logic.");
+      try {
+        const turfPoint = turf.point(centerForCircle);
+        console.log("[Radius Preset] Turf point:", turfPoint);
+
+        const circlePolygon = turf.circle(turfPoint, newRadius, {
+          steps: 64,
+          units: "kilometers",
+        });
+        console.log("[Radius Preset] Circle Polygon:", circlePolygon);
+
+        if (
+          circlePolygon &&
+          circlePolygon.geometry &&
+          circlePolygon.geometry.coordinates &&
+          circlePolygon.geometry.coordinates.length > 0
+        ) {
+          const circleBbox = turf.bbox(circlePolygon);
+          console.log("[Radius Preset] Circle BBox:", circleBbox);
+
+          console.log(
+            "[Radius Preset] Calling map.fitBounds with BBox:",
+            circleBbox
+          );
+          map.fitBounds(circleBbox, {
+            padding: 40,
+            duration: 500,
+          });
+        } else {
+          console.warn(
+            "[Radius Preset] Could not generate valid circle polygon for fitBounds. Polygon:",
+            circlePolygon
+          );
+        }
+      } catch (e) {
+        console.error(
+          "[Radius Preset] Error calculating or fitting bounds for radius circle:",
+          e
+        );
+      }
+    } else {
+      console.warn(
+        "[Radius Preset] Skipped fitBounds logic. Conditions not met.",
         {
           map: !!map,
           turf: typeof turf !== "undefined" ? !!turf : "Turf IS UNDEFINED",
