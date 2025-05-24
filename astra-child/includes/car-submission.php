@@ -417,48 +417,36 @@ add_action('transition_post_status', 'store_car_publication_date', 10, 3);
  * Process form submission for editing a car listing
  */
 function handle_edit_car_listing() {
-    // Initialize variables for error tracking
-    $errors = array();
-    $editable_fields = array(
-        'mileage' => 'Mileage',
-        'price' => 'Price',
-        'description' => 'Description'
-    );
+    // Include separated validation and processing files
+    require_once get_stylesheet_directory() . '/template-edit-listing/edit-listing-validation.php';
+    require_once get_stylesheet_directory() . '/template-edit-listing/edit-listing-processing.php';
     
     // Verify nonce
-    if (!isset($_POST['edit_car_listing_nonce']) || !wp_verify_nonce($_POST['edit_car_listing_nonce'], 'edit_car_listing_nonce')) {
-        wp_redirect(add_query_arg('listing_error', 'nonce_failed', wp_get_referer()));
-        exit;
+    if (!validate_edit_listing_nonce($_POST)) {
+        handle_edit_listing_redirect('error', 'nonce_failed', home_url('/my-listings/'));
+        return;
     }
     
     // Get car ID
     $car_id = isset($_POST['car_id']) ? intval($_POST['car_id']) : 0;
     if (!$car_id) {
-        wp_redirect(add_query_arg('listing_error', 'invalid_car', wp_get_referer()));
-        exit;
+        handle_edit_listing_redirect('error', 'invalid_car', home_url('/my-listings/'));
+        return;
     }
     
     // Check if user owns the car
-    $car = get_post($car_id);
-    if (!$car || $car->post_type !== 'car' || $car->post_author != get_current_user_id()) {
-        wp_redirect(add_query_arg('listing_error', 'unauthorized', wp_get_referer()));
-        exit;
+    if (!validate_car_ownership($car_id, get_current_user_id())) {
+        handle_edit_listing_redirect('error', 'unauthorized', home_url('/my-listings/'));
+        return;
     }
     
-    // Check for required editable fields
-    $missing_fields = array();
-    foreach ($editable_fields as $field_key => $field_label) {
-        if (!isset($_POST[$field_key]) || empty(trim($_POST[$field_key]))) {
-            $missing_fields[] = $field_key;
-        }
-    }
-    
-    if (!empty($missing_fields)) {
-        // Redirect back with error message
+    // Validate form data
+    $validation_errors = validate_edit_listing_form($_POST, $car_id);
+    if (!empty($validation_errors['missing_fields'])) {
         $redirect_url = add_query_arg(
             array(
                 'error' => 'validation',
-                'fields' => implode(',', $missing_fields)
+                'fields' => implode(',', $validation_errors['missing_fields'])
             ),
             wp_get_referer()
         );
@@ -466,120 +454,24 @@ function handle_edit_car_listing() {
         exit;
     }
     
-    // Update only editable fields
-    foreach ($editable_fields as $field_key => $field_label) {
-        update_field($field_key, sanitize_text_field($_POST[$field_key]), $car_id);
-    }
-    
-    // Update location-related fields
-    if (isset($_POST['car_city'])) {
-        update_field('car_city', sanitize_text_field($_POST['car_city']), $car_id);
-    }
-    if (isset($_POST['car_district'])) {
-        update_field('car_district', sanitize_text_field($_POST['car_district']), $car_id);
-    }
-    if (isset($_POST['car_latitude'])) {
-        update_field('car_latitude', floatval($_POST['car_latitude']), $car_id);
-    }
-    if (isset($_POST['car_longitude'])) {
-        update_field('car_longitude', floatval($_POST['car_longitude']), $car_id);
-    }
-    if (isset($_POST['car_address'])) {
-        update_field('car_address', sanitize_text_field($_POST['car_address']), $car_id);
-    }
-    
-    // Update optional fields
-    if (isset($_POST['hp'])) {
-        update_field('hp', sanitize_text_field($_POST['hp']), $car_id);
-    }
-    
-    // Update number of owners
-    if (isset($_POST['numowners'])) {
-        update_field('numowners', intval($_POST['numowners']), $car_id);
-    }
-    
-    // Process vehicle history
-    $vehiclehistory = array();
-    if (isset($_POST['vehiclehistory']) && is_array($_POST['vehiclehistory'])) {
-        foreach ($_POST['vehiclehistory'] as $history_item) {
-            $vehiclehistory[] = sanitize_text_field($history_item);
-        }
-    }
-    update_field('vehiclehistory', $vehiclehistory, $car_id);
-    
-    // Process extras
-    $extras = isset($_POST['extras']) ? array_map('sanitize_text_field', $_POST['extras']) : array();
-    update_field('extras', $extras, $car_id);
-    
-    // Handle images
-    // Get existing images
+    // Validate image requirements
     $existing_images = get_field('car_images', $car_id);
-    if (!is_array($existing_images)) {
-        $existing_images = array();
-    }
-
-    // Remove deleted images
-    if (!empty($_POST['removed_images'])) {
-        foreach ($_POST['removed_images'] as $removed_id) {
-            $key = array_search($removed_id, $existing_images);
-            if ($key !== false) {
-                unset($existing_images[$key]);
-            }
-        }
-        // Reindex array after removal
-        $existing_images = array_values($existing_images);
-    }
-
-    // Process new image uploads if any
-    if (!empty($_FILES['car_images']['name'][0])) {
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-        
-        $image_ids = array();
-        
-        // Upload new images
-        foreach ($_FILES['car_images']['name'] as $key => $value) {
-            if ($_FILES['car_images']['error'][$key] === 0) {
-                $file = array(
-                    'name'     => $_FILES['car_images']['name'][$key],
-                    'type'     => $_FILES['car_images']['type'][$key],
-                    'tmp_name' => $_FILES['car_images']['tmp_name'][$key],
-                    'error'    => $_FILES['car_images']['error'][$key],
-                    'size'     => $_FILES['car_images']['size'][$key]
-                );
-                
-                $_FILES['car_image'] = $file;
-                $attachment_id = media_handle_upload('car_image', $car_id);
-                
-                if (!is_wp_error($attachment_id)) {
-                    $image_ids[] = $attachment_id;
-                }
-            }
-        }
-        
-        // Combine existing and new images
-        $all_images = array_merge($existing_images, $image_ids);
-    } else {
-        // If no new images uploaded, just use the existing images after removal
-        $all_images = $existing_images;
-    }
-
-    // Check if we have at least 5 images
-    if (count($all_images) < 5) {
+    $removed_images = isset($_POST['removed_images']) ? $_POST['removed_images'] : array();
+    $image_validation = validate_image_requirements($existing_images, $removed_images, $_FILES);
+    
+    if (!$image_validation['valid']) {
         wp_redirect(add_query_arg('error', 'insufficient_images', wp_get_referer()));
         exit;
     }
     
-    // Update the car_images field
-    update_field('car_images', $all_images, $car_id);
+    // Process form data
+    process_edit_listing_form($_POST, $car_id);
     
-    // Set the first image as featured image
-    set_post_thumbnail($car_id, $all_images[0]);
+    // Process images
+    process_edit_listing_images($car_id, $_FILES, $removed_images);
     
-    // Redirect to my listings page with success message
-    wp_redirect(add_query_arg('listing_updated', '1', home_url('/my-listings/')));
-    exit;
+    // Redirect with success message
+    handle_edit_listing_redirect('success', 'listing_updated');
 }
 add_action('admin_post_edit_car_listing', 'handle_edit_car_listing');
 add_action('admin_post_nopriv_edit_car_listing', 'handle_edit_car_listing');
