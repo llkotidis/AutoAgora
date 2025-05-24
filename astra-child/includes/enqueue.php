@@ -249,9 +249,9 @@ function autoagora_enqueue_car_listings_map_filter_assets() {
         );
         wp_enqueue_script(
             'car-specs-filter-js',
-            get_stylesheet_directory_uri() . '/js/car-specs-filter.js',
+            get_stylesheet_directory_uri() . '/includes/car-listings/car-specs-filter.js',
             array('jquery'),
-            filemtime(get_stylesheet_directory() . '/js/car-specs-filter.js'),
+            filemtime(get_stylesheet_directory() . '/includes/car-listings/car-specs-filter.js'),
             true
         );
         wp_enqueue_script(
