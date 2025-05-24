@@ -25,7 +25,7 @@ require_once get_stylesheet_directory() . '/includes/shortcodes/favourite-listin
 // Include theme setup and enqueueing functions
 require_once get_stylesheet_directory() . '/includes/enqueue.php';
 
-require_once get_stylesheet_directory() . '/includes/registration.php';
+require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 
 // Include custom user roles definitions
 require_once get_stylesheet_directory() . '/includes/roles.php';

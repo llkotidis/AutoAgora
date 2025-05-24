@@ -17,7 +17,7 @@ use Twilio\Rest\Client; // Needed for registration handling
 function custom_registration_form_shortcode() {
     ob_start();
     // Include the form structure (consider moving this file to includes/ too)
-    include( get_stylesheet_directory() . '/includes/registration-form.php' ); 
+    include( get_stylesheet_directory() . '/includes/auth/registration-form.php' ); 
     return ob_get_clean();
 }
 add_shortcode( 'custom_registration', 'custom_registration_form_shortcode' );
