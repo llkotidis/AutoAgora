@@ -8,7 +8,23 @@
 
 // Enqueue separated CSS and JS files
 function enqueue_favourite_listings_assets() {
-    if (is_page() || (is_user_logged_in() && (strpos($_SERVER['REQUEST_URI'], 'my-account') !== false || isset($_GET['shortcode']) && $_GET['shortcode'] === 'favourite_listings'))) {
+    // Only load on specific contexts - be more restrictive to avoid conflicts
+    $should_load = false;
+    
+    // Load on my-account page or when favourite_listings shortcode is specifically used
+    if (is_user_logged_in()) {
+        // Check if we're on my-account page specifically
+        if (strpos($_SERVER['REQUEST_URI'], 'my-account') !== false) {
+            $should_load = true;
+        }
+        // Check if favourite_listings shortcode is being used on current page
+        global $post;
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'favourite_listings')) {
+            $should_load = true;
+        }
+    }
+    
+    if ($should_load) {
         // Enqueue Favourite Listings CSS
         wp_enqueue_style(
             'favourite-listings-css',
@@ -26,8 +42,8 @@ function enqueue_favourite_listings_assets() {
             true
         );
 
-        // Localize script for AJAX
-        wp_localize_script('favourite-listings-js', 'carListingsData', array(
+        // Use a different object name to avoid conflicts with car-listings page
+        wp_localize_script('favourite-listings-js', 'favouriteListingsData', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('toggle_favorite_car')
         ));

@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopPropagation();
 
                 // Check if user is logged in (nonce should be available)
-                if (typeof carListingsData === 'undefined' || typeof carListingsData.ajaxurl === 'undefined' || typeof carListingsData.nonce === 'undefined') {
+                if (typeof favouriteListingsData === 'undefined' || typeof favouriteListingsData.ajaxurl === 'undefined' || typeof favouriteListingsData.nonce === 'undefined') {
                     alert('Please log in to add favorites.');
                     return;
                 }
@@ -92,10 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('action', 'toggle_favorite_car');
                 formData.append('car_id', carId);
                 formData.append('is_favorite', !isActive ? '1' : '0');
-                formData.append('nonce', carListingsData.nonce);
+                formData.append('nonce', favouriteListingsData.nonce);
 
                 // Send AJAX request
-                fetch(carListingsData.ajaxurl, {
+                fetch(favouriteListingsData.ajaxurl, {
                     method: 'POST',
                     body: formData,
                     credentials: 'same-origin',

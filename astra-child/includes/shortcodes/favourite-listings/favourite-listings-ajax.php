@@ -61,4 +61,5 @@ function toggle_favorite_car() {
     ));
 }
 add_action('wp_ajax_toggle_favorite_car', 'toggle_favorite_car');
+add_action('wp_ajax_nopriv_toggle_favorite_car', 'toggle_favorite_car');
 ?> 
