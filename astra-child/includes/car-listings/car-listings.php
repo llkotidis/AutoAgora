@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once get_stylesheet_directory() . '/includes/car-listings/car-listings-data.php';
 require_once get_stylesheet_directory() . '/includes/car-listings/car-listings-query.php';
 require_once get_stylesheet_directory() . '/includes/car-filter-form.php';
-require_once get_stylesheet_directory() . '/includes/geo-utils.php';
+require_once get_stylesheet_directory() . '/includes/car-listings/geo-utils.php';
 
 // Define Cyprus center coordinates and default radius
 define('CYPRUS_CENTER_LAT', 35.1856);

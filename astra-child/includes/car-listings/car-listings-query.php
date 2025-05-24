@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-require_once dirname(__DIR__) . '/geo-utils.php'; // Include geo utility functions
+require_once __DIR__ . '/geo-utils.php'; // Include geo utility functions
 
 
 
