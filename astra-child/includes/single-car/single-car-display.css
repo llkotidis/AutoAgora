@@ -88,6 +88,9 @@
     overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: #ccc transparent;
+    padding-bottom: 10px;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .thumbnail-gallery::-webkit-scrollbar {
@@ -104,13 +107,14 @@
 }
 
 .thumbnail {
-    min-width: 120px;
-    height: 80px;
+    width: 180px;
+    height: 135px;
     border-radius: 4px;
     overflow: hidden;
     cursor: pointer;
     border: 2px solid transparent;
     transition: border-color 0.2s ease;
+    flex-shrink: 0;
 }
 
 .thumbnail.active {
@@ -350,28 +354,34 @@
     gap: 10px;
 }
 
+/* Override favorite button position for detailed page */
+.favorite-btn {
+    position: static; /* Reset position */
+}
+
 .favorite-btn,
 .share-btn {
-    background: white;
-    border: 1px solid #ddd;
-    width: 40px;
-    height: 40px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
 .favorite-btn:hover,
 .share-btn:hover {
-    border-color: #007bff;
-    color: #007bff;
+    background: #f0f0f0;
 }
 
-.favorite-btn.active {
-    color: #dc3545;
+.favorite-btn i,
+.share-btn i {
+    font-size: 18px;
+    color: #333;
+}
+
+.favorite-btn.active i {
+    color: #ff0000;
 }
 
 /* Read More Button */
