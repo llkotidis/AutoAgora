@@ -34,7 +34,7 @@ require_once get_stylesheet_directory() . '/includes/roles.php';
 require_once get_stylesheet_directory() . '/includes/user-profile.php';
 
 // Include backend access and admin bar controls
-require_once get_stylesheet_directory() . '/includes/access-control.php';
+require_once get_stylesheet_directory() . '/includes/auth/access-control.php';
 
 // Include login/logout and phone authentication functions
 require_once get_stylesheet_directory() . '/includes/auth/login-logout.php';
