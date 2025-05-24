@@ -87,9 +87,9 @@ function astra_child_enqueue_styles() {
     if ( $load_car_listings_script ) {
         wp_enqueue_script(
             'car-listings-script',
-            get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.js',
+            get_stylesheet_directory_uri() . '/js/car-listings.js',
             array('jquery'), 
-            filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.js'),
+            filemtime(get_stylesheet_directory() . '/js/car-listings.js'),
             false // Load in header instead of footer
         );
 
@@ -243,9 +243,9 @@ function autoagora_enqueue_car_listings_map_filter_assets() {
         // Enqueue your custom scripts/styles
         wp_enqueue_style(
             'car-listings-map-filter-style',
-            get_stylesheet_directory_uri() . '/includes/car-listings/car-listings-map-filter.css',
+            get_stylesheet_directory_uri() . '/css/car-listings-map-filter.css',
             array('mapbox-gl-css', 'mapbox-geocoder-css'),
-            filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings-map-filter.css')
+            filemtime(get_stylesheet_directory() . '/css/car-listings-map-filter.css')
         );
         wp_enqueue_script(
             'car-specs-filter-js',
@@ -256,9 +256,9 @@ function autoagora_enqueue_car_listings_map_filter_assets() {
         );
         wp_enqueue_script(
             'car-listings-map-filter-js',
-            get_stylesheet_directory_uri() . '/includes/car-listings/car-listings-map-filter.js',
+            get_stylesheet_directory_uri() . '/js/car-listings-map-filter.js',
             array('jquery', 'mapbox-gl-js', 'mapbox-geocoder-js', 'turf-js', 'car-specs-filter-js'),
-            filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings-map-filter.js'),
+            filemtime(get_stylesheet_directory() . '/js/car-listings-map-filter.js'),
             true
         );
 

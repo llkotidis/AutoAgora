@@ -6,7 +6,7 @@ require_once get_stylesheet_directory() . '/vendor/autoload.php';
 require_once get_stylesheet_directory() . '/includes/mapbox-assets.php';
 
 // Include car listings functionality
-require_once get_stylesheet_directory() . '/includes/car-listings/car-listings.php';
+require_once get_stylesheet_directory() . '/includes/car-listings.php';
 
 // Include car submission functionality
 require_once get_stylesheet_directory() . '/includes/car-submission.php';
