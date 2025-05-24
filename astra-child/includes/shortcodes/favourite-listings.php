@@ -67,7 +67,4 @@ function display_favourite_listings($atts) {
     include get_stylesheet_directory() . '/includes/shortcodes/favourite-listings/favourite-listings-display.php';
     return ob_get_clean();
 }
-
-// Include AJAX handlers
-include get_stylesheet_directory() . '/includes/shortcodes/favourite-listings/favourite-listings-ajax.php';
 ?>
