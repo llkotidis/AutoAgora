@@ -39,7 +39,7 @@ function astra_child_enqueue_styles() {
     wp_enqueue_style( 'astra-child-car-search-css', get_stylesheet_directory_uri() . '/css/car-search-form.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue car listings styles
-    wp_enqueue_style( 'astra-child-car-listings-css', get_stylesheet_directory_uri() . '/css/car-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+    wp_enqueue_style( 'astra-child-car-listings-css', get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue add listing page styles
     if (is_page_template('template-add-listing.php')) {

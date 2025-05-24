@@ -35,9 +35,9 @@ function display_car_listings($atts) {
     // Enqueue the main stylesheet for this shortcode
     wp_enqueue_style(
         'car-listings-style',
-        get_stylesheet_directory_uri() . '/css/car-listings.css',
+        get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.css',
         array(), 
-        filemtime(get_stylesheet_directory() . '/css/car-listings.css')
+        filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.css')
     );
 
 
