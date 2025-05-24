@@ -352,8 +352,7 @@
 .action-buttons {
     display: flex;
     gap: 10px;
-    position: relative;
-    z-index: 10;
+    align-items: center;
 }
 
 /* Override favorite button position for detailed page */
@@ -363,33 +362,33 @@
 
 .favorite-btn,
 .share-btn {
-    background: #007bff !important;
-    border: 2px solid #0056b3 !important;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ddd;
     cursor: pointer;
-    padding: 12px !important;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 4px;
     transition: all 0.3s ease;
-    min-width: 50px !important;
-    min-height: 50px !important;
-    display: flex !important;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .favorite-btn:hover,
 .share-btn:hover {
-    background: #0056b3 !important;
-    border-color: #004085 !important;
+    background: #f0f0f0;
+    border-color: #007bff;
 }
 
 .favorite-btn i,
 .share-btn i {
-    font-size: 20px !important;
-    color: white !important;
+    font-size: 18px;
+    color: #333;
 }
 
 .favorite-btn.active i {
-    color: #ff0000 !important;
+    color: #ff0000;
 }
 
 /* Read More Button */
