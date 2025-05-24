@@ -37,7 +37,7 @@ require_once get_stylesheet_directory() . '/includes/user-profile.php';
 require_once get_stylesheet_directory() . '/includes/access-control.php';
 
 // Include login/logout and phone authentication functions
-require_once get_stylesheet_directory() . '/includes/login-logout.php';
+require_once get_stylesheet_directory() . '/includes/auth/login-logout.php';
 
 // Include AJAX handlers
 require_once get_stylesheet_directory() . '/includes/ajax.php';
