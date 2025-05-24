@@ -28,7 +28,7 @@ require_once get_stylesheet_directory() . '/includes/enqueue.php';
 require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 
 // Include custom user roles definitions
-require_once get_stylesheet_directory() . '/includes/roles.php';
+require_once get_stylesheet_directory() . '/includes/auth/roles.php';
 
 // Include custom user profile field functions
 require_once get_stylesheet_directory() . '/includes/user-profile.php';
