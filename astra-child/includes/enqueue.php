@@ -87,9 +87,9 @@ function astra_child_enqueue_styles() {
     if ( $load_car_listings_script ) {
         wp_enqueue_script(
             'car-listings-script',
-            get_stylesheet_directory_uri() . '/js/car-listings.js',
+            get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.js',
             array('jquery'), 
-            filemtime(get_stylesheet_directory() . '/js/car-listings.js'),
+            filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.js'),
             false // Load in header instead of footer
         );
 
