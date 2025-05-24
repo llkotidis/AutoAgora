@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Include helper files
-require_once get_stylesheet_directory() . '/includes/car-listings-data.php';
+require_once get_stylesheet_directory() . '/includes/car-listings/car-listings-data.php';
 require_once get_stylesheet_directory() . '/includes/car-listings-query.php';
 require_once get_stylesheet_directory() . '/includes/car-filter-form.php';
 require_once get_stylesheet_directory() . '/includes/geo-utils.php';
