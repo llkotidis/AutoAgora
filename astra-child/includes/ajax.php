@@ -146,8 +146,7 @@ function ajax_filter_car_listings_handler() {
      );
 
     // Include the query builder file
-    require_once get_stylesheet_directory() . '/includes/car-listings-query.php';
-    // require_once get_stylesheet_directory() . '/includes/template-tags.php'; // File does not exist - Removed
+    require_once get_stylesheet_directory() . '/includes/car-listings/car-listings-query.php';
 
     // Build query args - Assuming build_car_listings_query_args accepts filters directly now
     $args = build_car_listings_query_args($atts_for_query, $paged, $sanitized_filters); 
