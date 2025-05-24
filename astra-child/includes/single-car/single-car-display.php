@@ -129,9 +129,10 @@ if (have_posts()) :
                                         $num_thumbnails = min(count($all_images) - 1, $max_thumbnails);
                                         for ($i = 1; $i <= $num_thumbnails; $i++) : 
                                             $thumb_url = wp_get_attachment_image_url($all_images[$i], 'medium');
+                                            $full_url = wp_get_attachment_image_url($all_images[$i], 'large');
                                             if ($thumb_url) :
                                         ?>
-                                            <div class="thumbnail">
+                                            <div class="thumbnail" data-full-url="<?php echo esc_url($full_url); ?>">
                                                 <img src="<?php echo esc_url($thumb_url); ?>" 
                                                      alt="Thumbnail <?php echo $i + 1; ?>"
                                                      class="clickable-image"

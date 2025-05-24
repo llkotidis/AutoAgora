@@ -9,8 +9,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const preloadImages = () => {
         thumbnails.forEach(thumb => {
-            const img = new Image();
-            img.src = thumb.dataset.fullUrl;
+            const fullUrl = thumb.dataset.fullUrl;
+            if (fullUrl) {
+                const img = new Image();
+                img.src = fullUrl;
+            }
         });
     };
     
