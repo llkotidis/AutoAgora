@@ -64,14 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const carId = this.getAttribute('data-car-id');
             const isActive = this.classList.contains('active');
             const heartIcon = this.querySelector('i');
+            const favoriteText = this.querySelector('.favorite-text');
 
             this.classList.toggle('active');
             if (isActive) {
                 heartIcon.classList.remove('fas');
                 heartIcon.classList.add('far');
+                if (favoriteText) favoriteText.textContent = 'Add to Favorites';
             } else {
                 heartIcon.classList.remove('far');
                 heartIcon.classList.add('fas');
+                if (favoriteText) favoriteText.textContent = 'Remove from Favorites';
             }
 
             const formData = new FormData();
@@ -97,9 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isActive) {
                         heartIcon.classList.remove('far');
                         heartIcon.classList.add('fas');
+                        if (favoriteText) favoriteText.textContent = 'Remove from Favorites';
                     } else {
                         heartIcon.classList.remove('fas');
                         heartIcon.classList.add('far');
+                        if (favoriteText) favoriteText.textContent = 'Add to Favorites';
                     }
                     console.error('Favorite toggle failed:', data);
                     alert('Failed to update favorites. Please try again.');
@@ -110,9 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (isActive) {
                     heartIcon.classList.remove('far');
                     heartIcon.classList.add('fas');
+                    if (favoriteText) favoriteText.textContent = 'Remove from Favorites';
                 } else {
                     heartIcon.classList.remove('fas');
                     heartIcon.classList.add('far');
+                    if (favoriteText) favoriteText.textContent = 'Add to Favorites';
                 }
                 console.error('Error:', error);
                 alert('Failed to update favorites. An error occurred.');

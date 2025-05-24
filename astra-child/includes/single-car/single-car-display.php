@@ -90,6 +90,7 @@ if (have_posts()) :
                     <div class="action-buttons">
                         <button class="<?php echo esc_attr($button_class); ?>" data-car-id="<?php echo esc_attr($car_id); ?>">
                             <i class="<?php echo esc_attr($heart_class); ?>"></i>
+                            <span class="favorite-text"><?php echo $is_favorite ? 'Remove from Favorites' : 'Add to Favorites'; ?></span>
                         </button>
                         <button class="share-btn">
                             <i class="fas fa-share-alt"></i>
