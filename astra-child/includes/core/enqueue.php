@@ -59,7 +59,7 @@ function astra_child_enqueue_styles() {
 
     // Enqueue account dropdown script for logged-in users
     if ( is_user_logged_in() ) {
-        wp_enqueue_script( 'astra-child-account-dropdown-js', get_stylesheet_directory_uri() . '/js/account-dropdown.js', array(), ASTRA_CHILD_THEME_VERSION, true ); // true for loading in footer
+        wp_enqueue_script( 'astra-child-account-dropdown-js', get_stylesheet_directory_uri() . '/includes/user-account/account-dropdown.js', array(), ASTRA_CHILD_THEME_VERSION, true ); // true for loading in footer
     }
 
     // Enqueue Car Listings script and localize data if relevant shortcodes might be present
