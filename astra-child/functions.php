@@ -16,7 +16,7 @@ require_once get_stylesheet_directory() . '/includes/car-listing-detailed.php';
 
 // Include My Account and My Listings functionality
 require_once get_stylesheet_directory() . '/includes/my-account.php';
-require_once get_stylesheet_directory() . '/includes/my-listings.php';
+require_once get_stylesheet_directory() . '/includes/user-account/my-listings/my-listings.php';
 
 
 // Include Favourite Listings functionality
