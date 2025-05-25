@@ -31,7 +31,7 @@ require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 require_once get_stylesheet_directory() . '/includes/auth/roles.php';
 
 // Include custom user profile field functions
-require_once get_stylesheet_directory() . '/includes/user-profile.php';
+require_once get_stylesheet_directory() . '/includes/user-account/user-profile.php';
 
 // Include backend access and admin bar controls
 require_once get_stylesheet_directory() . '/includes/auth/access-control.php';
