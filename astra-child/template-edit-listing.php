@@ -137,6 +137,6 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
 ));
 
 // Include the separated display file
-include get_stylesheet_directory() . '/template-edit-listing/edit-listing-display.php';
+include get_stylesheet_directory() . '/includes/user-manage-listings/template-edit-listing/edit-listing-display.php';
 
 get_footer(); 

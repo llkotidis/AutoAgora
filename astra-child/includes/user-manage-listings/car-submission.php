@@ -418,8 +418,8 @@ add_action('transition_post_status', 'store_car_publication_date', 10, 3);
  */
 function handle_edit_car_listing() {
     // Include separated validation and processing files
-    require_once get_stylesheet_directory() . '/template-edit-listing/edit-listing-validation.php';
-    require_once get_stylesheet_directory() . '/template-edit-listing/edit-listing-processing.php';
+    require_once get_stylesheet_directory() . '/includes/user-manage-listings/template-edit-listing/edit-listing-validation.php';
+    require_once get_stylesheet_directory() . '/includes/user-manage-listings/template-edit-listing/edit-listing-processing.php';
     
     // Verify nonce
     if (!validate_edit_listing_nonce($_POST)) {
