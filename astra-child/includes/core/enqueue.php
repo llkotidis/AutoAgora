@@ -43,19 +43,19 @@ function astra_child_enqueue_styles() {
 
     // Enqueue add listing page styles
     if (is_page_template('template-add-listing.php')) {
-        wp_enqueue_style( 'astra-child-add-listing-css', get_stylesheet_directory_uri() . '/css/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+        wp_enqueue_style( 'astra-child-add-listing-css', get_stylesheet_directory_uri() . '/includes/user-manage-listings/template-add-listing/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
     }
 
     // Enqueue edit listing styles
     if (is_page_template('template-edit-listing.php')) {
-        wp_enqueue_style( 'astra-child-edit-listing-css', get_stylesheet_directory_uri() . '/css/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+        wp_enqueue_style( 'astra-child-edit-listing-css', get_stylesheet_directory_uri() . '/includes/user-manage-listings/template-add-listing/add-listing.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
     }
 
     // Enqueue my-listings styles
-    wp_enqueue_style( 'astra-child-my-listings-css', get_stylesheet_directory_uri() . '/css/my-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+    wp_enqueue_style( 'astra-child-my-listings-css', get_stylesheet_directory_uri() . '/includes/user-account/my-listings/my-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue my-account styles
-    wp_enqueue_style( 'astra-child-my-account-css', get_stylesheet_directory_uri() . '/css/my-account.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+    wp_enqueue_style( 'astra-child-my-account-css', get_stylesheet_directory_uri() . '/includes/user-account/my-account/my-account.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue account dropdown script for logged-in users
     if ( is_user_logged_in() ) {
@@ -174,7 +174,7 @@ add_action( 'wp_enqueue_scripts', 'astra_child_enqueue_styles', 15 );
  * Enqueue styles for the custom login page.
  */
 function astra_child_enqueue_login_styles() {
-    wp_enqueue_style( 'astra-child-login-css', get_stylesheet_directory_uri() . '/css/login.css', array(), ASTRA_CHILD_THEME_VERSION, 'all' );
+    wp_enqueue_style( 'astra-child-login-css', get_stylesheet_directory_uri() . '/includes/auth/login.css', array(), ASTRA_CHILD_THEME_VERSION, 'all' );
 }
 add_action( 'login_enqueue_scripts', 'astra_child_enqueue_login_styles' );
 
@@ -200,7 +200,7 @@ function enqueue_intl_tel_input_assets() {
 
         // Enqueue registration-specific styles
         if ( is_singular() && is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'custom_registration' ) ) {
-             wp_enqueue_style( 'astra-child-register-css', get_stylesheet_directory_uri() . '/css/register.css', array(), ASTRA_CHILD_THEME_VERSION, 'all' );
+             wp_enqueue_style( 'astra-child-register-css', get_stylesheet_directory_uri() . '/includes/auth/register.css', array(), ASTRA_CHILD_THEME_VERSION, 'all' );
         }
 
         // Enqueue JS (needs jQuery)
