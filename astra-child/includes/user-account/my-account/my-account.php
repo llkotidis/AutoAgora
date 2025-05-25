@@ -7,9 +7,9 @@
  */
 
 // Include separated files
-require_once get_stylesheet_directory() . '/includes/my-account/my-account-display.php';
-require_once get_stylesheet_directory() . '/includes/my-account/password-reset.php';
-require_once get_stylesheet_directory() . '/includes/my-account/my-account-ajax.php';
+require_once get_stylesheet_directory() . '/includes/user-account/my-account/my-account-display.php';
+require_once get_stylesheet_directory() . '/includes/user-account/my-account/password-reset.php';
+require_once get_stylesheet_directory() . '/includes/user-account/my-account/my-account-ajax.php';
 
 // Register the shortcode
 add_shortcode('my_account', 'display_my_account');
@@ -23,8 +23,8 @@ function display_my_account($atts) {
     }
 
     // Enqueue separated CSS and JS files
-    wp_enqueue_style('my-account-display-css', get_stylesheet_directory_uri() . '/includes/my-account/my-account-display.css', array(), '1.0.0');
-    wp_enqueue_script('my-account-display-js', get_stylesheet_directory_uri() . '/includes/my-account/my-account-display.js', array(), '1.0.0', true);
+    wp_enqueue_style('my-account-display-css', get_stylesheet_directory_uri() . '/includes/user-account/my-account/my-account-display.css', array(), '1.0.0');
+    wp_enqueue_script('my-account-display-js', get_stylesheet_directory_uri() . '/includes/user-account/my-account/my-account-display.js', array(), '1.0.0', true);
     
     // Localize script with AJAX data
     wp_localize_script('my-account-display-js', 'MyAccountAjax', array(
@@ -38,8 +38,8 @@ function display_my_account($atts) {
     
     // Enqueue password reset files if in password reset flow
     if ($password_reset_step) {
-        wp_enqueue_style('password-reset-css', get_stylesheet_directory_uri() . '/includes/my-account/password-reset.css', array(), '1.0.0');
-        wp_enqueue_script('password-reset-js', get_stylesheet_directory_uri() . '/includes/my-account/password-reset.js', array(), '1.0.0', true);
+        wp_enqueue_style('password-reset-css', get_stylesheet_directory_uri() . '/includes/user-account/my-account/password-reset.css', array(), '1.0.0');
+        wp_enqueue_script('password-reset-js', get_stylesheet_directory_uri() . '/includes/user-account/my-account/password-reset.js', array(), '1.0.0', true);
         
         // Localize password reset script with AJAX data
         wp_localize_script('password-reset-js', 'PasswordResetAjax', array(

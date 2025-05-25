@@ -15,7 +15,7 @@ require_once get_stylesheet_directory() . '/includes/car-submission.php';
 require_once get_stylesheet_directory() . '/includes/car-listing-detailed.php';
 
 // Include My Account and My Listings functionality
-require_once get_stylesheet_directory() . '/includes/my-account.php';
+require_once get_stylesheet_directory() . '/includes/user-account/my-account/my-account.php';
 require_once get_stylesheet_directory() . '/includes/user-account/my-listings/my-listings.php';
 
 
