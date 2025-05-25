@@ -9,7 +9,7 @@ require_once get_stylesheet_directory() . '/includes/core/mapbox-assets.php';
 require_once get_stylesheet_directory() . '/includes/car-listings/car-listings.php';
 
 // Include car submission functionality
-require_once get_stylesheet_directory() . '/includes/car-submission.php';
+require_once get_stylesheet_directory() . '/includes/user-manage-listings/car-submission.php';
 
 // Include detailed car listing functionality
 require_once get_stylesheet_directory() . '/includes/car-listing-detailed.php';
