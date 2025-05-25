@@ -40,9 +40,9 @@ wp_enqueue_script('jquery');
 // Enqueue add-listing script
 wp_enqueue_script(
     'astra-child-add-listing-js',
-    get_stylesheet_directory_uri() . '/js/add-listing.js',
+    get_stylesheet_directory_uri() . '/includes/user-manage-listings/add-listing.js',
     array('jquery'),
-    filemtime(get_stylesheet_directory() . '/js/add-listing.js'),
+    filemtime(get_stylesheet_directory() . '/includes/user-manage-listings/add-listing.js'),
     true
 );
 
