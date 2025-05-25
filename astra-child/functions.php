@@ -3,7 +3,7 @@
 require_once get_stylesheet_directory() . '/vendor/autoload.php';
 
 // Include Mapbox assets
-require_once get_stylesheet_directory() . '/includes/mapbox-assets.php';
+require_once get_stylesheet_directory() . '/includes/core/mapbox-assets.php';
 
 // Include car listings functionality
 require_once get_stylesheet_directory() . '/includes/car-listings/car-listings.php';
@@ -23,7 +23,7 @@ require_once get_stylesheet_directory() . '/includes/user-account/my-listings/my
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourite-listings.php';
 
 // Include theme setup and enqueueing functions
-require_once get_stylesheet_directory() . '/includes/enqueue.php';
+require_once get_stylesheet_directory() . '/includes/core/enqueue.php';
 
 require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 
@@ -40,7 +40,7 @@ require_once get_stylesheet_directory() . '/includes/auth/access-control.php';
 require_once get_stylesheet_directory() . '/includes/auth/login-logout.php';
 
 // Include AJAX handlers
-require_once get_stylesheet_directory() . '/includes/ajax.php';
+require_once get_stylesheet_directory() . '/includes/core/ajax.php';
 
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
