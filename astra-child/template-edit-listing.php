@@ -126,7 +126,7 @@ get_header();
 // Enqueue assets
 wp_enqueue_style('edit-listing-style', get_stylesheet_directory_uri() . '/css/edit-listing.css', array(), '1.0.1');
 wp_enqueue_script('jquery');
-wp_enqueue_script('edit-listing-script', get_stylesheet_directory_uri() . '/js/edit-listing.js', array('jquery'), '1.0.0', true);
+wp_enqueue_script('edit-listing-script', get_stylesheet_directory_uri() . '/includes/user-manage-listings/template-edit-listing/edit-listing.js', array('jquery'), '1.0.0', true);
 
 // Localize the script with necessary data
 wp_localize_script('edit-listing-script', 'editListingData', array(
