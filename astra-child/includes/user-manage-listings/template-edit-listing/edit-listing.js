@@ -450,6 +450,9 @@ jQuery(document).ready(function($) {
             }
         }
         updateActualFileInput();
+        
+        console.log('🚀 [Edit Listing] All validations passed - form will now submit');
+        // Form should submit normally after this point
     });
 
     // Initialize location picker
