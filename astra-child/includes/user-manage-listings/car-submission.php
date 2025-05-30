@@ -17,6 +17,9 @@ if (!defined('WPINC')) {
  * Process form submission for adding a new car listing
  */
 function handle_add_car_listing() {
+    $start_time = microtime(true);
+    car_submission_log('🚀 FORM SUBMISSION STARTED at: ' . date('H:i:s.u'));
+    
     // Initialize variables for error tracking
     $errors = array();
     $required_fields = array(
@@ -244,8 +247,14 @@ function handle_add_car_listing() {
     
     car_submission_log('Car listing created successfully. Post ID: ' . $post_id . ' with ' . count($image_ids) . ' images');
     
+    $end_time = microtime(true);
+    $total_duration = round(($end_time - $start_time), 3);
+    car_submission_log('⏱️ TOTAL FORM PROCESSING TIME: ' . $total_duration . ' seconds');
+    car_submission_log('🔄 STARTING REDIRECT at: ' . date('H:i:s.u'));
+    
     // Redirect to success page
     wp_redirect(add_query_arg('listing_submitted', 'success', wp_get_referer()));
+    car_submission_log('🔄 REDIRECT CALLED at: ' . date('H:i:s.u'));
     exit;
 }
 
