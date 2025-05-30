@@ -76,7 +76,7 @@ function validate_edit_listing_nonce($data) {
 /**
  * Validate image requirements
  * 
- * @param array $existing_images Existing car images
+ * @param array $existing_images Existing car images (gallery only after featured image fix)
  * @param array $removed_images Images to be removed
  * @param array $new_images New images being uploaded
  * @return array Array with 'valid' boolean and 'message' string
@@ -85,6 +85,11 @@ function validate_image_requirements($existing_images, $removed_images, $new_ima
     if (!is_array($existing_images)) {
         $existing_images = array();
     }
+    
+    // FIXED: Account for featured image + gallery images
+    // After our featured image fix, car_images field contains only gallery images
+    // We need to add 1 for the featured image to get the true total
+    $featured_image_count = 1; // There's always a featured image
     
     // Calculate final image count
     $remaining_existing = $existing_images;
@@ -98,16 +103,17 @@ function validate_image_requirements($existing_images, $removed_images, $new_ima
     }
     
     $new_image_count = 0;
-    if (!empty($new_images['name'][0])) {
-        $new_image_count = count($new_images['name']);
+    if (!empty($new_images['car_images']['name'][0])) {
+        $new_image_count = count($new_images['car_images']['name']);
     }
     
-    $final_count = count($remaining_existing) + $new_image_count;
+    // FIXED: Include featured image in total count
+    $final_count = $featured_image_count + count($remaining_existing) + $new_image_count;
     
     if ($final_count < 5) {
         return array(
             'valid' => false,
-            'message' => 'At least 5 images are required.'
+            'message' => 'At least 5 images are required. Current count: ' . $final_count
         );
     }
     
