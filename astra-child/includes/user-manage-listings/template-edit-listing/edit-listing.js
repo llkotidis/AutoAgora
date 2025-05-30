@@ -415,16 +415,39 @@ jQuery(document).ready(function($) {
         const totalImages = existingImagesCount + newImagesCount;
 
         console.log('[Edit Listing] Submit validation - Existing images:', existingImagesCount, 'New images:', newImagesCount, 'Total:', totalImages);
-
-        if (totalImages < 5) {
-            e.preventDefault();
-            alert('Please ensure there are at least 5 images for your car listing (including existing and newly added).');
-            return false;
-        }
-        if (totalImages > 25) {
-            e.preventDefault();
-            alert('You can have a maximum of 25 images for your car listing (including existing and newly added).');
-            return false;
+        console.log('[Edit Listing] Debug - Existing selector:', existingImageSelector);
+        console.log('[Edit Listing] Debug - Found existing elements:', imagePreviewContainer.find(existingImageSelector));
+        console.log('[Edit Listing] Debug - All image preview items:', imagePreviewContainer.find('.image-preview-item'));
+        
+        // More robust image counting - fallback if selector fails
+        const alternativeExistingCount = imagePreviewContainer.find('.image-preview-item').length - newImagesCount;
+        if (existingImagesCount === 0 && alternativeExistingCount > 0) {
+            console.log('[Edit Listing] Using alternative count method:', alternativeExistingCount);
+            const correctedTotal = alternativeExistingCount + newImagesCount;
+            console.log('[Edit Listing] Corrected total:', correctedTotal);
+            
+            if (correctedTotal < 5) {
+                e.preventDefault();
+                alert('Please ensure there are at least 5 images for your car listing (including existing and newly added).');
+                return false;
+            }
+            if (correctedTotal > 25) {
+                e.preventDefault();
+                alert('You can have a maximum of 25 images for your car listing (including existing and newly added).');
+                return false;
+            }
+        } else {
+            // Original validation
+            if (totalImages < 5) {
+                e.preventDefault();
+                alert('Please ensure there are at least 5 images for your car listing (including existing and newly added).');
+                return false;
+            }
+            if (totalImages > 25) {
+                e.preventDefault();
+                alert('You can have a maximum of 25 images for your car listing (including existing and newly added).');
+                return false;
+            }
         }
         updateActualFileInput();
     });
