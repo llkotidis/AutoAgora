@@ -154,18 +154,6 @@ jQuery(document).ready(function($) {
 
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
-        const submitStartTime = performance.now();
-        console.log('🚀 [Add Listing] FORM SUBMISSION STARTED at:', new Date().toLocaleTimeString());
-        // Log submission timing
-        window.addEventListener('beforeunload', function() {
-            const submitEndTime = performance.now();
-            const submitDuration = Math.round(submitEndTime - submitStartTime);
-            console.log('⏱️ [Add Listing] FORM SUBMISSION DURATION:', submitDuration + 'ms');
-        });
-
-        console.log('✅ [Add Listing] Form validation passed - submitting form');
-        console.log('📋 [Add Listing] Async session ID being submitted:', asyncUploadManager ? asyncUploadManager.sessionId : 'None');
-        
         // Validate image count - either async uploaded or traditional
         let totalImages = 0;
         
