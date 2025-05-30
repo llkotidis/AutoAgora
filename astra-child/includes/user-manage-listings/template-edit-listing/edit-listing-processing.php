@@ -80,11 +80,17 @@ function process_edit_listing_form($data, $car_id) {
  * @return bool Success status
  */
 function process_edit_listing_images($car_id, $files, $removed_images) {
+    error_log('🔍 [PROCESS IMAGES] Starting for car ID: ' . $car_id);
+    
     // Get existing images
     $existing_images = get_field('car_images', $car_id);
     if (!is_array($existing_images)) {
         $existing_images = array();
     }
+    
+    error_log('🔍 [PROCESS IMAGES] Initial existing images: ' . print_r($existing_images, true));
+    error_log('🔍 [PROCESS IMAGES] Removed images: ' . print_r($removed_images, true));
+    error_log('🔍 [PROCESS IMAGES] Files to upload: ' . print_r($files, true));
     
     // Remove selected images
     if (!empty($removed_images)) {
@@ -152,22 +158,33 @@ function process_edit_listing_images($car_id, $files, $removed_images) {
     
     // Update the car_images field
     update_field('car_images', $all_images, $car_id);
+    error_log('🔍 [PROCESS IMAGES] Updated car_images field with: ' . print_r($all_images, true));
     
     // ONLY reorganize featured/gallery relationship if there were actual image changes
     $has_image_changes = !empty($removed_images) || (!empty($files['car_images']['name'][0]));
+    error_log('🔍 [PROCESS IMAGES] Has image changes: ' . ($has_image_changes ? 'YES' : 'NO'));
+    error_log('🔍 [PROCESS IMAGES] Removed images empty: ' . (empty($removed_images) ? 'YES' : 'NO'));
+    error_log('🔍 [PROCESS IMAGES] New files uploaded: ' . (!empty($files['car_images']['name'][0]) ? 'YES' : 'NO'));
     
     if ($has_image_changes && !empty($all_images)) {
+        error_log('🔍 [PROCESS IMAGES] RUNNING FEATURED IMAGE REORGANIZATION');
         // Only run featured image logic when images were actually modified
         $featured_image_id = $all_images[0];
+        error_log('🔍 [PROCESS IMAGES] Setting featured image: ' . $featured_image_id);
         
         // Remove the featured image from the gallery array to prevent duplication
         $gallery_images = array_slice($all_images, 1);
+        error_log('🔍 [PROCESS IMAGES] Gallery images after removing featured: ' . print_r($gallery_images, true));
         
         // Update the car_images field with only non-featured images
         update_field('car_images', $gallery_images, $car_id);
+        error_log('🔍 [PROCESS IMAGES] Updated car_images field to gallery-only: ' . print_r($gallery_images, true));
         
         // Set the featured image
         set_post_thumbnail($car_id, $featured_image_id);
+        error_log('🔍 [PROCESS IMAGES] Set post thumbnail: ' . $featured_image_id);
+    } else {
+        error_log('🔍 [PROCESS IMAGES] SKIPPING FEATURED IMAGE REORGANIZATION - no changes detected');
     }
     // If no image changes, leave everything as-is
     

@@ -617,8 +617,18 @@ function handle_edit_car_listing() {
     // Process form data
     process_edit_listing_form($_POST, $car_id);
     
+    // DEBUG: Log what we're about to process
+    error_log('=== EDIT LISTING IMAGE PROCESSING DEBUG ===');
+    error_log('Car ID: ' . $car_id);
+    error_log('Removed images from POST: ' . print_r($removed_images, true));
+    error_log('FILES array: ' . print_r($_FILES, true));
+    error_log('Current car_images field: ' . print_r(get_field('car_images', $car_id), true));
+    
     // Process images
     process_edit_listing_images($car_id, $_FILES, $removed_images);
+    
+    error_log('After processing - car_images field: ' . print_r(get_field('car_images', $car_id), true));
+    error_log('=== END IMAGE PROCESSING DEBUG ===');
     
     // Redirect with success message
     handle_edit_listing_redirect('success', 'listing_updated');
