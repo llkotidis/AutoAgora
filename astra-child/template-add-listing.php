@@ -37,11 +37,20 @@ wp_enqueue_script('jquery');
 // Enqueue Font Awesome
 // wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
 
+// Enqueue image optimization script
+wp_enqueue_script(
+    'astra-child-image-optimization',
+    get_stylesheet_directory_uri() . '/includes/user-manage-listings/image-optimization.js',
+    array('jquery'),
+    filemtime(get_stylesheet_directory() . '/includes/user-manage-listings/image-optimization.js'),
+    true
+);
+
 // Enqueue add-listing script
 wp_enqueue_script(
     'astra-child-add-listing-js',
     get_stylesheet_directory_uri() . '/includes/user-manage-listings/template-add-listing/add-listing.js',
-    array('jquery'),
+    array('jquery', 'astra-child-image-optimization'),
     filemtime(get_stylesheet_directory() . '/includes/user-manage-listings/template-add-listing/add-listing.js'),
     true
 );

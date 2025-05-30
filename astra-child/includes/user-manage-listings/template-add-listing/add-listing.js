@@ -228,68 +228,227 @@ jQuery(document).ready(function($) {
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-        let filesAddedThisBatchCount = 0;
+        // Show processing indicator
+        showImageProcessingIndicator(true);
 
-        candidateFiles.forEach(file => {
-            // Check if adding this file would exceed the maximum, considering those already processed in this batch
-            if (accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
-                alert('Maximum ' + maxFiles + ' files allowed. Some files were not added.');
-                return false; // Effectively breaks forEach for this iteration's candidateFiles
-            }
-
-            const isDuplicate = accumulatedFilesList.some(
-                existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
-            );
-
-            if (isDuplicate) {
-                console.log('[Add Listing] Skipping duplicate file:', file.name);
-                return; // to next candidate in forEach
-            }
-
-            if (!allowedTypes.includes(file.type)) {
-                alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
-                return; // to next candidate in forEach
-            }
-
-            if (file.size > maxFileSize) {
-                alert(`File ${file.name} is too large (max 5MB).`);
-                return; // to next candidate in forEach
-            }
-
-            // If all checks pass, add to accumulated list and create preview
-            accumulatedFilesList.push(file);
-            createAndDisplayPreview(file); // Create preview for the newly added file
-            filesAddedThisBatchCount++;
+        // Initialize the image optimizer
+        const optimizer = new ImageOptimizer({
+            maxWidth: 1920,
+            maxHeight: 1080,
+            quality: 0.8,
+            maxFileSize: 2048, // 2MB in KB
+            allowedTypes: allowedTypes
         });
 
-        if (filesAddedThisBatchCount > 0) {
-            updateActualFileInput(); // Update the hidden file input with the new state of accumulatedFilesList
+        // Process files asynchronously with optimization
+        processFilesWithOptimization(candidateFiles, optimizer, maxFiles, allowedTypes, maxFileSize);
+    }
+
+    async function processFilesWithOptimization(candidateFiles, optimizer, maxFiles, allowedTypes, maxFileSize) {
+        let filesAddedThisBatchCount = 0;
+        let totalSavings = 0;
+        let totalOriginalSize = 0;
+        let optimizationErrors = 0;
+
+        try {
+            for (const file of candidateFiles) {
+                // Check if adding this file would exceed the maximum
+                if (accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
+                    alert('Maximum ' + maxFiles + ' files allowed. Some files were not added.');
+                    break;
+                }
+
+                const isDuplicate = accumulatedFilesList.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+                );
+
+                if (isDuplicate) {
+                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    continue;
+                }
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
+                    continue;
+                }
+
+                if (file.size > maxFileSize) {
+                    alert(`File ${file.name} is too large (max 5MB).`);
+                    continue;
+                }
+
+                // Show current file being processed
+                updateProcessingStatus(`Optimizing ${file.name}...`);
+
+                try {
+                    // Optimize the image
+                    const optimizedFile = await optimizer.optimizeImage(file);
+                    
+                    // Calculate savings
+                    const originalSizeKB = file.size / 1024;
+                    const optimizedSizeKB = optimizedFile.size / 1024;
+                    const savedKB = originalSizeKB - optimizedSizeKB;
+                    
+                    totalOriginalSize += originalSizeKB;
+                    
+                    // Only count actual savings (when file was actually compressed)
+                    if (optimizedFile.size < file.size) {
+                        totalSavings += savedKB;
+                        
+                        // Create preview with compression info
+                        createAndDisplayPreviewWithStats(optimizedFile, file, {
+                            originalSize: originalSizeKB.toFixed(1),
+                            optimizedSize: optimizedSizeKB.toFixed(1),
+                            savings: savedKB.toFixed(1),
+                            compressionRatio: ((savedKB / originalSizeKB) * 100).toFixed(1)
+                        });
+                    } else {
+                        // File wasn't compressed, show without stats
+                        createAndDisplayPreview(file);
+                    }
+
+                    // Add the file to accumulated list (either optimized or original)
+                    accumulatedFilesList.push(optimizedFile);
+                    filesAddedThisBatchCount++;
+                    
+                } catch (error) {
+                    console.error('[Add Listing] Failed to process image:', file.name, error);
+                    optimizationErrors++;
+                    
+                    // Add original file as fallback
+                    accumulatedFilesList.push(file);
+                    createAndDisplayPreview(file);
+                    filesAddedThisBatchCount++;
+                    
+                    totalOriginalSize += file.size / 1024;
+                }
+            }
+
+            // Show completion summary
+            if (filesAddedThisBatchCount > 0) {
+                updateActualFileInput();
+                
+                if (totalSavings > 0) {
+                    showOptimizationSummary(filesAddedThisBatchCount, totalSavings, totalOriginalSize, optimizationErrors);
+                } else if (optimizationErrors > 0) {
+                    showErrorSummary(optimizationErrors, filesAddedThisBatchCount);
+                }
+            }
+
+        } catch (error) {
+            console.error('[Add Listing] Error processing files:', error);
+            alert('An error occurred while processing images. Please try again.');
+        } finally {
+            showImageProcessingIndicator(false);
         }
+
         console.log('[Add Listing] Processed batch. Accumulated files count:', accumulatedFilesList.length);
     }
-    
+
+    function showImageProcessingIndicator(show) {
+        if (show) {
+            if (!$('#image-processing-indicator').length) {
+                const indicator = $(`
+                    <div id="image-processing-indicator" class="image-processing-indicator">
+                        <div class="processing-spinner"></div>
+                        <div class="processing-text">Optimizing images...</div>
+                        <div class="processing-status"></div>
+                    </div>
+                `);
+                imagePreview.before(indicator);
+            }
+        } else {
+            $('#image-processing-indicator').remove();
+        }
+    }
+
+    function updateProcessingStatus(message) {
+        $('#image-processing-indicator .processing-status').text(message);
+    }
+
+    function showOptimizationSummary(filesCount, totalSavings, totalOriginalSize, optimizationErrors) {
+        if (totalSavings > 0) {
+            const compressionPercentage = ((totalSavings / totalOriginalSize) * 100).toFixed(1);
+            const summaryMessage = `✅ Optimized ${filesCount} image${filesCount > 1 ? 's' : ''}: Saved ${totalSavings.toFixed(1)} KB (${compressionPercentage}% reduction)`;
+            
+            const summaryEl = $(`<div class="optimization-summary">${summaryMessage}</div>`);
+            imagePreview.before(summaryEl);
+            
+            // Remove summary after 5 seconds
+            setTimeout(() => {
+                summaryEl.fadeOut(() => summaryEl.remove());
+            }, 5000);
+        }
+    }
+
+    function showErrorSummary(optimizationErrors, filesAddedThisBatchCount) {
+        const errorMessage = `❌ ${optimizationErrors} image${optimizationErrors > 1 ? 's' : ''} were not optimized. Please check the images and try again.`;
+        
+        const errorEl = $(`<div class="error-summary">${errorMessage}</div>`);
+        imagePreview.before(errorEl);
+        
+        // Remove summary after 5 seconds
+        setTimeout(() => {
+            errorEl.fadeOut(() => errorEl.remove());
+        }, 5000);
+    }
+
     function createAndDisplayPreview(file) {
         console.log('[Add Listing] Creating preview for:', file.name);
         const reader = new FileReader();
         reader.onload = function(e) {
-            console.log('[Add Listing] File read complete for preview, creating DOM element for:', file.name);
             const previewItem = $('<div>').addClass('image-preview-item');
             const img = $('<img>').attr({ 'src': e.target.result, 'alt': file.name });
+            
             const removeBtn = $('<div>').addClass('remove-image')
                 .html('<i class="fas fa-times"></i>')
                 .on('click', function() {
                     console.log('[Add Listing] Remove button clicked for:', file.name);
-                    removeFileFromSelection(file.name); // Pass file name to identify for removal
-                    previewItem.remove(); // Remove the preview DOM element
+                    removeFileFromSelection(file.name);
+                    previewItem.remove();
                 });
+                
             previewItem.append(img).append(removeBtn);
-            imagePreview.append(previewItem); // Append to the main preview container
+            imagePreview.append(previewItem);
             console.log('[Add Listing] Preview added to DOM for:', file.name);
         };
         reader.onerror = function() {
             console.error('[Add Listing] Error reading file for preview:', file.name);
         };
         reader.readAsDataURL(file);
+    }
+
+    function createAndDisplayPreviewWithStats(optimizedFile, originalFile, stats) {
+        console.log('[Add Listing] Creating preview with stats for:', optimizedFile.name);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewItem = $('<div>').addClass('image-preview-item');
+            const img = $('<img>').attr({ 'src': e.target.result, 'alt': optimizedFile.name });
+            
+            // Add compression stats tooltip
+            const statsTooltip = $(`
+                <div class="compression-stats" title="Original: ${stats.originalSize}KB | Optimized: ${stats.optimizedSize}KB | Saved: ${stats.savings}KB (${stats.compressionRatio}%)">
+                    <span class="stats-icon">📊</span>
+                    <span class="stats-text">-${stats.compressionRatio}%</span>
+                </div>
+            `);
+            
+            const removeBtn = $('<div>').addClass('remove-image')
+                .html('<i class="fas fa-times"></i>')
+                .on('click', function() {
+                    console.log('[Add Listing] Remove button clicked for:', optimizedFile.name);
+                    removeFileFromSelection(optimizedFile.name);
+                    previewItem.remove();
+                });
+                
+            previewItem.append(img).append(statsTooltip).append(removeBtn);
+            imagePreview.append(previewItem);
+            console.log('[Add Listing] Preview with stats added to DOM for:', optimizedFile.name);
+        };
+        reader.onerror = function() {
+            console.error('[Add Listing] Error reading file for preview:', optimizedFile.name);
+        };
+        reader.readAsDataURL(optimizedFile);
     }
 
     function removeFileFromSelection(fileNameToRemove) {
@@ -317,4 +476,23 @@ jQuery(document).ready(function($) {
         }
         console.log('[Add Listing] Actual file input updated. Count:', fileInput[0].files.length);
     }
+    
+    // Initialize and test image optimizer
+    function initializeImageOptimizer() {
+        if (typeof ImageOptimizer !== 'undefined') {
+            const testOptimizer = new ImageOptimizer();
+            console.log('[Add Listing] ✅ Image optimization ready! Browser support:', testOptimizer.isSupported);
+            console.log('[Add Listing] Optimization settings:', {
+                maxWidth: testOptimizer.maxWidth,
+                maxHeight: testOptimizer.maxHeight,
+                quality: testOptimizer.quality,
+                maxFileSize: testOptimizer.maxFileSize + 'KB'
+            });
+        } else {
+            console.error('[Add Listing] ❌ ImageOptimizer class not found! Image optimization will not work.');
+        }
+    }
+    
+    // Test the optimizer on page load
+    initializeImageOptimizer();
 }); 
