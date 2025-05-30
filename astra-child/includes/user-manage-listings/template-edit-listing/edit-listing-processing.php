@@ -72,41 +72,47 @@ function process_edit_listing_form($data, $car_id) {
 }
 
 /**
- * Process image uploads and updates for edit listing
- * 
- * @param int $car_id Car ID being edited
- * @param array $files $_FILES array
- * @param array $removed_images Array of image IDs to remove
- * @return bool True on success, false on failure
+ * Process edit listing images - OPTIMIZED VERSION
+ *
+ * @param int $car_id Post ID
+ * @param array $files Uploaded files
+ * @param array $removed_images Image IDs to remove
+ * @return bool Success status
  */
-function process_edit_listing_images($car_id, $files, $removed_images = array()) {
+function process_edit_listing_images($car_id, $files, $removed_images) {
     // Get existing images
     $existing_images = get_field('car_images', $car_id);
     if (!is_array($existing_images)) {
         $existing_images = array();
     }
-
-    // Remove deleted images
+    
+    // Remove selected images
     if (!empty($removed_images)) {
         foreach ($removed_images as $removed_id) {
             $key = array_search($removed_id, $existing_images);
             if ($key !== false) {
                 unset($existing_images[$key]);
+                // Optionally delete the attachment file
+                wp_delete_attachment($removed_id, true);
             }
         }
-        // Reindex array after removal
+        // Reindex array
         $existing_images = array_values($existing_images);
     }
-
-    // Process new image uploads if any
+    
+    // Process new image uploads if any - OPTIMIZED VERSION
     if (!empty($files['car_images']['name'][0])) {
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
         
         $image_ids = array();
+        $processed_files = array();
         
-        // Upload new images
+        // OPTIMIZATION: Disable intermediate image generation during batch upload
+        add_filter('intermediate_image_sizes_advanced', '__return_empty_array');
+        
+        // Upload new images with optimized processing
         foreach ($files['car_images']['name'] as $key => $value) {
             if ($files['car_images']['error'][$key] === 0) {
                 $file = array(
@@ -116,14 +122,25 @@ function process_edit_listing_images($car_id, $files, $removed_images = array())
                     'error'    => $files['car_images']['error'][$key],
                     'size'     => $files['car_images']['size'][$key]
                 );
-                
+            
                 $_FILES['car_image'] = $file;
-                $attachment_id = media_handle_upload('car_image', $car_id);
+                
+                // Use optimized upload function
+                $attachment_id = optimized_media_handle_upload('car_image', $car_id);
                 
                 if (!is_wp_error($attachment_id)) {
                     $image_ids[] = $attachment_id;
+                    $processed_files[] = $attachment_id;
                 }
             }
+        }
+        
+        // OPTIMIZATION: Re-enable image generation and generate only needed sizes
+        remove_filter('intermediate_image_sizes_advanced', '__return_empty_array');
+        
+        // Generate optimized image sizes in batch
+        if (!empty($processed_files)) {
+            generate_optimized_car_image_sizes($processed_files);
         }
         
         // Combine existing and new images

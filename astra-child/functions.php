@@ -18,12 +18,14 @@ require_once get_stylesheet_directory() . '/includes/car-listing-detailed.php';
 require_once get_stylesheet_directory() . '/includes/user-account/my-account/my-account.php';
 require_once get_stylesheet_directory() . '/includes/user-account/my-listings/my-listings.php';
 
-
 // Include Favourite Listings functionality
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourite-listings.php';
 
 // Include theme setup and enqueueing functions
 require_once get_stylesheet_directory() . '/includes/core/enqueue.php';
+
+// Include image optimization for car listings
+require_once get_stylesheet_directory() . '/includes/core/image-optimization.php';
 
 require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 
@@ -49,7 +51,6 @@ require_once get_stylesheet_directory() . '/includes/shortcodes/car-search-form.
 
 // Include admin user favorites column functionality
 require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column.php';
-
 
 /**
  * Astra Child Theme functions and definitions

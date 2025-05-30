@@ -201,7 +201,7 @@ add_action('admin_post_add_new_car_listing', 'handle_add_car_listing');
 add_action('admin_post_nopriv_add_new_car_listing', 'handle_add_car_listing');
 
 /**
- * Process image uploads for car listings
+ * Process image uploads for car listings - OPTIMIZED VERSION
  *
  * @param int $post_id The ID of the car listing post
  * @return array|WP_Error Array of attachment IDs or WP_Error on failure
@@ -229,6 +229,12 @@ function handle_car_image_uploads($post_id) {
     require_once(ABSPATH . 'wp-admin/includes/file.php');
     require_once(ABSPATH . 'wp-admin/includes/image.php');
     require_once(ABSPATH . 'wp-admin/includes/media.php');
+    
+    // OPTIMIZATION: Disable intermediate image generation during batch upload
+    add_filter('intermediate_image_sizes_advanced', '__return_empty_array');
+    
+    // Process files in optimized batch
+    $processed_files = array();
     
     // Loop through each file
     for ($i = 0; $i < $file_count; $i++) {
@@ -263,8 +269,8 @@ function handle_car_image_uploads($post_id) {
         // Set up $_FILES array for this single file
         $_FILES['car_image'] = $file;
         
-        // Use WordPress built-in attachment handling
-        $attachment_id = media_handle_upload('car_image', $post_id);
+        // OPTIMIZATION: Use faster upload with minimal processing
+        $attachment_id = optimized_media_handle_upload('car_image', $post_id);
         
         if (is_wp_error($attachment_id)) {
             car_submission_log('Error creating attachment: ' . $attachment_id->get_error_message());
@@ -275,6 +281,16 @@ function handle_car_image_uploads($post_id) {
         
         // Add to our array of attachment IDs
         $attachment_ids[] = $attachment_id;
+        $processed_files[] = $attachment_id;
+    }
+    
+    // OPTIMIZATION: Re-enable image generation and generate only needed sizes
+    remove_filter('intermediate_image_sizes_advanced', '__return_empty_array');
+    
+    // Generate optimized image sizes in batch for better performance
+    if (!empty($processed_files)) {
+        car_submission_log('Generating optimized image sizes for ' . count($processed_files) . ' images');
+        generate_optimized_car_image_sizes($processed_files);
     }
     
     // If we have no attachments, return an error
@@ -290,6 +306,87 @@ function handle_car_image_uploads($post_id) {
     car_submission_log('Saved all attachment IDs to ACF car_images gallery field');
     
     return $attachment_ids;
+}
+
+/**
+ * OPTIMIZATION: Custom media upload handler with minimal processing
+ */
+function optimized_media_handle_upload($file_handler, $post_id) {
+    $file = $_FILES[$file_handler];
+    
+    // Basic file validation
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return new WP_Error('upload_error', 'File upload error: ' . $file['error']);
+    }
+    
+    // Move uploaded file to WordPress uploads directory
+    $upload = wp_handle_upload($file, array('test_form' => false));
+    
+    if (isset($upload['error'])) {
+        return new WP_Error('upload_error', $upload['error']);
+    }
+    
+    // Create attachment post with minimal data
+    $attachment = array(
+        'post_mime_type' => $upload['type'],
+        'post_title'     => sanitize_file_name(pathinfo($upload['file'], PATHINFO_FILENAME)),
+        'post_content'   => '',
+        'post_status'    => 'inherit',
+        'post_parent'    => $post_id
+    );
+    
+    // Insert attachment with minimal processing
+    $attachment_id = wp_insert_attachment($attachment, $upload['file'], $post_id);
+    
+    if (!$attachment_id) {
+        return new WP_Error('db_error', 'Failed to create attachment');
+    }
+    
+    // Store basic metadata without generating image sizes yet
+    $metadata = array(
+        'file' => _wp_relative_upload_path($upload['file']),
+        'width' => 0,  // Will be set later if needed
+        'height' => 0, // Will be set later if needed
+        'sizes' => array()
+    );
+    
+    wp_update_attachment_metadata($attachment_id, $metadata);
+    
+    return $attachment_id;
+}
+
+/**
+ * OPTIMIZATION: Generate only essential image sizes in batch
+ */
+function generate_optimized_car_image_sizes($attachment_ids) {
+    // Only generate the 3 sizes we actually use
+    $essential_sizes = array('thumbnail', 'medium', 'large');
+    
+    foreach ($attachment_ids as $attachment_id) {
+        $file_path = get_attached_file($attachment_id);
+        
+        if (!$file_path || !file_exists($file_path)) {
+            continue;
+        }
+        
+        // Generate metadata with only essential sizes
+        $metadata = wp_generate_attachment_metadata($attachment_id, $file_path);
+        
+        // Filter to keep only essential sizes
+        if (isset($metadata['sizes'])) {
+            $filtered_sizes = array();
+            foreach ($essential_sizes as $size) {
+                if (isset($metadata['sizes'][$size])) {
+                    $filtered_sizes[$size] = $metadata['sizes'][$size];
+                }
+            }
+            $metadata['sizes'] = $filtered_sizes;
+        }
+        
+        wp_update_attachment_metadata($attachment_id, $metadata);
+        
+        car_submission_log('Generated optimized sizes for attachment: ' . $attachment_id);
+    }
 }
 
 /**
