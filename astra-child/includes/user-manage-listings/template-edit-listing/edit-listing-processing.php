@@ -153,9 +153,18 @@ function process_edit_listing_images($car_id, $files, $removed_images) {
     // Update the car_images field
     update_field('car_images', $all_images, $car_id);
     
-    // Set the first image as featured image
+    // Set the first image as featured image and remove it from the gallery to prevent duplicates
     if (!empty($all_images)) {
-        set_post_thumbnail($car_id, $all_images[0]);
+        $featured_image_id = $all_images[0];
+        
+        // Remove the featured image from the gallery array to prevent duplication
+        $gallery_images = array_slice($all_images, 1);
+        
+        // Update the car_images field with only non-featured images
+        update_field('car_images', $gallery_images, $car_id);
+        
+        // Set the featured image
+        set_post_thumbnail($car_id, $featured_image_id);
     }
     
     return true;
