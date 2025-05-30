@@ -145,61 +145,146 @@ jQuery(document).ready(function($) {
         const maxTotalFiles = 25;
         const maxFileSize = 5 * 1024 * 1024; // 5MB
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        let filesActuallyAddedInThisBatch = 0;
 
         const currentExistingImageDOMCount = imagePreviewContainer.find(existingImageSelector).length;
 
         console.log('[Edit Listing] Current existing images in DOM (for processNewFiles):', currentExistingImageDOMCount);
         console.log('[Edit Listing] Currently accumulated new files:', accumulatedFilesList.length);
 
-        candidateFiles.forEach(file => {
-            if (currentExistingImageDOMCount + accumulatedFilesList.length >= maxTotalFiles) {
-                alert('Maximum ' + maxTotalFiles + ' total images allowed. Cannot add "' + file.name + '".');
-                return;
-            }
+        // Show processing indicator
+        showImageProcessingIndicator(true);
 
-            const isDuplicateInNew = accumulatedFilesList.some(
-                existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
-            );
-            if (isDuplicateInNew) {
-                console.log('[Edit Listing] Skipping duplicate new file (already in this edit session):', file.name);
-                return;
-            }
-            if (!allowedTypes.includes(file.type)) {
-                alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
-                return;
-            }
-            if (file.size > maxFileSize) {
-                alert(`File ${file.name} is too large (max 5MB).`);
-                return;
-            }
-
-            accumulatedFilesList.push(file);
-            createAndDisplayPreviewForNewFile(file);
-            filesActuallyAddedInThisBatch++;
+        // Initialize the image optimizer
+        const optimizer = new ImageOptimizer({
+            maxWidth: 1920,
+            maxHeight: 1080,
+            quality: 0.8,
+            maxFileSize: 2048, // 2MB in KB
+            allowedTypes: allowedTypes
         });
 
-        if (filesActuallyAddedInThisBatch > 0) {
-            updateActualFileInput();
-        }
-        console.log('[Edit Listing] Processed batch. Total new files added in session:', accumulatedFilesList.length);
+        // Process files asynchronously with optimization
+        processFilesWithOptimization(candidateFiles, optimizer, maxTotalFiles, allowedTypes, maxFileSize, currentExistingImageDOMCount);
     }
 
-    function createAndDisplayPreviewForNewFile(file) {
+    async function processFilesWithOptimization(candidateFiles, optimizer, maxTotalFiles, allowedTypes, maxFileSize, currentExistingImageDOMCount) {
+        let filesActuallyAddedInThisBatch = 0;
+        let totalSavings = 0;
+        let totalOriginalSize = 0;
+        let optimizationErrors = 0;
+
+        try {
+            for (const file of candidateFiles) {
+                // Check if adding this file would exceed the maximum
+                if (currentExistingImageDOMCount + accumulatedFilesList.length >= maxTotalFiles) {
+                    alert('Maximum ' + maxTotalFiles + ' total images allowed. Cannot add "' + file.name + '".');
+                    break;
+                }
+
+                const isDuplicateInNew = accumulatedFilesList.some(
+                    existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+                );
+                
+                if (isDuplicateInNew) {
+                    console.log('[Edit Listing] Skipping duplicate new file (already in this edit session):', file.name);
+                    continue;
+                }
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
+                    continue;
+                }
+
+                if (file.size > maxFileSize) {
+                    alert(`File ${file.name} is too large (max 5MB).`);
+                    continue;
+                }
+
+                try {
+                    // Update processing status
+                    updateProcessingStatus('Optimizing ' + file.name + '...');
+
+                    const originalSize = file.size;
+                    totalOriginalSize += originalSize;
+
+                    // Optimize the image
+                    const optimizedFile = await optimizer.optimizeImage(file);
+                    const optimizedSize = optimizedFile.size;
+                    totalSavings += (originalSize - optimizedSize);
+
+                    console.log('[Edit Listing] File optimized:', file.name, 'Original:', (originalSize/1024).toFixed(2) + 'KB', 'Optimized:', (optimizedSize/1024).toFixed(2) + 'KB');
+
+                    // Add optimized file to our array
+                    accumulatedFilesList.push(optimizedFile);
+                    createAndDisplayPreviewForNewFile(optimizedFile, originalSize, optimizedSize);
+                    filesActuallyAddedInThisBatch++;
+                } catch (error) {
+                    console.error('[Edit Listing] Error optimizing image:', file.name, error);
+                    optimizationErrors++;
+                    
+                    // Fall back to original file if optimization fails
+                    console.log('[Edit Listing] Using original file as fallback for:', file.name);
+                    accumulatedFilesList.push(file);
+                    createAndDisplayPreviewForNewFile(file);
+                    filesActuallyAddedInThisBatch++;
+                }
+            }
+
+            // Show optimization summary
+            if (filesActuallyAddedInThisBatch > 0) {
+                updateActualFileInput();
+                
+                if (totalSavings > 0) {
+                    const compressionPercent = ((totalSavings / totalOriginalSize) * 100).toFixed(1);
+                    showOptimizationSummary(
+                        filesActuallyAddedInThisBatch,
+                        totalSavings,
+                        compressionPercent,
+                        optimizationErrors
+                    );
+                }
+            }
+
+            console.log('[Edit Listing] Processed batch. Total new files added in session:', accumulatedFilesList.length);
+
+        } catch (error) {
+            console.error('[Edit Listing] Error in batch processing:', error);
+        } finally {
+            // Hide processing indicator
+            showImageProcessingIndicator(false);
+        }
+    }
+
+    function createAndDisplayPreviewForNewFile(file, originalSize = null, optimizedSize = null) {
         console.log('[Edit Listing] Creating preview for new file:', file.name);
         const reader = new FileReader();
         reader.onload = function(e) {
-            const previewItem = $('<div>').addClass('image-preview-item new-image'); // Add 'new-image' class for styling/selection if needed
+            const previewItem = $('<div>').addClass('image-preview-item new-image');
             const img = $('<img>').attr({ 'src': e.target.result, 'alt': file.name });
-            const removeBtn = $('<div>').addClass('remove-image remove-new-image') // Specific class for new image removal
+            
+            const removeBtn = $('<div>').addClass('remove-image remove-new-image')
                 .html('<i class="fas fa-times"></i>')
                 .on('click', function(event) {
-                    event.stopPropagation(); // Prevent potential parent clicks
+                    event.stopPropagation();
                     console.log('[Edit Listing] Remove button clicked for new file:', file.name);
                     removeNewFileFromSelection(file.name);
                     previewItem.remove();
                 });
-            previewItem.append(img).append(removeBtn);
+
+            // Add compression stats if available
+            if (originalSize && optimizedSize && originalSize !== optimizedSize) {
+                const savings = originalSize - optimizedSize;
+                const compressionPercent = ((savings / originalSize) * 100).toFixed(1);
+                const statsDiv = $('<div>').addClass('image-stats')
+                    .html(`
+                        <small>Optimized: ${compressionPercent}% smaller</small><br>
+                        <small>${(originalSize/1024).toFixed(1)}KB → ${(optimizedSize/1024).toFixed(1)}KB</small>
+                    `);
+                previewItem.append(img).append(removeBtn).append(statsDiv);
+            } else {
+                previewItem.append(img).append(removeBtn);
+            }
+            
             imagePreviewContainer.append(previewItem);
         };
         reader.onerror = function() {
@@ -402,4 +487,44 @@ jQuery(document).ready(function($) {
         //     arrow.text('▼');
         // }
     });
+
+    // Helper functions for optimization feedback
+    function showImageProcessingIndicator(show) {
+        if (show) {
+            if ($('.image-processing-indicator').length === 0) {
+                const indicator = $(`
+                    <div class="image-processing-indicator">
+                        <div class="processing-spinner"></div>
+                        <span class="processing-text">Optimizing images...</span>
+                        <span class="processing-status"></span>
+                    </div>
+                `);
+                imagePreviewContainer.before(indicator);
+            }
+        } else {
+            $('.image-processing-indicator').remove();
+        }
+    }
+
+    function updateProcessingStatus(status) {
+        $('.processing-status').text(status);
+    }
+
+    function showOptimizationSummary(fileCount, totalSavings, compressionPercent, errors) {
+        // Remove any existing summaries
+        $('.optimization-summary, .error-summary').remove();
+        
+        const summaryClass = errors > 0 ? 'error-summary' : 'optimization-summary';
+        const message = errors > 0 
+            ? `${fileCount} images processed with ${errors} optimization errors`
+            : `${fileCount} images optimized! Saved ${(totalSavings/1024).toFixed(1)}KB (${compressionPercent}% compression)`;
+            
+        const summary = $(`<div class="${summaryClass}">${message}</div>`);
+        imagePreviewContainer.before(summary);
+        
+        // Remove summary after 5 seconds
+        setTimeout(() => {
+            summary.fadeOut(() => summary.remove());
+        }, 5000);
+    }
 }); 
