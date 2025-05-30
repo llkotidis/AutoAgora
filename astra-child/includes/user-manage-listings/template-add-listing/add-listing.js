@@ -1,6 +1,34 @@
 jQuery(document).ready(function($) {
     console.log('[Add Listing] jQuery ready');
     
+    // Initialize async upload manager if available
+    let asyncUploadManager = null;
+    if (typeof AsyncUploadManager !== 'undefined') {
+        asyncUploadManager = new AsyncUploadManager();
+        
+        // Set session ID in hidden form field
+        $('#async_session_id').val(asyncUploadManager.session.id);
+        
+        // Override callbacks to update UI
+        asyncUploadManager.updateUploadProgress = function(fileKey, progress) {
+            updateAsyncUploadProgress(fileKey, progress);
+        };
+        
+        asyncUploadManager.onUploadSuccess = function(fileKey, data) {
+            onAsyncUploadSuccess(fileKey, data);
+        };
+        
+        asyncUploadManager.onUploadError = function(fileKey, error) {
+            onAsyncUploadError(fileKey, error);
+        };
+        
+        asyncUploadManager.onImageRemoved = function(fileKey) {
+            onAsyncImageRemoved(fileKey);
+        };
+        
+        console.log('[Add Listing] Async upload manager initialized with session:', asyncUploadManager.session.id);
+    }
+    
     // Store the makes data from localized script
     const makesData = addListingData.makesData;
     console.log('[Add Listing] Makes data:', makesData);
@@ -126,16 +154,35 @@ jQuery(document).ready(function($) {
 
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
-        // Validate image count using accumulatedFilesList
-        if (accumulatedFilesList.length < 5) {
-            e.preventDefault(); // Prevent default form submission
+        // Validate image count - either async uploaded or traditional
+        let totalImages = 0;
+        
+        if (asyncUploadManager) {
+            // Count async uploaded images
+            totalImages = asyncUploadManager.getUploadedAttachmentIds().length;
+        } else {
+            // Count traditional uploaded files
+            totalImages = accumulatedFilesList.length;
+        }
+        
+        if (totalImages < 5) {
+            e.preventDefault();
             alert('Please upload at least 5 images before submitting the form');
             return;
         }
-        if (accumulatedFilesList.length > 25) {
-            e.preventDefault(); // Prevent default form submission
+        if (totalImages > 25) {
+            e.preventDefault();
             alert('Maximum 25 images allowed');
             return;
+        }
+        
+        // If using async uploads, mark session as completed
+        if (asyncUploadManager) {
+            asyncUploadManager.markSessionCompleted();
+            console.log('[Add Listing] Session marked as completed on form submission');
+        } else {
+            // For traditional uploads, ensure fileInput has correct files
+            updateActualFileInput();
         }
         
         // Get the raw values from data attributes
@@ -167,9 +214,8 @@ jQuery(document).ready(function($) {
         priceInput.prop('disabled', true);
         $('#hp').prop('disabled', true);
         
-        // Ensure fileInput has the correct files from accumulatedFilesList
-        updateActualFileInput(); 
-        // Form will submit with fileInput populated by accumulatedFilesList
+        console.log('[Add Listing] Form validation passed, submitting with', totalImages, 'images');
+        return true;
     });
     
     console.log('[Add Listing] Elements found:', {
@@ -306,6 +352,23 @@ jQuery(document).ready(function($) {
 
                     console.log('[Add Listing] File optimized:', file.name, 'Original:', (originalSize/1024).toFixed(2) + 'KB', 'Optimized:', (optimizedSize/1024).toFixed(2) + 'KB');
 
+                    // Start async upload immediately after optimization
+                    if (asyncUploadManager) {
+                        try {
+                            updateProcessingStatus('Uploading ' + file.name + '...');
+                            const fileKey = await asyncUploadManager.addFileToQueue(optimizedFile, file);
+                            
+                            // Store the file key for tracking
+                            optimizedFile.asyncFileKey = fileKey;
+                            optimizedFile.asyncUploadStatus = 'uploading';
+                            
+                            console.log('[Add Listing] Started async upload for:', file.name, 'Key:', fileKey);
+                        } catch (uploadError) {
+                            console.error('[Add Listing] Async upload start failed:', file.name, uploadError);
+                            // Continue with regular flow
+                        }
+                    }
+
                     accumulatedFilesList.push(optimizedFile);
                     createAndDisplayPreview(optimizedFile, originalSize, optimizedSize);
                     filesAddedThisBatchCount++;
@@ -320,6 +383,17 @@ jQuery(document).ready(function($) {
                     file.originalName = file.name;
                     file.originalSize = file.size;
                     file.originalType = file.type;
+                    
+                    // Start async upload for fallback file too
+                    if (asyncUploadManager) {
+                        try {
+                            const fileKey = await asyncUploadManager.addFileToQueue(file);
+                            file.asyncFileKey = fileKey;
+                            file.asyncUploadStatus = 'uploading';
+                        } catch (uploadError) {
+                            console.error('[Add Listing] Async upload start failed for fallback:', file.name, uploadError);
+                        }
+                    }
                     
                     accumulatedFilesList.push(file);
                     createAndDisplayPreview(file);
@@ -404,17 +478,37 @@ jQuery(document).ready(function($) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const previewItem = $('<div>').addClass('image-preview-item');
+            
+            // Add async file key if available
+            if (file.asyncFileKey) {
+                previewItem.addClass('image-preview').attr('data-async-key', file.asyncFileKey);
+            }
+            
             const img = $('<img>').attr({ 'src': e.target.result, 'alt': file.name });
             
             const removeBtn = $('<div>').addClass('remove-image')
                 .html('<i class="fas fa-times"></i>')
                 .on('click', function() {
                     console.log('[Add Listing] Remove button clicked for:', file.name);
+                    
+                    // Remove from async system if applicable
+                    if (file.asyncFileKey && asyncUploadManager) {
+                        asyncUploadManager.removeImage(file.asyncFileKey).catch(error => {
+                            console.error('[Add Listing] Failed to remove from async system:', error);
+                        });
+                    }
+                    
                     removeFileFromSelection(file.name);
                     previewItem.remove();
                 });
                 
             previewItem.append(img).append(removeBtn);
+            
+            // Add initial upload status if async upload is starting
+            if (file.asyncFileKey) {
+                previewItem.append('<div class="upload-status upload-pending">⏳ Uploading...</div>');
+            }
+            
             imagePreview.append(previewItem);
             console.log('[Add Listing] Preview added to DOM for:', file.name);
         };
@@ -501,4 +595,78 @@ jQuery(document).ready(function($) {
     
     // Test the optimizer on page load
     initializeImageOptimizer();
+
+    /**
+     * Async upload callback functions
+     */
+    function updateAsyncUploadProgress(fileKey, progress) {
+        const $preview = $(`.image-preview[data-async-key="${fileKey}"]`);
+        if ($preview.length) {
+            let $progressBar = $preview.find('.upload-progress');
+            if (!$progressBar.length) {
+                $progressBar = $('<div class="upload-progress"><div class="upload-progress-bar"></div><span class="upload-progress-text">0%</span></div>');
+                $preview.append($progressBar);
+            }
+            
+            // Update CSS custom property for progress bar
+            $progressBar.find('.upload-progress-bar').css('--progress', progress + '%');
+            $progressBar.find('.upload-progress-text').text(progress + '%');
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    $progressBar.fadeOut(() => $progressBar.remove());
+                }, 1000);
+            }
+        }
+    }
+    
+    function onAsyncUploadSuccess(fileKey, data) {
+        const fileIndex = accumulatedFilesList.findIndex(file => file.asyncFileKey === fileKey);
+        if (fileIndex !== -1) {
+            accumulatedFilesList[fileIndex].asyncUploadStatus = 'completed';
+            accumulatedFilesList[fileIndex].attachmentId = data.attachment_id;
+            
+            const $preview = $(`.image-preview[data-async-key="${fileKey}"]`);
+            $preview.find('.upload-status').remove();
+            $preview.append('<div class="upload-status upload-success">✓ Uploaded</div>');
+            
+            setTimeout(() => {
+                $preview.find('.upload-success').fadeOut(() => {
+                    $preview.find('.upload-success').remove();
+                });
+            }, 3000);
+            
+            console.log('[Add Listing] Async upload completed for:', data.original_filename);
+        }
+    }
+    
+    function onAsyncUploadError(fileKey, error) {
+        const fileIndex = accumulatedFilesList.findIndex(file => file.asyncFileKey === fileKey);
+        if (fileIndex !== -1) {
+            accumulatedFilesList[fileIndex].asyncUploadStatus = 'failed';
+            accumulatedFilesList[fileIndex].asyncUploadError = error.message;
+            
+            const $preview = $(`.image-preview[data-async-key="${fileKey}"]`);
+            $preview.find('.upload-status').remove();
+            $preview.append('<div class="upload-status upload-error">✗ Upload failed</div>');
+            
+            console.error('[Add Listing] Async upload failed for file key:', fileKey, error);
+        }
+    }
+    
+    function onAsyncImageRemoved(fileKey) {
+        // Remove from accumulated files list
+        const fileIndex = accumulatedFilesList.findIndex(file => file.asyncFileKey === fileKey);
+        if (fileIndex !== -1) {
+            accumulatedFilesList.splice(fileIndex, 1);
+            updateActualFileInput();
+        }
+        
+        // Remove preview element
+        $(`.image-preview[data-async-key="${fileKey}"]`).fadeOut(() => {
+            $(`.image-preview[data-async-key="${fileKey}"]`).remove();
+        });
+        
+        console.log('[Add Listing] Image removed from async system:', fileKey);
+    }
 }); 

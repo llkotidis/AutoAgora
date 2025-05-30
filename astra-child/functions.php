@@ -27,6 +27,9 @@ require_once get_stylesheet_directory() . '/includes/core/enqueue.php';
 // Include image optimization for car listings
 require_once get_stylesheet_directory() . '/includes/core/image-optimization.php';
 
+// Include asynchronous upload system
+require_once get_stylesheet_directory() . '/includes/core/async-uploads.php';
+
 require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 
 // Include custom user roles definitions

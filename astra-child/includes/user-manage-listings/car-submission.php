@@ -65,8 +65,27 @@ function handle_add_car_listing() {
         exit;
     }
     
-    // Check for images - at least 5 images and maximum 25 images are required
-    if (!isset($_FILES['car_images']) || empty($_FILES['car_images']['name'][0])) {
+    // Check for async upload session ID
+    $async_session_id = isset($_POST['async_session_id']) ? sanitize_text_field($_POST['async_session_id']) : '';
+    $async_images = array();
+    
+    if (!empty($async_session_id)) {
+        // Get async uploaded images
+        $async_images = get_session_attachment_ids($async_session_id, get_current_user_id());
+        car_submission_log('Async session found: ' . $async_session_id . ' with ' . count($async_images) . ' images');
+    }
+    
+    // Check for images - either async uploads or traditional file uploads
+    $has_images = false;
+    if (!empty($async_images)) {
+        $has_images = true;
+        car_submission_log('Using async uploaded images: ' . count($async_images));
+    } elseif (isset($_FILES['car_images']) && !empty($_FILES['car_images']['name'][0])) {
+        $has_images = true;
+        car_submission_log('Using traditional file uploads');
+    }
+    
+    if (!$has_images) {
         wp_redirect(add_query_arg('error', 'no_images', wp_get_referer()));
         exit;
     }
@@ -179,17 +198,36 @@ function handle_add_car_listing() {
     error_log('Saved Vehicle History (post meta): ' . print_r(get_post_meta($post_id, 'vehiclehistory', true), true));
     error_log('Saved Vehicle History (ACF): ' . print_r(get_field('vehiclehistory', $post_id), true));
     
-    // Process image uploads
-    $image_ids = handle_car_image_uploads($post_id);
-    
-    // If image processing failed
-    if (is_wp_error($image_ids)) {
-        error_log('Error processing car images: ' . $image_ids->get_error_message());
-        // Delete the post since images are required
-        wp_delete_post($post_id, true);
-        wp_redirect(add_query_arg('error', 'image_upload', wp_get_referer()));
-        exit;
+    // Process images - either async or traditional
+    if (!empty($async_images)) {
+        // Use async uploaded images
+        car_submission_log('Using async uploaded images for post: ' . $post_id);
+        
+        // Mark session as completed to preserve files
+        mark_upload_session_completed($async_session_id, $post_id);
+        
+        // Update car_images field with async attachment IDs
+        update_field('car_images', $async_images, $post_id);
+        
+        car_submission_log('Successfully linked ' . count($async_images) . ' async images to post: ' . $post_id);
+        $image_ids = $async_images;
+        
+    } else {
+        // Traditional image upload processing
+        car_submission_log('Processing traditional image uploads for post: ' . $post_id);
+        $image_ids = handle_car_image_uploads($post_id);
+        
+        // If image processing failed
+        if (is_wp_error($image_ids)) {
+            error_log('Error processing car images: ' . $image_ids->get_error_message());
+            // Delete the post since images are required
+            wp_delete_post($post_id, true);
+            wp_redirect(add_query_arg('error', 'image_upload', wp_get_referer()));
+            exit;
+        }
     }
+    
+    car_submission_log('Car listing created successfully. Post ID: ' . $post_id . ' with ' . count($image_ids) . ' images');
     
     // Redirect to success page
     wp_redirect(add_query_arg('listing_submitted', 'success', wp_get_referer()));

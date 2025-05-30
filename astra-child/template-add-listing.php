@@ -159,6 +159,7 @@ get_header(); ?>
 							<?php wp_nonce_field( 'add_car_listing_nonce', 'add_car_listing_nonce' ); ?>
 							<input type="hidden" name="action" value="add_new_car_listing">
 							<input type="hidden" name="post_type" value="car">
+							<input type="hidden" id="async_session_id" name="async_session_id" value="">
 
 							<div class="add-listing-images-section input-wrapper">
 								<h2><?php echo get_svg_icon('camera'); ?> <?php esc_html_e( 'Upload Images', 'astra-child' ); ?></h2>
