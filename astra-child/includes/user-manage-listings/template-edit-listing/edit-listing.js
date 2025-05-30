@@ -181,8 +181,18 @@ jQuery(document).ready(function($) {
                     break;
                 }
 
+                // FIXED: Check for duplicates using ORIGINAL file properties (before optimization)
                 const isDuplicateInNew = accumulatedFilesList.some(
-                    existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+                    existingFile => {
+                        // Compare against original properties if they exist, otherwise current properties
+                        const existingOriginalName = existingFile.originalName || existingFile.name;
+                        const existingOriginalSize = existingFile.originalSize || existingFile.size;
+                        const existingOriginalType = existingFile.originalType || existingFile.type;
+                        
+                        return existingOriginalName === file.name && 
+                               existingOriginalSize === file.size && 
+                               existingOriginalType === file.type;
+                    }
                 );
                 
                 if (isDuplicateInNew) {
@@ -212,6 +222,11 @@ jQuery(document).ready(function($) {
                     const optimizedSize = optimizedFile.size;
                     totalSavings += (originalSize - optimizedSize);
 
+                    // FIXED: Store original file properties for future duplicate detection
+                    optimizedFile.originalName = file.name;
+                    optimizedFile.originalSize = file.size;
+                    optimizedFile.originalType = file.type;
+
                     console.log('[Edit Listing] File optimized:', file.name, 'Original:', (originalSize/1024).toFixed(2) + 'KB', 'Optimized:', (optimizedSize/1024).toFixed(2) + 'KB');
 
                     // Add optimized file to our array
@@ -224,6 +239,12 @@ jQuery(document).ready(function($) {
                     
                     // Fall back to original file if optimization fails
                     console.log('[Edit Listing] Using original file as fallback for:', file.name);
+                    
+                    // Even for fallback, store original properties for consistency
+                    file.originalName = file.name;
+                    file.originalSize = file.size;
+                    file.originalType = file.type;
+                    
                     accumulatedFilesList.push(file);
                     createAndDisplayPreviewForNewFile(file);
                     filesActuallyAddedInThisBatch++;

@@ -258,91 +258,98 @@ jQuery(document).ready(function($) {
                     break;
                 }
 
+                // FIXED: Check for duplicates using ORIGINAL file properties (before optimization)
                 const isDuplicate = accumulatedFilesList.some(
-                    existingFile => existingFile.name === file.name && existingFile.size === file.size && existingFile.type === file.type
+                    existingFile => {
+                        // Compare against original properties if they exist, otherwise current properties
+                        const existingOriginalName = existingFile.originalName || existingFile.name;
+                        const existingOriginalSize = existingFile.originalSize || existingFile.size;
+                        const existingOriginalType = existingFile.originalType || existingFile.type;
+                        
+                        return existingOriginalName === file.name && 
+                               existingOriginalSize === file.size && 
+                               existingOriginalType === file.type;
+                    }
                 );
-
+                
                 if (isDuplicate) {
-                    console.log('[Add Listing] Skipping duplicate file:', file.name);
+                    console.log('[Add Listing] Skipping duplicate file (already selected):', file.name);
                     continue;
                 }
 
                 if (!allowedTypes.includes(file.type)) {
-                    alert(`File type not allowed for ${file.name}. Only JPG, PNG, GIF, and WebP are permitted.`);
+                    alert('File type "' + file.type + '" not allowed for "' + file.name + '". Only JPG, PNG, GIF, and WebP are permitted.');
                     continue;
                 }
 
                 if (file.size > maxFileSize) {
-                    alert(`File ${file.name} is too large (max 5MB).`);
+                    alert('File "' + file.name + '" is too large (' + (file.size / (1024*1024)).toFixed(2) + 'MB). Maximum allowed is ' + (maxFileSize / (1024*1024)) + 'MB.');
                     continue;
                 }
 
-                // Show current file being processed
-                updateProcessingStatus(`Optimizing ${file.name}...`);
-
                 try {
+                    // Update processing status
+                    updateProcessingStatus('Optimizing ' + file.name + '...');
+
+                    const originalSize = file.size;
+                    totalOriginalSize += originalSize;
+
                     // Optimize the image
                     const optimizedFile = await optimizer.optimizeImage(file);
-                    
-                    // Calculate savings
-                    const originalSizeKB = file.size / 1024;
-                    const optimizedSizeKB = optimizedFile.size / 1024;
-                    const savedKB = originalSizeKB - optimizedSizeKB;
-                    
-                    totalOriginalSize += originalSizeKB;
-                    
-                    // Only count actual savings (when file was actually compressed)
-                    if (optimizedFile.size < file.size) {
-                        totalSavings += savedKB;
-                        
-                        // Create preview with compression info
-                        createAndDisplayPreviewWithStats(optimizedFile, file, {
-                            originalSize: originalSizeKB.toFixed(1),
-                            optimizedSize: optimizedSizeKB.toFixed(1),
-                            savings: savedKB.toFixed(1),
-                            compressionRatio: ((savedKB / originalSizeKB) * 100).toFixed(1)
-                        });
-                    } else {
-                        // File wasn't compressed, show without stats
-                        createAndDisplayPreview(file);
-                    }
+                    const optimizedSize = optimizedFile.size;
+                    totalSavings += (originalSize - optimizedSize);
 
-                    // Add the file to accumulated list (either optimized or original)
+                    // FIXED: Store original file properties for future duplicate detection
+                    optimizedFile.originalName = file.name;
+                    optimizedFile.originalSize = file.size;
+                    optimizedFile.originalType = file.type;
+
+                    console.log('[Add Listing] File optimized:', file.name, 'Original:', (originalSize/1024).toFixed(2) + 'KB', 'Optimized:', (optimizedSize/1024).toFixed(2) + 'KB');
+
                     accumulatedFilesList.push(optimizedFile);
+                    createAndDisplayPreview(optimizedFile, originalSize, optimizedSize);
                     filesAddedThisBatchCount++;
-                    
                 } catch (error) {
-                    console.error('[Add Listing] Failed to process image:', file.name, error);
+                    console.error('[Add Listing] Error optimizing image:', file.name, error);
                     optimizationErrors++;
                     
-                    // Add original file as fallback
+                    // Fall back to original file if optimization fails
+                    console.log('[Add Listing] Using original file as fallback for:', file.name);
+                    
+                    // Even for fallback, store original properties for consistency
+                    file.originalName = file.name;
+                    file.originalSize = file.size;
+                    file.originalType = file.type;
+                    
                     accumulatedFilesList.push(file);
                     createAndDisplayPreview(file);
                     filesAddedThisBatchCount++;
-                    
-                    totalOriginalSize += file.size / 1024;
                 }
             }
 
-            // Show completion summary
+            // Show optimization summary
             if (filesAddedThisBatchCount > 0) {
-                updateActualFileInput();
+                updateActualFileInput(); // Refresh the actual file input
                 
                 if (totalSavings > 0) {
-                    showOptimizationSummary(filesAddedThisBatchCount, totalSavings, totalOriginalSize, optimizationErrors);
-                } else if (optimizationErrors > 0) {
-                    showErrorSummary(optimizationErrors, filesAddedThisBatchCount);
+                    const compressionPercent = ((totalSavings / totalOriginalSize) * 100).toFixed(1);
+                    showOptimizationSummary(
+                        filesAddedThisBatchCount,
+                        totalSavings,
+                        compressionPercent,
+                        optimizationErrors
+                    );
                 }
             }
 
+            console.log('[Add Listing] Processed batch. Accumulated files count:', accumulatedFilesList.length);
+
         } catch (error) {
-            console.error('[Add Listing] Error processing files:', error);
-            alert('An error occurred while processing images. Please try again.');
+            console.error('[Add Listing] Error in batch processing:', error);
         } finally {
+            // Hide processing indicator
             showImageProcessingIndicator(false);
         }
-
-        console.log('[Add Listing] Processed batch. Accumulated files count:', accumulatedFilesList.length);
     }
 
     function showImageProcessingIndicator(show) {
@@ -366,10 +373,9 @@ jQuery(document).ready(function($) {
         $('#image-processing-indicator .processing-status').text(message);
     }
 
-    function showOptimizationSummary(filesCount, totalSavings, totalOriginalSize, optimizationErrors) {
+    function showOptimizationSummary(filesCount, totalSavings, compressionPercent, optimizationErrors) {
         if (totalSavings > 0) {
-            const compressionPercentage = ((totalSavings / totalOriginalSize) * 100).toFixed(1);
-            const summaryMessage = `✅ Optimized ${filesCount} image${filesCount > 1 ? 's' : ''}: Saved ${totalSavings.toFixed(1)} KB (${compressionPercentage}% reduction)`;
+            const summaryMessage = `✅ Optimized ${filesCount} image${filesCount > 1 ? 's' : ''}: Saved ${totalSavings.toFixed(1)} KB (${compressionPercent}% reduction)`;
             
             const summaryEl = $(`<div class="optimization-summary">${summaryMessage}</div>`);
             imagePreview.before(summaryEl);
