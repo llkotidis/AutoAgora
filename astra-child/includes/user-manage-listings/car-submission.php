@@ -69,10 +69,17 @@ function handle_add_car_listing() {
     $async_session_id = isset($_POST['async_session_id']) ? sanitize_text_field($_POST['async_session_id']) : '';
     $async_images = array();
     
+    car_submission_log('=== ASYNC UPLOAD DEBUG ===');
+    car_submission_log('POST async_session_id: ' . ($async_session_id ? $async_session_id : 'NOT SET'));
+    car_submission_log('POST data keys: ' . implode(', ', array_keys($_POST)));
+    
     if (!empty($async_session_id)) {
         // Get async uploaded images
         $async_images = get_session_attachment_ids($async_session_id, get_current_user_id());
         car_submission_log('Async session found: ' . $async_session_id . ' with ' . count($async_images) . ' images');
+        car_submission_log('Async image IDs: ' . implode(', ', $async_images));
+    } else {
+        car_submission_log('No async session ID found in POST data');
     }
     
     // Check for images - either async uploads or traditional file uploads
@@ -201,6 +208,7 @@ function handle_add_car_listing() {
     // Process images - either async or traditional
     if (!empty($async_images)) {
         // Use async uploaded images
+        car_submission_log('✅ USING ASYNC UPLOADS - Processing should be instant');
         car_submission_log('Using async uploaded images for post: ' . $post_id);
         
         // Mark session as completed to preserve files
@@ -214,8 +222,15 @@ function handle_add_car_listing() {
         
     } else {
         // Traditional image upload processing
+        car_submission_log('⚠️ FALLING BACK TO TRADITIONAL UPLOADS - This will be slow');
         car_submission_log('Processing traditional image uploads for post: ' . $post_id);
+        $upload_start_time = microtime(true);
+        
         $image_ids = handle_car_image_uploads($post_id);
+        
+        $upload_end_time = microtime(true);
+        $upload_duration = round(($upload_end_time - $upload_start_time), 2);
+        car_submission_log('Traditional upload completed in: ' . $upload_duration . ' seconds');
         
         // If image processing failed
         if (is_wp_error($image_ids)) {
