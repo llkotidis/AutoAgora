@@ -396,14 +396,6 @@ jQuery(document).ready(function($) {
     function removeNewFileFromSelection(fileNameToRemove) {
         console.log('[Edit Listing] Attempting to remove new file from selection:', fileNameToRemove);
         
-        // ASYNC UPLOAD INTEGRATION - Clean up async upload if exists
-        const fileToRemove = accumulatedFilesList.find(file => file.name === fileNameToRemove);
-        if (fileToRemove && fileToRemove.asyncFileKey && asyncUploadManager) {
-            asyncUploadManager.removeImage(fileToRemove.asyncFileKey).catch(error => {
-                console.error('[Edit Listing] Failed to remove async upload:', error);
-            });
-        }
-        
         accumulatedFilesList = accumulatedFilesList.filter(
             file => file.name !== fileNameToRemove
         );
