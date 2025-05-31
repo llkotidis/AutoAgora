@@ -143,7 +143,9 @@ wp_localize_script('edit-listing-script', 'editListingData', array(
     'makesData' => $add_listing_makes,
     'selectedMake' => esc_js($make),
     'selectedModel' => esc_js($model),
-    'selectedVariant' => esc_js($variant)
+    'selectedVariant' => esc_js($variant),
+    'ajaxurl' => admin_url('admin-ajax.php'),
+    'nonce' => wp_create_nonce('edit_car_listing_nonce')
 ));
 
 // Include the separated display file

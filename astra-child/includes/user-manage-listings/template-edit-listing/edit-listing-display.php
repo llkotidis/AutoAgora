@@ -30,6 +30,7 @@ if (!defined('ABSPATH')) {
                     <?php wp_nonce_field('edit_car_listing_nonce', 'edit_car_listing_nonce'); ?>
                     <input type="hidden" name="action" value="edit_car_listing">
                     <input type="hidden" name="car_id" value="<?php echo esc_attr($car_id); ?>">
+                    <input type="hidden" id="async_session_id" name="async_session_id" value="">
 
                     <div class="add-listing-main-row">
                         <div class="add-listing-main-info-column">
@@ -293,6 +294,7 @@ if (!defined('ABSPATH')) {
                                         ?>
                                     </div>
                                 </div>
+                                <p class="image-upload-info"><?php esc_html_e('Hold CTRL to choose several photos. Minimum 5 images per listing. Maximum 25 images per listing. Maximum file size is 5MB, the formats are .jpg, .jpeg, .png, .gif, .webp. Images larger than 2MB are automatically compressed.', 'astra-child'); ?></p>
                             </div>
                         </div>
                     </div>

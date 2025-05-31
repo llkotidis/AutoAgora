@@ -226,20 +226,20 @@ function handle_add_car_listing() {
         car_submission_log('Processing traditional image uploads for post: ' . $post_id);
         $upload_start_time = microtime(true);
         
-        $image_ids = handle_car_image_uploads($post_id);
+    $image_ids = handle_car_image_uploads($post_id);
         
         $upload_end_time = microtime(true);
         $upload_duration = round(($upload_end_time - $upload_start_time), 2);
         car_submission_log('Traditional upload completed in: ' . $upload_duration . ' seconds');
-        
-        // If image processing failed
-        if (is_wp_error($image_ids)) {
-            error_log('Error processing car images: ' . $image_ids->get_error_message());
-            // Delete the post since images are required
-            wp_delete_post($post_id, true);
-            wp_redirect(add_query_arg('error', 'image_upload', wp_get_referer()));
-            exit;
-        }
+    
+    // If image processing failed
+    if (is_wp_error($image_ids)) {
+        error_log('Error processing car images: ' . $image_ids->get_error_message());
+        // Delete the post since images are required
+        wp_delete_post($post_id, true);
+        wp_redirect(add_query_arg('error', 'image_upload', wp_get_referer()));
+        exit;
+    }
     }
     
     car_submission_log('Car listing created successfully. Post ID: ' . $post_id . ' with ' . count($image_ids) . ' images');

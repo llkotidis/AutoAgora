@@ -299,13 +299,13 @@ jQuery(document).ready(function($) {
         try {
             for (const file of candidateFiles) {
                 // Check if adding this file would exceed the maximum
-                if (accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
-                    alert('Maximum ' + maxFiles + ' files allowed. Some files were not added.');
+            if (accumulatedFilesList.length + filesAddedThisBatchCount >= maxFiles) {
+                alert('Maximum ' + maxFiles + ' files allowed. Some files were not added.');
                     break;
-                }
+            }
 
                 // FIXED: Check for duplicates using ORIGINAL file properties (before optimization)
-                const isDuplicate = accumulatedFilesList.some(
+            const isDuplicate = accumulatedFilesList.some(
                     existingFile => {
                         // Compare against original properties if they exist, otherwise current properties
                         const existingOriginalName = existingFile.originalName || existingFile.name;
@@ -316,19 +316,19 @@ jQuery(document).ready(function($) {
                                existingOriginalSize === file.size && 
                                existingOriginalType === file.type;
                     }
-                );
-                
-                if (isDuplicate) {
+            );
+
+            if (isDuplicate) {
                     console.log('[Add Listing] Skipping duplicate file (already selected):', file.name);
                     continue;
-                }
+            }
 
-                if (!allowedTypes.includes(file.type)) {
+            if (!allowedTypes.includes(file.type)) {
                     alert('File type "' + file.type + '" not allowed for "' + file.name + '". Only JPG, PNG, GIF, and WebP are permitted.');
                     continue;
-                }
+            }
 
-                if (file.size > maxFileSize) {
+            if (file.size > maxFileSize) {
                     alert('File "' + file.name + '" is too large (' + (file.size / (1024*1024)).toFixed(2) + 'MB). Maximum allowed is ' + (maxFileSize / (1024*1024)) + 'MB.');
                     continue;
                 }
@@ -395,14 +395,14 @@ jQuery(document).ready(function($) {
                         }
                     }
                     
-                    accumulatedFilesList.push(file);
+            accumulatedFilesList.push(file);
                     createAndDisplayPreview(file);
-                    filesAddedThisBatchCount++;
+            filesAddedThisBatchCount++;
                 }
             }
 
             // Show optimization summary
-            if (filesAddedThisBatchCount > 0) {
+        if (filesAddedThisBatchCount > 0) {
                 updateActualFileInput(); // Refresh the actual file input
                 
                 if (totalSavings > 0) {
@@ -472,7 +472,7 @@ jQuery(document).ready(function($) {
             errorEl.fadeOut(() => errorEl.remove());
         }, 5000);
     }
-
+    
     function createAndDisplayPreview(file) {
         console.log('[Add Listing] Creating preview for:', file.name);
         const reader = new FileReader();
