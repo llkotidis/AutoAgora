@@ -262,7 +262,35 @@ function handle_delete_async_image() {
     }
     
     // Delete the attachment file
-    $deleted = wp_delete_attachment($attachment_id, true);
+    error_log("Async Delete Debug - Attempting to delete WordPress attachment {$attachment_id}");
+    
+    // Check if attachment exists first
+    $attachment_exists = get_post($attachment_id);
+    if (!$attachment_exists) {
+        error_log("Async Delete Warning - Attachment {$attachment_id} does not exist in WordPress");
+        // If attachment doesn't exist, consider deletion successful for our purposes
+        $deleted = true;
+    } else {
+        error_log("Async Delete Debug - Attachment {$attachment_id} exists, proceeding with deletion");
+        error_log("Async Delete Debug - Attachment details: post_type={$attachment_exists->post_type}, post_status={$attachment_exists->post_status}");
+        
+        $deleted = wp_delete_attachment($attachment_id, true);
+        
+        if (!$deleted) {
+            // Try to get more information about why deletion failed
+            $attachment_file = get_attached_file($attachment_id);
+            $file_exists = file_exists($attachment_file);
+            error_log("Async Delete Debug - Deletion failed. File path: {$attachment_file}, File exists: " . ($file_exists ? 'yes' : 'no'));
+            
+            // Check file permissions if file exists
+            if ($file_exists) {
+                $perms = fileperms($attachment_file);
+                error_log("Async Delete Debug - File permissions: " . decoct($perms & 0777));
+            }
+        } else {
+            error_log("Async Delete Debug - WordPress deletion successful");
+        }
+    }
     
     if ($deleted) {
         // Remove from tracking table
