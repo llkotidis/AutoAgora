@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
+// Redirect logged-in users to their account page
+if ( is_user_logged_in() ) {
+	wp_redirect( home_url( '/my-account' ) );
+	exit;
+}
+
 get_header(); ?>
 
 <?php if ( astra_page_layout() == 'left-sidebar' ) { ?>

@@ -50,8 +50,23 @@ add_filter( 'login_url', 'custom_login_page_url', 10, 3 );
 
 /**
  * Redirect to the custom login page if someone tries to access wp-login.php directly.
+ * Also redirect logged-in users to their account page.
  */
 function redirect_login_page() {
+    // First check: If user is already logged in, redirect to my-account
+    if (is_user_logged_in()) {
+        // Check if we're on login-related pages
+        $page_viewed = isset($_SERVER['REQUEST_URI']) ? basename($_SERVER['REQUEST_URI']) : '';
+        $is_login_page = ($page_viewed == 'wp-login.php') || 
+                        (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/signin') !== false);
+        
+        if ($is_login_page) {
+            wp_redirect(home_url('/my-account'));
+            exit;
+        }
+    }
+    
+    // Second check: Redirect wp-login.php to custom signin page for non-logged-in users
     $page_viewed = isset($_SERVER['REQUEST_URI']) ? basename($_SERVER['REQUEST_URI']) : '';
     if ( $page_viewed == 'wp-login.php' && $_SERVER['REQUEST_METHOD'] == 'GET' ) {
         $custom_login_page_id = get_page_by_path( 'signin' )->ID;
