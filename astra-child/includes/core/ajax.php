@@ -11,6 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * AJAX handler to send OTP.
  */
 function ajax_send_otp() {
+    // Security check: Prevent logged-in users from using registration OTP
+    if (is_user_logged_in()) {
+        wp_send_json_error(array('message' => esc_html__('Access denied: Already logged in', 'astra-child')));
+        return;
+    }
+    
     // Verify AJAX nonce (consider adding this for security if not already done)
     // check_ajax_referer( 'your_nonce_action', 'nonce' );
 
@@ -67,6 +73,12 @@ add_action('wp_ajax_send_otp', 'ajax_send_otp');
  * AJAX handler to verify OTP.
  */
 function ajax_verify_otp() {
+    // Security check: Prevent logged-in users from using registration OTP
+    if (is_user_logged_in()) {
+        wp_send_json_error(array('message' => esc_html__('Access denied: Already logged in', 'astra-child')));
+        return;
+    }
+    
     $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
     $code = isset($_POST['otp']) ? sanitize_text_field($_POST['otp']) : '';
 
