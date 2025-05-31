@@ -198,8 +198,36 @@ function handle_update_password_reset() {
 
     $new_password = isset($_POST['new_password']) ? $_POST['new_password'] : '';
     
-    if (empty($new_password) || strlen($new_password) < 8) {
-        wp_send_json_error('Password must be at least 8 characters long');
+    // Apply the same strict validation as registration
+    if (empty($new_password)) {
+        wp_send_json_error('Password is required');
+        return;
+    }
+    
+    // Password Length Check (8-16 characters)
+    if (strlen($new_password) < 8 || strlen($new_password) > 16) {
+        wp_send_json_error('Password must be between 8 and 16 characters long');
+        return;
+    }
+
+    // Password Complexity Checks
+    if (!preg_match('/[a-z]/', $new_password)) {
+        wp_send_json_error('Password must contain at least one lowercase letter');
+        return;
+    }
+    
+    if (!preg_match('/[A-Z]/', $new_password)) {
+        wp_send_json_error('Password must contain at least one uppercase letter');
+        return;
+    }
+    
+    if (!preg_match('/[0-9]/', $new_password)) {
+        wp_send_json_error('Password must contain at least one number');
+        return;
+    }
+    
+    if (!preg_match('/[!@#$%^&*(),.?":{}|<>\-_=+;\[\]~`]/', $new_password)) {
+        wp_send_json_error('Password must contain at least one symbol (e.g., !@#$%^&*)');
         return;
     }
 

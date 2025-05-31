@@ -76,7 +76,7 @@ function display_password_reset_form() {
             <div class="password-form">
                 <div class="info-row">
                     <label for="new-password" class="label">New Password:</label>
-                    <input type="password" id="new-password" placeholder="Enter new password" class="password-input">
+                    <input type="password" id="new-password" placeholder="Enter new password" class="password-input" aria-describedby="password-strength password-remaining-reqs">
                 </div>
                 <div class="info-row">
                     <label for="confirm-password" class="label">Confirm Password:</label>
@@ -84,6 +84,11 @@ function display_password_reset_form() {
                 </div>
                 <div class="info-row">
                     <div class="password-strength" id="password-strength"></div>
+                </div>
+                <div class="info-row">
+                    <div id="password-remaining-reqs" style="font-size: 0.9em; margin-top: 3px;">
+                        <!-- Requirements list will be populated by JS -->
+                    </div>
                 </div>
                 <div class="info-row">
                     <button class="button update-password-btn">Update Password</button>

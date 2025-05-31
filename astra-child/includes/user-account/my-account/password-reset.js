@@ -93,15 +93,88 @@ document.addEventListener('DOMContentLoaded', function() {
         const updateBtn = document.querySelector('.update-password-btn');
         const cancelBtn = document.querySelector('.cancel-reset-btn');
         const strengthDiv = document.getElementById('password-strength');
+        const requirementsDiv = document.getElementById('password-remaining-reqs');
 
         if (!newPasswordInput || !confirmPasswordInput || !updateBtn) {
             console.log('Password form elements not found');
             return;
         }
 
+        // Define the same strict requirements as registration
+        const requirements = {
+            length: { text: '8-16 characters', regex: /.{8,16}/ },
+            lowercase: { text: 'At least one lowercase letter', regex: /[a-z]/ },
+            uppercase: { text: 'At least one uppercase letter', regex: /[A-Z]/ },
+            number: { text: 'At least one number', regex: /[0-9]/ },
+            symbol: { text: 'At least one symbol (e.g., !@#$%^&*)', regex: /[!@#$%^&*(),.?":{}|<>\-_=+;\[\]~`]/ }
+        };
+
+        // Build initial requirements list HTML
+        let initialReqsHtml = '<ul>';
+        for (const key in requirements) {
+            initialReqsHtml += '<li id="req-' + key + '">' + requirements[key].text + '</li>';
+        }
+        initialReqsHtml += '</ul>';
+        if (requirementsDiv) {
+            requirementsDiv.innerHTML = initialReqsHtml;
+        }
+
+        // Function to update password strength UI
+        function updatePasswordUI(password) {
+            let score = 0;
+            let requirementsMetCount = 0;
+
+            // Update individual requirements list item classes
+            for (const key in requirements) {
+                const requirementMet = requirements[key].regex.test(password);
+                const reqElement = document.getElementById('req-' + key);
+                if (reqElement) {
+                    if (requirementMet) {
+                        reqElement.classList.add('met');
+                        requirementsMetCount++;
+                    } else {
+                        reqElement.classList.remove('met');
+                    }
+                }
+            }
+            score = requirementsMetCount;
+
+            // Determine strength level
+            let strengthLevel = '';
+            let strengthLabel = '';
+
+            // Reset if empty
+            if (password.length === 0) {
+                strengthLevel = '';
+                strengthLabel = '';
+                if (strengthDiv) {
+                    strengthDiv.textContent = strengthLabel;
+                    strengthDiv.className = 'password-strength';
+                }
+                return;
+            } 
+            // Check levels - require length met for medium/strong
+            else if (!requirements.length.regex.test(password) || score <= 2) { 
+                strengthLevel = 'strength-weak';
+                strengthLabel = '⚠️ Weak';
+            } else if (score <= 4) {
+                strengthLevel = 'strength-medium';
+                strengthLabel = '⚡ Moderate';
+            } else { // Score is 5 and length is met
+                strengthLevel = 'strength-strong';
+                strengthLabel = '✅ Safe';
+            }
+
+            // Update indicator and text classes/content
+            if (strengthDiv) {
+                strengthDiv.textContent = strengthLabel;
+                strengthDiv.className = 'password-strength ' + strengthLevel;
+            }
+        }
+
         // Password strength checker
         newPasswordInput.addEventListener('input', function() {
-            checkPasswordStrength(this.value);
+            updatePasswordUI(this.value);
             validatePasswords();
         });
 
@@ -109,20 +182,45 @@ document.addEventListener('DOMContentLoaded', function() {
             validatePasswords();
         });
 
+        // Initial UI update
+        updatePasswordUI(newPasswordInput.value);
+
         // Update password
         updateBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
             const newPassword = newPasswordInput.value;
             const confirmPassword = confirmPasswordInput.value;
-            
-            if (newPassword.length < 8) {
-                alert('Password must be at least 8 characters long');
-                return;
+            let errors = [];
+
+            // Apply the same strict validation as registration
+            // Password Length Check (8-16 characters)
+            if (newPassword.length < 8 || newPassword.length > 16) {
+                errors.push('Password must be between 8 and 16 characters long.');
             }
-            
+
+            // Password Complexity Checks
+            if (!/[a-z]/.test(newPassword)) {
+                errors.push('Password must contain at least one lowercase letter.');
+            }
+            if (!/[A-Z]/.test(newPassword)) {
+                errors.push('Password must contain at least one uppercase letter.');
+            }
+            if (!/[0-9]/.test(newPassword)) {
+                errors.push('Password must contain at least one number.');
+            }
+            if (!/[!@#$%^&*(),.?":{}|<>\-_=+;\[\]~`]/.test(newPassword)) {
+                errors.push('Password must contain at least one symbol (e.g., !@#$%^&*).');
+            }
+
+            // Password match check
             if (newPassword !== confirmPassword) {
-                alert('Passwords do not match');
+                errors.push('Passwords do not match. Please re-enter.');
+            }
+
+            // Check if any errors occurred
+            if (errors.length > 0) {
+                alert(errors.join('\n'));
                 return;
             }
             
@@ -138,37 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         /**
-         * Check password strength
-         */
-        function checkPasswordStrength(password) {
-            if (!strengthDiv) return;
-            
-            let strength = 0;
-            let message = '';
-            
-            if (password.length >= 8) strength++;
-            if (password.match(/[a-z]/)) strength++;
-            if (password.match(/[A-Z]/)) strength++;
-            if (password.match(/[0-9]/)) strength++;
-            if (password.match(/[^a-zA-Z0-9]/)) strength++;
-            
-            if (password.length === 0) {
-                message = '';
-            } else if (strength < 3) {
-                message = '⚠️ Weak password';
-                strengthDiv.className = 'password-strength strength-weak';
-            } else if (strength < 4) {
-                message = '⚡ Medium password';
-                strengthDiv.className = 'password-strength strength-medium';
-            } else {
-                message = '✅ Strong password';
-                strengthDiv.className = 'password-strength strength-strong';
-            }
-            
-            strengthDiv.textContent = message;
-        }
-
-        /**
          * Validate password fields
          */
         function validatePasswords() {
@@ -181,8 +248,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let isValid = true;
             
+            // Check all requirements are met
+            let allRequirementsMet = true;
+            for (const key in requirements) {
+                if (!requirements[key].regex.test(newPassword)) {
+                    allRequirementsMet = false;
+                    break;
+                }
+            }
+            
             // Check password strength
-            if (newPassword.length < 8) {
+            if (!allRequirementsMet) {
                 newPasswordInput.classList.add('invalid');
                 isValid = false;
             } else {
@@ -191,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check password match
             if (confirmPassword.length > 0) {
-                if (newPassword === confirmPassword) {
+                if (newPassword === confirmPassword && allRequirementsMet) {
                     confirmPasswordInput.classList.add('valid');
                 } else {
                     confirmPasswordInput.classList.add('invalid');
@@ -199,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            updateBtn.disabled = !isValid || newPassword.length < 8 || newPassword !== confirmPassword;
+            updateBtn.disabled = !isValid || !allRequirementsMet || newPassword !== confirmPassword;
         }
     }
     

@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- DOM Elements ---
   const filtersButton = document.querySelector(".filters-button");
-  const filtersPopup = document.getElementById("spec-filters-popup");
+  const filtersPopup = document.getElementById("filtersPopup");
   const closeFilters = document.querySelector(".close-filters");
   const filterForm = document.getElementById("car-filter-form-listings_page");
 
