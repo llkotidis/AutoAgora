@@ -590,6 +590,15 @@ function handle_edit_car_listing() {
         return;
     }
     
+    // Check for async upload session ID (NEW - matches add listing logic)
+    $async_session_id = isset($_POST['async_session_id']) ? sanitize_text_field($_POST['async_session_id']) : '';
+    $async_images = array();
+    
+    if (!empty($async_session_id)) {
+        // Get async uploaded images
+        $async_images = get_session_attachment_ids($async_session_id, get_current_user_id());
+    }
+    
     // Validate form data
     $validation_errors = validate_edit_listing_form($_POST, $car_id);
     if (!empty($validation_errors['missing_fields'])) {
@@ -604,12 +613,16 @@ function handle_edit_car_listing() {
         exit;
     }
     
-    // Validate image requirements
+    // Validate image requirements - UPDATED to account for async uploads
     $existing_images = get_field('car_images', $car_id);
     $removed_images = isset($_POST['removed_images']) ? $_POST['removed_images'] : array();
-    $image_validation = validate_image_requirements($existing_images, $removed_images, $_FILES);
     
-    if (!$image_validation['valid']) {
+    // Calculate total images after changes
+    $remaining_existing = is_array($existing_images) ? count($existing_images) - count($removed_images) : 0;
+    $new_images_count = !empty($async_images) ? count($async_images) : (isset($_FILES['car_images']) && !empty($_FILES['car_images']['name'][0]) ? count($_FILES['car_images']['name']) : 0);
+    $total_images = $remaining_existing + $new_images_count;
+    
+    if ($total_images < 5) {
         wp_redirect(add_query_arg('error', 'insufficient_images', wp_get_referer()));
         exit;
     }
@@ -617,8 +630,14 @@ function handle_edit_car_listing() {
     // Process form data
     process_edit_listing_form($_POST, $car_id);
     
-    // Process images
-    process_edit_listing_images($car_id, $_FILES, $removed_images);
+    // Process images - UPDATED to use async uploads if available
+    if (!empty($async_images)) {
+        // Use async uploaded images (fast path)
+        process_edit_listing_images_async($car_id, $async_images, $removed_images, $async_session_id);
+    } else {
+        // Traditional image upload processing (slow path)
+        process_edit_listing_images($car_id, $_FILES, $removed_images);
+    }
     
     // Redirect with success message
     handle_edit_listing_redirect('success', 'listing_updated');

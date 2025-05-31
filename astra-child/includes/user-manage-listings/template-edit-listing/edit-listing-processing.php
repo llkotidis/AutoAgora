@@ -171,6 +171,64 @@ function process_edit_listing_images($car_id, $files, $removed_images) {
 }
 
 /**
+ * Process edit listing images using async uploads - FAST VERSION
+ * 
+ * Uses already-uploaded async images for instant processing
+ *
+ * @param int $car_id Post ID
+ * @param array $async_images Array of async uploaded attachment IDs
+ * @param array $removed_images Image IDs to remove
+ * @param string $session_id Async upload session ID
+ * @return bool Success status
+ */
+function process_edit_listing_images_async($car_id, $async_images, $removed_images, $session_id) {
+    // Get ALL existing images from car_images field
+    $existing_images = get_field('car_images', $car_id);
+    if (!is_array($existing_images)) {
+        $existing_images = array();
+    }
+    
+    // ALSO check for featured image and merge if it exists (for backward compatibility)
+    $featured_image_id = get_post_thumbnail_id($car_id);
+    if ($featured_image_id && !in_array($featured_image_id, $existing_images)) {
+        // If there's a featured image not in the gallery, add it to the beginning
+        array_unshift($existing_images, $featured_image_id);
+    }
+    
+    // Remove selected images from the array
+    if (!empty($removed_images)) {
+        foreach ($removed_images as $removed_id) {
+            $key = array_search($removed_id, $existing_images);
+            if ($key !== false) {
+                unset($existing_images[$key]);
+                // Delete the attachment file
+                wp_delete_attachment($removed_id, true);
+            }
+        }
+        // Reindex array to maintain sequential keys
+        $existing_images = array_values($existing_images);
+    }
+    
+    // Mark async session as completed to preserve files and link to post
+    mark_upload_session_completed($session_id, $car_id);
+    
+    // Simply append new async images to existing images
+    // This maintains the order and doesn't disrupt the main image
+    $all_images = array_merge($existing_images, $async_images);
+    
+    // Update the car_images field with ALL images
+    update_field('car_images', $all_images, $car_id);
+    
+    // Remove any separate featured image to avoid duplication
+    // Since car_images now contains all images with first as main
+    if (has_post_thumbnail($car_id)) {
+        delete_post_thumbnail($car_id);
+    }
+    
+    return true;
+}
+
+/**
  * Handle redirect with success or error messages
  * 
  * @param string $type Type of redirect ('success' or 'error')
