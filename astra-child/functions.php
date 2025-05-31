@@ -35,6 +35,9 @@ require_once get_stylesheet_directory() . '/includes/auth/registration.php';
 // Include custom user roles definitions
 require_once get_stylesheet_directory() . '/includes/auth/roles.php';
 
+// Include forgot password AJAX handlers
+require_once get_stylesheet_directory() . '/includes/auth/forgot-password-ajax.php';
+
 // Include custom user profile field functions
 require_once get_stylesheet_directory() . '/includes/user-account/user-profile.php';
 
