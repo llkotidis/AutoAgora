@@ -25,6 +25,12 @@ add_action('wp_ajax_nopriv_update_forgot_password', 'handle_update_forgot_passwo
  * Handle sending OTP for forgot password
  */
 function handle_send_forgot_password_otp() {
+    // Security check: Prevent logged-in users from using forgot password
+    if (is_user_logged_in()) {
+        wp_send_json_error('Access denied: Already logged in');
+        return;
+    }
+    
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'send_forgot_password_otp_nonce')) {
         wp_send_json_error('Invalid security token');
@@ -96,6 +102,12 @@ function handle_send_forgot_password_otp() {
  * Handle verifying OTP for forgot password
  */
 function handle_verify_forgot_password_otp() {
+    // Security check: Prevent logged-in users from using forgot password
+    if (is_user_logged_in()) {
+        wp_send_json_error('Access denied: Already logged in');
+        return;
+    }
+    
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'verify_forgot_password_otp_nonce')) {
         wp_send_json_error('Invalid security token');
@@ -172,6 +184,12 @@ function handle_verify_forgot_password_otp() {
  * Handle updating password for forgot password
  */
 function handle_update_forgot_password() {
+    // Security check: Prevent logged-in users from using forgot password
+    if (is_user_logged_in()) {
+        wp_send_json_error('Access denied: Already logged in');
+        return;
+    }
+    
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'update_forgot_password_nonce')) {
         wp_send_json_error('Invalid security token');

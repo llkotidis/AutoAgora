@@ -12,6 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Redirect logged-in users to their account page
 if ( is_user_logged_in() ) {
+	// Prevent caching of this redirect
+	nocache_headers();
+	
 	wp_redirect( home_url( '/my-account' ) );
 	exit;
 }

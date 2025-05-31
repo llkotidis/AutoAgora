@@ -37,6 +37,9 @@ function redirect_logged_in_users_from_registration() {
         
         // Check if current page/post contains the registration shortcode
         if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'custom_registration' ) ) {
+            // Prevent caching of this redirect
+            nocache_headers();
+            
             wp_redirect( home_url( '/my-account' ) );
             exit;
         }
