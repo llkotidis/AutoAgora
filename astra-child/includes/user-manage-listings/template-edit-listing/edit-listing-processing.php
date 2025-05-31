@@ -72,7 +72,10 @@ function process_edit_listing_form($data, $car_id) {
 }
 
 /**
- * Process edit listing images - OPTIMIZED VERSION
+ * Process edit listing images - FIXED VERSION
+ * 
+ * Now uses consistent approach: car_images field contains ALL images,
+ * with first image serving as main image (no separate featured image)
  *
  * @param int $car_id Post ID
  * @param array $files Uploaded files
@@ -80,33 +83,40 @@ function process_edit_listing_form($data, $car_id) {
  * @return bool Success status
  */
 function process_edit_listing_images($car_id, $files, $removed_images) {
-    // Get existing images
+    // Get ALL existing images from car_images field
     $existing_images = get_field('car_images', $car_id);
     if (!is_array($existing_images)) {
         $existing_images = array();
     }
     
-    // Remove selected images
+    // ALSO check for featured image and merge if it exists (for backward compatibility)
+    $featured_image_id = get_post_thumbnail_id($car_id);
+    if ($featured_image_id && !in_array($featured_image_id, $existing_images)) {
+        // If there's a featured image not in the gallery, add it to the beginning
+        array_unshift($existing_images, $featured_image_id);
+    }
+    
+    // Remove selected images from the array
     if (!empty($removed_images)) {
         foreach ($removed_images as $removed_id) {
             $key = array_search($removed_id, $existing_images);
             if ($key !== false) {
                 unset($existing_images[$key]);
-                // Optionally delete the attachment file
+                // Delete the attachment file
                 wp_delete_attachment($removed_id, true);
             }
         }
-        // Reindex array
+        // Reindex array to maintain sequential keys
         $existing_images = array_values($existing_images);
     }
     
     // Process new image uploads if any - OPTIMIZED VERSION
+    $new_image_ids = array();
     if (!empty($files['car_images']['name'][0])) {
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
         
-        $image_ids = array();
         $processed_files = array();
         
         // OPTIMIZATION: Disable intermediate image generation during batch upload
@@ -129,7 +139,7 @@ function process_edit_listing_images($car_id, $files, $removed_images) {
                 $attachment_id = optimized_media_handle_upload('car_image', $car_id);
                 
                 if (!is_wp_error($attachment_id)) {
-                    $image_ids[] = $attachment_id;
+                    $new_image_ids[] = $attachment_id;
                     $processed_files[] = $attachment_id;
                 }
             }
@@ -142,40 +152,19 @@ function process_edit_listing_images($car_id, $files, $removed_images) {
         if (!empty($processed_files)) {
             generate_optimized_car_image_sizes($processed_files);
         }
-        
-        // Combine existing and new images
-        $all_images = array_merge($existing_images, $image_ids);
-    } else {
-        // If no new images uploaded, just use the existing images after removal
-        $all_images = $existing_images;
     }
     
-    // Update the car_images field
+    // FIXED LOGIC: Simply append new images to existing images
+    // This maintains the order and doesn't disrupt the main image
+    $all_images = array_merge($existing_images, $new_image_ids);
+    
+    // Update the car_images field with ALL images (no splitting/reorganizing)
     update_field('car_images', $all_images, $car_id);
     
-    // ONLY reorganize featured/gallery relationship in specific cases
-    $first_image_removed = false;
-    if (!empty($removed_images)) {
-        // Check if the first image (featured image) was removed
-        $current_featured_id = get_post_thumbnail_id($car_id);
-        $first_image_removed = in_array($current_featured_id, $removed_images);
-    }
-    
-    $new_images_added = !empty($files['car_images']['name'][0]);
-    $should_reorganize = $first_image_removed || $new_images_added;
-    
-    if ($should_reorganize && !empty($all_images)) {
-        // Only run featured image logic when the featured image changes or new images are added
-        $featured_image_id = $all_images[0];
-        
-        // Remove the featured image from the gallery array to prevent duplication
-        $gallery_images = array_slice($all_images, 1);
-        
-        // Update the car_images field with only non-featured images
-        update_field('car_images', $gallery_images, $car_id);
-        
-        // Set the featured image
-        set_post_thumbnail($car_id, $featured_image_id);
+    // FIXED: Remove any separate featured image to avoid duplication
+    // Since car_images now contains all images with first as main
+    if (has_post_thumbnail($car_id)) {
+        delete_post_thumbnail($car_id);
     }
     
     return true;
