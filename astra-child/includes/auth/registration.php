@@ -15,6 +15,12 @@ use Twilio\Rest\Client; // Needed for registration handling
  * @return string HTML output of the registration form.
  */
 function custom_registration_form_shortcode() {
+    // Redirect logged-in users to their account page
+    if ( is_user_logged_in() ) {
+        wp_redirect( home_url( '/my-account' ) );
+        exit;
+    }
+    
     ob_start();
     // Include the form structure (consider moving this file to includes/ too)
     include( get_stylesheet_directory() . '/includes/auth/registration-form.php' ); 
