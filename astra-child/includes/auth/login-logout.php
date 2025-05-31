@@ -113,4 +113,53 @@ function allow_phone_number_login( $user, $username, $password ) {
 
     return $user; // Fallback
 }
-add_filter( 'authenticate', 'allow_phone_number_login', 30, 3 ); 
+add_filter( 'authenticate', 'allow_phone_number_login', 30, 3 );
+
+/**
+ * Override the "Lost your password?" link in login form
+ */
+function redirect_lost_password_to_custom_page() {
+    // Get the forgot password page URL
+    $forgot_password_page = get_page_by_path('forgot-password');
+    
+    if ($forgot_password_page) {
+        $custom_url = get_permalink($forgot_password_page->ID);
+        
+        // Use JavaScript to replace the lost password link
+        ?>
+        <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find the lost password link and update it
+            const lostPasswordLinks = document.querySelectorAll('a[href*="wp-login.php?action=lostpassword"]');
+            lostPasswordLinks.forEach(function(link) {
+                link.href = '<?php echo esc_url($custom_url); ?>';
+            });
+            
+            // Also check for other common selectors
+            const navLinks = document.querySelectorAll('a[href*="action=lostpassword"]');
+            navLinks.forEach(function(link) {
+                link.href = '<?php echo esc_url($custom_url); ?>';
+            });
+        });
+        </script>
+        <?php
+    }
+}
+
+// Hook into login page and any page that might show login forms
+add_action('login_footer', 'redirect_lost_password_to_custom_page');
+add_action('wp_footer', 'redirect_lost_password_to_custom_page');
+
+/**
+ * Filter the lost password URL to use our custom page
+ */
+function custom_lost_password_url($url) {
+    $forgot_password_page = get_page_by_path('forgot-password');
+    
+    if ($forgot_password_page) {
+        return get_permalink($forgot_password_page->ID);
+    }
+    
+    return $url; // Fallback to default if page not found
+}
+add_filter('lostpassword_url', 'custom_lost_password_url', 10, 1); 
