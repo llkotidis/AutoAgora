@@ -26,8 +26,8 @@ if (!defined('ABSPATH')) {
         <div id="step-phone" class="forgot-password-step">
             <h2>Step 1: Enter Phone Number</h2>
             <div class="form-group">
-                <label for="forgot-phone-number">Phone Number:</label>
-                <input type="tel" name="forgot_phone_number" id="forgot-phone-number" required placeholder="Enter your phone number">
+                <label for="forgot-phone-number-display">Phone Number:</label>
+                <input type="tel" name="forgot_phone_number_display" id="forgot-phone-number-display" required placeholder="Enter your phone number">
             </div>
             <div class="form-actions">
                 <button type="button" id="send-forgot-otp-button" class="button button-primary">Send Verification Code</button>

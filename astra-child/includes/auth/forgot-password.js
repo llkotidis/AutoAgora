@@ -19,6 +19,25 @@ jQuery(document).ready(function($) {
     const stepPassword = $('#step-password');
     const stepSuccess = $('#step-success');
     
+    // --- Initialize intl-tel-input --- 
+    const phoneInput = document.querySelector("#forgot-phone-number-display");
+    let iti = null; // Variable to store the instance
+    if (phoneInput) {
+        iti = window.intlTelInput(phoneInput, {
+            initialCountry: "auto",
+            geoIpLookup: function(callback) {
+                fetch('https://ipinfo.io/json', { headers: { 'Accept': 'application/json' } })
+                .then(response => response.json())
+                .then(data => callback(data.country))
+                .catch(() => callback('cy')); // Default to Cyprus on error
+            },
+            separateDialCode: true,
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js" 
+        });
+    } else {
+        console.error("Forgot password form: Phone input #forgot-phone-number-display not found.");
+    }
+    
     // Password requirements (same as registration)
     const requirements = {
         length: { text: '8-16 characters', regex: /.{8,16}/ },
@@ -48,13 +67,21 @@ jQuery(document).ready(function($) {
     // --- Step 1: Send OTP to Phone Number ---
     $('#send-forgot-otp-button').on('click', function() {
         const button = $(this);
-        const phoneNumber = $('#forgot-phone-number').val().trim();
         
         messagesDiv.hide();
         button.prop('disabled', true).text('Sending...');
 
-        if (!phoneNumber) {
-            showMessage('Please enter your phone number.', true);
+        // Get number from intl-tel-input instance
+        if (!iti) {
+            showMessage('Phone input failed to initialize.', true);
+            button.prop('disabled', false).text('Send Verification Code');
+            return;
+        }
+        const fullPhoneNumber = iti.getNumber(); // Includes country code
+
+        // Basic validation from library
+        if (!iti.isValidNumber()) {
+            showMessage('Please enter a valid phone number.', true);
             button.prop('disabled', false).text('Send Verification Code');
             return;
         }
@@ -64,13 +91,13 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'send_forgot_password_otp',
-                phone: phoneNumber,
+                phone: fullPhoneNumber,
                 nonce: ForgotPasswordAjax.send_otp_nonce
             },
             success: function(response) {
                 if (response.success) {
                     showMessage(response.data.message);
-                    verifiedPhoneNumber = phoneNumber;
+                    verifiedPhoneNumber = fullPhoneNumber;
                     hideAllSteps();
                     stepOtp.show();
                 } else {
@@ -139,7 +166,12 @@ jQuery(document).ready(function($) {
     // --- Change Phone Number ---
     $('#change-forgot-phone-button').on('click', function() {
         messagesDiv.hide();
-        $('#forgot-phone-number').val('');
+        
+        // Reset the intl-tel-input field
+        if (iti) {
+            iti.setNumber('');
+        }
+        
         $('#forgot-verification-code').val('');
         verifiedPhoneNumber = '';
         hideAllSteps();

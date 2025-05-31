@@ -193,6 +193,10 @@ function enqueue_intl_tel_input_assets() {
     elseif ( is_singular() && is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'custom_registration' ) ) {
         $load_assets = true;
     }
+    // Check if on the forgot password page (slug 'forgot-password')
+    elseif ( is_page('forgot-password') ) {
+        $load_assets = true;
+    }
 
     if ( $load_assets ) {
         // Enqueue CSS
