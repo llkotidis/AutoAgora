@@ -357,8 +357,6 @@ jQuery(document).ready(function($) {
                     if (file.asyncFileKey && asyncUploadManager) {
                         asyncUploadManager.removeImage(file.asyncFileKey).catch(error => {
                             console.error('[Edit Listing] Failed to remove from async system:', error);
-                            // Don't block the UI removal - show warning but continue
-                            console.warn('[Edit Listing] Image removed from UI but may still exist on server');
                         });
                     }
                     
