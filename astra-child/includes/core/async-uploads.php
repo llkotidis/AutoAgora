@@ -150,6 +150,9 @@ function handle_async_upload_image() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'temp_uploads';
     
+    // DEBUG: Log the insert parameters
+    error_log("Async Upload Debug - Inserting: session_id={$session_id}, user_id=" . get_current_user_id() . ", attachment_id={$attachment_id}, original_filename={$original_filename}, form_type={$form_type}");
+    
     $result = $wpdb->insert(
         $table_name,
         array(
@@ -164,10 +167,14 @@ function handle_async_upload_image() {
     );
     
     if ($result === false) {
+        // DEBUG: Log the error
+        error_log("Async Upload Error - Database insert failed: " . $wpdb->last_error);
         // If database insert failed, clean up the uploaded file
         wp_delete_attachment($attachment_id, true);
-        wp_send_json_error(array('message' => 'Database error'));
+        wp_send_json_error(array('message' => 'Database error: ' . $wpdb->last_error));
         return;
+    } else {
+        error_log("Async Upload Debug - Database insert successful, inserted ID: " . $wpdb->insert_id);
     }
     
     // Get attachment URL for preview
@@ -199,19 +206,59 @@ function handle_delete_async_image() {
     
     $attachment_id = intval($_POST['attachment_id']);
     $session_id = sanitize_text_field($_POST['session_id']);
+    $user_id = get_current_user_id();
+    
+    // DEBUG: Log the search parameters
+    error_log("Async Delete Debug - Searching for: attachment_id={$attachment_id}, session_id={$session_id}, user_id={$user_id}");
     
     // Verify user owns this upload
     global $wpdb;
     $table_name = $wpdb->prefix . 'temp_uploads';
     
+    // First check if table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+    if (!$table_exists) {
+        error_log("Async Delete Error - Table {$table_name} does not exist");
+        create_temp_uploads_table(); // Try to create it
+    }
+    
+    // DEBUG: Check what records exist for this session and user
+    $session_records = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE session_id = %s AND user_id = %d",
+        $session_id, $user_id
+    ));
+    error_log("Async Delete Debug - Found " . count($session_records) . " records for session {$session_id} and user {$user_id}");
+    foreach ($session_records as $record) {
+        error_log("Async Delete Debug - Record: attachment_id={$record->attachment_id}, status={$record->status}");
+    }
+    
     $upload_record = $wpdb->get_row($wpdb->prepare(
         "SELECT * FROM $table_name WHERE attachment_id = %d AND session_id = %s AND user_id = %d",
-        $attachment_id, $session_id, get_current_user_id()
+        $attachment_id, $session_id, $user_id
     ));
     
     if (!$upload_record) {
-        wp_send_json_error(array('message' => 'Upload not found or access denied'));
-        return;
+        // Try alternative search - maybe there's a timing issue
+        $alt_record = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE attachment_id = %d AND user_id = %d ORDER BY upload_time DESC LIMIT 1",
+            $attachment_id, $user_id
+        ));
+        
+        if ($alt_record) {
+            error_log("Async Delete Debug - Found record with different session: {$alt_record->session_id} vs {$session_id}");
+            // Use the found record if it's recent (within last 5 minutes)
+            $upload_time = strtotime($alt_record->upload_time);
+            if (time() - $upload_time < 300) {
+                $upload_record = $alt_record;
+                error_log("Async Delete Debug - Using alternative record (recent upload)");
+            }
+        }
+        
+        if (!$upload_record) {
+            error_log("Async Delete Error - No record found for attachment {$attachment_id}");
+            wp_send_json_error(array('message' => 'Upload not found or access denied'));
+            return;
+        }
     }
     
     // Delete the attachment file
@@ -219,18 +266,20 @@ function handle_delete_async_image() {
     
     if ($deleted) {
         // Remove from tracking table
-        $wpdb->delete(
+        $delete_result = $wpdb->delete(
             $table_name,
             array(
                 'attachment_id' => $attachment_id,
-                'session_id' => $session_id,
-                'user_id' => get_current_user_id()
+                'user_id' => $user_id
             ),
-            array('%d', '%s', '%d')
+            array('%d', '%d')
         );
+        
+        error_log("Async Delete Debug - Database delete result: {$delete_result}");
         
         wp_send_json_success(array('message' => 'Image deleted successfully'));
     } else {
+        error_log("Async Delete Error - WordPress failed to delete attachment {$attachment_id}");
         wp_send_json_error(array('message' => 'Failed to delete image'));
     }
 }
