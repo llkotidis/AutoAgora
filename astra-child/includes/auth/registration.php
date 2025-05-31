@@ -15,18 +15,34 @@ use Twilio\Rest\Client; // Needed for registration handling
  * @return string HTML output of the registration form.
  */
 function custom_registration_form_shortcode() {
-    // Redirect logged-in users to their account page
-    if ( is_user_logged_in() ) {
-        wp_redirect( home_url( '/my-account' ) );
-        exit;
-    }
-    
     ob_start();
     // Include the form structure (consider moving this file to includes/ too)
     include( get_stylesheet_directory() . '/includes/auth/registration-form.php' ); 
     return ob_get_clean();
 }
 add_shortcode( 'custom_registration', 'custom_registration_form_shortcode' );
+
+/**
+ * Redirect logged-in users away from registration pages
+ */
+function redirect_logged_in_users_from_registration() {
+    // Only run on front-end
+    if ( is_admin() ) {
+        return;
+    }
+    
+    // Check if user is logged in
+    if ( is_user_logged_in() ) {
+        global $post;
+        
+        // Check if current page/post contains the registration shortcode
+        if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'custom_registration' ) ) {
+            wp_redirect( home_url( '/my-account' ) );
+            exit;
+        }
+    }
+}
+add_action( 'template_redirect', 'redirect_logged_in_users_from_registration' );
 
 /**
  * Function to generate a random verification code.
