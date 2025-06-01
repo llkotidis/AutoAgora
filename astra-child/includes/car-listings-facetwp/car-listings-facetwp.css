@@ -1,0 +1,157 @@
+.car-listings-facetwp-container {
+  position: relative;
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.car-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  transition: opacity 0.3s ease;
+}
+
+.car-listings-grid.loading {
+  opacity: 0.5;
+}
+
+.car-listing-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.car-listing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.car-listing-image {
+  position: relative;
+  padding-top: 66.67%; /* 3:2 aspect ratio */
+  overflow: hidden;
+}
+
+.car-listing-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.car-listing-card:hover .car-listing-image img {
+  transform: scale(1.05);
+}
+
+.car-listing-details {
+  padding: 1.5rem;
+}
+
+.car-listing-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.car-listing-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c5282;
+  margin-bottom: 1rem;
+}
+
+.car-listing-specs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.car-listing-specs span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.view-details-btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #2c5282;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background-color: #1a365d;
+}
+
+.car-listings-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2c5282;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.no-listings-found {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1.125rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .car-listings-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .car-listings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .car-listing-details {
+    padding: 1rem;
+  }
+
+  .car-listing-title {
+    font-size: 1.125rem;
+  }
+
+  .car-listing-price {
+    font-size: 1.25rem;
+  }
+}

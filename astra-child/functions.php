@@ -8,6 +8,9 @@ require_once get_stylesheet_directory() . '/includes/core/mapbox-assets.php';
 // Include car listings functionality
 require_once get_stylesheet_directory() . '/includes/car-listings/car-listings.php';
 
+// Include FacetWP car listings functionality
+require_once get_stylesheet_directory() . '/includes/car-listings-facetwp/car-listings-facetwp.php';
+
 // Include car submission functionality
 require_once get_stylesheet_directory() . '/includes/user-manage-listings/car-submission.php';
 
