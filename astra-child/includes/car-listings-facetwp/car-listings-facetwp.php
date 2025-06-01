@@ -209,37 +209,61 @@ class Car_Listings_FacetWP {
             'paged' => get_query_var('paged') ? get_query_var('paged') : 1,
         );
 
-        // Get FacetWP parameters from URL
-        $price_range = isset($_GET['_price']) ? explode(',', $_GET['_price']) : array();
-        $transmission = isset($_GET['_transmission']) ? $_GET['_transmission'] : '';
-        $interior_color = isset($_GET['_interior_color']) ? $_GET['_interior_color'] : '';
-
-        // Add meta queries based on FacetWP parameters
+        // Get FacetWP parameters from AJAX POST
+        $facets = isset($_POST['facets']) ? $_POST['facets'] : array();
         $meta_query = array('relation' => 'AND');
 
-        if (!empty($price_range)) {
-            $meta_query[] = array(
-                'key' => '_price',
-                'value' => array($price_range[0], $price_range[1]),
-                'type' => 'NUMERIC',
-                'compare' => 'BETWEEN'
-            );
+        // Range fields
+        $range_fields = [
+            'price' => 'price',
+            'mileage' => 'mileage',
+            'engine_displacement' => 'engine_capacity',
+            'horsepower' => 'hp',
+        ];
+        foreach ($range_fields as $facet_key => $acf_key) {
+            if (!empty($facets[$facet_key])) {
+                $range = explode(',', $facets[$facet_key]);
+                if (count($range) === 2) {
+                    $meta_query[] = array(
+                        'key' => $acf_key,
+                        'value' => array($range[0], $range[1]),
+                        'type' => 'NUMERIC',
+                        'compare' => 'BETWEEN'
+                    );
+                }
+            }
         }
 
-        if (!empty($transmission)) {
-            $meta_query[] = array(
-                'key' => '_transmission',
-                'value' => $transmission,
-                'compare' => '='
-            );
-        }
-
-        if (!empty($interior_color)) {
-            $meta_query[] = array(
-                'key' => '_interior_color',
-                'value' => $interior_color,
-                'compare' => '='
-            );
+        // Single/multi-value fields
+        $fields = [
+            'transmission' => 'transmission',
+            'fuel_type' => 'fuel_type',
+            'exterior_color' => 'exterior_color',
+            'interior_color' => 'interior_color',
+            'body_type' => 'body_type',
+            'drive_type' => 'drive_type',
+            'number_of_doors' => 'number_of_doors',
+            'number_of_seats' => 'number_of_seats',
+            'extras' => 'extras',
+            'number_of_owners' => 'number_of_owners',
+            'antique' => 'antique',
+        ];
+        foreach ($fields as $facet_key => $acf_key) {
+            if (!empty($facets[$facet_key])) {
+                if (is_array($facets[$facet_key])) {
+                    $meta_query[] = array(
+                        'key' => $acf_key,
+                        'value' => $facets[$facet_key],
+                        'compare' => 'IN'
+                    );
+                } else {
+                    $meta_query[] = array(
+                        'key' => $acf_key,
+                        'value' => $facets[$facet_key],
+                        'compare' => '='
+                    );
+                }
+            }
         }
 
         if (count($meta_query) > 1) {

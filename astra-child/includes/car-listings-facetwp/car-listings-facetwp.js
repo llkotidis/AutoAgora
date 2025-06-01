@@ -35,6 +35,7 @@
         data: {
           action: "load_car_listings",
           nonce: carListingsFacetWP.nonce,
+          facets: window.FWP ? window.FWP.facets : {},
           url: this.currentUrl,
         },
         success: (response) => {
