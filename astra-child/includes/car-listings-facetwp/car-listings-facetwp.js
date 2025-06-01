@@ -16,19 +16,12 @@
 
     init() {
       // Listen for FacetWP events
-      $(document).on("facetwp-loaded", () => this.handleFacetWPUpdate());
-      $(document).on("facetwp-refresh", () => this.handleFacetWPUpdate());
-
+      $(document).on("facetwp-loaded", () => {
+        this.currentUrl = window.location.href;
+        this.loadListings();
+      });
       // Initial load
       this.loadListings();
-    }
-
-    handleFacetWPUpdate() {
-      const newUrl = window.location.href;
-      if (newUrl !== this.currentUrl) {
-        this.currentUrl = newUrl;
-        this.loadListings();
-      }
     }
 
     loadListings() {
