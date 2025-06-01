@@ -583,26 +583,30 @@
 .favorite-btn i {
   width: 100%;
   height: auto;
-  color: #ff0000;
+  color: #ff0000 !important;
   transition: all 0.2s ease;
+  font-style: normal !important; /* Prevent italic inheritance */
 }
 
-/* Empty heart state */
+/* Empty heart state - outline only */
 .favorite-btn i.far {
   opacity: 0.8;
-  font-weight: 400; /* Required for Font Awesome 6 regular icons */
+  font-weight: 400 !important; /* Required for Font Awesome 6 regular icons */
+  font-style: normal !important; /* Prevent italic inheritance */
 }
 
 /* Filled heart state (will be added via JavaScript when favorited) */
 .favorite-btn i.fas {
   opacity: 1;
-  font-weight: 900; /* Required for Font Awesome 6 solid icons */
+  font-weight: 900 !important; /* Required for Font Awesome 6 solid icons */
+  font-style: normal !important; /* Prevent italic inheritance */
 }
 
 /* Hover state */
 .favorite-btn:hover i.far {
   opacity: 1;
-  font-weight: 400; /* Required for Font Awesome 6 regular icons */
+  font-weight: 400 !important; /* Required for Font Awesome 6 regular icons */
+  font-style: normal !important; /* Prevent italic inheritance */
 }
 
 /* NOTE: Global input/select styles moved to style.css */
