@@ -107,3 +107,12 @@ function get_svg_icon($icon_name) {
 // Enable shortcodes in FacetWP Listing Builder fields
 add_filter('facetwp_builder_inner_html', 'do_shortcode');
 
+// Enqueue carousel CSS/JS on /used-cars-facetwp page
+add_action('wp_enqueue_scripts', function() {
+    if (is_page() && (get_query_var('pagename') === 'used-cars-facetwp' || strpos($_SERVER['REQUEST_URI'], '/used-cars-facetwp') !== false)) {
+        $theme_dir = get_stylesheet_directory_uri();
+        wp_enqueue_style('car-listings-style', $theme_dir . '/includes/car-listings/car-listings.css', array(), filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.css'));
+        wp_enqueue_script('car-listings-js', $theme_dir . '/includes/car-listings/car-listings.js', array('jquery'), filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.js'), true);
+    }
+});
+
