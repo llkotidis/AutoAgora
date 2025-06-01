@@ -209,7 +209,6 @@ class Car_Listings_FacetWP {
             'paged' => get_query_var('paged') ? get_query_var('paged') : 1,
         );
 
-        // Get FacetWP parameters from AJAX POST
         $facets = isset($_POST['facets']) ? $_POST['facets'] : array();
         $meta_query = array('relation' => 'AND');
 
