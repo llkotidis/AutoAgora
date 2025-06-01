@@ -290,7 +290,7 @@
 }
 
 .mapboxgl-ctrl-locate-me::before {
-    font-family: "Font Awesome 5 Free", "FontAwesome"; /* Added fallback FontAwesome name */
+    font-family: "Font Awesome 6 Free", "FontAwesome"; /* Updated for Font Awesome 6 */
     content: "\f124"; /* Unicode for fa-location-arrow */
     font-weight: 900; /* For solid style icons */
     margin-right: 8px; /* Space between icon and text */
