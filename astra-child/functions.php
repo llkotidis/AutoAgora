@@ -104,3 +104,6 @@ function get_svg_icon($icon_name) {
     return '';
 }
 
+// Enable shortcodes in FacetWP Listing Builder fields
+add_filter('facetwp_builder_inner_html', 'do_shortcode');
+
