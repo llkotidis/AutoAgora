@@ -34,8 +34,8 @@ if (is_dir($add_listing_jsons_dir)) {
 // Ensure jQuery is loaded
 wp_enqueue_script('jquery');
 
-// Enqueue Font Awesome
-wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', array(), '6.7.2', 'all');
+// Font Awesome is now loaded globally in enqueue.php
+// wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', array(), '6.7.2', 'all');
 
 // Enqueue image optimization script
 wp_enqueue_script(

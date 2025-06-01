@@ -471,3 +471,40 @@ select option:disabled {
         transform: rotate(360deg);
     }
 }
+
+/* Global Font Awesome 6 fixes */
+.fas, .fa-solid {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 900 !important;
+}
+
+.far, .fa-regular {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 400 !important;
+}
+
+.fab, .fa-brands {
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", "FontAwesome" !important;
+    font-weight: 400 !important;
+}
+
+.fa {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 900 !important;
+}
+
+/* Ensure pseudo-elements work properly */
+.fas::before, .fa-solid::before, .fa::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 900 !important;
+}
+
+.far::before, .fa-regular::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 400 !important;
+}
+
+.fab::before, .fa-brands::before {
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", "FontAwesome" !important;
+    font-weight: 400 !important;
+}

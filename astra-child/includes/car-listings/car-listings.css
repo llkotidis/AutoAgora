@@ -590,16 +590,19 @@
 /* Empty heart state */
 .favorite-btn i.far {
   opacity: 0.8;
+  font-weight: 400; /* Required for Font Awesome 6 regular icons */
 }
 
 /* Filled heart state (will be added via JavaScript when favorited) */
 .favorite-btn i.fas {
   opacity: 1;
+  font-weight: 900; /* Required for Font Awesome 6 solid icons */
 }
 
 /* Hover state */
 .favorite-btn:hover i.far {
   opacity: 1;
+  font-weight: 400; /* Required for Font Awesome 6 regular icons */
 }
 
 /* NOTE: Global input/select styles moved to style.css */

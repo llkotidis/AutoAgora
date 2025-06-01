@@ -17,10 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Enqueue styles
  */
 function astra_child_enqueue_styles() {
-    wp_enqueue_style( 'astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
-
-    // Enqueue Font Awesome from CDN
+    // Enqueue Font Awesome from CDN first with higher priority
     wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', array(), '6.7.2', 'all' );
+    
+    wp_enqueue_style( 'astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css', 'font-awesome'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue account display styles if the shortcode might be used
     // For simplicity, we'll load it everywhere for now. Consider conditional loading if performance is critical.
@@ -30,7 +30,7 @@ function astra_child_enqueue_styles() {
     wp_enqueue_style(
         'favourites-button',
         get_stylesheet_directory_uri() . '/css/favourites-button.css',
-        array(),
+        array('font-awesome'),
         ASTRA_CHILD_THEME_VERSION
     );
 
@@ -39,7 +39,7 @@ function astra_child_enqueue_styles() {
     wp_enqueue_style( 'astra-child-car-search-css', get_stylesheet_directory_uri() . '/css/car-search-form.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue car listings styles
-    wp_enqueue_style( 'astra-child-car-listings-css', get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.css', array('astra-child-theme-css'), ASTRA_CHILD_THEME_VERSION, 'all' );
+    wp_enqueue_style( 'astra-child-car-listings-css', get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.css', array('astra-child-theme-css', 'font-awesome'), ASTRA_CHILD_THEME_VERSION, 'all' );
 
     // Enqueue add listing page styles
     if (is_page_template('template-add-listing.php')) {
