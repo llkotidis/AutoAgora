@@ -11,6 +11,8 @@ if (!function_exists('car_images_slider_shortcode')) {
         global $post;
         $car_post_id = isset($atts['post_id']) ? $atts['post_id'] : ($post ? $post->ID : null);
         if (!$car_post_id) return '';
+        // Enqueue carousel assets only when shortcode is used
+        add_action('wp_enqueue_scripts', 'car_images_slider_enqueue_assets');
         ob_start();
         $featured_image    = function_exists('get_post_thumbnail_id') ? get_post_thumbnail_id($car_post_id) : null;
         $additional_images = function_exists('get_field') ? get_field('car_images', $car_post_id) : array();

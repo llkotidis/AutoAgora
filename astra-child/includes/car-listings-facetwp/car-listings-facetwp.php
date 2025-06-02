@@ -1,289 +1,185 @@
 <?php
 /**
- * Car Listings FacetWP Integration
+ * FacetWP Car Listings Shortcode
+ * 
+ * @package Astra Child
+ * @since 1.0.0
  */
 
 if (!defined('ABSPATH')) {
-    exit;
+    exit; // Exit if accessed directly.
 }
 
-class Car_Listings_FacetWP {
-    private static $instance = null;
+// Register the shortcode
+add_shortcode('facetwp_car_listings', 'display_facetwp_car_listings');
 
-    public static function get_instance() {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+function display_facetwp_car_listings($atts) {
+    // Enqueue the main stylesheet for this shortcode
+    wp_enqueue_style(
+        'car-listings-style',
+        get_stylesheet_directory_uri() . '/includes/car-listings/car-listings.css',
+        array(), 
+        filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings.css')
+    );
+
+    // Enqueue the map filter stylesheet
+    wp_enqueue_style(
+        'car-listings-map-filter-style',
+        get_stylesheet_directory_uri() . '/includes/car-listings/car-listings-map-filter.css',
+        array(),
+        filemtime(get_stylesheet_directory() . '/includes/car-listings/car-listings-map-filter.css')
+    );
+
+    // Start output buffering
+    ob_start();
+
+    // Get the current post
+    global $post;
+    if (!$post) {
+        return '';
     }
 
-    private function __construct() {
-        add_shortcode('car-listings-facetwp', array($this, 'render_car_listings'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-        add_action('wp_ajax_load_car_listings', array($this, 'ajax_load_car_listings'));
-        add_action('wp_ajax_nopriv_load_car_listings', array($this, 'ajax_load_car_listings'));
+    // Get car details
+    $make = get_field('make', $post->ID);
+    $model = get_field('model', $post->ID);
+    $variant = get_field('variant', $post->ID);
+    $year = get_field('year', $post->ID);
+    $price = get_field('price', $post->ID);
+    $mileage = get_field('mileage', $post->ID);
+    $car_city = get_field('car_city', $post->ID);
+    $car_district = get_field('car_district', $post->ID);
+    $display_location = '';
+    if (!empty($car_city) && !empty($car_district)) {
+        $display_location = $car_city . ' - ' . $car_district;
+    } elseif (!empty($car_city)) {
+        $display_location = $car_city;
+    } elseif (!empty($car_district)) {
+        $display_location = $car_district;
     }
+    $engine_capacity = get_field('engine_capacity', $post->ID);
+    $fuel_type = get_field('fuel_type', $post->ID);
+    $transmission = get_field('transmission', $post->ID);
+    $description = get_field('description', $post->ID);
+    $publication_date = get_field('publication_date', $post->ID);
 
-    public function enqueue_scripts() {
-        wp_enqueue_script(
-            'car-listings-facetwp',
-            get_stylesheet_directory_uri() . '/includes/car-listings-facetwp/car-listings-facetwp.js',
-            array('jquery'),
-            filemtime(get_stylesheet_directory() . '/includes/car-listings-facetwp/car-listings-facetwp.js'),
-            true
-        );
+    // Generate the detail page URL
+    $car_detail_url = esc_url(get_permalink($post->ID));
 
-        wp_enqueue_style(
-            'car-listings-facetwp',
-            get_stylesheet_directory_uri() . '/includes/car-listings-facetwp/car-listings-facetwp.css',
-            array(),
-            filemtime(get_stylesheet_directory() . '/includes/car-listings-facetwp/car-listings-facetwp.css')
-        );
-
-        wp_localize_script('car-listings-facetwp', 'carListingsFacetWP', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('car_listings_facetwp_nonce')
-        ));
-    }
-
-    public function render_car_listings($atts) {
-        $atts = shortcode_atts(array(
-            'posts_per_page' => 12,
-            'columns' => 3,
-        ), $atts);
-
-        ob_start();
-        ?>
-        <div class="car-listings-facetwp-container" 
-             data-posts-per-page="<?php echo esc_attr($atts['posts_per_page']); ?>"
-             data-columns="<?php echo esc_attr($atts['columns']); ?>">
-            <div class="car-listings-grid">
-                <?php $this->render_listings(); ?>
-            </div>
-            <div class="car-listings-loading" style="display: none;">
-                <div class="loading-spinner"></div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    private function render_listings() {
-        $args = $this->get_query_args();
-        $query = new WP_Query($args);
-
-        if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $this->render_listing_card();
-            }
-            wp_reset_postdata();
-        } else {
-            echo '<div class="no-listings-found">No cars found matching your criteria.</div>';
-        }
-    }
-
-    private function render_listing_card($car_post_id = null) {
-        if (!$car_post_id) {
-            $car_post_id = get_the_ID();
-        }
-        $car_detail_url = esc_url(get_permalink($car_post_id));
-        $make             = get_field('make', $car_post_id);
-        $model            = get_field('model', $car_post_id);
-        $variant          = get_field('variant', $car_post_id);
-        $year             = get_field('year', $car_post_id);
-        $price            = get_field('price', $car_post_id);
-        $mileage          = get_field('mileage', $car_post_id);
-        $car_city         = get_field('car_city', $car_post_id);
-        $car_district     = get_field('car_district', $car_post_id);
-        $display_location = '';
-        if (!empty($car_city) && !empty($car_district)) {
-            $display_location = $car_city . ' - ' . $car_district;
-        } elseif (!empty($car_city)) {
-            $display_location = $car_city;
-        } elseif (!empty($car_district)) {
-            $display_location = $car_district;
-        }
-        $engine_capacity  = get_field('engine_capacity', $car_post_id);
-        $fuel_type        = get_field('fuel_type', $car_post_id);
-        $transmission     = get_field('transmission', $car_post_id);
-        $body_type        = get_field('body_type', $car_post_id);
-        $publication_date = get_field('publication_date', $car_post_id);
-        $latitude         = get_field('car_latitude', $car_post_id);
-        $longitude        = get_field('car_longitude', $car_post_id);
-        ?>
-        <div class="car-listing-card"
-             data-city="<?php echo esc_attr($car_city); ?>"
-             data-district="<?php echo esc_attr($car_district); ?>"
-             data-latitude="<?php echo esc_attr($latitude); ?>"
-             data-longitude="<?php echo esc_attr($longitude); ?>"
-             data-post-id="<?php echo esc_attr($car_post_id); ?>">
-            <?php
-            $featured_image    = get_post_thumbnail_id($car_post_id);
-            $additional_images = get_field('car_images', $car_post_id);
-            $all_images        = array();
+    // Start the car listing card output
+    ?>
+    <div class="car-listing-card">
+        <div class="car-listing-image-carousel">
+            <?php 
+            // Get all car images
+            $featured_image = get_post_thumbnail_id($post->ID);
+            $additional_images = get_field('car_images', $post->ID);
+            $all_images = array();
+            
             if ($featured_image) {
                 $all_images[] = $featured_image;
             }
+            
             if (is_array($additional_images)) {
                 $all_images = array_merge($all_images, $additional_images);
             }
-            if (!empty($all_images)) {
-                echo '<div class="car-listing-image-container">';
-                echo '<div class="car-listing-image-carousel" data-post-id="' . esc_attr($car_post_id) . '">';
-                foreach ($all_images as $index => $image_id) {
-                    $image_url = wp_get_attachment_image_url($image_id, 'medium');
-                    if ($image_url) {
-                        $clean_year = str_replace(',', '', $year);
-                        echo '<div class="car-listing-image' . ($index === 0 ? ' active' : '') . '" data-index="' . esc_attr($index) . '">';
-                        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($clean_year . ' ' . $make . ' ' . $model) . '">';
-                        if ($index === count($all_images) - 1 && count($all_images) > 1) {
-                            echo '<a href="' . $car_detail_url . '" class="see-all-images" style="display: none;">See All Images</a>';
-                        }
-                        echo '</div>';
-                    }
-                }
-                echo '<button class="carousel-nav prev"><i class="fas fa-chevron-left"></i></button>';
-                echo '<button class="carousel-nav next"><i class="fas fa-chevron-right"></i></button>';
-                $user_id       = get_current_user_id();
-                $favorite_cars = get_user_meta($user_id, 'favorite_cars', true);
-                $favorite_cars = is_array($favorite_cars) ? $favorite_cars : array();
-                $is_favorite   = in_array($car_post_id, $favorite_cars);
-                $button_class  = $is_favorite ? 'favorite-btn active' : 'favorite-btn';
-                $heart_class   = $is_favorite ? 'fas fa-heart' : 'far fa-heart';
-                echo '<button class="' . esc_attr($button_class) . '" data-car-id="' . esc_attr($car_post_id) . '"><i class="' . esc_attr($heart_class) . '"></i></button>';
-                echo '</div>';
-                echo '</div>';
-            }
+
+            if (!empty($all_images)) :
+                foreach ($all_images as $index => $image_id) :
+                    $image_url = wp_get_attachment_image_url($image_id, 'large');
+                    if ($image_url) :
+                        ?>
+                        <div class="car-listing-image <?php echo $index === 0 ? 'active' : ''; ?>">
+                            <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr(get_the_title($post->ID)); ?>">
+                        </div>
+                        <?php
+                    endif;
+                endforeach;
+            endif;
             ?>
-            <a href="<?php echo $car_detail_url; ?>" class="car-listing-link">
-                <div class="car-listing-details">
-                    <h2 class="car-title"><?php echo esc_html($make . ' ' . $model); ?></h2>
-                    <div class="car-specs">
-                        <?php
-                        $specs_array = array();
-                        if (!empty($engine_capacity)) {
-                            $specs_array[] = esc_html($engine_capacity) . 'L';
-                        }
-                        if (!empty($fuel_type)) {
-                            $specs_array[] = esc_html($fuel_type);
-                        }
-                        if (!empty($body_type)) {
-                            $specs_array[] = esc_html($body_type);
-                        }
-                        if (!empty($transmission)) {
-                            $specs_array[] = esc_html($transmission);
-                        }
-                        echo implode(' | ', $specs_array);
-                        ?>
-                    </div>
-                    <div class="car-info-boxes">
-                    <div class="info-box">
-                            <span class="info-value"><?php echo esc_html(str_replace(',', '', $year ?? '')); ?></span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-value"><?php echo number_format(floatval(str_replace(',', '', $mileage ?? '0'))); ?> km</span>
-                        </div>
-                    </div>
-                    <div class="car-price">€<?php echo number_format(floatval(str_replace(',', '', $price ?? '0'))); ?></div>
-                    <div class="car-listing-additional-info">
-                        <?php
-                        if (!$publication_date) {
-                            $publication_date = get_the_date('Y-m-d H:i:s', $car_post_id);
-                        }
-                        $formatted_date = date_i18n('F j, Y', strtotime($publication_date));
-                        echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
-                        ?>
-                        <p class="car-location"><i class="fas fa-map-marker-alt"></i> <span class="location-text"><?php echo esc_html($display_location); ?></span></p>
-                    </div>
-                </div>
-            </a>
+
+            <?php if (count($all_images) > 1) : ?>
+                <button class="carousel-nav prev" aria-label="Previous image">&lt;</button>
+                <button class="carousel-nav next" aria-label="Next image">&gt;</button>
+                <div class="image-counter">1/<?php echo count($all_images); ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($all_images)) : ?>
+                <a href="<?php echo esc_url($car_detail_url); ?>" class="see-all-images">See All Images</a>
+            <?php endif; ?>
         </div>
-        <?php
-    }
 
-    private function get_query_args() {
-        $args = array(
-            'post_type' => 'car',
-            'posts_per_page' => 12,
-            'paged' => get_query_var('paged') ? get_query_var('paged') : 1,
-        );
+        <div class="car-listing-details">
+            <h3 class="car-title">
+                <?php 
+                $title_parts = array_filter([$make, $model, $variant, $year]);
+                echo esc_html(implode(' ', $title_parts));
+                ?>
+            </h3>
 
-        $facets = isset($_POST['facets']) ? $_POST['facets'] : array();
-        $meta_query = array('relation' => 'AND');
+            <div class="car-price">
+                €<?php echo number_format($price, 0, '.', ','); ?>
+            </div>
 
-        // Range fields
-        $range_fields = [
-            'price' => 'price',
-            'mileage' => 'mileage',
-            'engine_displacement' => 'engine_capacity',
-            'horsepower' => 'hp',
-        ];
-        foreach ($range_fields as $facet_key => $acf_key) {
-            if (!empty($facets[$facet_key])) {
-                $range = explode(',', $facets[$facet_key]);
-                if (count($range) === 2) {
-                    $meta_query[] = array(
-                        'key' => $acf_key,
-                        'value' => array($range[0], $range[1]),
-                        'type' => 'NUMERIC',
-                        'compare' => 'BETWEEN'
-                    );
-                }
-            }
-        }
+            <div class="car-specs">
+                <div class="car-info-boxes">
+                    <?php if ($mileage) : ?>
+                        <div class="info-box">
+                            <span class="info-value"><?php echo number_format($mileage, 0, '.', ','); ?> km</span>
+                        </div>
+                    <?php endif; ?>
 
-        // Single/multi-value fields
-        $fields = [
-            'transmission' => 'transmission',
-            'fuel_type' => 'fuel_type',
-            'exterior_color' => 'exterior_color',
-            'interior_color' => 'interior_color',
-            'body_type' => 'body_type',
-            'drive_type' => 'drive_type',
-            'number_of_doors' => 'number_of_doors',
-            'number_of_seats' => 'number_of_seats',
-            'extras' => 'extras',
-            'number_of_owners' => 'number_of_owners',
-            'antique' => 'antique',
-        ];
-        foreach ($fields as $facet_key => $acf_key) {
-            if (!empty($facets[$facet_key])) {
-                if (is_array($facets[$facet_key])) {
-                    $meta_query[] = array(
-                        'key' => $acf_key,
-                        'value' => $facets[$facet_key],
-                        'compare' => 'IN'
-                    );
-                } else {
-                    $meta_query[] = array(
-                        'key' => $acf_key,
-                        'value' => $facets[$facet_key],
-                        'compare' => '='
-                    );
-                }
-            }
-        }
+                    <?php if ($engine_capacity) : ?>
+                        <div class="info-box">
+                            <span class="info-value"><?php echo esc_html($engine_capacity); ?>L</span>
+                        </div>
+                    <?php endif; ?>
 
-        if (count($meta_query) > 1) {
-            $args['meta_query'] = $meta_query;
-        }
+                    <?php if ($fuel_type) : ?>
+                        <div class="info-box">
+                            <span class="info-value"><?php echo esc_html($fuel_type); ?></span>
+                        </div>
+                    <?php endif; ?>
 
-        return $args;
-    }
+                    <?php if ($transmission) : ?>
+                        <div class="info-box">
+                            <span class="info-value"><?php echo esc_html($transmission); ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
-    public function ajax_load_car_listings() {
-        check_ajax_referer('car_listings_facetwp_nonce', 'nonce');
+            <?php if ($display_location) : ?>
+                <div class="car-location">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <?php echo esc_html($display_location); ?>
+                </div>
+            <?php endif; ?>
 
-        ob_start();
-        $this->render_listings();
-        $html = ob_get_clean();
+            <?php if ($description) : ?>
+                <div class="car-description">
+                    <?php echo wp_trim_words($description, 20, '...'); ?>
+                </div>
+            <?php endif; ?>
 
-        wp_send_json_success(array(
-            'html' => $html
-        ));
-    }
-}
+            <a href="<?php echo esc_url($car_detail_url); ?>" class="view-details">View Details</a>
 
-// Initialize the class
-Car_Listings_FacetWP::get_instance(); 
+            <?php if (is_user_logged_in()) : ?>
+                <button class="favorite-btn" data-car-id="<?php echo esc_attr($post->ID); ?>">
+                    <i class="far fa-heart"></i>
+                </button>
+            <?php endif; ?>
+
+            <?php if ($publication_date) : ?>
+                <div class="car-publication-date">
+                    Listed: <?php echo date('d/m/Y', strtotime($publication_date)); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+
+    // Get the buffered content
+    $output = ob_get_clean();
+
+    return $output;
+} 
