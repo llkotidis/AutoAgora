@@ -257,7 +257,7 @@ function handle_update_password_reset() {
 add_action('wp_ajax_send_email_verification', 'handle_send_email_verification');
 function handle_send_email_verification() {
     // Log the start of the function
-    error_log('Email verification AJAX called');
+    error_log('Email verification AJAX called (Twilio Verify)');
     
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'email_verification_nonce')) {
@@ -295,14 +295,60 @@ function handle_send_email_verification() {
         return;
     }
 
-    // Send verification email
-    error_log('Email verification: Attempting to send email to: ' . $email);
+    // Send verification email using Twilio Verify
+    error_log('Email verification: Attempting to send via Twilio Verify to: ' . $email);
     $result = send_verification_email($user_id, $email);
     error_log('Email verification: Send result: ' . ($result ? 'SUCCESS' : 'FAILED'));
 
     if ($result) {
-        wp_send_json_success('Verification email sent successfully! Please check your inbox and click the verification link.');
+        wp_send_json_success('Verification code sent to your email! Please check your inbox and enter the 6-digit code.');
     } else {
         wp_send_json_error('Failed to send verification email. Please try again later.');
+    }
+}
+
+// Add AJAX handler for verifying email code
+add_action('wp_ajax_verify_email_code', 'handle_verify_email_code');
+function handle_verify_email_code() {
+    // Log the start of the function
+    error_log('Email code verification AJAX called');
+    
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'email_verification_nonce')) {
+        error_log('Email code verification: Invalid nonce');
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        error_log('Email code verification: User not logged in');
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    // Get and validate code
+    $code = isset($_POST['code']) ? sanitize_text_field($_POST['code']) : '';
+    error_log('Email code verification: Code provided: ' . $code);
+    
+    if (empty($code) || strlen($code) !== 6) {
+        error_log('Email code verification: Invalid code format');
+        wp_send_json_error('Please enter a valid 6-digit verification code');
+        return;
+    }
+
+    // Get current user
+    $user_id = get_current_user_id();
+    error_log('Email code verification: User ID: ' . $user_id);
+
+    // Verify code using Twilio Verify
+    error_log('Email code verification: Attempting to verify code for user: ' . $user_id);
+    $result = verify_email_verification_code($user_id, $code);
+    error_log('Email code verification: Verify result: ' . ($result ? 'SUCCESS' : 'FAILED'));
+
+    if ($result) {
+        wp_send_json_success('Email verified successfully!');
+    } else {
+        wp_send_json_error('Invalid verification code. Please try again.');
     }
 } 
