@@ -66,9 +66,9 @@ function display_my_account_main($current_user) {
                     <span class="label">Email:</span>
                     <span class="value"><?php echo esc_html($current_user->user_email); ?></span>
                     <?php
-                    // Check email verification status
+                    // Check email verification status - now properly initialized to '0' or '1'
                     $email_verified = get_user_meta($current_user->ID, 'email_verified', true);
-                    if ($email_verified === '1' || $email_verified === true) {
+                    if ($email_verified === '1') {
                         echo '<span class="email-status verified">✅ Verified</span>';
                     } else {
                         echo '<span class="email-status not-verified">❌ Not Verified</span>';
