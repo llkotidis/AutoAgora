@@ -11,8 +11,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Load SendGrid library
-require_once get_stylesheet_directory() . '/vendor/autoload.php';
+// Load SendGrid library using its own autoloader
+require_once get_stylesheet_directory() . '/vendor/sendgrid/sendgrid/sendgrid-php.php';
 
 use SendGrid\Mail\Mail;
 
