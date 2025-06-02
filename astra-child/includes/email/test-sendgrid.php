@@ -25,7 +25,7 @@ function test_sendgrid_email() {
             wp_die('Access denied.');
         }
 
-        $test_email = get_option('admin_email'); // Send to admin email
+        $test_email = 'lkotidis43@gmail.com'; // Send to your email instead of admin
         $subject = 'SendGrid Test Email from AutoAgora';
         $html_content = '
         <html>
