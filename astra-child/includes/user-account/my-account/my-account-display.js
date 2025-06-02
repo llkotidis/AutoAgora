@@ -192,9 +192,18 @@ jQuery(document).ready(function($) {
             return;
         }
         
-        // Disable button and show loading
-        button.prop('disabled', true).text('Sending...');
+        // Prevent multiple rapid requests
+        if (button.prop('disabled')) {
+            return;
+        }
+        
+        // Disable button and show loading with better messaging
+        button.prop('disabled', true).text('Sending Email...');
         $('.cancel-email-btn').prop('disabled', true);
+        
+        // Add a progress indicator
+        const progressMsg = $('<div class="email-progress-message" style="background: #e7f3ff; color: #0073aa; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3d9ed;">📧 Sending verification email... This may take up to 2 minutes to arrive.</div>');
+        $('.email-edit-row').after(progressMsg);
         
         // Send AJAX request
         $.ajax({
@@ -208,8 +217,12 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 console.log('AJAX Success Response:', response);
                 
+                // Remove progress message
+                $('.email-progress-message').remove();
+                
                 if (response.success) {
-                    alert(response.data);
+                    // Show detailed success message with timing expectations
+                    alert('✅ Verification email sent successfully!\n\n📧 Please check your inbox (and spam folder) in the next 1-2 minutes.\n\n⏱️ Note: Email delivery can sometimes take up to 5 minutes depending on your email provider.\n\n🔄 If you don\'t receive it within 5 minutes, you can try sending another verification email.');
                     
                     // Update the displayed email to the new email
                     $('#display-email').text(email);
@@ -218,33 +231,39 @@ jQuery(document).ready(function($) {
                     $('.email-edit-row').hide();
                     $('.email-row').show();
                     
-                    // Show a temporary success message
-                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb;">Verification email sent! Please check your inbox.</div>');
+                    // Show a persistent success message with better instructions
+                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb; font-weight: 600;">📧 Verification email sent to ' + email + '!<br><small style="font-weight: normal; margin-top: 5px; display: block;">⏱️ Allow up to 5 minutes for delivery. Check your spam folder if needed.</small></div>');
                     $('.email-row').after(successMsg);
                     
-                    // Remove success message after 10 seconds
+                    // Remove success message after 30 seconds instead of 10
                     setTimeout(function() {
                         successMsg.fadeOut(500, function() {
                             $(this).remove();
                         });
-                    }, 10000);
+                    }, 30000);
                     
                 } else {
                     console.log('AJAX Error Response:', response.data);
-                    alert('Error: ' + response.data);
+                    alert('❌ Error: ' + response.data + '\n\nPlease try again in a moment.');
                     // DON'T hide the edit form on error - let user try again
                 }
             },
             error: function(xhr, status, error) {
                 console.log('AJAX Request Failed:', {xhr, status, error});
                 console.log('Response Text:', xhr.responseText);
-                alert('An error occurred. Please try again. Check console for details.');
+                
+                // Remove progress message
+                $('.email-progress-message').remove();
+                
+                alert('❌ Connection error occurred. Please check your internet connection and try again.\n\nTechnical details logged to console.');
                 // DON'T hide the edit form on error - let user try again
             },
             complete: function() {
-                // Re-enable buttons
-                button.prop('disabled', false).text('Send Verification Email');
-                $('.cancel-email-btn').prop('disabled', false);
+                // Re-enable buttons after a 5-second delay to prevent rapid clicking
+                setTimeout(function() {
+                    button.prop('disabled', false).text('Send Verification Email');
+                    $('.cancel-email-btn').prop('disabled', false);
+                }, 5000);
             }
         });
     });

@@ -273,6 +273,19 @@ function handle_send_email_verification() {
         return;
     }
 
+    // Get current user
+    $user_id = get_current_user_id();
+    error_log('Email verification: User ID: ' . $user_id);
+
+    // Rate limiting - check if user sent an email recently
+    $last_email_time = get_transient('email_verification_last_sent_' . $user_id);
+    if ($last_email_time && (time() - $last_email_time) < 60) {
+        $wait_time = 60 - (time() - $last_email_time);
+        error_log('Email verification: Rate limit hit for user ' . $user_id . ', wait time: ' . $wait_time . ' seconds');
+        wp_send_json_error('Please wait ' . $wait_time . ' seconds before sending another verification email');
+        return;
+    }
+
     // Get and validate email
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     error_log('Email verification: Email provided: ' . $email);
@@ -283,10 +296,6 @@ function handle_send_email_verification() {
         return;
     }
 
-    // Get current user
-    $user_id = get_current_user_id();
-    error_log('Email verification: User ID: ' . $user_id);
-
     // Check if email is already in use by another user
     $existing_user = get_user_by('email', $email);
     if ($existing_user && $existing_user->ID !== $user_id) {
@@ -294,6 +303,9 @@ function handle_send_email_verification() {
         wp_send_json_error('This email address is already in use by another account');
         return;
     }
+
+    // Set rate limit before sending
+    set_transient('email_verification_last_sent_' . $user_id, time(), 300);
 
     // Send verification email
     error_log('Email verification: Attempting to send email to: ' . $email);
@@ -303,6 +315,8 @@ function handle_send_email_verification() {
     if ($result) {
         wp_send_json_success('Verification email sent successfully! Please check your inbox and click the verification link.');
     } else {
+        // Remove rate limit if email failed to send
+        delete_transient('email_verification_last_sent_' . $user_id);
         wp_send_json_error('Failed to send verification email. Please try again later.');
     }
 } 
