@@ -66,12 +66,16 @@ function admin_initialize_email_verification() {
 
         $updated_count = initialize_email_verified_for_existing_users();
         
-        // Show success message
-        add_action('admin_notices', function() use ($updated_count) {
-            echo '<div class="notice notice-success is-dismissible">';
-            echo '<p><strong>Email Verification Initialized:</strong> Updated ' . $updated_count . ' users with email_verified = "0"</p>';
-            echo '</div>';
-        });
+        // Show immediate results and stop execution
+        wp_die(
+            '<h2>✅ Email Verification Initialization Complete</h2>' .
+            '<p><strong>Updated ' . $updated_count . ' users</strong> with email_verified = "0"</p>' .
+            '<p>All users now have the email_verified field properly initialized.</p>' .
+            '<p><a href="' . admin_url() . '">← Back to Dashboard</a></p>' .
+            '<p><a href="' . home_url('/my-account/') . '">Test My Account Page →</a></p>',
+            'Email Verification Initialized',
+            array('response' => 200)
+        );
     }
 }
 add_action('admin_init', 'admin_initialize_email_verification'); 
