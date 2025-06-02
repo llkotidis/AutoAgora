@@ -53,6 +53,10 @@ require_once get_stylesheet_directory() . '/includes/auth/login-logout.php';
 // Include AJAX handlers
 require_once get_stylesheet_directory() . '/includes/core/ajax.php';
 
+// Include SendGrid email functionality
+require_once get_stylesheet_directory() . '/includes/email/sendgrid-config.php';
+require_once get_stylesheet_directory() . '/includes/email/test-sendgrid.php';
+
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourites-button.php';
