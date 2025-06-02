@@ -177,6 +177,10 @@ jQuery(document).ready(function($) {
         const button = $(this);
         const email = $('#new-email').val().trim();
         
+        console.log('Send verification clicked, email:', email);
+        console.log('AJAX URL:', MyAccountAjax.ajax_url);
+        console.log('Nonce:', MyAccountAjax.email_verification_nonce);
+        
         // Basic validation
         if (!email) {
             alert('Please enter an email address');
@@ -202,8 +206,14 @@ jQuery(document).ready(function($) {
                 nonce: MyAccountAjax.email_verification_nonce
             },
             success: function(response) {
+                console.log('AJAX Success Response:', response);
+                
                 if (response.success) {
                     alert(response.data);
+                    
+                    // Update the displayed email to the new email
+                    $('#display-email').text(email);
+                    
                     // Hide edit form and show success message
                     $('.email-edit-row').hide();
                     $('.email-row').show();
@@ -220,11 +230,16 @@ jQuery(document).ready(function($) {
                     }, 10000);
                     
                 } else {
+                    console.log('AJAX Error Response:', response.data);
                     alert('Error: ' + response.data);
+                    // DON'T hide the edit form on error - let user try again
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status, error) {
+                console.log('AJAX Request Failed:', {xhr, status, error});
+                console.log('Response Text:', xhr.responseText);
+                alert('An error occurred. Please try again. Check console for details.');
+                // DON'T hide the edit form on error - let user try again
             },
             complete: function() {
                 // Re-enable buttons

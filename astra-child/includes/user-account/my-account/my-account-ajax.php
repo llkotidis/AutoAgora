@@ -256,38 +256,49 @@ function handle_update_password_reset() {
 // Add AJAX handler for sending email verification
 add_action('wp_ajax_send_email_verification', 'handle_send_email_verification');
 function handle_send_email_verification() {
+    // Log the start of the function
+    error_log('Email verification AJAX called');
+    
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'email_verification_nonce')) {
+        error_log('Email verification: Invalid nonce');
         wp_send_json_error('Invalid nonce');
         return;
     }
 
     // Check if user is logged in
     if (!is_user_logged_in()) {
+        error_log('Email verification: User not logged in');
         wp_send_json_error('User not logged in');
         return;
     }
 
     // Get and validate email
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    error_log('Email verification: Email provided: ' . $email);
     
     if (empty($email) || !is_email($email)) {
+        error_log('Email verification: Invalid email format');
         wp_send_json_error('Please enter a valid email address');
         return;
     }
 
     // Get current user
     $user_id = get_current_user_id();
+    error_log('Email verification: User ID: ' . $user_id);
 
     // Check if email is already in use by another user
     $existing_user = get_user_by('email', $email);
     if ($existing_user && $existing_user->ID !== $user_id) {
+        error_log('Email verification: Email already in use by user ID: ' . $existing_user->ID);
         wp_send_json_error('This email address is already in use by another account');
         return;
     }
 
     // Send verification email
+    error_log('Email verification: Attempting to send email to: ' . $email);
     $result = send_verification_email($user_id, $email);
+    error_log('Email verification: Send result: ' . ($result ? 'SUCCESS' : 'FAILED'));
 
     if ($result) {
         wp_send_json_success('Verification email sent successfully! Please check your inbox and click the verification link.');
