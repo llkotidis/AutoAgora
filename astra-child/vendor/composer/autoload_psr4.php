@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Twilio\\' => array($vendorDir . '/twilio/sdk/src/Twilio'),
+    'SendGrid\\' => array($vendorDir . '/sendgrid/sendgrid/lib'),
 );
