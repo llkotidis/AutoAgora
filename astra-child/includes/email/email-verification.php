@@ -1,6 +1,6 @@
 <?php
 /**
- * Email Verification System - Twilio Verify
+ * Email Verification System
  * 
  * @package Astra Child
  * @since 1.0.0
@@ -11,102 +11,118 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Load SendGrid configuration
+require_once get_stylesheet_directory() . '/includes/email/sendgrid-config.php';
+
 /**
- * Send email verification using Twilio Verify
+ * Generate a secure verification token
  */
-function send_verification_email($user_id, $email) {
-    // Get Twilio configuration
-    $twilio_sid = defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '';
-    $twilio_token = defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '';
-    $twilio_verify_sid = defined('TWILIO_VERIFY_SID') ? TWILIO_VERIFY_SID : '';
-
-    if (empty($twilio_sid) || empty($twilio_token) || empty($twilio_verify_sid)) {
-        error_log('Twilio Verify configuration is missing for email verification.');
-        return false;
-    }
-
-    try {
-        $twilio = new \Twilio\Rest\Client($twilio_sid, $twilio_token);
-
-        // Send verification email via Twilio Verify
-        $verification = $twilio->verify->v2->services($twilio_verify_sid)
-            ->verifications
-            ->create($email, "email");
-
-        error_log("Email verification started via Twilio Verify: SID " . $verification->sid . " for email: " . $email);
-        
-        // Store the verification session for this user
-        set_transient('email_verification_' . $user_id, array(
-            'email' => $email,
-            'verification_sid' => $verification->sid,
-            'timestamp' => time()
-        ), 600); // 10 minutes expiry
-
-        return true;
-
-    } catch (Exception $e) {
-        error_log('Twilio Verify email error: ' . $e->getMessage());
-        return false;
-    }
+function generate_email_verification_token($user_id, $email) {
+    $data = $user_id . '|' . $email . '|' . time();
+    return base64_encode($data . '|' . hash_hmac('sha256', $data, wp_salt()));
 }
 
 /**
- * Verify email verification code
+ * Verify email verification token
  */
-function verify_email_verification_code($user_id, $code) {
-    // Get verification session
-    $verification_session = get_transient('email_verification_' . $user_id);
+function verify_email_verification_token($token) {
+    $decoded = base64_decode($token);
+    $parts = explode('|', $decoded);
     
-    if (!$verification_session) {
-        error_log('Email verification: No session found for user ' . $user_id);
+    if (count($parts) !== 4) {
         return false;
     }
-
-    // Get Twilio configuration
-    $twilio_sid = defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '';
-    $twilio_token = defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '';
-    $twilio_verify_sid = defined('TWILIO_VERIFY_SID') ? TWILIO_VERIFY_SID : '';
-
-    if (empty($twilio_sid) || empty($twilio_token) || empty($twilio_verify_sid)) {
-        error_log('Twilio Verify configuration is missing for email verification.');
+    
+    list($user_id, $email, $timestamp, $hash) = $parts;
+    
+    // Check if token is expired (24 hours)
+    if (time() - $timestamp > 86400) {
         return false;
     }
-
-    try {
-        $twilio = new \Twilio\Rest\Client($twilio_sid, $twilio_token);
-
-        // Verify the code via Twilio Verify
-        $verification_check = $twilio->verify->v2->services($twilio_verify_sid)
-            ->verificationChecks
-            ->create([
-                'to' => $verification_session['email'],
-                'code' => $code
-            ]);
-
-        if ($verification_check->status === 'approved') {
-            // Update user email and verification status
-            wp_update_user(array(
-                'ID' => $user_id,
-                'user_email' => $verification_session['email']
-            ));
-            
-            // Mark email as verified
-            update_user_meta($user_id, 'email_verified', '1');
-            
-            // Clean up the verification session
-            delete_transient('email_verification_' . $user_id);
-            
-            error_log("Email verification successful for user " . $user_id . " with email: " . $verification_session['email']);
-            return true;
-        } else {
-            error_log('Email verification failed: Invalid code for user ' . $user_id);
-            return false;
-        }
-
-    } catch (Exception $e) {
-        error_log('Twilio Verify email verification error: ' . $e->getMessage());
+    
+    // Verify hash
+    $data = $user_id . '|' . $email . '|' . $timestamp;
+    $expected_hash = hash_hmac('sha256', $data, wp_salt());
+    
+    if (!hash_equals($expected_hash, $hash)) {
         return false;
     }
+    
+    return array(
+        'user_id' => $user_id,
+        'email' => $email,
+        'timestamp' => $timestamp
+    );
+}
+
+/**
+ * Send verification email
+ */
+function send_verification_email($user_id, $email) {
+    // Generate verification token
+    $token = generate_email_verification_token($user_id, $email);
+    
+    // Create verification URL
+    $verification_url = home_url('/verify-email/?token=' . urlencode($token));
+    
+    // Get user info
+    $user = get_user_by('ID', $user_id);
+    $user_name = trim($user->first_name . ' ' . $user->last_name);
+    if (empty($user_name)) {
+        $user_name = $user->display_name;
+    }
+    
+    // Email subject
+    $subject = 'Verify Your Email Address - AutoAgora';
+    
+    // Email content (HTML)
+    $html_content = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+            <h1 style="color: #0073aa; margin-bottom: 20px;">AutoAgora</h1>
+            <h2 style="color: #333; margin-bottom: 30px;">Verify Your Email Address</h2>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">Hello ' . esc_html($user_name) . ',</p>
+            
+            <p style="font-size: 16px; margin-bottom: 30px;">
+                Please click the button below to verify your email address: <strong>' . esc_html($email) . '</strong>
+            </p>
+            
+            <div style="margin: 40px 0;">
+                <a href="' . esc_url($verification_url) . '" 
+                   style="background-color: #0073aa; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold; display: inline-block;">
+                    Click Here to Verify Your Email
+                </a>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; margin-top: 40px;">
+                This verification link will expire in 24 hours.
+            </p>
+            
+            <p style="font-size: 14px; color: #666;">
+                If you did not request this email verification, please ignore this email.
+            </p>
+        </div>
+    </body>
+    </html>';
+    
+    // Plain text version
+    $text_content = "AutoAgora - Verify Your Email Address\n\n";
+    $text_content .= "Hello " . $user_name . ",\n\n";
+    $text_content .= "Please click the link below to verify your email address: " . $email . "\n\n";
+    $text_content .= "Verification Link: " . $verification_url . "\n\n";
+    $text_content .= "This verification link will expire in 24 hours.\n\n";
+    $text_content .= "If you did not request this email verification, please ignore this email.";
+    
+    // Send email using SendGrid
+    return send_sendgrid_email($email, $subject, $html_content, $text_content);
 }
 
 /**

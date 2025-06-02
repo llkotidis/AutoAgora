@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * My Account Email Verification JavaScript - Twilio Verify
+ * My Account Email Verification JavaScript
  * 
  * @package Astra Child
  * @since 1.0.0
@@ -168,17 +168,18 @@ jQuery(document).ready(function($) {
     $('.cancel-email-btn').on('click', function() {
         $('.email-edit-row').hide();
         $('.email-row').show();
-        $('.email-verification-step').hide();
         // Reset email input to current value
         $('#new-email').val($('#display-email').text());
     });
     
-    // Send verification email (Step 1)
+    // Send verification email
     $('.send-verification-btn').on('click', function() {
         const button = $(this);
         const email = $('#new-email').val().trim();
         
         console.log('Send verification clicked, email:', email);
+        console.log('AJAX URL:', MyAccountAjax.ajax_url);
+        console.log('Nonce:', MyAccountAjax.email_verification_nonce);
         
         // Basic validation
         if (!email) {
@@ -208,21 +209,37 @@ jQuery(document).ready(function($) {
                 console.log('AJAX Success Response:', response);
                 
                 if (response.success) {
-                    // Hide email input form and show verification code step
+                    alert(response.data);
+                    
+                    // Update the displayed email to the new email
+                    $('#display-email').text(email);
+                    
+                    // Hide edit form and show success message
                     $('.email-edit-row').hide();
-                    $('.email-verification-step').show();
-                    $('#verification-email-display').text(email);
-                    $('#verification-code').focus();
+                    $('.email-row').show();
+                    
+                    // Show a temporary success message
+                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb;">Verification email sent! Please check your inbox.</div>');
+                    $('.email-row').after(successMsg);
+                    
+                    // Remove success message after 10 seconds
+                    setTimeout(function() {
+                        successMsg.fadeOut(500, function() {
+                            $(this).remove();
+                        });
+                    }, 10000);
                     
                 } else {
                     console.log('AJAX Error Response:', response.data);
                     alert('Error: ' + response.data);
+                    // DON'T hide the edit form on error - let user try again
                 }
             },
             error: function(xhr, status, error) {
                 console.log('AJAX Request Failed:', {xhr, status, error});
                 console.log('Response Text:', xhr.responseText);
                 alert('An error occurred. Please try again. Check console for details.');
+                // DON'T hide the edit form on error - let user try again
             },
             complete: function() {
                 // Re-enable buttons
@@ -230,76 +247,6 @@ jQuery(document).ready(function($) {
                 $('.cancel-email-btn').prop('disabled', false);
             }
         });
-    });
-    
-    // Verify email code (Step 2)
-    $('.verify-code-btn').on('click', function() {
-        const button = $(this);
-        const code = $('#verification-code').val().trim();
-        
-        console.log('Verify code clicked, code:', code);
-        
-        // Basic validation
-        if (!code) {
-            alert('Please enter the verification code');
-            return;
-        }
-        
-        if (code.length !== 6) {
-            alert('Please enter the 6-digit verification code');
-            return;
-        }
-        
-        // Disable button and show loading
-        button.prop('disabled', true).text('Verifying...');
-        $('.cancel-verification-btn').prop('disabled', true);
-        
-        // Send AJAX request
-        $.ajax({
-            url: MyAccountAjax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'verify_email_code',
-                code: code,
-                nonce: MyAccountAjax.email_verification_nonce
-            },
-            success: function(response) {
-                console.log('Verification Response:', response);
-                
-                if (response.success) {
-                    // Success! Reload page to show updated status
-                    window.location.href = window.location.pathname + '?email_verified=success';
-                    
-                } else {
-                    console.log('Verification Error:', response.data);
-                    alert('Error: ' + response.data);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.log('Verification Request Failed:', {xhr, status, error});
-                alert('An error occurred. Please try again.');
-            },
-            complete: function() {
-                // Re-enable buttons
-                button.prop('disabled', false).text('Verify Code');
-                $('.cancel-verification-btn').prop('disabled', false);
-            }
-        });
-    });
-    
-    // Cancel verification (go back to email input)
-    $('.cancel-verification-btn').on('click', function() {
-        $('.email-verification-step').hide();
-        $('.email-edit-row').show();
-        $('#verification-code').val('');
-    });
-    
-    // Handle Enter key in verification code input
-    $('#verification-code').on('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            $('.verify-code-btn').click();
-        }
     });
     
     // Email validation function
@@ -322,7 +269,7 @@ jQuery(document).ready(function($) {
         }, 3000);
         
     } else if (emailVerified === 'error') {
-        const errorMsg = $('<div class="email-error-message" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #f5c6cb; font-weight: 600;">❌ Email verification failed. Please try again.</div>');
+        const errorMsg = $('<div class="email-error-message" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #f5c6cb; font-weight: 600;">❌ Email verification failed. The link may be expired or invalid.</div>');
         $('.my-account-container h2').after(errorMsg);
         
         // Remove URL parameter

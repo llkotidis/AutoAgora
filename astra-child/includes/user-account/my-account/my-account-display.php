@@ -99,20 +99,6 @@ function display_my_account_main($current_user) {
                     <button class="button button-small send-verification-btn">Send Verification Email</button>
                     <button class="button button-small cancel-email-btn">Cancel</button>
                 </div>
-                <!-- Email Verification Code Step -->
-                <div class="info-row email-verification-step" style="display: none;">
-                    <span class="label">Verification Code:</span>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="font-size: 14px; color: #666;">
-                            We sent a 6-digit verification code to: <strong id="verification-email-display"></strong>
-                        </div>
-                        <input type="text" id="verification-code" maxlength="6" class="email-input" placeholder="Enter 6-digit code" style="max-width: 120px;">
-                        <div style="display: flex; gap: 10px;">
-                            <button class="button button-small verify-code-btn">Verify Code</button>
-                            <button class="button button-small cancel-verification-btn">Go Back</button>
-                        </div>
-                    </div>
-                </div>
                 <div class="info-row">
                     <span class="label">Role:</span>
                     <span class="value"><?php 
