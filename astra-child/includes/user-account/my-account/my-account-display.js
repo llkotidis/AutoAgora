@@ -147,4 +147,119 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error sending verification code. Please try again.');
         });
     }
+});
+
+/**
+ * My Account Email Verification JavaScript
+ * 
+ * @package Astra Child
+ * @since 1.0.0
+ */
+
+jQuery(document).ready(function($) {
+    
+    // Email editing functionality
+    $('.edit-email-btn').on('click', function() {
+        $('.email-row').hide();
+        $('.email-edit-row').show();
+        $('#new-email').focus();
+    });
+    
+    $('.cancel-email-btn').on('click', function() {
+        $('.email-edit-row').hide();
+        $('.email-row').show();
+        // Reset email input to current value
+        $('#new-email').val($('#display-email').text());
+    });
+    
+    // Send verification email
+    $('.send-verification-btn').on('click', function() {
+        const button = $(this);
+        const email = $('#new-email').val().trim();
+        
+        // Basic validation
+        if (!email) {
+            alert('Please enter an email address');
+            return;
+        }
+        
+        if (!isValidEmail(email)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+        
+        // Disable button and show loading
+        button.prop('disabled', true).text('Sending...');
+        $('.cancel-email-btn').prop('disabled', true);
+        
+        // Send AJAX request
+        $.ajax({
+            url: MyAccountAjax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'send_email_verification',
+                email: email,
+                nonce: MyAccountAjax.email_verification_nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data);
+                    // Hide edit form and show success message
+                    $('.email-edit-row').hide();
+                    $('.email-row').show();
+                    
+                    // Show a temporary success message
+                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb;">Verification email sent! Please check your inbox.</div>');
+                    $('.email-row').after(successMsg);
+                    
+                    // Remove success message after 10 seconds
+                    setTimeout(function() {
+                        successMsg.fadeOut(500, function() {
+                            $(this).remove();
+                        });
+                    }, 10000);
+                    
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+            },
+            complete: function() {
+                // Re-enable buttons
+                button.prop('disabled', false).text('Send Verification Email');
+                $('.cancel-email-btn').prop('disabled', false);
+            }
+        });
+    });
+    
+    // Email validation function
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    // Show success/error messages from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailVerified = urlParams.get('email_verified');
+    
+    if (emailVerified === 'success') {
+        const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #c3e6cb; font-weight: 600;">✅ Email verified successfully! Your email notifications are now active.</div>');
+        $('.my-account-container h2').after(successMsg);
+        
+        // Remove URL parameter and reload to show updated status
+        setTimeout(function() {
+            window.location.href = window.location.pathname;
+        }, 3000);
+        
+    } else if (emailVerified === 'error') {
+        const errorMsg = $('<div class="email-error-message" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #f5c6cb; font-weight: 600;">❌ Email verification failed. The link may be expired or invalid.</div>');
+        $('.my-account-container h2').after(errorMsg);
+        
+        // Remove URL parameter
+        setTimeout(function() {
+            window.location.href = window.location.pathname;
+        }, 5000);
+    }
 }); 

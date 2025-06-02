@@ -251,4 +251,47 @@ function handle_update_password_reset() {
     error_log("Password reset completed for user ID: $user_id");
 
     wp_send_json_success('Password updated successfully');
+}
+
+// Add AJAX handler for sending email verification
+add_action('wp_ajax_send_email_verification', 'handle_send_email_verification');
+function handle_send_email_verification() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'email_verification_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    // Get and validate email
+    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    
+    if (empty($email) || !is_email($email)) {
+        wp_send_json_error('Please enter a valid email address');
+        return;
+    }
+
+    // Get current user
+    $user_id = get_current_user_id();
+
+    // Check if email is already in use by another user
+    $existing_user = get_user_by('email', $email);
+    if ($existing_user && $existing_user->ID !== $user_id) {
+        wp_send_json_error('This email address is already in use by another account');
+        return;
+    }
+
+    // Send verification email
+    $result = send_verification_email($user_id, $email);
+
+    if ($result) {
+        wp_send_json_success('Verification email sent successfully! Please check your inbox and click the verification link.');
+    } else {
+        wp_send_json_error('Failed to send verification email. Please try again later.');
+    }
 } 

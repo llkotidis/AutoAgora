@@ -152,4 +152,21 @@
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+/* Email editing styles (same pattern as name editing) */
+.email-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.email-edit-row .button-small {
+    margin-right: 10px;
+}
+
+.email-edit-row .button-small:last-child {
+    margin-right: 0;
 } 

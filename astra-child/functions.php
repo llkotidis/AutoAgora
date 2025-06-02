@@ -55,6 +55,7 @@ require_once get_stylesheet_directory() . '/includes/core/ajax.php';
 require_once get_stylesheet_directory() . '/includes/email/sendgrid-config.php';
 require_once get_stylesheet_directory() . '/includes/email/test-sendgrid.php';
 require_once get_stylesheet_directory() . '/includes/email/email-verification-init.php';
+require_once get_stylesheet_directory() . '/includes/email/email-verification.php';
 
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
