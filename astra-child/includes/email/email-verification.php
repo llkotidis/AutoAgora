@@ -48,6 +48,14 @@ function verify_email_verification_token($token) {
         return false;
     }
     
+    // SECURITY: Check if this token was created after the latest verification attempt
+    // This invalidates all previous tokens when a new verification email is sent
+    $latest_verification_timestamp = get_user_meta($user_id, 'latest_email_verification_timestamp', true);
+    if ($latest_verification_timestamp && $timestamp < $latest_verification_timestamp) {
+        error_log("Email verification: Token rejected - created before latest verification attempt. Token: $timestamp, Latest: $latest_verification_timestamp");
+        return false;
+    }
+    
     return array(
         'user_id' => $user_id,
         'email' => $email,
@@ -59,6 +67,10 @@ function verify_email_verification_token($token) {
  * Send verification email
  */
 function send_verification_email($user_id, $email) {
+    // Store timestamp of this verification attempt to invalidate previous tokens
+    $current_timestamp = time();
+    update_user_meta($user_id, 'latest_email_verification_timestamp', $current_timestamp);
+    
     // Generate verification token
     $token = generate_email_verification_token($user_id, $email);
     
@@ -146,11 +158,18 @@ function handle_email_verification() {
             // Mark email as verified
             update_user_meta($user_id, 'email_verified', '1');
             
+            // Clear the verification timestamp since email is now verified
+            // This prevents any remaining old tokens from being used
+            delete_user_meta($user_id, 'latest_email_verification_timestamp');
+            
+            error_log("Email verification successful for user ID: $user_id, email: $email");
+            
             // Redirect to my-account with success message
             wp_redirect(home_url('/my-account/?email_verified=success'));
             exit;
         } else {
             // Invalid or expired token
+            error_log("Email verification failed - invalid or expired token");
             wp_redirect(home_url('/my-account/?email_verified=error'));
             exit;
         }
