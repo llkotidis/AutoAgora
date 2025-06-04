@@ -84,6 +84,7 @@ function display_my_account_main($current_user) {
                     $email_verified = get_user_meta($current_user->ID, 'email_verified', true);
                     if ($email_verified === '1') {
                         echo '<span class="email-status verified">✅ Verified</span>';
+                        echo '<button class="button button-small edit-email-btn">Change Email</button>';
                     } else {
                         echo '<span class="email-status not-verified">❌ Not Verified</span>';
                         echo '<button class="button button-small edit-email-btn">Edit & Verify</button>';

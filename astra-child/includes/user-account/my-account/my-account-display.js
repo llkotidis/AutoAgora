@@ -176,8 +176,14 @@ jQuery(document).ready(function($) {
     $('.send-verification-btn').on('click', function() {
         const button = $(this);
         const email = $('#new-email').val().trim();
+        const currentEmail = $('#display-email').text().trim();
+        const isEmailChange = email !== currentEmail;
+        const isCurrentEmailVerified = $('.email-status.verified').length > 0;
         
         console.log('Send verification clicked, email:', email);
+        console.log('Current email:', currentEmail);
+        console.log('Is email change:', isEmailChange);
+        console.log('Is current email verified:', isCurrentEmailVerified);
         console.log('AJAX URL:', MyAccountAjax.ajax_url);
         console.log('Nonce:', MyAccountAjax.email_verification_nonce);
         
@@ -192,6 +198,12 @@ jQuery(document).ready(function($) {
             return;
         }
         
+        // Check if user is trying to verify the same email that's already verified
+        if (isCurrentEmailVerified && !isEmailChange) {
+            alert('✅ This email address is already verified!\n\n💡 If you want to use a different email, please enter a new email address.');
+            return;
+        }
+        
         // Prevent multiple rapid requests
         if (button.prop('disabled')) {
             return;
@@ -201,8 +213,9 @@ jQuery(document).ready(function($) {
         button.prop('disabled', true).text('Sending Email...');
         $('.cancel-email-btn').prop('disabled', true);
         
-        // Add a progress indicator
-        const progressMsg = $('<div class="email-progress-message" style="background: #e7f3ff; color: #0073aa; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3d9ed;">📧 Sending verification email... This may take up to 2 minutes to arrive.</div>');
+        // Add a progress indicator with context-aware messaging
+        const actionText = isEmailChange ? 'Sending email change verification' : 'Sending verification email';
+        const progressMsg = $('<div class="email-progress-message" style="background: #e7f3ff; color: #0073aa; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3d9ed;">📧 ' + actionText + '... This may take up to 2 minutes to arrive.</div>');
         $('.email-edit-row').after(progressMsg);
         
         // Send AJAX request
@@ -221,8 +234,11 @@ jQuery(document).ready(function($) {
                 $('.email-progress-message').remove();
                 
                 if (response.success) {
-                    // Show detailed success message with timing expectations
-                    alert('✅ Verification email sent successfully!\n\n📧 Please check your inbox (and spam folder) in the next 1-2 minutes.\n\n⏱️ Note: Email delivery can sometimes take up to 5 minutes depending on your email provider.\n\n🔄 If you don\'t receive it within 5 minutes, you can try sending another verification email.');
+                    // Create context-aware success message
+                    const actionType = isEmailChange ? 'email change' : 'verification';
+                    const actionVerb = isEmailChange ? 'Email change verification' : 'Verification email';
+                    
+                    alert('✅ ' + actionVerb + ' sent successfully!\n\n📧 Please check your inbox (and spam folder) in the next 1-2 minutes.\n\n⏱️ Note: Email delivery can sometimes take up to 5 minutes depending on your email provider.\n\n🔄 If you don\'t receive it within 5 minutes, you can try sending another ' + actionType + ' email.');
                     
                     // Update the displayed email to the new email
                     $('#display-email').text(email);
@@ -231,11 +247,12 @@ jQuery(document).ready(function($) {
                     $('.email-edit-row').hide();
                     $('.email-row').show();
                     
-                    // Show a persistent success message with better instructions
-                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb; font-weight: 600;">📧 Verification email sent to ' + email + '!<br><small style="font-weight: normal; margin-top: 5px; display: block;">⏱️ Allow up to 5 minutes for delivery. Check your spam folder if needed.</small></div>');
+                    // Show context-aware persistent success message
+                    const successText = isEmailChange ? 'Email change verification sent to ' + email + '!' : 'Verification email sent to ' + email + '!';
+                    const successMsg = $('<div class="email-success-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb; font-weight: 600;">📧 ' + successText + '<br><small style="font-weight: normal; margin-top: 5px; display: block;">⏱️ Allow up to 5 minutes for delivery. Check your spam folder if needed.</small></div>');
                     $('.email-row').after(successMsg);
                     
-                    // Remove success message after 30 seconds instead of 10
+                    // Remove success message after 30 seconds
                     setTimeout(function() {
                         successMsg.fadeOut(500, function() {
                             $(this).remove();
