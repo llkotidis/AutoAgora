@@ -277,15 +277,6 @@ function handle_send_email_verification() {
     $user_id = get_current_user_id();
     error_log('Email verification: User ID: ' . $user_id);
 
-    // Rate limiting - check if user sent an email recently
-    $last_email_time = get_transient('email_verification_last_sent_' . $user_id);
-    if ($last_email_time && (time() - $last_email_time) < 60) {
-        $wait_time = 60 - (time() - $last_email_time);
-        error_log('Email verification: Rate limit hit for user ' . $user_id . ', wait time: ' . $wait_time . ' seconds');
-        wp_send_json_error('Please wait ' . $wait_time . ' seconds before sending another verification email');
-        return;
-    }
-
     // Get and validate email
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     error_log('Email verification: Email provided: ' . $email);
@@ -301,6 +292,41 @@ function handle_send_email_verification() {
     if ($existing_user && $existing_user->ID !== $user_id) {
         error_log('Email verification: Email already in use by user ID: ' . $existing_user->ID);
         wp_send_json_error('This email address is already in use by another account');
+        return;
+    }
+
+    // Get current user's email to check if it's a change
+    $current_user = get_user_by('ID', $user_id);
+    $current_email = $current_user->user_email;
+    $is_email_change = ($email !== $current_email);
+    
+    error_log('Email verification: Current email: ' . $current_email . ', New email: ' . $email . ', Is change: ' . ($is_email_change ? 'YES' : 'NO'));
+    
+    // If it's an email change, update the email immediately and reset verification status
+    if ($is_email_change) {
+        // Update user email in database
+        $user_update_result = wp_update_user(array(
+            'ID' => $user_id,
+            'user_email' => $email
+        ));
+        
+        if (is_wp_error($user_update_result)) {
+            error_log('Email verification: Failed to update user email: ' . $user_update_result->get_error_message());
+            wp_send_json_error('Failed to update email address');
+            return;
+        }
+        
+        // Reset email verification status to unverified
+        update_user_meta($user_id, 'email_verified', '0');
+        error_log('Email verification: Email updated and verification status reset to 0 for user ' . $user_id);
+    }
+
+    // Rate limiting - check if user sent an email recently
+    $last_email_time = get_transient('email_verification_last_sent_' . $user_id);
+    if ($last_email_time && (time() - $last_email_time) < 60) {
+        $wait_time = 60 - (time() - $last_email_time);
+        error_log('Email verification: Rate limit hit for user ' . $user_id . ', wait time: ' . $wait_time . ' seconds');
+        wp_send_json_error('Please wait ' . $wait_time . ' seconds before sending another verification email');
         return;
     }
 

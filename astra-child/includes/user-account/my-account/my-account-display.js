@@ -213,10 +213,13 @@ jQuery(document).ready(function($) {
         button.prop('disabled', true).text('Sending Email...');
         $('.cancel-email-btn').prop('disabled', true);
         
-        // Add a progress indicator with context-aware messaging
+        // Remove any existing progress messages first
+        $('.email-progress-message').remove();
+        
+        // Add a progress indicator with context-aware messaging (above the buttons)
         const actionText = isEmailChange ? 'Sending email change verification' : 'Sending verification email';
         const progressMsg = $('<div class="email-progress-message" style="background: #e7f3ff; color: #0073aa; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3d9ed;">📧 ' + actionText + '... This may take up to 2 minutes to arrive.</div>');
-        $('.email-edit-row').after(progressMsg);
+        $('.email-edit-row:last').before(progressMsg);
         
         // Send AJAX request
         $.ajax({
@@ -243,7 +246,14 @@ jQuery(document).ready(function($) {
                     // Update the displayed email to the new email
                     $('#display-email').text(email);
                     
-                    // Hide edit form and show success message
+                    // Update verification status - reset to not verified for email changes
+                    if (isEmailChange) {
+                        $('.email-status').removeClass('verified').addClass('not-verified')
+                                          .html('❌ Not Verified');
+                        $('.edit-email-btn').text('Edit & Verify');
+                    }
+                    
+                    // Hide edit form and show main row
                     $('.email-edit-row').hide();
                     $('.email-row').show();
                     
