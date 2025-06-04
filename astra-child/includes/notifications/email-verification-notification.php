@@ -77,7 +77,7 @@ function handle_dismiss_email_notification() {
 }
 
 // Hook to show notification after header
-add_action('wp_body_open', 'show_email_verification_notification');
+add_action('astra_content_before', 'show_email_verification_notification');
 
 // Add AJAX handler for dismissing notification
 add_action('wp_ajax_dismiss_email_notification', 'handle_dismiss_email_notification');
