@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 
 <div id="email-verification-notification" class="email-verification-notice">
     <div class="notice-container">
-        <span class="notice-icon">📧</span>
+        <span class="notice-icon"><i class="fas fa-envelope"></i></span>
         <span class="notice-text">
             Verify Your Email - Send verification link to <strong><?php echo esc_html($user_email); ?></strong> to receive notifications
         </span>
