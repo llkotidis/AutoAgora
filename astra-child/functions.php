@@ -57,6 +57,9 @@ require_once get_stylesheet_directory() . '/includes/email/test-sendgrid.php';
 require_once get_stylesheet_directory() . '/includes/email/email-verification-init.php';
 require_once get_stylesheet_directory() . '/includes/email/email-verification.php';
 
+// Include email verification notification system
+require_once get_stylesheet_directory() . '/includes/notifications/email-verification-notification.php';
+
 // Include Shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes/account-display.php';
 require_once get_stylesheet_directory() . '/includes/shortcodes/favourites-button.php';

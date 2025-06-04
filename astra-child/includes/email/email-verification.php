@@ -35,8 +35,8 @@ function verify_email_verification_token($token) {
     
     list($user_id, $email, $timestamp, $hash) = $parts;
     
-    // Check if token is expired (24 hours)
-    if (time() - $timestamp > 86400) {
+    // Check if token is expired (72 hours)
+    if (time() - $timestamp > 259200) {
         return false;
     }
     
@@ -115,7 +115,7 @@ function send_verification_email($user_id, $email) {
             </div>
             
             <p style="font-size: 14px; color: #666; margin-top: 40px;">
-                This verification link will expire in 24 hours.
+                This verification link will expire in 72 hours.
             </p>
             
             <p style="font-size: 14px; color: #666;">
@@ -130,7 +130,7 @@ function send_verification_email($user_id, $email) {
     $text_content .= "Hello " . $user_name . ",\n\n";
     $text_content .= "Please click the link below to verify your email address: " . $email . "\n\n";
     $text_content .= "Verification Link: " . $verification_url . "\n\n";
-    $text_content .= "This verification link will expire in 24 hours.\n\n";
+    $text_content .= "This verification link will expire in 72 hours.\n\n";
     $text_content .= "If you did not request this email verification, please ignore this email.";
     
     // Send email using SendGrid
