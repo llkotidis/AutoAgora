@@ -11,17 +11,15 @@ function enqueue_favourite_listings_assets() {
     // Only load on specific contexts - be more restrictive to avoid conflicts
     $should_load = false;
     
-    // Load on my-account page or when favourite_listings shortcode is specifically used
-    if (is_user_logged_in()) {
-        // Check if we're on my-account page specifically
-        if (strpos($_SERVER['REQUEST_URI'], 'my-account') !== false) {
-            $should_load = true;
-        }
-        // Check if favourite_listings shortcode is being used on current page
-        global $post;
-        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'favourite_listings')) {
-            $should_load = true;
-        }
+    // Check if favourite_listings shortcode is being used on current page (for both logged in and logged out users)
+    global $post;
+    if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'favourite_listings')) {
+        $should_load = true;
+    }
+    
+    // Also load on my-account page for logged-in users
+    if (is_user_logged_in() && strpos($_SERVER['REQUEST_URI'], 'my-account') !== false) {
+        $should_load = true;
     }
     
     if ($should_load) {

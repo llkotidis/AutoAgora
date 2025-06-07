@@ -32,7 +32,7 @@ if ( ! $user_id ) {
             <div class="favorites-auth-buttons">
                 <a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="favorites-signin-btn">Sign in</a>
                 <span class="auth-separator">/</span>
-                <a href="<?php echo esc_url( wp_registration_url() ); ?>" class="favorites-register-btn">Register</a>
+                <a href="<?php echo esc_url( wp_registration_url( get_permalink() ) ); ?>" class="favorites-register-btn">Register</a>
             </div>
         </div>
     </div>
