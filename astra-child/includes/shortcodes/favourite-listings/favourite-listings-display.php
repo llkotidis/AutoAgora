@@ -12,11 +12,38 @@ if (!defined('ABSPATH')) {
 // Get the current page number
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 
-// Get user's favorite car IDs from user meta
+// Check if user is logged in
 $user_id = get_current_user_id();
+
+// If user is not logged in, show the sign-in prompt
+if ( ! $user_id ) {
+    ?>
+    <div class="favorite-listings-container">
+        <div class="favorites-guest-message">
+            <div class="favorites-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <h1>Save your favourite adverts</h1>
+            <p>Save an advert, and view across all your devices.</p>
+            
+            <h2>Manage your saved adverts</h2>
+            <p>Simply sign in or register to manage your saved adverts.</p>
+            
+            <div class="favorites-auth-buttons">
+                <a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="favorites-signin-btn">Sign in</a>
+                <span class="auth-separator">/</span>
+                <a href="<?php echo esc_url( wp_registration_url() ); ?>" class="favorites-register-btn">Register</a>
+            </div>
+        </div>
+    </div>
+    <?php
+    return;
+}
+
+// Get user's favorite car IDs from user meta
 $favorite_car_ids = get_user_meta($user_id, 'favorite_cars', true);
 
-// If no favorites, show a message
+// If no favorites, show a message for logged-in users
 if (empty($favorite_car_ids)) {
     ?>
     <div class="favorite-listings-container">
