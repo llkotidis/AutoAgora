@@ -14,6 +14,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debug: Check if mapboxConfig is available
     console.log('Mapbox Config:', mapboxConfig);
 
+    // --- Locate Me Control for Mapbox ---
+    class LocateMeControl {
+        onAdd(mapInstance) {
+            this._map = mapInstance;
+            this._container = document.createElement('div');
+            this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+            const button = document.createElement('button');
+            button.className = 'mapboxgl-ctrl-text mapboxgl-ctrl-locate-me';
+            button.type = 'button';
+            button.title = 'Find my current location';
+            button.setAttribute('aria-label', 'Find my current location');
+            button.textContent = 'Find my current location';
+
+            button.onclick = () => {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+
+                // Add a loading/locating indicator to the button
+                button.classList.add('mapboxgl-ctrl-geolocate-active');
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const newCoords = [
+                            position.coords.longitude,
+                            position.coords.latitude,
+                        ];
+                        selectedCoordinates = newCoords;
+
+                        this._map.flyTo({
+                            center: newCoords,
+                            zoom: 15, // Zoom in closer for better context
+                        });
+                        // The map's 'moveend' event will handle marker update and reverse geocode
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                    },
+                    (error) => {
+                        alert(`Error getting location: ${error.message}`);
+                        console.error('Geolocation error:', error);
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 8000,
+                        maximumAge: 0,
+                    }
+                );
+            };
+
+            this._container.appendChild(button);
+            return this._container;
+        }
+
+        onRemove() {
+            if (this._container && this._container.parentNode) {
+                this._container.parentNode.removeChild(this._container);
+            }
+            this._map = undefined;
+        }
+    }
+    // --- End Locate Me Control ---
+
     // Function to parse location details from Mapbox result
     function parseLocationDetails(result) {
         const context = result.context || [];
@@ -170,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Add navigation controls
             map.addControl(new mapboxgl.NavigationControl());
+            map.addControl(new LocateMeControl(), 'bottom-right');
 
             // Create initial marker at map center
             const mapCenter = map.getCenter();
