@@ -202,10 +202,18 @@ jQuery(document).ready(function($) {
         const cookie = getCookie('autoagora_cookie_preferences');
         if (cookie) {
             try {
-                return JSON.parse(cookie);
+                // Decode the cookie value in case it's URL encoded
+                const decodedCookie = decodeURIComponent(cookie);
+                return JSON.parse(decodedCookie);
             } catch (e) {
                 console.error('Error parsing cookie preferences:', e);
-                return null;
+                // Try parsing without decoding in case it's not URL encoded
+                try {
+                    return JSON.parse(cookie);
+                } catch (e2) {
+                    console.error('Error parsing cookie preferences (second attempt):', e2);
+                    return null;
+                }
             }
         }
         return null;
