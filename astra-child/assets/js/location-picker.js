@@ -45,10 +45,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         ];
                         selectedCoordinates = newCoords;
 
+                        // Check accuracy and zoom level accordingly
+                        const accuracy = position.coords.accuracy;
+                        let zoomLevel = 18; // Very close zoom for high accuracy
+                        
+                        if (accuracy > 100) {
+                            zoomLevel = 15; // Moderate zoom for lower accuracy
+                        } else if (accuracy > 50) {
+                            zoomLevel = 16; // Close zoom for medium accuracy
+                        } else if (accuracy > 20) {
+                            zoomLevel = 17; // Closer zoom for good accuracy
+                        }
+
                         this._map.flyTo({
                             center: newCoords,
-                            zoom: 15, // Zoom in closer for better context
+                            zoom: zoomLevel,
                         });
+                        
+                        // Log accuracy for debugging
+                        console.log(`Location found with accuracy: ${accuracy.toFixed(1)} meters`);
+                        
                         // The map's 'moveend' event will handle marker update and reverse geocode
                         button.classList.remove('mapboxgl-ctrl-geolocate-active');
                     },
@@ -59,8 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     {
                         enableHighAccuracy: true,
-                        timeout: 8000,
-                        maximumAge: 0,
+                        timeout: 15000, // Increased timeout for better GPS fix
+                        maximumAge: 0, // Always get fresh location
                     }
                 );
             };
