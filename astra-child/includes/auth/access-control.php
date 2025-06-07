@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Redirect subscribers, clients, and dealerships away from the WordPress backend.
  */
 function restrict_backend_access() {
-    if ( is_admin() && ! current_user_can( 'edit_posts' ) ) {
+    if ( is_admin() ) {
         $current_user = wp_get_current_user();
         $user_roles = $current_user->roles;
         
