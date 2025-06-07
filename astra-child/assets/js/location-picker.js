@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 failIfMajorPerformanceCaveat: false,
                 preserveDrawingBuffer: false,
                 refreshExpiredTiles: true,
+                scrollZoom: { around: 'center' }, // Always zoom to center where the pin is
                 transformRequest: (url, resourceType) => {
                     // Disable analytics requests
                     if (url.includes('events.mapbox.com')) {
