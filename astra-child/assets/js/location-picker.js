@@ -37,36 +37,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add a loading/locating indicator to the button
                 button.classList.add('mapboxgl-ctrl-geolocate-active');
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const newCoords = [
-                            position.coords.longitude,
-                            position.coords.latitude,
-                        ];
-                        selectedCoordinates = newCoords;
-
-                        this._map.flyTo({
-                            center: newCoords,
-                            zoom: 15, // Zoom in closer for better context
-                        });
-                        // The map's 'moveend' event will handle marker update and reverse geocode
-                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
-                    },
-                    (error) => {
-                        alert(`Error getting location: ${error.message}`);
-                        console.error('Geolocation error:', error);
-                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 8000,
-                        maximumAge: 0,
-                    }
-                );
+                // Try to get the most accurate location possible
+                this.getHighAccuracyLocation(button);
             };
 
             this._container.appendChild(button);
             return this._container;
+        }
+
+        getHighAccuracyLocation(button) {
+            let bestAccuracy = Infinity;
+            let bestPosition = null;
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            const tryGetLocation = () => {
+                attempts++;
+                console.log(`Location attempt ${attempts}/${maxAttempts}`);
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const accuracy = position.coords.accuracy;
+                        console.log(`Location accuracy: ${accuracy} meters`);
+                        
+                        // If this is more accurate than previous attempts, use it
+                        if (accuracy < bestAccuracy) {
+                            bestAccuracy = accuracy;
+                            bestPosition = position;
+                        }
+                        
+                        // If we have good accuracy (< 20 meters) or we've tried enough times, use the best position
+                        if (accuracy < 20 || attempts >= maxAttempts) {
+                            const newCoords = [
+                                bestPosition.coords.longitude,
+                                bestPosition.coords.latitude,
+                            ];
+                            selectedCoordinates = newCoords;
+
+                            this._map.flyTo({
+                                center: newCoords,
+                                zoom: 17, // Zoom in closer for better precision
+                            });
+                            
+                            // Show accuracy info to user
+                            console.log(`Using location with ${Math.round(bestAccuracy)} meter accuracy`);
+                            
+                            button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                        } else {
+                            // Try again for better accuracy
+                            setTimeout(() => tryGetLocation(), 1000);
+                        }
+                    },
+                    (error) => {
+                        if (attempts < maxAttempts) {
+                            // Try again with different settings
+                            setTimeout(() => tryGetLocation(), 1000);
+                        } else {
+                            let errorMessage = 'Error getting location';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage = 'Location access denied. Please enable location services.';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage = 'Location information unavailable. Please try again.';
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage = 'Location request timed out. Please try again.';
+                                    break;
+                            }
+                            alert(errorMessage);
+                            console.error('Geolocation error:', error);
+                            button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000, // Increased timeout for better GPS fix
+                        maximumAge: 0, // Always get fresh location
+                    }
+                );
+            };
+            
+            tryGetLocation();
         }
 
         onRemove() {
