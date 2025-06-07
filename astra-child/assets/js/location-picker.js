@@ -37,8 +37,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add a loading/locating indicator to the button
                 button.classList.add('mapboxgl-ctrl-geolocate-active');
 
-                navigator.geolocation.getCurrentPosition(
+                // Force fresh location by using watchPosition briefly then clearing it
+                // This bypasses browser location caching more effectively
+                let watchId = navigator.geolocation.watchPosition(
                     (position) => {
+                        // Immediately clear the watch to stop continuous tracking
+                        navigator.geolocation.clearWatch(watchId);
+                        
                         const newCoords = [
                             position.coords.longitude,
                             position.coords.latitude,
@@ -47,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Check accuracy and zoom level accordingly
                         const accuracy = position.coords.accuracy;
+                        const timestamp = new Date(position.timestamp).toLocaleTimeString();
                         let zoomLevel = 18; // Very close zoom for high accuracy
                         
                         if (accuracy > 100) {
@@ -62,13 +68,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             zoom: zoomLevel,
                         });
                         
-                        // Log accuracy for debugging
-                        console.log(`Location found with accuracy: ${accuracy.toFixed(1)} meters`);
+                        // Log accuracy and timestamp for debugging
+                        console.log(`Fresh location found at ${timestamp} with accuracy: ${accuracy.toFixed(1)} meters`);
                         
                         // The map's 'moveend' event will handle marker update and reverse geocode
                         button.classList.remove('mapboxgl-ctrl-geolocate-active');
                     },
                     (error) => {
+                        navigator.geolocation.clearWatch(watchId);
                         alert(`Error getting location: ${error.message}`);
                         console.error('Geolocation error:', error);
                         button.classList.remove('mapboxgl-ctrl-geolocate-active');
