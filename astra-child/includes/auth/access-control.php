@@ -56,22 +56,3 @@ function hide_admin_bar_except_for_admins() {
 }
 add_filter( 'show_admin_bar', 'hide_admin_bar_except_for_admins' );
 
-/**
- * Debug function - Add this temporarily to see what's happening
- * Remove this after testing!
- */
-function debug_user_access() {
-    if ( is_user_logged_in() ) {
-        $current_user = wp_get_current_user();
-        $user_roles = $current_user->roles;
-        
-        // Only show for non-admins to avoid clutter
-        if ( ! current_user_can( 'administrator' ) ) {
-            echo '<div style="background: #f44336; color: white; padding: 10px; position: fixed; top: 0; left: 0; z-index: 99999; width: 100%;">';
-            echo 'DEBUG - User: ' . $current_user->user_login . ' | Roles: ' . implode(', ', $user_roles) . ' | Can edit posts: ' . (current_user_can('edit_posts') ? 'YES' : 'NO');
-            echo '</div>';
-        }
-    }
-}
-add_action( 'wp_footer', 'debug_user_access' );
-add_action( 'admin_footer', 'debug_user_access' ); 
