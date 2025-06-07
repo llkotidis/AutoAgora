@@ -66,21 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!marker) {
             // Create marker only if it doesn't exist
             marker = new mapboxgl.Marker({
-                draggable: true,
+                draggable: false,
                 color: '#FF0000' // Make it more visible
             })
                 .setLngLat(lngLat)
                 .addTo(map);
-
-             // Handle marker drag end
-            marker.on('dragend', () => {
-                const newLngLat = marker.getLngLat();
-                selectedCoordinates = [newLngLat.lng, newLngLat.lat];
-                console.log('Marker dragged to:', selectedCoordinates);
-                
-                // Reverse geocode the new position
-                reverseGeocode(newLngLat);
-            });
         } else {
             // Just update position if marker exists
             marker.setLngLat(lngLat);
@@ -181,7 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
             map.addControl(new mapboxgl.NavigationControl());
 
             // Create initial marker at map center
-            updateMarkerPosition(map.getCenter());
+            const mapCenter = map.getCenter();
+            updateMarkerPosition(mapCenter);
+            selectedCoordinates = [mapCenter.lng, mapCenter.lat];
 
             // Wait for map to load before adding geocoder
             map.on('load', () => {
@@ -227,8 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedCoordinates = result.center;
                     selectedLocation = parseLocationDetails(result);
                     
-                    // Update marker position immediately
-                    updateMarkerPosition(result.center);
+                    // Fly to the result, which will trigger move and moveend events
+                    map.flyTo({ center: result.center, zoom: 15 });
                     
                     // Enable continue button since we have valid coordinates
                     const continueBtn = modal.querySelector('.choose-location-btn');
@@ -241,11 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle geocoder clear
                 geocoder.on('clear', () => {
                     console.log('Geocoder cleared');
-                    // Don't remove the marker, just move it back to center
-                    updateMarkerPosition(map.getCenter());
-                    selectedCoordinates = [map.getCenter().lng, map.getCenter().lat]; // Keep coordinates
+                    // Keep the current center as selected coordinates
+                    const currentCenter = map.getCenter();
+                    selectedCoordinates = [currentCenter.lng, currentCenter.lat];
                     
-                    // Preserve the selectedLocation data instead of resetting it
+                    // Preserve the selectedLocation data, but update coordinates if needed
                     if (selectedLocation.latitude && selectedLocation.longitude) {
                         console.log('Preserving selected location data:', selectedLocation);
                     } else {
@@ -253,8 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             city: '',
                             district: '',
                             address: '',
-                            latitude: map.getCenter().lat,
-                            longitude: map.getCenter().lng
+                            latitude: currentCenter.lat,
+                            longitude: currentCenter.lng
                         };
                     }
                     // Don't disable the continue button since we still have valid coordinates
@@ -265,11 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle map click
             map.on('click', (e) => {
                 console.log('Map clicked at:', e.lngLat);
-                selectedCoordinates = [e.lngLat.lng, e.lngLat.lat];
-                updateMarkerPosition(e.lngLat);
+                const clickedCoords = [e.lngLat.lng, e.lngLat.lat];
+                selectedCoordinates = clickedCoords;
                 
-                // Reverse geocode the clicked position
-                reverseGeocode(e.lngLat);
+                // Fly to the clicked position, which will trigger move and moveend events
+                map.flyTo({ center: clickedCoords });
             });
 
             // Handle map movement
