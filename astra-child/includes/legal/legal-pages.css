@@ -5,7 +5,6 @@
  * @since 1.0.0
  */
 
-/* Main legal content container */
 .legal-content {
     max-width: 800px;
     margin: 0 auto;
@@ -13,80 +12,6 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
     color: #333;
-}
-
-/* Also apply styling to pages that might not have the legal-content wrapper */
-.page .entry-content,
-.single .entry-content {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.6;
-    color: #333;
-}
-
-/* Override theme defaults for legal pages */
-body.page .entry-content {
-    text-align: left !important;
-}
-
-body.page .entry-content p {
-    color: #333 !important;
-    margin-bottom: 15px;
-    text-align: justify;
-}
-
-body.page .entry-content h1 {
-    font-size: 2.5rem !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-    margin-bottom: 15px !important;
-    text-align: center !important;
-}
-
-body.page .entry-content h2 {
-    font-size: 1.5rem !important;
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 10px !important;
-    border-bottom: 1px solid #e5e5e5 !important;
-}
-
-body.page .entry-content h3 {
-    font-size: 1.2rem !important;
-    font-weight: 600 !important;
-    color: #2c3e50 !important;
-    margin: 25px 0 15px 0 !important;
-}
-
-body.page .entry-content ul {
-    margin: 15px 0 !important;
-    padding-left: 30px !important;
-}
-
-body.page .entry-content li {
-    margin-bottom: 8px !important;
-    line-height: 1.5 !important;
-    color: #333 !important;
-}
-
-body.page .entry-content a {
-    color: #0073aa !important;
-    text-decoration: none !important;
-    border-bottom: 1px dotted #0073aa !important;
-    transition: all 0.3s ease !important;
-}
-
-body.page .entry-content a:hover {
-    color: #005177 !important;
-    border-bottom-style: solid !important;
-}
-
-body.page .entry-content strong {
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
 }
 
 .legal-header {
@@ -99,7 +24,7 @@ body.page .entry-content strong {
 .legal-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: blue;
     margin-bottom: 15px;
 }
 
@@ -199,42 +124,33 @@ body.page .entry-content strong {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .legal-content,
-    .page .entry-content,
-    .single .entry-content {
+    .legal-content {
         padding: 20px 15px;
     }
     
-    .legal-header h1,
-    body.page .entry-content h1 {
-        font-size: 2rem !important;
+    .legal-header h1 {
+        font-size: 2rem;
     }
     
-    .legal-section h2,
-    body.page .entry-content h2 {
-        font-size: 1.3rem !important;
+    .legal-section h2 {
+        font-size: 1.3rem;
     }
     
-    .legal-section h3,
-    body.page .entry-content h3 {
-        font-size: 1.1rem !important;
+    .legal-section h3 {
+        font-size: 1.1rem;
     }
     
-    .legal-section ul,
-    body.page .entry-content ul {
-        padding-left: 20px !important;
+    .legal-section ul {
+        padding-left: 20px;
     }
     
-    .legal-section p,
-    body.page .entry-content p {
-        text-align: left !important;
+    .legal-section p {
+        text-align: left;
     }
 }
 
 @media (max-width: 480px) {
-    .legal-content,
-    .page .entry-content,
-    .single .entry-content {
+    .legal-content {
         padding: 15px 10px;
     }
     
@@ -243,9 +159,8 @@ body.page .entry-content strong {
         padding-bottom: 20px;
     }
     
-    .legal-header h1,
-    body.page .entry-content h1 {
-        font-size: 1.8rem !important;
+    .legal-header h1 {
+        font-size: 1.8rem;
     }
     
     .legal-section {
@@ -255,29 +170,23 @@ body.page .entry-content strong {
 
 /* Print Styles */
 @media print {
-    .legal-content,
-    .page .entry-content,
-    .single .entry-content {
+    .legal-content {
         max-width: none;
         padding: 0;
     }
     
-    .legal-header h1,
-    body.page .entry-content h1 {
-        color: #000 !important;
+    .legal-header h1 {
+        color: #000;
     }
     
     .legal-section h2,
-    .legal-section h3,
-    body.page .entry-content h2,
-    body.page .entry-content h3 {
-        color: #000 !important;
+    .legal-section h3 {
+        color: #000;
     }
     
-    .legal-section a,
-    body.page .entry-content a {
-        color: #000 !important;
-        border-bottom: none !important;
-        text-decoration: underline !important;
+    .legal-section a {
+        color: #000;
+        border-bottom: none;
+        text-decoration: underline;
     }
 } 
