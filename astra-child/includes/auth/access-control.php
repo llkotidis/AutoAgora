@@ -8,12 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Redirect subscribers and dealerships away from the WordPress backend.
+ * Redirect subscribers, clients, and dealerships away from the WordPress backend.
  */
 function restrict_backend_access() {
     if ( is_admin() && ! current_user_can( 'edit_posts' ) ) {
-        // Check if the current user has the 'subscriber' or 'dealership' role
-        if ( current_user_can( 'subscriber' ) || current_user_can( 'dealership' ) ) {
+        // Check if the current user has the 'subscriber', 'client', or 'dealership' role
+        if ( current_user_can( 'subscriber' ) || current_user_can( 'client' ) || current_user_can( 'dealership' ) ) {
             wp_safe_redirect( home_url() ); // Redirect to the homepage
             exit;
         }
@@ -22,10 +22,10 @@ function restrict_backend_access() {
 add_action( 'admin_init', 'restrict_backend_access' );
 
 /**
- * Remove the admin bar for subscribers and dealerships.
+ * Remove the admin bar for subscribers, clients, and dealerships.
  */
 function remove_admin_bar_for_specific_roles() {
-    if ( ! is_admin() && ( current_user_can( 'subscriber' ) || current_user_can( 'dealership' ) ) ) {
+    if ( ! is_admin() && ( current_user_can( 'subscriber' ) || current_user_can( 'client' ) || current_user_can( 'dealership' ) ) ) {
         return false;
     }
     return true;

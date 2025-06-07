@@ -16,79 +16,8 @@ if (!defined('ABSPATH')) {
 class AutoAgora_Legal_Pages {
     
     public function __construct() {
-        add_action('init', array($this, 'create_legal_pages'));
+        // Only handle styling - pages already exist
         add_action('wp_enqueue_scripts', array($this, 'enqueue_legal_styles'));
-    }
-    
-    /**
-     * Create legal pages if they don't exist
-     */
-    public function create_legal_pages() {
-        $this->create_terms_of_service_page();
-        $this->create_privacy_policy_page();
-    }
-    
-    /**
-     * Create Terms of Service page
-     */
-    private function create_terms_of_service_page() {
-        // Check if page already exists
-        $existing_page = get_page_by_path('terms-of-service');
-        if ($existing_page) {
-            return;
-        }
-        
-        $content = $this->get_terms_of_service_content();
-        
-        $page_data = array(
-            'post_title'     => 'Terms of Service',
-            'post_content'   => $content,
-            'post_status'    => 'publish',
-            'post_type'      => 'page',
-            'post_name'      => 'terms-of-service',
-            'post_author'    => 1,
-            'page_template'  => 'page-legal.php'
-        );
-        
-        $page_id = wp_insert_post($page_data);
-        
-        if ($page_id) {
-            // Set page template
-            update_post_meta($page_id, '_wp_page_template', 'page-legal.php');
-        }
-    }
-    
-    /**
-     * Create Privacy Policy page
-     */
-    private function create_privacy_policy_page() {
-        // Check if page already exists
-        $existing_page = get_page_by_path('privacy-policy');
-        if ($existing_page) {
-            return;
-        }
-        
-        $content = $this->get_privacy_policy_content();
-        
-        $page_data = array(
-            'post_title'     => 'Privacy Policy',
-            'post_content'   => $content,
-            'post_status'    => 'publish',
-            'post_type'      => 'page',
-            'post_name'      => 'privacy-policy',
-            'post_author'    => 1,
-            'page_template'  => 'page-legal.php'
-        );
-        
-        $page_id = wp_insert_post($page_data);
-        
-        if ($page_id) {
-            // Set page template
-            update_post_meta($page_id, '_wp_page_template', 'page-legal.php');
-            
-            // Set as WordPress privacy policy page
-            update_option('wp_page_for_privacy_policy', $page_id);
-        }
     }
     
     /**
