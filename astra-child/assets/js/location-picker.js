@@ -39,89 +39,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Force fresh location by using watchPosition briefly then clearing it
                 // This bypasses browser location caching more effectively
-                let attemptCount = 0;
-                const maxAttempts = 3;
-                
-                const getHighAccuracyLocation = () => {
-                    let watchId = navigator.geolocation.watchPosition(
-                        (position) => {
-                            const accuracy = position.coords.accuracy;
-                            const timestamp = new Date(position.timestamp).toLocaleTimeString();
-                            
-                            console.log(`Attempt ${attemptCount + 1}: Location found at ${timestamp} with accuracy: ${accuracy.toFixed(1)} meters`);
-                            
-                            // If accuracy is poor (over 100m) and we haven't reached max attempts, try again
-                            if (accuracy > 100 && attemptCount < maxAttempts - 1) {
-                                navigator.geolocation.clearWatch(watchId);
-                                attemptCount++;
-                                console.log(`Accuracy too low (${accuracy.toFixed(1)}m), retrying... (attempt ${attemptCount + 1}/${maxAttempts})`);
-                                setTimeout(getHighAccuracyLocation, 1000); // Wait 1 second before retry
-                                return;
-                            }
-                            
-                            // Accept this location (either good accuracy or max attempts reached)
-                            navigator.geolocation.clearWatch(watchId);
-                            
-                            const newCoords = [
-                                position.coords.longitude,
-                                position.coords.latitude,
-                            ];
-                            selectedCoordinates = newCoords;
+                let watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        // Immediately clear the watch to stop continuous tracking
+                        navigator.geolocation.clearWatch(watchId);
+                        
+                        const newCoords = [
+                            position.coords.longitude,
+                            position.coords.latitude,
+                        ];
+                        selectedCoordinates = newCoords;
 
-                            // Adjust zoom based on actual accuracy
-                            let zoomLevel = 18; // Very close zoom for high accuracy
-                            
-                            if (accuracy > 500) {
-                                zoomLevel = 13; // Wide zoom for very poor accuracy
-                            } else if (accuracy > 100) {
-                                zoomLevel = 15; // Moderate zoom for poor accuracy
-                            } else if (accuracy > 50) {
-                                zoomLevel = 16; // Close zoom for medium accuracy
-                            } else if (accuracy > 20) {
-                                zoomLevel = 17; // Closer zoom for good accuracy
-                            }
-
-                            this._map.flyTo({
-                                center: newCoords,
-                                zoom: zoomLevel,
-                            });
-                            
-                            // Log final result
-                            if (accuracy <= 20) {
-                                console.log(`✅ High-precision GPS location found with accuracy: ${accuracy.toFixed(1)} meters`);
-                            } else if (accuracy <= 100) {
-                                console.log(`⚠️ Moderate-precision location found with accuracy: ${accuracy.toFixed(1)} meters`);
-                            } else {
-                                console.log(`❌ Low-precision location (likely network-based) with accuracy: ${accuracy.toFixed(1)} meters`);
-                            }
-                            
-                            // The map's 'moveend' event will handle marker update and reverse geocode
-                            button.classList.remove('mapboxgl-ctrl-geolocate-active');
-                        },
-                        (error) => {
-                            navigator.geolocation.clearWatch(watchId);
-                            
-                            // If this was a timeout and we haven't reached max attempts, try again with different settings
-                            if (error.code === error.TIMEOUT && attemptCount < maxAttempts - 1) {
-                                attemptCount++;
-                                console.log(`Location timeout, retrying with longer timeout... (attempt ${attemptCount + 1}/${maxAttempts})`);
-                                setTimeout(getHighAccuracyLocation, 1000);
-                                return;
-                            }
-                            
-                            alert(`Error getting location: ${error.message}`);
-                            console.error('Geolocation error:', error);
-                            button.classList.remove('mapboxgl-ctrl-geolocate-active');
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: attemptCount === 0 ? 20000 : 30000, // Longer timeout for retries
-                            maximumAge: 0, // Always get fresh location
+                        // Check accuracy and zoom level accordingly
+                        const accuracy = position.coords.accuracy;
+                        const timestamp = new Date(position.timestamp).toLocaleTimeString();
+                        let zoomLevel = 18; // Very close zoom for high accuracy
+                        
+                        if (accuracy > 100) {
+                            zoomLevel = 15; // Moderate zoom for lower accuracy
+                        } else if (accuracy > 50) {
+                            zoomLevel = 16; // Close zoom for medium accuracy
+                        } else if (accuracy > 20) {
+                            zoomLevel = 17; // Closer zoom for good accuracy
                         }
-                    );
-                };
-                
-                getHighAccuracyLocation();
+
+                        this._map.flyTo({
+                            center: newCoords,
+                            zoom: zoomLevel,
+                        });
+                        
+                        // Log accuracy and timestamp for debugging
+                        console.log(`Fresh location found at ${timestamp} with accuracy: ${accuracy.toFixed(1)} meters`);
+                        
+                        // The map's 'moveend' event will handle marker update and reverse geocode
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                    },
+                    (error) => {
+                        navigator.geolocation.clearWatch(watchId);
+                        alert(`Error getting location: ${error.message}`);
+                        console.error('Geolocation error:', error);
+                        button.classList.remove('mapboxgl-ctrl-geolocate-active');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000, // Increased timeout for better GPS fix
+                        maximumAge: 0, // Always get fresh location
+                    }
+                );
             };
 
             this._container.appendChild(button);
