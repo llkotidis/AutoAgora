@@ -264,9 +264,13 @@ class AutoAgora_Legal_Pages {
             wp_enqueue_style(
                 'legal-pages-style',
                 get_stylesheet_directory_uri() . '/includes/legal/legal-pages.css',
-                array(),
-                ASTRA_CHILD_THEME_VERSION
+                array('astra-theme-css'), // Ensure it loads after Astra theme CSS
+                ASTRA_CHILD_THEME_VERSION,
+                'all'
             );
+            
+            // Debug: Log that CSS is being enqueued
+            error_log('Legal pages CSS enqueued for: ' . get_the_title());
         }
     }
 }
