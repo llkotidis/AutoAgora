@@ -68,6 +68,12 @@ require_once get_stylesheet_directory() . '/includes/shortcodes/car-search-form.
 // Include admin user favorites column functionality
 require_once get_stylesheet_directory() . '/includes/admin/user-favorites-column.php';
 
+// Include legal pages functionality
+require_once get_stylesheet_directory() . '/includes/legal/legal-pages.php';
+
+// Include cookie consent banner
+require_once get_stylesheet_directory() . '/includes/legal/cookie-consent.php';
+
 /**
  * Astra Child Theme functions and definitions
  *
