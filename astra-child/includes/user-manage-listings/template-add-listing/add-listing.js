@@ -203,6 +203,18 @@ jQuery(document).ready(function($) {
         if (asyncUploadManager) {
             asyncUploadManager.markSessionCompleted();
             console.log('[Add Listing] Session marked as completed on form submission');
+            
+            // DEBUG: Check if file input still has files (it shouldn't for async uploads)
+            const fileInput = $('#car_images')[0];
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                console.warn('🚨 WARNING: File input still has', fileInput.files.length, 'files despite async uploads!');
+                console.log('🚨 File input files:', Array.from(fileInput.files).map(f => ({name: f.name, size: f.size})));
+                // Clear the file input since we're using async uploads
+                fileInput.value = '';
+                console.log('✅ Cleared file input for async uploads');
+            } else {
+                console.log('✅ File input is empty (correct for async uploads)');
+            }
         } else {
             // For traditional uploads, ensure fileInput has correct files
             updateActualFileInput();
@@ -264,14 +276,37 @@ jQuery(document).ready(function($) {
         // Log form data size for debugging
         const formData = new FormData(this);
         let totalSize = 0;
+        let formDataBreakdown = {};
+        
         for (let pair of formData.entries()) {
+            let fieldSize = 0;
             if (pair[1] instanceof File) {
-                totalSize += pair[1].size;
+                fieldSize = pair[1].size;
+                formDataBreakdown[pair[0]] = {
+                    type: 'File',
+                    size: fieldSize,
+                    name: pair[1].name
+                };
             } else {
-                totalSize += new Blob([pair[1]]).size;
+                fieldSize = new Blob([pair[1]]).size;
+                formDataBreakdown[pair[0]] = {
+                    type: 'Text',
+                    size: fieldSize,
+                    value: pair[1].length > 100 ? pair[1].substring(0, 100) + '...' : pair[1]
+                };
             }
+            totalSize += fieldSize;
         }
+        
         console.log('📊 Form data size:', Math.round(totalSize / 1024), 'KB');
+        console.log('📋 Form data breakdown:', formDataBreakdown);
+        
+        // Find the largest fields
+        const sortedFields = Object.entries(formDataBreakdown)
+            .sort((a, b) => b[1].size - a[1].size)
+            .slice(0, 10); // Top 10 largest fields
+        
+        console.log('🔍 Largest form fields:', sortedFields);
         
         // Let the form submit naturally
         return true;
