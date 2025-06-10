@@ -38,7 +38,7 @@ class AsyncUploadManager {
      * Initialize event listeners for cleanup
      */
     initializeEventListeners() {
-        // Cleanup on page unload
+        // Cleanup on page unload (when user actually leaves the page)
         window.addEventListener('beforeunload', () => {
             if (this.session.status === 'active' && this.session.attachmentIds.length > 0) {
                 // Use navigator.sendBeacon for reliable cleanup
@@ -46,12 +46,8 @@ class AsyncUploadManager {
             }
         });
         
-        // Cleanup on page visibility change (mobile browsers)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && this.session.status === 'active') {
-                this.scheduleCleanup();
-            }
-        });
+        // Note: No visibility change cleanup needed - server-side cleanup 
+        // handles orphaned uploads after 1 hour, which is sufficient
     }
     
     /**
@@ -312,17 +308,6 @@ class AsyncUploadManager {
         navigator.sendBeacon(asyncUploads.ajaxUrl, data);
         
         console.log('[AsyncUpload] Session cleanup beacon sent');
-    }
-    
-    /**
-     * Schedule cleanup (for mobile browsers)
-     */
-    scheduleCleanup() {
-        setTimeout(() => {
-            if (this.session.status === 'active') {
-                this.cleanupSession();
-            }
-        }, 5000); // 5 second delay
     }
     
     /**
