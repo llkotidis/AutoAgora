@@ -149,5 +149,27 @@ function preserve_car_listing_author_on_admin_edit($data, $postarr) {
 }
 add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
 
+/**
+ * Temporary debug function for async upload issues
+ * This helps us see what's happening with regular user uploads
+ */
+function debug_async_upload_requests() {
+    if (isset($_POST['action']) && $_POST['action'] === 'async_upload_image') {
+        error_log('=== ASYNC UPLOAD DEBUG ===');
+        error_log('User ID: ' . get_current_user_id());
+        error_log('User Roles: ' . implode(', ', wp_get_current_user()->roles));
+        error_log('Can upload files: ' . (current_user_can('upload_files') ? 'YES' : 'NO'));
+        error_log('Nonce valid: ' . (wp_verify_nonce($_POST['nonce'], 'async_upload_nonce') ? 'YES' : 'NO'));
+        error_log('Files uploaded: ' . (isset($_FILES['image']) ? 'YES' : 'NO'));
+        if (isset($_FILES['image'])) {
+            error_log('File error code: ' . $_FILES['image']['error']);
+            error_log('File type: ' . $_FILES['image']['type']);
+            error_log('File size: ' . $_FILES['image']['size']);
+        }
+        error_log('=== END DEBUG ===');
+    }
+}
+add_action('init', 'debug_async_upload_requests');
+
 
 

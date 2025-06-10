@@ -126,6 +126,12 @@ function handle_async_upload_image() {
         return;
     }
     
+    // Check if user has upload capability
+    if (!current_user_can('upload_files')) {
+        wp_send_json_error(array('message' => 'User does not have upload permission'));
+        return;
+    }
+    
     // Check if file was uploaded
     if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
         wp_send_json_error(array('message' => 'File upload error'));
@@ -213,6 +219,12 @@ function handle_delete_async_image() {
         return;
     }
     
+    // Check if user has upload capability
+    if (!current_user_can('upload_files')) {
+        wp_send_json_error(array('message' => 'User does not have upload permission'));
+        return;
+    }
+    
     $attachment_id = intval($_POST['attachment_id']);
     $session_id = sanitize_text_field($_POST['session_id']);
     $user_id = get_current_user_id();
@@ -288,6 +300,12 @@ function handle_cleanup_upload_session() {
     // Check if user is logged in
     if (!is_user_logged_in()) {
         wp_send_json_error(array('message' => 'User not logged in'));
+        return;
+    }
+    
+    // Check if user has upload capability
+    if (!current_user_can('upload_files')) {
+        wp_send_json_error(array('message' => 'User does not have upload permission'));
         return;
     }
     
