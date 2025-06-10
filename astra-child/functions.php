@@ -153,8 +153,7 @@ function preserve_car_listing_author_on_admin_edit($data, $postarr) {
     
     return $data;
 }
-// TEMPORARILY DISABLED FOR TESTING
-// add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
+add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
 
 
 

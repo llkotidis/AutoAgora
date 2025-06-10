@@ -114,20 +114,37 @@ function enqueue_async_upload_scripts() {
  * AJAX handler for asynchronous image upload
  */
 function handle_async_upload_image() {
+    // Add debugging
+    error_log('=== ASYNC UPLOAD DEBUG START ===');
+    error_log('User ID: ' . get_current_user_id());
+    error_log('User can upload_files: ' . (current_user_can('upload_files') ? 'YES' : 'NO'));
+    error_log('POST data: ' . print_r($_POST, true));
+    error_log('FILES data: ' . print_r($_FILES, true));
+    
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'async_upload_nonce')) {
+        error_log('FAILED: Nonce verification failed');
         wp_send_json_error(array('message' => 'Security check failed'));
         return;
     }
     
     // Check if user is logged in
     if (!is_user_logged_in()) {
+        error_log('FAILED: User not logged in');
         wp_send_json_error(array('message' => 'User not logged in'));
+        return;
+    }
+    
+    // Check upload capability
+    if (!current_user_can('upload_files')) {
+        error_log('FAILED: User cannot upload files');
+        wp_send_json_error(array('message' => 'Insufficient permissions to upload files'));
         return;
     }
     
     // Check if file was uploaded
     if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+        error_log('FAILED: File upload error - ' . ($_FILES['image']['error'] ?? 'No file'));
         wp_send_json_error(array('message' => 'File upload error'));
         return;
     }
@@ -136,15 +153,20 @@ function handle_async_upload_image() {
     $original_filename = sanitize_text_field($_POST['original_filename']);
     $form_type = sanitize_text_field($_POST['form_type']);
     
+    error_log('Session ID: ' . $session_id);
+    error_log('Original filename: ' . $original_filename);
+    
     // Validate file type
     $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
     if (!in_array($_FILES['image']['type'], $allowed_types)) {
+        error_log('FAILED: Invalid file type - ' . $_FILES['image']['type']);
         wp_send_json_error(array('message' => 'Invalid file type'));
         return;
     }
     
     // Validate file size (5MB max)
     if ($_FILES['image']['size'] > 5 * 1024 * 1024) {
+        error_log('FAILED: File too large - ' . $_FILES['image']['size']);
         wp_send_json_error(array('message' => 'File too large'));
         return;
     }
@@ -154,17 +176,31 @@ function handle_async_upload_image() {
     require_once(ABSPATH . 'wp-admin/includes/image.php');
     require_once(ABSPATH . 'wp-admin/includes/media.php');
     
+    error_log('About to call media_handle_upload...');
+    
     // Upload file to WordPress media library
     $attachment_id = media_handle_upload('image', 0); // 0 = no post parent initially
     
     if (is_wp_error($attachment_id)) {
+        error_log('FAILED: media_handle_upload error - ' . $attachment_id->get_error_message());
         wp_send_json_error(array('message' => $attachment_id->get_error_message()));
         return;
     }
     
+    error_log('SUCCESS: media_handle_upload returned ID - ' . $attachment_id);
+    
     // Track upload in database
     global $wpdb;
     $table_name = $wpdb->prefix . 'temp_uploads';
+    
+    // Check if table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+    if (!$table_exists) {
+        error_log('FAILED: temp_uploads table does not exist');
+        wp_delete_attachment($attachment_id, true);
+        wp_send_json_error(array('message' => 'Database table missing'));
+        return;
+    }
     
     $result = $wpdb->insert(
         $table_name,
@@ -180,14 +216,20 @@ function handle_async_upload_image() {
     );
     
     if ($result === false) {
+        error_log('FAILED: Database insert failed - ' . $wpdb->last_error);
         // If database insert failed, clean up the uploaded file
         wp_delete_attachment($attachment_id, true);
         wp_send_json_error(array('message' => 'Database error: ' . $wpdb->last_error));
         return;
     }
     
+    error_log('SUCCESS: Database insert completed');
+    
     // Get attachment URL for preview
     $attachment_url = wp_get_attachment_image_url($attachment_id, 'medium');
+    
+    error_log('SUCCESS: Upload completed successfully');
+    error_log('=== ASYNC UPLOAD DEBUG END ===');
     
     wp_send_json_success(array(
         'attachment_id' => $attachment_id,
