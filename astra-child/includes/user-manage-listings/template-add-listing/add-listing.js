@@ -154,9 +154,14 @@ jQuery(document).ready(function($) {
 
     // Handle form submission
     $('#add-car-listing-form').on('submit', function(e) {
+        // === DEBUG TIMER START ===
+        const debugStartTime = performance.now();
+        console.log('🚀 FORM SUBMIT STARTED at:', new Date().toISOString());
+        
         // Validate image count - either async uploaded or traditional
         let totalImages = 0;
         
+        const checkpoint1 = performance.now();
         if (asyncUploadManager) {
             // Count async uploaded images
             totalImages = asyncUploadManager.getUploadedAttachmentIds().length;
@@ -164,6 +169,8 @@ jQuery(document).ready(function($) {
             // Count traditional uploaded files
             totalImages = accumulatedFilesList.length;
         }
+        const checkpoint1Time = Math.round(performance.now() - checkpoint1);
+        console.log('⏱️ Image count validation completed in:', checkpoint1Time, 'ms');
         
         if (totalImages < 5) {
             e.preventDefault();
@@ -177,6 +184,7 @@ jQuery(document).ready(function($) {
         }
         
         // If using async uploads, mark session as completed
+        const checkpoint2 = performance.now();
         if (asyncUploadManager) {
             asyncUploadManager.markSessionCompleted();
             console.log('[Add Listing] Session marked as completed on form submission');
@@ -184,13 +192,19 @@ jQuery(document).ready(function($) {
             // For traditional uploads, ensure fileInput has correct files
             updateActualFileInput();
         }
+        const checkpoint2Time = Math.round(performance.now() - checkpoint2);
+        console.log('⏱️ Session management completed in:', checkpoint2Time, 'ms');
         
         // Get the raw values from data attributes
+        const checkpoint3 = performance.now();
         const rawMileage = mileageInput.data('raw-value') || unformatNumber(mileageInput.val());
         const rawPrice = priceInput.data('raw-value') || unformatNumber(priceInput.val().replace('€', ''));
         const rawHp = $('#hp').data('raw-value') || unformatNumber($('#hp').val());
+        const checkpoint3Time = Math.round(performance.now() - checkpoint3);
+        console.log('⏱️ Raw value extraction completed in:', checkpoint3Time, 'ms');
         
         // Create hidden inputs with the raw values
+        const checkpoint4 = performance.now();
         $('<input>').attr({
             type: 'hidden',
             name: 'mileage',
@@ -208,13 +222,22 @@ jQuery(document).ready(function($) {
             name: 'hp',
             value: rawHp
         }).appendTo(this);
+        const checkpoint4Time = Math.round(performance.now() - checkpoint4);
+        console.log('⏱️ Hidden input creation completed in:', checkpoint4Time, 'ms');
         
         // Remove the original inputs from submission
+        const checkpoint5 = performance.now();
         mileageInput.prop('disabled', true);
         priceInput.prop('disabled', true);
         $('#hp').prop('disabled', true);
+        const checkpoint5Time = Math.round(performance.now() - checkpoint5);
+        console.log('⏱️ Input disabling completed in:', checkpoint5Time, 'ms');
         
+        const totalClientTime = Math.round(performance.now() - debugStartTime);
+        console.log('🏁 CLIENT-SIDE FORM PROCESSING COMPLETED in:', totalClientTime, 'ms');
         console.log('[Add Listing] Form validation passed, submitting with', totalImages, 'images');
+        
+        // Let the form submit naturally
         return true;
     });
     
