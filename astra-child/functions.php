@@ -129,25 +129,3 @@ add_action('wp_enqueue_scripts', function() {
     }
 });
 
-/**
- * Prevent post_author from changing when admins edit car listings
- * This ensures that the original car listing owner is preserved when admins make edits
- */
-function preserve_car_listing_author_on_admin_edit($data, $postarr) {
-    // Only apply to car post type updates (not new posts)
-    if (isset($data['post_type']) && $data['post_type'] === 'car' && isset($postarr['ID']) && $postarr['ID'] > 0) {
-        
-        // Get the current post to preserve its author
-        $current_post = get_post($postarr['ID']);
-        if ($current_post && $current_post->post_author) {
-            // Always preserve the original author
-            $data['post_author'] = $current_post->post_author;
-        }
-    }
-    
-    return $data;
-}
-add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
-
-
-

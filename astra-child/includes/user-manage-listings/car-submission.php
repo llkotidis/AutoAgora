@@ -198,7 +198,8 @@ function handle_add_car_listing() {
     update_field('numowners', $numowners, $post_id);
     update_field('isantique', $isantique, $post_id);
     
-    // Note: Using post_author field for ownership (original_author ACF field no longer needed)
+    // Store the original author ID in ACF field
+    update_field('original_author', get_current_user_id(), $post_id);
     
     // Save vehicle history both as post meta and ACF field to ensure compatibility
     update_field('vehiclehistory', $vehiclehistory, $post_id);

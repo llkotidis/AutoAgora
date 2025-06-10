@@ -194,9 +194,10 @@ if (have_posts()) :
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
                             <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
-                                        <?php 
-            // Get the author from post_author field
-            $author_id = get_post_field('post_author', $car_id);
+                            <?php 
+                            // Get the original author from ACF field, fallback to post_author if not set
+                            $original_author_id = get_field('original_author', $car_id);
+                            $author_id = $original_author_id ? $original_author_id : get_post_field('post_author', $car_id);
                             
                             $author_name = get_the_author_meta('display_name', $author_id);
                             $author_first_name = get_the_author_meta('first_name', $author_id);
