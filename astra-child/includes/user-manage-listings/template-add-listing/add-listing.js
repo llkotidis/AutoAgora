@@ -1,6 +1,17 @@
 jQuery(document).ready(function($) {
     console.log('[Add Listing] jQuery ready');
     
+    // Check if we just came from a form submission (for timing debug)
+    if (window.formSubmitStartTime) {
+        const totalFormSubmissionTime = Math.round(performance.now() - window.formSubmitStartTime);
+        console.log('🎯 TOTAL FORM SUBMISSION TIME (start to page load):', totalFormSubmissionTime, 'ms');
+        console.log('📅 Form submitted at:', window.formSubmitStartTimeISO);
+        console.log('📅 Page loaded at:', new Date().toISOString());
+        // Clear the timing data
+        delete window.formSubmitStartTime;
+        delete window.formSubmitStartTimeISO;
+    }
+    
     // Initialize async upload manager if available
     let asyncUploadManager = null;
     if (typeof AsyncUploadManager !== 'undefined') {
@@ -158,6 +169,10 @@ jQuery(document).ready(function($) {
         const debugStartTime = performance.now();
         console.log('🚀 FORM SUBMIT STARTED at:', new Date().toISOString());
         
+        // Store start time globally to track across page transitions
+        window.formSubmitStartTime = performance.now();
+        window.formSubmitStartTimeISO = new Date().toISOString();
+        
         // Validate image count - either async uploaded or traditional
         let totalImages = 0;
         
@@ -236,6 +251,27 @@ jQuery(document).ready(function($) {
         const totalClientTime = Math.round(performance.now() - debugStartTime);
         console.log('🏁 CLIENT-SIDE FORM PROCESSING COMPLETED in:', totalClientTime, 'ms');
         console.log('[Add Listing] Form validation passed, submitting with', totalImages, 'images');
+        
+        // Add beforeunload listener to track when page starts to unload
+        const beforeUnloadHandler = function() {
+            const unloadTime = performance.now();
+            const timeToUnload = Math.round(unloadTime - debugStartTime);
+            console.log('📤 PAGE UNLOAD STARTED after:', timeToUnload, 'ms from form submit');
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+        };
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+        
+        // Log form data size for debugging
+        const formData = new FormData(this);
+        let totalSize = 0;
+        for (let pair of formData.entries()) {
+            if (pair[1] instanceof File) {
+                totalSize += pair[1].size;
+            } else {
+                totalSize += new Blob([pair[1]]).size;
+            }
+        }
+        console.log('📊 Form data size:', Math.round(totalSize / 1024), 'KB');
         
         // Let the form submit naturally
         return true;
