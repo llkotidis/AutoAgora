@@ -17,10 +17,6 @@ if (!defined('WPINC')) {
  * Process form submission for adding a new car listing
  */
 function handle_add_car_listing() {
-    // === DEBUG TIMER START ===
-    $debug_start_time = microtime(true);
-    car_submission_log('🚀 SUBMISSION STARTED - Timer initialized at: ' . date('H:i:s.u'));
-    
     // Initialize variables for error tracking
     $errors = array();
     $required_fields = array(
@@ -212,11 +208,6 @@ function handle_add_car_listing() {
     error_log('Saved Vehicle History (post meta): ' . print_r(get_post_meta($post_id, 'vehiclehistory', true), true));
     error_log('Saved Vehicle History (ACF): ' . print_r(get_field('vehiclehistory', $post_id), true));
     
-    // === DEBUG CHECKPOINT: Before Image Processing ===
-    $checkpoint_time = microtime(true);
-    $elapsed_time = round(($checkpoint_time - $debug_start_time), 2);
-    car_submission_log('⏱️ CHECKPOINT: Before image processing - Elapsed: ' . $elapsed_time . ' seconds');
-    
     // Process images - either async or traditional
     if (!empty($async_images)) {
         // Use async uploaded images
@@ -255,11 +246,6 @@ function handle_add_car_listing() {
     }
     
     car_submission_log('Car listing created successfully. Post ID: ' . $post_id . ' with ' . count($image_ids) . ' images');
-    
-    // === DEBUG TIMER END ===
-    $debug_end_time = microtime(true);
-    $total_time = round(($debug_end_time - $debug_start_time), 2);
-    car_submission_log('🏁 SUBMISSION COMPLETED - Total time: ' . $total_time . ' seconds');
     
     // Redirect to success page
     wp_redirect(add_query_arg('listing_submitted', 'success', wp_get_referer()));

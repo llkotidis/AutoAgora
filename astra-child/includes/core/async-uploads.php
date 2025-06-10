@@ -330,15 +330,10 @@ function handle_cleanup_upload_session() {
  * Mark upload session as completed (preserve files)
  */
 function mark_upload_session_completed($session_id, $post_id) {
-    // === DEBUG TIMER START ===
-    $debug_start = microtime(true);
-    error_log('🔄 mark_upload_session_completed STARTED for session: ' . $session_id . ' post: ' . $post_id);
-    
     global $wpdb;
     $table_name = $wpdb->prefix . 'temp_uploads';
     
     // Update all pending uploads in this session to completed
-    $checkpoint1 = microtime(true);
     $wpdb->update(
         $table_name,
         array('status' => 'completed'),
@@ -350,31 +345,19 @@ function mark_upload_session_completed($session_id, $post_id) {
         array('%s'),
         array('%s', '%d', '%s')
     );
-    $checkpoint1_time = round((microtime(true) - $checkpoint1), 3);
-    error_log('⏱️ Database UPDATE completed in: ' . $checkpoint1_time . ' seconds');
     
     // Update attachment post_parent to link them to the car listing
-    $checkpoint2 = microtime(true);
     $uploads = $wpdb->get_results($wpdb->prepare(
         "SELECT attachment_id FROM $table_name WHERE session_id = %s AND user_id = %d",
         $session_id, get_current_user_id()
     ));
-    $checkpoint2_time = round((microtime(true) - $checkpoint2), 3);
-    error_log('⏱️ Database SELECT completed in: ' . $checkpoint2_time . ' seconds, found ' . count($uploads) . ' uploads');
     
-    $checkpoint3 = microtime(true);
     foreach ($uploads as $upload) {
         wp_update_post(array(
             'ID' => $upload->attachment_id,
             'post_parent' => $post_id
         ));
     }
-    $checkpoint3_time = round((microtime(true) - $checkpoint3), 3);
-    error_log('⏱️ wp_update_post loop completed in: ' . $checkpoint3_time . ' seconds for ' . count($uploads) . ' attachments');
-    
-    // === DEBUG TIMER END ===
-    $total_time = round((microtime(true) - $debug_start), 3);
-    error_log('🏁 mark_upload_session_completed COMPLETED in: ' . $total_time . ' seconds');
 }
 
 /**
