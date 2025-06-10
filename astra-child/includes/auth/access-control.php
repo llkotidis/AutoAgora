@@ -9,9 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Redirect subscribers, clients, and dealerships away from the WordPress backend.
+ * BUT ALLOW AJAX requests (admin-ajax.php)
  */
 function restrict_backend_access() {
-    if ( is_admin() ) {
+    if ( is_admin() && !wp_doing_ajax() ) { // FIXED: Allow AJAX requests
         $current_user = wp_get_current_user();
         $user_roles = $current_user->roles;
         
