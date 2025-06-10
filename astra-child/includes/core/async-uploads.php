@@ -138,7 +138,10 @@ function handle_async_upload_image() {
     // Check upload capability
     if (!current_user_can('upload_files')) {
         error_log('FAILED: User cannot upload files');
-        wp_send_json_error(array('message' => 'Insufficient permissions to upload files'));
+        wp_send_json_error(array(
+            'message' => 'Insufficient permissions to upload files',
+            'debug' => 'User ID: ' . get_current_user_id() . ', Upload capability: NO'
+        ));
         return;
     }
     
@@ -183,7 +186,10 @@ function handle_async_upload_image() {
     
     if (is_wp_error($attachment_id)) {
         error_log('FAILED: media_handle_upload error - ' . $attachment_id->get_error_message());
-        wp_send_json_error(array('message' => $attachment_id->get_error_message()));
+        wp_send_json_error(array(
+            'message' => $attachment_id->get_error_message(),
+            'debug' => 'media_handle_upload failed: ' . $attachment_id->get_error_message()
+        ));
         return;
     }
     
