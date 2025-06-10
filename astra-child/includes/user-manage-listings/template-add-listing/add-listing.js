@@ -180,6 +180,13 @@ jQuery(document).ready(function($) {
         if (asyncUploadManager) {
             asyncUploadManager.markSessionCompleted();
             console.log('[Add Listing] Session marked as completed on form submission');
+            
+            // Clear file input to prevent duplicate uploads when using async system
+            const fileInput = $('#car_images')[0];
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                fileInput.value = '';
+                console.log('[Add Listing] Cleared file input for async uploads');
+            }
         } else {
             // For traditional uploads, ensure fileInput has correct files
             updateActualFileInput();
