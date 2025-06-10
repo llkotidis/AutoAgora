@@ -1,6 +1,72 @@
 jQuery(document).ready(function($) {
     console.log('[Add Listing] jQuery ready');
     
+    // === PERSISTENT DEBUG SYSTEM ===
+    // Check if we have stored timing data from a form submission
+    const storedTimingData = localStorage.getItem('formSubmissionDebug');
+    if (storedTimingData) {
+        try {
+            const timingData = JSON.parse(storedTimingData);
+            
+            // Calculate total time
+            const totalTime = Date.now() - timingData.startTime;
+            
+            // Create and display debug information on the page
+            const debugInfo = $(`
+                <div id="form-debug-overlay" style="
+                    position: fixed; 
+                    top: 20px; 
+                    right: 20px; 
+                    background: #333; 
+                    color: white; 
+                    padding: 15px; 
+                    border-radius: 8px; 
+                    z-index: 9999; 
+                    max-width: 400px; 
+                    font-family: monospace; 
+                    font-size: 12px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                ">
+                    <div style="margin-bottom: 10px; font-weight: bold; color: #4CAF50;">🎯 FORM SUBMISSION DEBUG</div>
+                    <div>🚀 Form submit started: ${new Date(timingData.startTime).toLocaleTimeString()}</div>
+                    <div>📄 Current page loaded: ${new Date().toLocaleTimeString()}</div>
+                    <div style="font-weight: bold; color: #FF9800;">⏱️ TOTAL TIME: ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)</div>
+                    <div style="margin-top: 8px; border-top: 1px solid #555; padding-top: 8px;">
+                        <div>Client processing: ${timingData.clientProcessingTime}ms</div>
+                        <div>Form data size: ${timingData.formDataSize}KB</div>
+                        <div>Page unload: ${timingData.pageUnloadTime || 'N/A'}ms</div>
+                        <div>Session ID: ${timingData.sessionId || 'N/A'}</div>
+                    </div>
+                    <button onclick="document.getElementById('form-debug-overlay').remove()" style="
+                        margin-top: 10px; 
+                        background: #f44336; 
+                        color: white; 
+                        border: none; 
+                        padding: 5px 10px; 
+                        border-radius: 4px; 
+                        cursor: pointer;
+                    ">Close</button>
+                </div>
+            `);
+            
+            $('body').append(debugInfo);
+            
+            // Also log to console
+            console.log('🎯 FORM SUBMISSION COMPLETE TIMING:');
+            console.log('📅 Started:', new Date(timingData.startTime).toISOString());
+            console.log('📅 Page loaded:', new Date().toISOString());
+            console.log('⏱️ Total time:', totalTime + 'ms (' + (totalTime/1000).toFixed(1) + 's)');
+            console.log('📊 Breakdown:', timingData);
+            
+            // Clear the stored data
+            localStorage.removeItem('formSubmissionDebug');
+            
+        } catch (error) {
+            console.error('Error parsing stored timing data:', error);
+            localStorage.removeItem('formSubmissionDebug');
+        }
+    }
+    
     // Check if we just came from a form submission (for timing debug)
     if (window.formSubmitStartTime) {
         const totalFormSubmissionTime = Math.round(performance.now() - window.formSubmitStartTime);
@@ -167,6 +233,7 @@ jQuery(document).ready(function($) {
     $('#add-car-listing-form').on('submit', function(e) {
         // === DEBUG TIMER START ===
         const debugStartTime = performance.now();
+        const debugStartTimeMs = Date.now();
         console.log('🚀 FORM SUBMIT STARTED at:', new Date().toISOString());
         
         // Store start time globally to track across page transitions
@@ -269,6 +336,12 @@ jQuery(document).ready(function($) {
             const unloadTime = performance.now();
             const timeToUnload = Math.round(unloadTime - debugStartTime);
             console.log('📤 PAGE UNLOAD STARTED after:', timeToUnload, 'ms from form submit');
+            
+            // Update stored timing data with unload time
+            const currentTimingData = JSON.parse(localStorage.getItem('formSubmissionDebug') || '{}');
+            currentTimingData.pageUnloadTime = timeToUnload;
+            localStorage.setItem('formSubmissionDebug', JSON.stringify(currentTimingData));
+            
             window.removeEventListener('beforeunload', beforeUnloadHandler);
         };
         window.addEventListener('beforeunload', beforeUnloadHandler);
@@ -307,6 +380,27 @@ jQuery(document).ready(function($) {
             .slice(0, 10); // Top 10 largest fields
         
         console.log('🔍 Largest form fields:', sortedFields);
+        
+        // === STORE TIMING DATA IN LOCALSTORAGE ===
+        const timingData = {
+            startTime: debugStartTimeMs,
+            startTimeISO: new Date().toISOString(),
+            clientProcessingTime: totalClientTime,
+            formDataSize: Math.round(totalSize / 1024),
+            sessionId: asyncUploadManager ? asyncUploadManager.session.id : 'N/A',
+            totalImages: totalImages,
+            checkpoints: {
+                imageValidation: checkpoint1Time,
+                sessionManagement: checkpoint2Time,
+                valueExtraction: checkpoint3Time,
+                hiddenInputs: checkpoint4Time,
+                inputDisabling: checkpoint5Time
+            },
+            largestFields: sortedFields
+        };
+        
+        localStorage.setItem('formSubmissionDebug', JSON.stringify(timingData));
+        console.log('💾 Timing data stored in localStorage for post-redirect analysis');
         
         // Let the form submit naturally
         return true;
