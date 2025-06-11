@@ -515,8 +515,26 @@ jQuery(document).ready(function($) {
 
         // If using async uploads, mark session as completed, otherwise use traditional method
         if (asyncUploadManager) {
+            // Check if any async uploads are still in progress
+            const pendingUploads = accumulatedFilesList.filter(file => 
+                file.asyncUploadStatus === 'uploading'
+            ).length;
+            
+            if (pendingUploads > 0) {
+                e.preventDefault();
+                alert(`Please wait for ${pendingUploads} image(s) to finish uploading before submitting.`);
+                return false;
+            }
+            
             asyncUploadManager.markSessionCompleted();
             console.log('[Edit Listing] Async upload session marked as completed');
+            
+            // Clear file input to prevent duplicate uploads when using async system
+            const fileInput = $('#car_images')[0];
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                fileInput.value = '';
+                console.log('[Edit Listing] Cleared file input for async uploads');
+            }
         } else {
             // For traditional uploads, ensure fileInput has correct files
             updateActualFileInput();
