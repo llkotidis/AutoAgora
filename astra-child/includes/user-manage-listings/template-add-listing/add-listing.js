@@ -178,6 +178,17 @@ jQuery(document).ready(function($) {
         
         // If using async uploads, mark session as completed
         if (asyncUploadManager) {
+            // Check if any async uploads are still in progress
+            const pendingUploads = accumulatedFilesList.filter(file => 
+                file.asyncUploadStatus === 'uploading'
+            ).length;
+            
+            if (pendingUploads > 0) {
+                e.preventDefault();
+                alert(`Please wait for ${pendingUploads} image(s) to finish uploading before submitting.`);
+                return false;
+            }
+            
             asyncUploadManager.markSessionCompleted();
             console.log('[Add Listing] Session marked as completed on form submission');
             
