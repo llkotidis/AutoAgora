@@ -9,10 +9,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Redirect subscribers, clients, and dealerships away from the WordPress backend.
- * BUT ALLOW AJAX requests (admin-ajax.php)
+ * BUT ALLOW AJAX requests (admin-ajax.php) AND admin-post.php requests (form submissions)
  */
 function restrict_backend_access() {
-    if ( is_admin() && !wp_doing_ajax() ) { // FIXED: Allow AJAX requests
+    if ( is_admin() && !wp_doing_ajax() ) {
+        // Allow admin-post.php requests (form submissions)
+        global $pagenow;
+        if ( $pagenow === 'admin-post.php' ) {
+            return; // Allow form submissions
+        }
+        
         $current_user = wp_get_current_user();
         $user_roles = $current_user->roles;
         

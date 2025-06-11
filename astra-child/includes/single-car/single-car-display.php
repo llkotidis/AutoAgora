@@ -194,7 +194,7 @@ if (have_posts()) :
                             echo '<div class="car-publication-date">Listed on ' . esc_html($formatted_date) . '</div>';
                             ?>
                             <div class="car-location"><i class="fas fa-map-marker-alt"></i><?php echo esc_html($location); ?></div>
-                                        <?php 
+                            <?php 
             // Get the author from post_author field
             $author_id = get_post_field('post_author', $car_id);
                             
