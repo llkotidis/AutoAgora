@@ -18,12 +18,11 @@ function display_my_listings($atts) {
     // Get current user
     $current_user = wp_get_current_user();
     
-    // Enqueue jQuery and localize script
+    // Enqueue jQuery
     wp_enqueue_script('jquery');
-    wp_localize_script('jquery', 'myListingsData', array(
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('toggle_car_status_nonce')
-    ));
+    
+    // Prepare localized data
+    $ajax_nonce = wp_create_nonce('toggle_car_status_nonce');
     
     // Start output buffering
     ob_start();
@@ -221,6 +220,12 @@ function display_my_listings($atts) {
     </div>
 
     <script>
+    // Define myListingsData object with localized data
+    const myListingsData = {
+        ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
+        nonce: '<?php echo $ajax_nonce; ?>'
+    };
+    
     function toggleCarStatus(carId, markAsSold) {
         console.log('Toggle function called with:', { carId, markAsSold });
         
