@@ -19,11 +19,36 @@ function process_listing_report_submission() {
         return;
     }
 
-    // Sanitize and validate input
+    // Get user info for rate limiting and duplicate checking
+    $user_ip = $_SERVER['REMOTE_ADDR'];
+    $user_id = get_current_user_id();
+    $user_identifier = $user_id ? $user_id : md5($user_ip);
+    
+    // Rate limiting: Check if user has submitted reports recently
+    $rate_limit_key = 'report_limit_' . $user_identifier;
+    $recent_reports = get_transient($rate_limit_key);
+    
+    if ($recent_reports && $recent_reports >= 3) {
+        wp_send_json_error('Too many reports submitted. Please wait before submitting another report.');
+        return;
+    }
+
+    // Sanitize and validate input with length limits
     $listing_id = intval($_POST['reported_listing_id']);
     $reason = sanitize_text_field($_POST['report_reason']);
     $details = sanitize_textarea_field($_POST['report_details']);
     $reporter_email = sanitize_email($_POST['reporter_email']);
+
+    // Validate input lengths
+    if (strlen($details) > 1000) {
+        wp_send_json_error('Additional details too long (max 1000 characters)');
+        return;
+    }
+    
+    if (!empty($reporter_email) && !is_email($reporter_email)) {
+        wp_send_json_error('Invalid email address');
+        return;
+    }
 
     // Validate required fields
     if (empty($listing_id) || empty($reason)) {
@@ -35,6 +60,13 @@ function process_listing_report_submission() {
     $listing = get_post($listing_id);
     if (!$listing || $listing->post_type !== 'car') {
         wp_send_json_error('Invalid listing');
+        return;
+    }
+
+    // Check if user has already reported this specific listing
+    $duplicate_key = 'report_duplicate_' . $user_identifier . '_listing_' . $listing_id;
+    if (get_transient($duplicate_key)) {
+        wp_send_json_error('You have already reported this listing.');
         return;
     }
 
@@ -69,11 +101,15 @@ function process_listing_report_submission() {
     // Send email notification to all admins
     $success = send_report_notification_email($report_data);
 
-    if ($success) {
-        wp_send_json_success('Report submitted successfully');
-    } else {
-        wp_send_json_error('Failed to send report notification');
-    }
+    // Update rate limiting counter
+    $new_count = $recent_reports ? $recent_reports + 1 : 1;
+    set_transient($rate_limit_key, $new_count, HOUR_IN_SECONDS);
+
+    // Mark this listing as reported by this user (prevent duplicates for 30 days)
+    set_transient($duplicate_key, true, 30 * DAY_IN_SECONDS);
+
+    // Always show success message (don't expose email delivery status)
+    wp_send_json_success('Report submitted successfully');
 }
 
 /**
