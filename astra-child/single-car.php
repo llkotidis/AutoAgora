@@ -54,6 +54,9 @@ add_action('wp_enqueue_scripts', 'enqueue_single_car_assets');
 
 get_header(); // Ensure Astra's header is loaded
 
+// Include the report handler functionality
+include get_stylesheet_directory() . '/includes/single-car/report-handler.php';
+
 // Include the separated display file
 include get_stylesheet_directory() . '/includes/single-car/single-car-display.php';
 
