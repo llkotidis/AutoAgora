@@ -46,7 +46,8 @@ function enqueue_single_car_assets() {
         // Localize script for AJAX
         wp_localize_script('single-car-display-js', 'carListingsData', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('toggle_favorite_car')
+            'nonce' => wp_create_nonce('toggle_favorite_car'),
+            'report_nonce' => wp_create_nonce('report_listing_nonce')
         ));
     }
 }
