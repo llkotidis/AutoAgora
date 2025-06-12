@@ -1048,6 +1048,24 @@ label svg path,
 }
 
 /* Upload Queue Status */
+
+/* Async Upload Fallback Message */
+.async-upload-fallback-message {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.async-upload-fallback-message .fallback-icon {
+    font-size: 16px;
+}
 .upload-queue-status {
     position: fixed;
     bottom: 20px;

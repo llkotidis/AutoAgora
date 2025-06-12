@@ -668,7 +668,25 @@ jQuery(document).ready(function($) {
             $preview.find('.upload-status').remove();
             $preview.append('<div class="upload-status upload-error">✗ Upload failed</div>');
             
+            // Show fallback message below upload area
+            showAsyncUploadFallbackMessage();
+            
             console.error('[Add Listing] Async upload failed for file key:', fileKey, error);
+        }
+    }
+    
+    function showAsyncUploadFallbackMessage() {
+        // Only show if not already shown
+        if ($('.async-upload-fallback-message').length === 0) {
+            const message = $(`
+                <div class="async-upload-fallback-message">
+                    <span class="fallback-icon">ℹ️</span>
+                    <span>Background upload failed but images will submit normally when you press submit. You may continue filling the form.</span>
+                </div>
+            `);
+            
+            // Insert after the file upload area
+            fileUploadArea.after(message);
         }
     }
     
