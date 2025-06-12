@@ -730,7 +730,7 @@ jQuery(document).ready(function($) {
         if ($('.async-upload-fallback-message').length === 0) {
             const message = $(`
                 <div class="async-upload-fallback-message">
-                    <span class="fallback-icon">ℹ️</span>
+                    <i class="fas fa-info-circle fallback-icon"></i>
                     <span>Background upload failed but images will submit normally when you press submit. You may continue filling the form.</span>
                 </div>
             `);
