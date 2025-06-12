@@ -183,8 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Check if AJAX data is available
-            if (typeof carListingsData === 'undefined' || typeof carListingsData.ajaxurl === 'undefined') {
+            if (typeof carListingsData === 'undefined') {
                 alert('Error: Unable to submit report. Please refresh the page and try again.');
                 return;
             }
@@ -198,26 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const formData = new FormData(this);
             
-            // Debug: Log form data
-            console.log('Submitting report with data:');
-            for (let [key, value] of formData.entries()) {
-                console.log(key + ': ' + value);
-            }
-            
             fetch(carListingsData.ajaxurl, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin',
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('Response data:', data);
                 if (data.success) {
                     alert('Thank you for your report. We will review it and take appropriate action if necessary.');
                     closeModal();
@@ -226,8 +212,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error details:', error);
-                alert('Failed to submit report. Error: ' + error.message);
+                console.error('Error:', error);
+                alert('Failed to submit report. Please try again later.');
             })
             .finally(() => {
                 // Reset button state

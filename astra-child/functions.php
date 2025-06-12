@@ -74,6 +74,19 @@ require_once get_stylesheet_directory() . '/includes/legal/legal-pages.php';
 // Include cookie consent banner
 require_once get_stylesheet_directory() . '/includes/legal/cookie-consent.php';
 
+// Register report listing AJAX hooks (lightweight)
+add_action('wp_ajax_submit_listing_report', 'handle_listing_report_submission');
+add_action('wp_ajax_nopriv_submit_listing_report', 'handle_listing_report_submission');
+
+// Load the actual handler function only when AJAX is called
+function handle_listing_report_submission() {
+    // Load the report handler file only when this AJAX call is made
+    require_once get_stylesheet_directory() . '/includes/single-car/report-handler.php';
+    
+    // Call the actual handler function
+    process_listing_report_submission();
+}
+
 /**
  * Astra Child Theme functions and definitions
  *

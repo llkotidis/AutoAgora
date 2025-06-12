@@ -9,28 +9,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Hook the AJAX handlers
-add_action('wp_ajax_submit_listing_report', 'handle_listing_report_submission');
-add_action('wp_ajax_nopriv_submit_listing_report', 'handle_listing_report_submission');
-
 /**
- * Handle the listing report submission
+ * Process the listing report submission
  */
-function handle_listing_report_submission() {
-    // Debug: Log incoming data
-    error_log('Report submission received. POST data: ' . print_r($_POST, true));
-    
-    // Check if nonce exists
-    if (!isset($_POST['report_nonce'])) {
-        error_log('Report submission error: No nonce provided');
-        wp_send_json_error('Security check failed: No nonce provided');
-        return;
-    }
-    
+function process_listing_report_submission() {
     // Verify nonce
-    if (!wp_verify_nonce($_POST['report_nonce'], 'report_listing_nonce')) {
-        error_log('Report submission error: Invalid nonce');
-        wp_send_json_error('Security check failed: Invalid nonce');
+    if (!isset($_POST['report_nonce']) || !wp_verify_nonce($_POST['report_nonce'], 'report_listing_nonce')) {
+        wp_send_json_error('Security check failed');
         return;
     }
 
