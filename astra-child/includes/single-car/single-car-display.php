@@ -74,6 +74,51 @@ if (have_posts()) :
                         </div>
                     </div>
                 </div>
+                
+                <!-- Report Listing Modal -->
+                <div class="report-modal" style="display: none;">
+                    <div class="report-modal-content">
+                        <div class="report-modal-header">
+                            <h3>Report this listing</h3>
+                            <button class="close-report-modal">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <form id="report-listing-form" method="post">
+                            <div class="report-form-group">
+                                <label for="report-reason">Reason for reporting:</label>
+                                <select id="report-reason" name="report_reason" required>
+                                    <option value="">Select a reason</option>
+                                    <option value="fake_listing">Fake or fraudulent listing</option>
+                                    <option value="inappropriate_content">Inappropriate content</option>
+                                    <option value="spam">Spam</option>
+                                    <option value="wrong_category">Wrong category</option>
+                                    <option value="duplicate">Duplicate listing</option>
+                                    <option value="sold_vehicle">Vehicle already sold</option>
+                                    <option value="overpriced">Significantly overpriced</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="report-form-group">
+                                <label for="report-details">Additional details (optional):</label>
+                                <textarea id="report-details" name="report_details" rows="4" placeholder="Please provide any additional information that would help us review this report..."></textarea>
+                            </div>
+                            <div class="report-form-group">
+                                <label for="reporter-email">Your email (optional):</label>
+                                <input type="email" id="reporter-email" name="reporter_email" placeholder="your.email@example.com" value="<?php echo is_user_logged_in() ? esc_attr(wp_get_current_user()->user_email) : ''; ?>">
+                                <small>We may contact you if we need more information</small>
+                            </div>
+                            <input type="hidden" name="reported_listing_id" value="<?php echo esc_attr($car_id); ?>">
+                            <input type="hidden" name="action" value="submit_listing_report">
+                            <?php wp_nonce_field('report_listing_nonce', 'report_nonce'); ?>
+                            <div class="report-form-actions">
+                                <button type="button" class="cancel-report-btn">Cancel</button>
+                                <button type="submit" class="submit-report-btn">Submit Report</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
                 <div class="car-listing-header">
                     <a href="javascript:history.back()" class="back-to-results-btn">
                         ← Back to Results
@@ -93,6 +138,9 @@ if (have_posts()) :
                         </button>
                         <button class="share-btn">
                             <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="report-btn" data-car-id="<?php echo esc_attr($car_id); ?>" title="Report this listing">
+                            <i class="fas fa-flag"></i>
                         </button>
                     </div>
                 </div>
