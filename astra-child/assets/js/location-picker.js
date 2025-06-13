@@ -443,6 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             cleanupMap();
             locationModal.remove();
+            locationModal = null; // Reset modal reference
         });
 
         // Close on outside click
@@ -454,6 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 cleanupMap();
                 locationModal.remove();
+                locationModal = null; // Reset modal reference
             }
         });
 
@@ -585,6 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             cleanupMap();
             locationModal.remove();
+            locationModal = null; // Reset modal reference
         } else {
             console.log('No location selected');
         }
