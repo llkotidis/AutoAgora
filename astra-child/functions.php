@@ -162,5 +162,42 @@ function preserve_car_listing_author_on_admin_edit($data, $postarr) {
 }
 add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
 
+/**
+ * Delete associated images when a car listing is deleted
+ * This prevents orphaned images from cluttering the Media Library
+ */
+function delete_car_listing_images_on_post_delete($post_id) {
+    // Check if this is a car post type
+    if (get_post_type($post_id) !== 'car') {
+        return;
+    }
+    
+    // Get all images associated with this car listing
+    $car_images = get_field('car_images', $post_id);
+    
+    if (!empty($car_images) && is_array($car_images)) {
+        foreach ($car_images as $image_id) {
+            // Delete the attachment and its files
+            wp_delete_attachment($image_id, true);
+        }
+        
+        // Log the deletion for debugging (if WP_DEBUG is enabled)
+        if (WP_DEBUG === true) {
+            error_log('AutoAgora: Deleted ' . count($car_images) . ' images associated with car listing ID: ' . $post_id);
+        }
+    }
+    
+    // Also check for any featured image (for backward compatibility)
+    $featured_image_id = get_post_thumbnail_id($post_id);
+    if ($featured_image_id) {
+        wp_delete_attachment($featured_image_id, true);
+        
+        if (WP_DEBUG === true) {
+            error_log('AutoAgora: Deleted featured image for car listing ID: ' . $post_id);
+        }
+    }
+}
+add_action('before_delete_post', 'delete_car_listing_images_on_post_delete');
+
 
 
