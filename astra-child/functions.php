@@ -163,12 +163,17 @@ function preserve_car_listing_author_on_admin_edit($data, $postarr) {
 add_filter('wp_insert_post_data', 'preserve_car_listing_author_on_admin_edit', 10, 2);
 
 /**
- * Delete associated images when a car listing is deleted
+ * Delete associated images when a car listing is deleted or trashed
  * This prevents orphaned images from cluttering the Media Library
  */
-function delete_car_listing_images_on_post_delete($post_id) {
+function delete_car_listing_images($post_id, $post = null) {
+    // Get post object if not provided (for wp_trash_post hook)
+    if (!$post) {
+        $post = get_post($post_id);
+    }
+    
     // Check if this is a car post type
-    if (get_post_type($post_id) !== 'car') {
+    if (!$post || $post->post_type !== 'car') {
         return;
     }
     
@@ -197,7 +202,10 @@ function delete_car_listing_images_on_post_delete($post_id) {
         }
     }
 }
-add_action('before_delete_post', 'delete_car_listing_images_on_post_delete');
+// Hook for permanent deletion (when trash is disabled or forced delete)
+add_action('before_delete_post', 'delete_car_listing_images', 10, 2);
+// Hook for when post is moved to trash (most common scenario)
+add_action('wp_trash_post', 'delete_car_listing_images', 10, 1);
 
 
 
