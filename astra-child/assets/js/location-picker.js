@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
         longitude: null
     };
 
+    // Page-level variable to store the last selected location for the session
+    let savedLocationForSession = null;
+
     // Debug: Check if mapboxConfig is available
     console.log('Mapbox Config:', mapboxConfig);
 
@@ -175,10 +178,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to show location picker
     function showLocationPicker() {
-        // Only reset map and marker, but keep the selected coordinates and location
+        // Reset global variables
         map = null;
         marker = null;
+        selectedCoordinates = null;
         geocoder = null;
+        
+        // Check if we have a saved location from previous selection
+        let initialCenter = mapboxConfig.center;
+        let initialZoom = mapboxConfig.defaultZoom;
+        
+        if (savedLocationForSession) {
+            console.log('Using saved location from previous selection:', savedLocationForSession);
+            initialCenter = [savedLocationForSession.longitude, savedLocationForSession.latitude];
+            initialZoom = 15; // Zoom in closer to the saved location
+            selectedLocation = { ...savedLocationForSession }; // Copy the saved location
+        } else {
+            console.log('No saved location found, using default map center');
+            selectedLocation = {
+                city: '',
+                district: '',
+                address: '',
+                latitude: null,
+                longitude: null
+            };
+        }
 
         // Store the original location field value
         const locationField = document.getElementById('location');
@@ -219,8 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
             map = new mapboxgl.Map({
                 container: mapContainer,
                 style: mapboxConfig.style,
-                center: selectedCoordinates || mapboxConfig.center,
-                zoom: selectedCoordinates ? 15 : mapboxConfig.defaultZoom,
+                center: initialCenter, // Use saved location or default
+                zoom: initialZoom, // Use appropriate zoom level
                 accessToken: mapboxConfig.accessToken,
                 trackUserLocation: false,
                 attributionControl: true,
@@ -251,12 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
             map.addControl(new mapboxgl.NavigationControl());
             map.addControl(new LocateMeControl(), 'bottom-right');
 
-            // Create initial marker at map center or last selected location
-            const mapCenter = selectedCoordinates ? { lng: selectedCoordinates[0], lat: selectedCoordinates[1] } : map.getCenter();
+            // Create initial marker at map center (which is now the saved location or default)
+            const mapCenter = map.getCenter();
             updateMarkerPosition(mapCenter);
-            if (!selectedCoordinates) {
-                selectedCoordinates = [mapCenter.lng, mapCenter.lat];
-            }
+            selectedCoordinates = [mapCenter.lng, mapCenter.lat];
 
             // Wait for map to load before adding geocoder
             map.on('load', () => {
@@ -292,12 +314,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     geocoderContainer.appendChild(geocoder.onAdd(map));
                     console.log('Geocoder added to container');
                     
-                    // If we have a selected location, populate the geocoder input
-                    if (selectedLocation && selectedLocation.address) {
+                    // If we have a saved location, populate the geocoder with the saved address
+                    if (savedLocationForSession && savedLocationForSession.address) {
                         const geocoderInput = geocoderContainer.querySelector('.mapboxgl-ctrl-geocoder input');
                         if (geocoderInput) {
-                            geocoderInput.value = selectedLocation.address;
-                            console.log('Populated geocoder input with:', selectedLocation.address);
+                            geocoderInput.value = savedLocationForSession.address;
+                            console.log('Populated geocoder with saved address:', savedLocationForSession.address);
+                        }
+                        
+                        // Enable continue button since we have a saved location
+                        const continueBtn = modal.querySelector('.choose-location-btn');
+                        if (continueBtn) {
+                            continueBtn.disabled = false;
+                            console.log('Continue button enabled with saved location');
                         }
                     }
                 } else {
@@ -496,6 +525,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const finalAddress = searchValue || selectedLocation.address;
                 locationField.value = finalAddress;
                 console.log('Updated location field with:', finalAddress);
+                
+                // Save the location for the page session
+                savedLocationForSession = {
+                    city: selectedLocation.city,
+                    district: selectedLocation.district || selectedLocation.city,
+                    address: finalAddress,
+                    latitude: selectedLocation.latitude,
+                    longitude: selectedLocation.longitude
+                };
+                console.log('Saved location for session:', savedLocationForSession);
                 
                 // Add hidden fields for location components
                 const form = locationField.closest('form');
