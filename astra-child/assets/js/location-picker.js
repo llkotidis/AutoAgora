@@ -443,8 +443,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close button functionality
         const closeBtn = locationModal.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => {
-            // Restore original location value
-            if (locationField) {
+            // Only restore original value if no location was ever saved in this session
+            if (locationField && !savedLocationForSession) {
                 locationField.value = originalLocationValue;
             }
             // Hide modal instead of removing it
@@ -454,8 +454,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close on outside click
         locationModal.addEventListener('click', (e) => {
             if (e.target === locationModal) {
-                // Restore original location value
-                if (locationField) {
+                // Only restore original value if no location was ever saved in this session
+                if (locationField && !savedLocationForSession) {
                     locationField.value = originalLocationValue;
                 }
                 // Hide modal instead of removing it
