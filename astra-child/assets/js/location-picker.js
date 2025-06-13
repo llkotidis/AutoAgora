@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedCoordinates = [center.lng, center.lat];
                     
                     // Enable continue button since we have valid coordinates
-                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    const continueBtn = locationModal.querySelector('.choose-location-btn');
                     if (continueBtn) {
                         continueBtn.disabled = false;
                         console.log('Continue button enabled after map movement');
@@ -435,34 +435,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Close button functionality
-        const closeBtn = modal.querySelector('.close-modal');
+        const closeBtn = locationModal.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => {
             // Restore original location value
             if (locationField) {
                 locationField.value = originalLocationValue;
             }
             cleanupMap();
-            modal.remove();
+            locationModal.remove();
         });
 
         // Close on outside click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+        locationModal.addEventListener('click', (e) => {
+            if (e.target === locationModal) {
                 // Restore original location value
                 if (locationField) {
                     locationField.value = originalLocationValue;
                 }
                 cleanupMap();
-                modal.remove();
+                locationModal.remove();
             }
         });
 
         // Continue button functionality
-        const continueBtn = modal.querySelector('.choose-location-btn');
+        const continueBtn = locationModal.querySelector('.choose-location-btn');
         continueBtn.addEventListener('click', () => {
             console.log('Continue button clicked');
             console.log('Selected location:', selectedLocation);
-            handleContinue(modal);
+            handleContinue(locationModal);
         });
     }
 
@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             cleanupMap();
-            modal.remove();
+            locationModal.remove();
         } else {
             console.log('No location selected');
         }
