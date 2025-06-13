@@ -181,11 +181,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to show location picker
     function showLocationPicker() {
-        // Check if modal already exists
-        if (locationModal) {
+        // Check if modal already exists and is still in the document
+        if (locationModal && document.body.contains(locationModal)) {
             console.log('Reusing existing modal');
             locationModal.style.display = 'flex';
             return;
+        }
+        
+        // If modal exists but is not in document, reset it
+        if (locationModal) {
+            console.log('Modal exists but not in document, resetting');
+            locationModal = null;
         }
         
         console.log('Creating new modal for first time');
