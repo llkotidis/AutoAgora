@@ -447,9 +447,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (locationField) {
                 locationField.value = originalLocationValue;
             }
-            cleanupMap();
-            locationModal.remove();
-            locationModal = null; // Reset modal reference
+            // Hide modal instead of removing it
+            locationModal.style.display = 'none';
         });
 
         // Close on outside click
@@ -459,9 +458,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (locationField) {
                     locationField.value = originalLocationValue;
                 }
-                cleanupMap();
-                locationModal.remove();
-                locationModal = null; // Reset modal reference
+                // Hide modal instead of removing it
+                locationModal.style.display = 'none';
             }
         });
 
@@ -591,9 +589,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('Location field not found');
             }
             
-            cleanupMap();
-            locationModal.remove();
-            locationModal = null; // Reset modal reference
+            // Hide modal instead of removing it
+            locationModal.style.display = 'none';
         } else {
             console.log('No location selected');
         }
