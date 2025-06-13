@@ -175,21 +175,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to show location picker
     function showLocationPicker() {
-        // Get stored location if it exists
-        const storedLocation = JSON.parse(localStorage.getItem('lastSelectedLocation')) || null;
-        
-        // Reset global variables
+        // Only reset map and marker, but keep the selected coordinates and location
         map = null;
         marker = null;
-        selectedCoordinates = storedLocation ? [storedLocation.longitude, storedLocation.latitude] : null;
         geocoder = null;
-        selectedLocation = storedLocation || {
-            city: '',
-            district: '',
-            address: '',
-            latitude: null,
-            longitude: null
-        };
 
         // Store the original location field value
         const locationField = document.getElementById('location');
@@ -226,12 +215,12 @@ document.addEventListener('DOMContentLoaded', function() {
         mapContainer.classList.add('visible');
 
         try {
-            // Initialize map
+            // Initialize map with analytics disabled
             map = new mapboxgl.Map({
                 container: mapContainer,
                 style: mapboxConfig.style,
-                center: selectedCoordinates || mapboxConfig.cyprusCenter,
-                zoom: selectedCoordinates ? 13 : mapboxConfig.defaultZoom,
+                center: selectedCoordinates || mapboxConfig.center,
+                zoom: selectedCoordinates ? 15 : mapboxConfig.defaultZoom,
                 accessToken: mapboxConfig.accessToken,
                 trackUserLocation: false,
                 attributionControl: true,
@@ -248,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 failIfMajorPerformanceCaveat: false,
                 preserveDrawingBuffer: false,
                 refreshExpiredTiles: true,
-                scrollZoom: { around: 'center' },
+                scrollZoom: { around: 'center' }, // Always zoom to center where the pin is
                 transformRequest: (url, resourceType) => {
                     // Disable analytics requests
                     if (url.includes('events.mapbox.com')) {
@@ -262,53 +251,59 @@ document.addEventListener('DOMContentLoaded', function() {
             map.addControl(new mapboxgl.NavigationControl());
             map.addControl(new LocateMeControl(), 'bottom-right');
 
-            // Initialize geocoder
-            geocoder = new MapboxGeocoder({
-                accessToken: mapboxConfig.accessToken,
-                mapboxgl: mapboxgl,
-                map: map,
-                marker: false,
-                placeholder: 'Search for a location in Cyprus...',
-                countries: 'cy',
-                language: 'en',
-                types: 'place,neighborhood,address',
-                enableEventLogging: false,
-                localGeocoder: null,
-                clearOnBlur: true,
-                clearAndBlurOnEsc: true,
-                trackProximity: false,
-                minLength: 2,
-                limit: 5,
-                flyTo: {
-                    animate: true,
-                    duration: 2000,
-                    zoom: 15
-                }
-            });
-
-            // Add geocoder to the map
-            const geocoderContainer = document.getElementById('geocoder');
-            if (geocoderContainer) {
-                geocoderContainer.appendChild(geocoder.onAdd(map));
-                console.log('Geocoder added to container');
-            } else {
-                console.error('Geocoder container not found');
+            // Create initial marker at map center or last selected location
+            const mapCenter = selectedCoordinates ? { lng: selectedCoordinates[0], lat: selectedCoordinates[1] } : map.getCenter();
+            updateMarkerPosition(mapCenter);
+            if (!selectedCoordinates) {
+                selectedCoordinates = [mapCenter.lng, mapCenter.lat];
             }
 
-            // Add marker if we have stored coordinates
-            if (selectedCoordinates) {
-                marker = new mapboxgl.Marker()
-                    .setLngLat(selectedCoordinates)
-                    .addTo(map);
-                
-                // Enable continue button since we have coordinates
-                const continueBtn = modal.querySelector('.choose-location-btn');
-                continueBtn.disabled = false;
-            }
-
+            // Wait for map to load before adding geocoder
             map.on('load', () => {
                 console.log('Map loaded, initializing geocoder...');
                 
+                // Initialize geocoder with analytics disabled
+                geocoder = new MapboxGeocoder({
+                    accessToken: mapboxConfig.accessToken,
+                    mapboxgl: mapboxgl,
+                    map: map,
+                    marker: false, // We'll handle the marker ourselves
+                    placeholder: 'Search for a location in Cyprus...',
+                    countries: 'cy', // Restrict to Cyprus
+                    types: 'place,neighborhood,address',
+                    language: 'en', // Force English results
+                    enableEventLogging: false, // Disable geocoder analytics
+                    localGeocoder: null,
+                    clearOnBlur: true,
+                    clearAndBlurOnEsc: true,
+                    trackProximity: false,
+                    minLength: 2, // Minimum characters before search starts
+                    limit: 5, // Maximum number of results to show
+                    flyTo: {
+                        animate: true,
+                        duration: 2000,
+                        zoom: 15
+                    }
+                });
+
+                // Add geocoder to the map
+                const geocoderContainer = document.getElementById('geocoder');
+                if (geocoderContainer) {
+                    geocoderContainer.appendChild(geocoder.onAdd(map));
+                    console.log('Geocoder added to container');
+                    
+                    // If we have a selected location, populate the geocoder input
+                    if (selectedLocation && selectedLocation.address) {
+                        const geocoderInput = geocoderContainer.querySelector('.mapboxgl-ctrl-geocoder input');
+                        if (geocoderInput) {
+                            geocoderInput.value = selectedLocation.address;
+                            console.log('Populated geocoder input with:', selectedLocation.address);
+                        }
+                    }
+                } else {
+                    console.error('Geocoder container not found');
+                }
+
                 // Handle geocoder results
                 geocoder.on('result', (event) => {
                     console.log('Geocoder result:', event.result);
@@ -421,13 +416,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Handle continue button click
+        // Continue button functionality
         const continueBtn = modal.querySelector('.choose-location-btn');
         continueBtn.addEventListener('click', () => {
             console.log('Continue button clicked');
             console.log('Selected location:', selectedLocation);
-            // Store the selected location before handling continue
-            localStorage.setItem('lastSelectedLocation', JSON.stringify(selectedLocation));
             handleContinue(modal);
         });
     }
