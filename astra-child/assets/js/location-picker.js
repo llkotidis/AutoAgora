@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // Enable continue button since we have a saved location
-                        const continueBtn = modal.querySelector('.choose-location-btn');
+                        const continueBtn = locationModal.querySelector('.choose-location-btn');
                         if (continueBtn) {
                             continueBtn.disabled = false;
                             console.log('Continue button enabled with saved location');
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     map.flyTo({ center: result.center, zoom: 15 });
                     
                     // Enable continue button since we have valid coordinates
-                    const continueBtn = modal.querySelector('.choose-location-btn');
+                    const continueBtn = locationModal.querySelector('.choose-location-btn');
                     if (continueBtn) {
                         continueBtn.disabled = false;
                         console.log('Continue button enabled after search');
@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chooseLocationBtn.addEventListener('click', showLocationPicker);
     }
 
-    function handleContinue(modal) {
+    function handleContinue(locationModal) {
         console.log('Handling continue...');
         if (selectedLocation.latitude && selectedLocation.longitude) {
             console.log('Location selected:', selectedLocation);
