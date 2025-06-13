@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let marker = null;
     let selectedCoordinates = null;
     let geocoder = null;
+    let modal = null; // Keep reference to modal
     let selectedLocation = {
         city: '',
         district: '',
@@ -176,41 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to show location picker
-    function showLocationPicker() {
-        // Reset global variables
-        map = null;
-        marker = null;
-        selectedCoordinates = null;
-        geocoder = null;
-        
-        // Check if we have a saved location from previous selection
-        let initialCenter = mapboxConfig.center;
-        let initialZoom = mapboxConfig.defaultZoom;
-        
-        if (savedLocationForSession) {
-            console.log('Using saved location from previous selection:', savedLocationForSession);
-            initialCenter = [savedLocationForSession.longitude, savedLocationForSession.latitude];
-            initialZoom = 15; // Zoom in closer to the saved location
-            selectedLocation = { ...savedLocationForSession }; // Copy the saved location
-        } else {
-            console.log('No saved location found, using default map center');
-            selectedLocation = {
-                city: '',
-                district: '',
-                address: '',
-                latitude: null,
-                longitude: null
-            };
-        }
+    // Function to initialize modal and map (called once)
+    function initializeLocationPicker() {
+        if (modal) return; // Already initialized
 
-        // Store the original location field value
-        const locationField = document.getElementById('location');
-        const originalLocationValue = locationField ? locationField.value : '';
-
-        // Create modal
-        const modal = document.createElement('div');
+        // Create modal once
+        modal = document.createElement('div');
         modal.className = 'location-picker-modal';
+        modal.style.display = 'none'; // Hidden by default
         modal.innerHTML = `
             <div class="location-picker-content">
                 <div class="location-picker-header">
@@ -234,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add modal to body
         document.body.appendChild(modal);
 
-        // Initialize map
+        // Initialize map once
         const mapContainer = modal.querySelector('.location-map');
         mapContainer.classList.add('visible');
 
@@ -243,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
             map = new mapboxgl.Map({
                 container: mapContainer,
                 style: mapboxConfig.style,
-                center: initialCenter, // Use saved location or default
-                zoom: initialZoom, // Use appropriate zoom level
+                center: mapboxConfig.center,
+                zoom: mapboxConfig.defaultZoom,
                 accessToken: mapboxConfig.accessToken,
                 trackUserLocation: false,
                 attributionControl: true,
@@ -274,11 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add navigation controls
             map.addControl(new mapboxgl.NavigationControl());
             map.addControl(new LocateMeControl(), 'bottom-right');
-
-            // Create initial marker at map center (which is now the saved location or default)
-            const mapCenter = map.getCenter();
-            updateMarkerPosition(mapCenter);
-            selectedCoordinates = [mapCenter.lng, mapCenter.lat];
 
             // Wait for map to load before adding geocoder
             map.on('load', () => {
@@ -313,22 +282,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (geocoderContainer) {
                     geocoderContainer.appendChild(geocoder.onAdd(map));
                     console.log('Geocoder added to container');
-                    
-                    // If we have a saved location, populate the geocoder with the saved address
-                    if (savedLocationForSession && savedLocationForSession.address) {
-                        const geocoderInput = geocoderContainer.querySelector('.mapboxgl-ctrl-geocoder input');
-                        if (geocoderInput) {
-                            geocoderInput.value = savedLocationForSession.address;
-                            console.log('Populated geocoder with saved address:', savedLocationForSession.address);
-                        }
-                        
-                        // Enable continue button since we have a saved location
-                        const continueBtn = modal.querySelector('.choose-location-btn');
-                        if (continueBtn) {
-                            continueBtn.disabled = false;
-                            console.log('Continue button enabled with saved location');
-                        }
-                    }
                 } else {
                     console.error('Geocoder container not found');
                 }
@@ -422,26 +375,20 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error initializing map:', error);
         }
 
+        // Set up event listeners once
+        setupModalEventListeners();
+    }
+
+    // Function to set up modal event listeners (called once)
+    function setupModalEventListeners() {
         // Close button functionality
         const closeBtn = modal.querySelector('.close-modal');
-        closeBtn.addEventListener('click', () => {
-            // Restore original location value
-            if (locationField) {
-                locationField.value = originalLocationValue;
-            }
-            cleanupMap();
-            modal.remove();
-        });
+        closeBtn.addEventListener('click', hideLocationPicker);
 
         // Close on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                // Restore original location value
-                if (locationField) {
-                    locationField.value = originalLocationValue;
-                }
-                cleanupMap();
-                modal.remove();
+                hideLocationPicker();
             }
         });
 
@@ -450,31 +397,92 @@ document.addEventListener('DOMContentLoaded', function() {
         continueBtn.addEventListener('click', () => {
             console.log('Continue button clicked');
             console.log('Selected location:', selectedLocation);
-            handleContinue(modal);
+            handleContinue();
         });
     }
 
-    // Function to clean up map resources
-    function cleanupMap() {
-        if (marker) {
-            marker.remove();
-            marker = null;
+    // Function to show location picker (now just shows existing modal)
+    function showLocationPicker() {
+        // Initialize modal and map if not already done
+        initializeLocationPicker();
+        
+        // Store the original location field value
+        const locationField = document.getElementById('location');
+        const originalLocationValue = locationField ? locationField.value : '';
+        
+        // Store original value for restoration if needed
+        modal.dataset.originalLocationValue = originalLocationValue;
+        
+        // Check if we have a saved location from previous selection
+        let targetCenter = mapboxConfig.center;
+        let targetZoom = mapboxConfig.defaultZoom;
+        
+        if (savedLocationForSession) {
+            console.log('Using saved location from previous selection:', savedLocationForSession);
+            targetCenter = [savedLocationForSession.longitude, savedLocationForSession.latitude];
+            targetZoom = 15; // Zoom in closer to the saved location
+            selectedLocation = { ...savedLocationForSession }; // Copy the saved location
+            
+            // Populate the geocoder with the saved address
+            const geocoderInput = modal.querySelector('.mapboxgl-ctrl-geocoder input');
+            if (geocoderInput) {
+                geocoderInput.value = savedLocationForSession.address;
+                console.log('Populated geocoder with saved address:', savedLocationForSession.address);
+            }
+            
+            // Enable continue button since we have a saved location
+            const continueBtn = modal.querySelector('.choose-location-btn');
+            if (continueBtn) {
+                continueBtn.disabled = false;
+                console.log('Continue button enabled with saved location');
+            }
+        } else {
+            console.log('No saved location found, using default map center');
+            selectedLocation = {
+                city: '',
+                district: '',
+                address: '',
+                latitude: null,
+                longitude: null
+            };
+            
+            // Clear geocoder input
+            const geocoderInput = modal.querySelector('.mapboxgl-ctrl-geocoder input');
+            if (geocoderInput) {
+                geocoderInput.value = '';
+            }
+            
+            // Disable continue button until location is selected
+            const continueBtn = modal.querySelector('.choose-location-btn');
+            if (continueBtn) {
+                continueBtn.disabled = true;
+            }
         }
-        if (map) {
-            map.remove();
-            map = null;
+
+        // Update map position and marker
+        if (map && map.isStyleLoaded()) {
+            map.flyTo({ center: targetCenter, zoom: targetZoom });
+            selectedCoordinates = targetCenter;
+            updateMarkerPosition(targetCenter);
         }
-        if (geocoder) {
-            geocoder = null;
+
+        // Show the modal
+        modal.style.display = 'block';
+        console.log('Location picker shown');
+    }
+
+    // Function to hide location picker
+    function hideLocationPicker() {
+        if (modal) {
+            // Restore original location value if user cancelled
+            const locationField = document.getElementById('location');
+            if (locationField && modal.dataset.originalLocationValue !== undefined) {
+                locationField.value = modal.dataset.originalLocationValue;
+            }
+            
+            modal.style.display = 'none';
+            console.log('Location picker hidden');
         }
-        selectedCoordinates = null;
-        selectedLocation = {
-            city: '',
-            district: '',
-            address: '',
-            latitude: null,
-            longitude: null
-        };
     }
 
     // Function to reverse geocode coordinates
@@ -509,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chooseLocationBtn.addEventListener('click', showLocationPicker);
     }
 
-    function handleContinue(modal) {
+    function handleContinue() {
         console.log('Handling continue...');
         if (selectedLocation.latitude && selectedLocation.longitude) {
             console.log('Location selected:', selectedLocation);
@@ -571,8 +579,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('Location field not found');
             }
             
-            cleanupMap();
-            modal.remove();
+            // Hide modal instead of removing it
+            hideLocationPicker();
         } else {
             console.log('No location selected');
         }
